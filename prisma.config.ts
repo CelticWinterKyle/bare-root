@@ -8,6 +8,6 @@ export default defineConfig({
   },
   datasource: {
     // Use direct (non-pooled) URL for migrations; app runtime uses adapter in lib/db.ts
-    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"]!,
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL_UNPOOLED"] ?? process.env["DATABASE_URL"]!,
   },
 });
