@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Tier {
+  FREE
+  PRO
+}
+
+enum CollabRole {
+  EDITOR
+  VIEWER
+}
+
+enum SunLevel {
+  FULL_SUN
+  PARTIAL_SUN
+  PARTIAL_SHADE
+  FULL_SHADE
+}
+
+enum WaterNeed {
+  LOW
+  MODERATE
+  HIGH
+}
+
+enum PlantCategory {
+  VEGETABLE
+  FRUIT
+  HERB
+  FLOWER
+  TREE
+  SHRUB
+  OTHER
+}
+
+enum CompanionType {
+  BENEFICIAL
+  HARMFUL
+}
+
+enum PlantingStatus {
+  PLANNED
+  SEEDS_STARTED
+  TRANSPLANTED
+  ACTIVE
+  HARVESTING
+  HARVESTED
+  FAILED
+}
+
+enum ReminderType {
+  START_SEEDS
+  TRANSPLANT
+  FERTILIZE
+  WATER
+  HARVEST
+  FROST_ALERT
+  SUCCESSION_PLANTING
+  CROP_ROTATION
+  CUSTOM
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id                   String    @id // Clerk user ID
+  email                String    @unique
+  name                 String?
+  avatarUrl            String?
+  timezone             String    @default("UTC")
+  subscriptionTier     Tier      @default(FREE)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  trialEndsAt          DateTime?
+  hadTrial             Boolean   @default(false)
+  onboardingComplete   Boolean   @default(false)
+  onboardingStep       Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  gardens           Garden[]
+  collaborations    GardenCollaborator[]
+  notificationPrefs NotificationPreference[]
+  seedInventory     SeedInventory[]
+  reminders         Reminder[]
+  pushSubscriptions PushSubscription[]
+}
+
+// ─── Push Subscriptions ───────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dhKey String
+  authKey   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Garden ───────────────────────────────────────────────────────────────────
+
+model Garden {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  locationLat     Float?
+  locationLng     Float?
+  locationZip     String?
+  locationDisplay String?
+  usdaZone        String?
+  lastFrostDate   String? // "MM-DD"
+  firstFrostDate  String? // "MM-DD"
+  widthFt         Float
+  heightFt        Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beds          Bed[]
+  collaborators GardenCollaborator[]
+  invitations   GardenInvitation[]
+  seasons       Season[]
+  weatherCache  WeatherCache?
+  reminders     Reminder[]
+}
+
+model GardenCollaborator {
+  id         String     @id @default(cuid())
+  gardenId   String
+  userId     String
+  role       CollabRole @default(VIEWER)
+  invitedAt  DateTime   @default(now())
+  acceptedAt DateTime?
+
+  garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gardenId, userId])
+}
+
+model GardenInvitation {
+  id         String     @id @default(cuid())
+  gardenId   String
+  email      String
+  role       CollabRole @default(VIEWER)
+  token      String     @unique
+  invitedAt  DateTime   @default(now())
+  expiresAt  DateTime
+  acceptedAt DateTime?
+
+  garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+
+  @@unique([gardenId, email])
+}
+
+// ─── Beds & Cells ─────────────────────────────────────────────────────────────
+
+model Bed {
+  id         String   @id @default(cuid())
+  gardenId   String
+  name       String
+  xPosition  Float
+  yPosition  Float
+  widthFt    Float
+  heightFt   Float
+  gridCols   Int
+  gridRows   Int
+  cellSizeIn Int      @default(12)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  cells  Cell[]
+}
+
+model Cell {
+  id       String   @id @default(cuid())
+  bedId    String
+  row      Int
+  col      Int
+  sunLevel SunLevel @default(FULL_SUN)
+  notes    String?
+
+  bed       Bed        @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  plantings Planting[]
+
+  @@unique([bedId, row, col])
+}
+
+// ─── Seasons ──────────────────────────────────────────────────────────────────
+
+model Season {
+  id        String    @id @default(cuid())
+  gardenId  String
+  name      String
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  garden    Garden     @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  plantings Planting[]
+}
+
+// ─── Planting — central hub entity ───────────────────────────────────────────
+
+model Planting {
+  id                  String         @id @default(cuid())
+  cellId              String
+  seasonId            String
+  plantId             String
+  variety             String?
+  status              PlantingStatus @default(PLANNED)
+  quantityPerCell     Int            @default(1)
+  plantedDate         DateTime?
+  transplantDate      DateTime?
+  expectedHarvestDate DateTime?
+  actualHarvestDate   DateTime?
+  notes               String?
+  rating              Int?
+  growAgain           Boolean?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  cell        Cell            @relation(fields: [cellId], references: [id], onDelete: Cascade)
+  season      Season          @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  plant       PlantLibrary    @relation(fields: [plantId], references: [id])
+  photos      PlantingPhoto[]
+  harvestLogs HarvestLog[]
+  growthNotes GrowthNote[]
+  reminders   Reminder[]
+
+  @@unique([cellId, seasonId])
+}
+
+model GrowthNote {
+  id         String   @id @default(cuid())
+  plantingId String
+  body       String
+  createdAt  DateTime @default(now())
+
+  planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+}
+
+model HarvestLog {
+  id          String   @id @default(cuid())
+  plantingId  String
+  harvestedAt DateTime @default(now())
+  quantity    Float
+  unit        String
+  notes       String?
+
+  planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+}
+
+model PlantingPhoto {
+  id         String   @id @default(cuid())
+  plantingId String
+  url        String
+  caption    String?
+  takenAt    DateTime @default(now())
+
+  planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+}
+
+// ─── Plant Library ────────────────────────────────────────────────────────────
+
+model PlantLibrary {
+  id               String        @id @default(cuid())
+  externalId       String?       @unique
+  source           String?
+  name             String
+  scientificName   String?
+  commonNames      String[]
+  category         PlantCategory
+  plantFamily      String?
+  description      String?
+  imageUrl         String?
+  daysToMaturity   Int?
+  spacingInches    Int?
+  plantingDepthIn  Float?
+  sunRequirement   SunLevel?
+  waterRequirement WaterNeed?
+  soilPhRange      String?
+  plantingSeasons  String[]
+  indoorStartWeeks Int?
+  transplantWeeks  Int?
+  harvestMonths    String[]
+  customForUserId  String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  companions  CompanionRelation[] @relation("PlantCompanions")
+  antagonists CompanionRelation[] @relation("PlantAntagonists")
+  plantings   Planting[]
+}
+
+model CompanionRelation {
+  id        String        @id @default(cuid())
+  plantId   String
+  relatedId String
+  type      CompanionType
+  notes     String?
+
+  plant   PlantLibrary @relation("PlantCompanions", fields: [plantId], references: [id], onDelete: Cascade)
+  related PlantLibrary @relation("PlantAntagonists", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@unique([plantId, relatedId, type])
+}
+
+// ─── Reminders & Notifications ────────────────────────────────────────────────
+
+model Reminder {
+  id             String       @id @default(cuid())
+  userId         String
+  plantingId     String?
+  gardenId       String?
+  type           ReminderType
+  title          String
+  body           String?
+  scheduledAt    DateTime
+  sentAt         DateTime?
+  dismissed      Boolean      @default(false)
+  recurring      Boolean      @default(false)
+  recurrenceCron String?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planting Planting? @relation(fields: [plantingId], references: [id], onDelete: SetNull)
+  garden   Garden?   @relation(fields: [gardenId], references: [id], onDelete: SetNull)
+}
+
+model NotificationPreference {
+  id           String       @id @default(cuid())
+  userId       String
+  type         ReminderType
+  enabled      Boolean      @default(true)
+  channelEmail Boolean      @default(true)
+  channelPush  Boolean      @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+// ─── Weather Cache ────────────────────────────────────────────────────────────
+
+model WeatherCache {
+  id        String   @id @default(cuid())
+  gardenId  String   @unique
+  current   Json
+  forecast  Json?
+  updatedAt DateTime @updatedAt
+
+  garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+}
+
+// ─── Seed Inventory ───────────────────────────────────────────────────────────
+
+model SeedInventory {
+  id          String    @id @default(cuid())
+  userId      String
+  plantId     String
+  variety     String    @default("")
+  quantity    Int       @default(0)
+  unit        String    @default("packets")
+  purchasedAt DateTime?
+  expiresAt   DateTime?
+  notes       String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, plantId, variety])
+}
