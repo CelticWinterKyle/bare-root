@@ -2,25 +2,22 @@
 import { useRef, useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateBedPosition } from "@/app/actions/garden";
-import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
 
 // ─── Projection constants ─────────────────────────────────────────────────────
-// RADIUS / VERT maintain the same visual scale as the original TW/TH at az = π/4
 const TW = 50;
 const TH = 25;
-const RADIUS = TW * Math.SQRT2;  // ≈ 70.7  — half-tile width per ft (general)
+const RADIUS = TW * Math.SQRT2;  // ≈ 70.7  — half-tile width per ft
 const VERT   = TH * Math.SQRT2;  // ≈ 35.4  — used to derive EL_SCALE
-const BED_H = 0.5;               // bed wall height (ft)
-const BOARD = 0.15;              // wood frame board width (ft)
-const DRAG_LIFT = 0.4;           // extra z when dragging
-const INITIAL_AZ = Math.PI / 4;  // classic isometric start azimuth
-const ROT_PX = 0.006;            // radians of azimuth per drag pixel
-// Elevation (tilt) — controls vertical viewing angle
-const INITIAL_EL = Math.atan(1 / Math.SQRT2); // ≈ 35.26° — true isometric
-const MIN_EL = 0.35;             // ≈ 20° — dramatic but walls still visible
-const MAX_EL = 1.05;             // ≈ 60° — steep but perspective intact
-const TILT_PX = 0.003;           // radians of elevation per drag pixel
-// EL_SCALE is chosen so the view at INITIAL_EL exactly matches the old VERT/Z_SCALE look
+const BED_H = 0.5;
+const BOARD = 0.15;
+const DRAG_LIFT = 0.4;
+const INITIAL_AZ = Math.PI / 4;
+const ROT_PX = 0.006;
+const INITIAL_EL = Math.atan(1 / Math.SQRT2); // ≈ 35.26°
+const MIN_EL = 0.35;
+const MAX_EL = 1.05;
+const TILT_PX = 0.003;
 const EL_SCALE = VERT / Math.sin(INITIAL_EL); // ≈ 61.2
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
@@ -28,8 +25,8 @@ const LAWN       = "#4a7c3f";
 const LAWN_DARK  = "#3d6b32";
 const LAWN_LIGHT = "#56904a";
 const WOOD_TOP   = "#C49458";
-const WOOD_SIDE1 = "#5A3A18"; // y-axis face (darkest — "south" when az=π/4)
-const WOOD_SIDE2 = "#7D5630"; // x-axis face (medium — "east" when az=π/4)
+const WOOD_SIDE1 = "#5A3A18";
+const WOOD_SIDE2 = "#7D5630";
 const SOIL       = "#3d2b1f";
 const SOIL_DARK  = "#2d1f14";
 const LABEL_CLR  = "#f0e0c0";
@@ -61,6 +58,11 @@ type Bed = {
 };
 type Garden = { id: string; widthFt: number; heightFt: number };
 
+type GestureData =
+  | { mode: "pan"; startX: number; startY: number; startPanX: number; startPanY: number; svgW: number; svgH: number; vbW0: number; vbH0: number }
+  | { mode: "orbit"; startX: number; startY: number; startAz: number; startEl: number }
+  | { mode: "pinch"; startDist: number; startAngle: number; startZoom: number; startAz: number; startPanX: number; startPanY: number; startMidVBX: number; startMidVBY: number; svgLeft: number; svgTop: number; svgW: number; svgH: number };
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }) {
   const router = useRouter();
@@ -83,31 +85,27 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  const [gesturing, setGesturing] = useState(false);
 
-  const [gesture, setGesture] = useState<{
-    startClientX: number; startClientY: number;
-    startAzimuth: number;
-    startElevation: number;
-  } | null>(null);
+  // Tracks all active pointer positions for multi-touch
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const gestureRef = useRef<GestureData | null>(null);
 
   const GW = garden.widthFt;
   const GH = garden.heightFt;
 
   // ── View geometry ──────────────────────────────────────────────────────────
-  // viewBox sized to contain garden at any azimuth + maximum elevation
   const DIAG = Math.sqrt(GW * GW + GH * GH);
   const viewW = Math.ceil(DIAG * RADIUS) + 200;
-  const viewH = Math.ceil(DIAG * EL_SCALE * Math.sin(MAX_EL)) + 200; // sized for MAX_EL, not 90°
+  const viewH = Math.ceil(DIAG * EL_SCALE * Math.sin(MAX_EL)) + 200;
   const vbW = viewW / zoom;
   const vbH = viewH / zoom;
 
-  // Current projection trig
   const COS_AZ = Math.cos(azimuth);
   const SIN_AZ = Math.sin(azimuth);
   const COS_EL = Math.cos(elevation);
   const SIN_EL = Math.sin(elevation);
 
-  // Keep garden center locked to viewBox center as azimuth/elevation changes
   const gardenCx = (GW / 2 * COS_AZ - GH / 2 * SIN_AZ) * RADIUS;
   const gardenCy = (GW / 2 * SIN_AZ + GH / 2 * COS_AZ) * SIN_EL * EL_SCALE;
   const originX = viewW / 2 - gardenCx;
@@ -128,7 +126,6 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     }).join(" ");
   }
 
-  // Inverse projection: screen coords → world coords (z=0 floor plane)
   function isoToWorld(sx: number, sy: number) {
     const U = sx / RADIUS;
     const V = sy / (SIN_EL * EL_SCALE);
@@ -147,10 +144,11 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     return { sx: p.x - originX, sy: p.y - originY };
   }
 
-  // ── Wheel zoom (non-passive) ───────────────────────────────────────────────
+  // ── Sync ref for non-React wheel/gesture callbacks ────────────────────────
   const viewStateRef = useRef({ zoom, panX, panY, vbW, vbH });
   viewStateRef.current = { zoom, panX, panY, vbW, vbH };
 
+  // ── Wheel zoom (non-passive, registered imperatively) ─────────────────────
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -202,31 +200,103 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   function onSvgPointerDown(e: React.PointerEvent) {
     if (dragging) return;
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    setGesture({
-      startClientX: e.clientX, startClientY: e.clientY,
-      startAzimuth: azimuth,
-      startElevation: elevation,
-    });
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pts = activePointersRef.current;
+
+    if (pts.size === 1) {
+      // Right-click or Ctrl+drag → orbit (rotate + tilt). Otherwise → pan.
+      if (e.button === 2 || e.ctrlKey) {
+        gestureRef.current = {
+          mode: "orbit",
+          startX: e.clientX, startY: e.clientY,
+          startAz: azimuth, startEl: elevation,
+        };
+      } else {
+        const rect = svgRef.current!.getBoundingClientRect();
+        const { vbW: vw, vbH: vh } = viewStateRef.current;
+        gestureRef.current = {
+          mode: "pan",
+          startX: e.clientX, startY: e.clientY,
+          startPanX: panX, startPanY: panY,
+          svgW: rect.width, svgH: rect.height,
+          vbW0: vw, vbH0: vh,
+        };
+      }
+      setGesturing(true);
+    } else if (pts.size === 2) {
+      // Second finger arrived — upgrade to pinch/rotate.
+      const [p1, p2] = [...pts.values()];
+      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      const midCX = (p1.x + p2.x) / 2;
+      const midCY = (p1.y + p2.y) / 2;
+      const rect = svgRef.current!.getBoundingClientRect();
+      const { zoom: z, panX: px, panY: py } = viewStateRef.current;
+      const curVbW = viewW / z;
+      const curVbH = viewH / z;
+      gestureRef.current = {
+        mode: "pinch",
+        startDist: dist, startAngle: angle,
+        startZoom: z, startAz: azimuth,
+        startPanX: px, startPanY: py,
+        startMidVBX: px + (midCX - rect.left) / rect.width * curVbW,
+        startMidVBY: py + (midCY - rect.top) / rect.height * curVbH,
+        svgLeft: rect.left, svgTop: rect.top, svgW: rect.width, svgH: rect.height,
+      };
+      // gesturing already true from the first finger
+    }
   }
 
   function onPointerMove(e: React.PointerEvent) {
+    // Always update the pointer's current position in the ref
+    if (activePointersRef.current.has(e.pointerId)) {
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
     if (dragging) {
       const { sx, sy } = getSvgPoint(e);
       const { x, y } = isoToWorld(sx, sy);
       const newX = Math.max(0, dragging.bedStartX + (x - dragging.worldStartX));
       const newY = Math.max(0, dragging.bedStartY + (y - dragging.worldStartY));
       setPositions((prev) => ({ ...prev, [dragging.bedId]: { x: newX, y: newY } }));
-    } else if (gesture) {
-      const dx = e.clientX - gesture.startClientX;
-      const dy = e.clientY - gesture.startClientY;
-      // Horizontal → pan (azimuth rotation) — negative so dragging right spins scene right
-      setAzimuth(gesture.startAzimuth - dx * ROT_PX);
-      // Vertical → tilt (elevation angle) — positive so dragging down tilts toward overhead
-      setElevation(Math.max(MIN_EL, Math.min(MAX_EL, gesture.startElevation + dy * TILT_PX)));
+      return;
+    }
+
+    const g = gestureRef.current;
+    if (!g) return;
+
+    if (g.mode === "pan") {
+      const dx = e.clientX - g.startX;
+      const dy = e.clientY - g.startY;
+      setPanX(g.startPanX - dx * g.vbW0 / g.svgW);
+      setPanY(g.startPanY - dy * g.vbH0 / g.svgH);
+    } else if (g.mode === "orbit") {
+      const dx = e.clientX - g.startX;
+      const dy = e.clientY - g.startY;
+      setAzimuth(g.startAz - dx * ROT_PX);
+      setElevation(Math.max(MIN_EL, Math.min(MAX_EL, g.startEl + dy * TILT_PX)));
+    } else if (g.mode === "pinch") {
+      const pVals = [...activePointersRef.current.values()];
+      if (pVals.length < 2) return;
+      const [p1, p2] = pVals;
+      const newDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const newAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      const newZoom = Math.max(0.4, Math.min(8, g.startZoom * newDist / g.startDist));
+      const newVbW = viewW / newZoom;
+      const newVbH = viewH / newZoom;
+      const curMidCX = (p1.x + p2.x) / 2;
+      const curMidCY = (p1.y + p2.y) / 2;
+      setZoom(newZoom);
+      setPanX(g.startMidVBX - (curMidCX - g.svgLeft) / g.svgW * newVbW);
+      setPanY(g.startMidVBY - (curMidCY - g.svgTop) / g.svgH * newVbH);
+      setAzimuth(g.startAz - (newAngle - g.startAngle));
     }
   }
 
-  function onPointerUp() {
+  function onPointerUp(e: React.PointerEvent) {
+    activePointersRef.current.delete(e.pointerId);
+    const pts = activePointersRef.current;
+
     if (dragging) {
       const pos = positions[dragging.bedId];
       const bed = beds.find((b) => b.id === dragging.bedId);
@@ -247,11 +317,28 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         }
       }
       setDragging(null);
+      return;
     }
-    setGesture(null);
+
+    if (pts.size === 0) {
+      gestureRef.current = null;
+      setGesturing(false);
+    } else if (pts.size === 1 && gestureRef.current?.mode === "pinch") {
+      // One finger lifted during pinch — transition to single-finger pan
+      const [p] = pts.values();
+      const rect = svgRef.current!.getBoundingClientRect();
+      const { zoom: z, panX: px, panY: py } = viewStateRef.current;
+      gestureRef.current = {
+        mode: "pan",
+        startX: p.x, startY: p.y,
+        startPanX: px, startPanY: py,
+        svgW: rect.width, svgH: rect.height,
+        vbW0: viewW / z, vbH0: viewH / z,
+      };
+    }
   }
 
-  // ── Z-sort: depth = x·sin(az) + y·cos(az), ascending (back first) ────────
+  // ── Z-sort: depth = x·sin(az) + y·cos(az), ascending (back first) ─────────
   const sorted = [...beds]
     .filter((b) => !dragging || b.id !== dragging.bedId)
     .sort((a, b) => {
@@ -264,7 +351,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   const dBed = dragging ? beds.find((b) => b.id === dragging.bedId) : null;
   const renderList = dBed ? [...sorted, dBed] : sorted;
 
-  const isBusy = !!dragging || !!gesture;
+  const isBusy = !!dragging || gesturing;
 
   return (
     <div
@@ -288,7 +375,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         onPointerDown={onSvgPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <defs>
           <pattern id="grass-tex" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
@@ -333,9 +420,6 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             const Z = isD ? BED_H + DRAG_LIFT : BED_H;
 
             // ── Dynamic face visibility based on viewer direction ─────────────
-            // y-axis face: south (SIN>0) or north (SIN<0)
-            // x-axis face: east (COS>0) or west (COS<0)
-            // Colors: y-face = darkest (WOOD_SIDE1), x-face = medium (WOOD_SIDE2)
             const yFace = COS_AZ >= 0
               ? ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]])
               : ppts([[bx+W,by,0],[bx,by,0],[bx,by,Z],[bx+W,by,Z]]);
@@ -343,7 +427,6 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
               ? ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]])
               : ppts([[bx,by+D,0],[bx,by,0],[bx,by,Z],[bx,by+D,Z]]);
 
-            // ── Top face ─────────────────────────────────────────────────────
             const nBoard  = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+BOARD,Z],[bx,by+BOARD,Z]]);
             const sBoard  = ppts([[bx,by+D-BOARD,Z],[bx+W,by+D-BOARD,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
             const wBoard  = ppts([[bx,by,Z],[bx+BOARD,by,Z],[bx+BOARD,by+D,Z],[bx,by+D,Z]]);
@@ -372,20 +455,14 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                 onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
                 onPointerLeave={() => setHoveredBed(null)}
               >
-                {/* Side faces (drawn before top so top covers them) */}
                 <polygon points={yFace} fill={WOOD_SIDE1} />
                 <polygon points={xFace} fill={WOOD_SIDE2} />
-
-                {/* Wood frame boards on top surface */}
                 <polygon points={nBoard} fill={WOOD_TOP} />
                 <polygon points={sBoard} fill={WOOD_TOP} />
                 <polygon points={wBoard} fill={WOOD_TOP} />
                 <polygon points={eBoard} fill={WOOD_TOP} />
-
-                {/* Soil */}
                 <polygon points={soil} fill="url(#soil-tex)" />
 
-                {/* Plant dots */}
                 {dots.map((d, i) => {
                   const p = pr(d.wx, d.wy, Z);
                   return (
@@ -396,12 +473,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                   );
                 })}
 
-                {/* Hover highlight */}
                 {(isH || isD) && (
                   <polygon points={topLine} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={2} />
                 )}
 
-                {/* Label */}
                 <text
                   x={lp.sx} y={lp.sy}
                   textAnchor="middle" dominantBaseline="middle"
@@ -447,13 +522,16 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       {/* Controls */}
       <div className="absolute bottom-2 right-3 flex flex-col gap-1 z-10">
         {([
-          { icon: RotateCcw, label: "Rotate left",  fn: () => { setAzimuth((a) => a + Math.PI / 2); resetView(); } },
-          { icon: RotateCw,  label: "Rotate right", fn: () => { setAzimuth((a) => a - Math.PI / 2); resetView(); } },
+          { icon: RotateCcw,   label: "Rotate left",  fn: () => { setAzimuth((a) => a + Math.PI / 2); resetView(); } },
+          { icon: RotateCw,    label: "Rotate right", fn: () => { setAzimuth((a) => a - Math.PI / 2); resetView(); } },
           null,
-          { icon: ZoomIn,    label: "Zoom in",  fn: () => applyZoom(zoom * 1.35) },
-          { icon: ZoomOut,   label: "Zoom out", fn: () => applyZoom(zoom / 1.35) },
+          { icon: ChevronUp,   label: "Tilt up",      fn: () => setElevation((el) => Math.min(MAX_EL, el + 0.15)) },
+          { icon: ChevronDown, label: "Tilt down",    fn: () => setElevation((el) => Math.max(MIN_EL, el - 0.15)) },
           null,
-          { icon: Maximize2, label: "Reset",    fn: () => { resetView(); setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL); } },
+          { icon: ZoomIn,      label: "Zoom in",      fn: () => applyZoom(zoom * 1.35) },
+          { icon: ZoomOut,     label: "Zoom out",     fn: () => applyZoom(zoom / 1.35) },
+          null,
+          { icon: Maximize2,   label: "Reset view",   fn: () => { resetView(); setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL); } },
         ] as const).map((ctrl, i) =>
           ctrl === null ? (
             <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
@@ -484,7 +562,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         className="text-[11px] text-center py-2 border-t select-none"
         style={{ color: "#6b8f47", borderColor: "#2a4018", background: "#19280e" }}
       >
-        Drag left/right to rotate · Drag up/down to tilt · Scroll to zoom
+        Drag to pan · Right-drag or Ctrl+drag to orbit · Pinch or scroll to zoom
       </p>
     </div>
   );
