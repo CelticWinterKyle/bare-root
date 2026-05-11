@@ -2,6 +2,8 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { TrialBanner } from "@/components/layout/TrialBanner";
+import { PwaInstallPrompt } from "@/components/layout/PwaInstallPrompt";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -28,8 +30,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     bedId: r.planting?.cell.bed.id ?? null,
   }));
 
+  const isPro = user.subscriptionTier === "PRO";
+  const trialDaysLeft =
+    isPro && user.trialEndsAt
+      ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : null;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
+      {trialDaysLeft !== null && trialDaysLeft <= 5 && (
+        <TrialBanner daysLeft={trialDaysLeft} />
+      )}
+
       {/* Top header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-[#E8E2D9]">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -41,6 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="flex-1 pb-24">{children}</main>
 
       <BottomNav />
+      <PwaInstallPrompt />
     </div>
   );
 }
