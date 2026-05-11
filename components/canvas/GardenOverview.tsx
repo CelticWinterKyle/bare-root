@@ -17,8 +17,8 @@ const INITIAL_AZ = Math.PI / 4;  // classic isometric start azimuth
 const ROT_PX = 0.006;            // radians of azimuth per drag pixel
 // Elevation (tilt) — controls vertical viewing angle
 const INITIAL_EL = Math.atan(1 / Math.SQRT2); // ≈ 35.26° — true isometric
-const MIN_EL = 0.20;             // ≈ 11° — very dramatic low angle
-const MAX_EL = 1.30;             // ≈ 74° — near top-down
+const MIN_EL = 0.35;             // ≈ 20° — dramatic but walls still visible
+const MAX_EL = 1.05;             // ≈ 60° — steep but perspective intact
 const TILT_PX = 0.003;           // radians of elevation per drag pixel
 // EL_SCALE is chosen so the view at INITIAL_EL exactly matches the old VERT/Z_SCALE look
 const EL_SCALE = VERT / Math.sin(INITIAL_EL); // ≈ 61.2
@@ -97,7 +97,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   // viewBox sized to contain garden at any azimuth + maximum elevation
   const DIAG = Math.sqrt(GW * GW + GH * GH);
   const viewW = Math.ceil(DIAG * RADIUS) + 200;
-  const viewH = Math.ceil(DIAG * EL_SCALE) + 200; // EL_SCALE = worst case (el→90°)
+  const viewH = Math.ceil(DIAG * EL_SCALE * Math.sin(MAX_EL)) + 200; // sized for MAX_EL, not 90°
   const vbW = viewW / zoom;
   const vbH = viewH / zoom;
 
