@@ -9,9 +9,9 @@ const TW = 50;
 const TH = 25;
 const RADIUS = TW * Math.SQRT2;  // ≈ 70.7  — half-tile width per ft
 const VERT   = TH * Math.SQRT2;  // ≈ 35.4  — used to derive EL_SCALE
-const BED_H = 0.5;
-const BOARD = 0.15;
-const DRAG_LIFT = 0.4;
+const BED_H = 1.0;
+const BOARD = 0.18;
+const DRAG_LIFT = 0.3;
 const INITIAL_AZ = Math.PI / 4;
 const ROT_PX = 0.006;
 const INITIAL_EL = Math.atan(1 / Math.SQRT2); // ≈ 35.26°
@@ -25,8 +25,11 @@ const LAWN       = "#4a7c3f";
 const LAWN_DARK  = "#3d6b32";
 const LAWN_LIGHT = "#56904a";
 const WOOD_TOP   = "#C49458";
-const WOOD_SIDE1 = "#5A3A18";
-const WOOD_SIDE2 = "#7D5630";
+// Face shading — sun from upper-east: east > north > south ≈ west
+const WOOD_EAST  = "#9A7040"; // east face — most lit
+const WOOD_NORTH = "#7D5630"; // north face — partially lit
+const WOOD_SOUTH = "#5A3A18"; // south face — less lit
+const WOOD_WEST  = "#452A10"; // west face — deepest shadow
 const SOIL       = "#3d2b1f";
 const SOIL_DARK  = "#2d1f14";
 const LABEL_CLR  = "#f0e0c0";
@@ -419,13 +422,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             const isH = hoveredBed === bed.id && !isD;
             const Z = isD ? BED_H + DRAG_LIFT : BED_H;
 
-            // ── Dynamic face visibility based on viewer direction ─────────────
+            // ── Dynamic face visibility + per-face sun shading ────────────────
+            // Camera from direction: (SIN_AZ·COS_EL, COS_AZ·COS_EL, SIN_EL)
+            // South visible when COS_AZ > 0, East when SIN_AZ > 0
             const yFace = COS_AZ >= 0
-              ? ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]])
-              : ppts([[bx+W,by,0],[bx,by,0],[bx,by,Z],[bx+W,by,Z]]);
+              ? ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]])   // south
+              : ppts([[bx+W,by,0],[bx,by,0],[bx,by,Z],[bx+W,by,Z]]);            // north
             const xFace = SIN_AZ >= 0
-              ? ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]])
-              : ppts([[bx,by+D,0],[bx,by,0],[bx,by,Z],[bx,by+D,Z]]);
+              ? ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]])   // east
+              : ppts([[bx,by+D,0],[bx,by,0],[bx,by,Z],[bx,by+D,Z]]);            // west
+            const yFaceColor = COS_AZ >= 0 ? WOOD_SOUTH : WOOD_NORTH;
+            const xFaceColor = SIN_AZ >= 0 ? WOOD_EAST  : WOOD_WEST;
 
             const nBoard  = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+BOARD,Z],[bx,by+BOARD,Z]]);
             const sBoard  = ppts([[bx,by+D-BOARD,Z],[bx+W,by+D-BOARD,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
@@ -455,8 +462,8 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                 onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
                 onPointerLeave={() => setHoveredBed(null)}
               >
-                <polygon points={yFace} fill={WOOD_SIDE1} />
-                <polygon points={xFace} fill={WOOD_SIDE2} />
+                <polygon points={yFace} fill={yFaceColor} />
+                <polygon points={xFace} fill={xFaceColor} />
                 <polygon points={nBoard} fill={WOOD_TOP} />
                 <polygon points={sBoard} fill={WOOD_TOP} />
                 <polygon points={wBoard} fill={WOOD_TOP} />
