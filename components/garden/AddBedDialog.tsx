@@ -1,0 +1,133 @@
+"use client";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { createBed } from "@/app/actions/bed";
+import { Plus, Loader2 } from "lucide-react";
+
+export function AddBedDialog({ gardenId }: { gardenId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState({
+    name: "",
+    widthFt: "",
+    heightFt: "",
+    cellSizeIn: "12" as "12" | "6",
+  });
+
+  function set(field: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  const valid =
+    form.name.trim().length > 0 &&
+    parseFloat(form.widthFt) > 0 &&
+    parseFloat(form.heightFt) > 0;
+
+  function handleSubmit() {
+    startTransition(async () => {
+      const bedId = await createBed({
+        gardenId,
+        name: form.name.trim(),
+        widthFt: parseFloat(form.widthFt),
+        heightFt: parseFloat(form.heightFt),
+        cellSizeIn: parseInt(form.cellSizeIn) as 12 | 6,
+      });
+      setOpen(false);
+      router.push(`/garden/${gardenId}/beds/${bedId}`);
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-[#E8E2D9] text-[#2D5016] hover:bg-[#F5F0E8]"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Add bed
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-display">Add a raised bed</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <div className="space-y-2">
+            <Label>Bed name</Label>
+            <Input
+              placeholder="Bed 2"
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Width (ft)</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="4"
+                value={form.widthFt}
+                onChange={(e) => set("widthFt", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Length (ft)</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="8"
+                value={form.heightFt}
+                onChange={(e) => set("heightFt", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Cell size</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["12", "6"] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => set("cellSizeIn", size)}
+                  className={`p-2.5 rounded-lg border text-sm text-left transition-colors ${
+                    form.cellSizeIn === size
+                      ? "border-[#2D5016] bg-[#F5F0E8] text-[#2D5016]"
+                      : "border-[#E8E2D9] text-[#6B6560] hover:border-[#6B8F47]"
+                  }`}
+                >
+                  {size === "12" ? "1 ft squares" : "6 in squares"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={!valid || isPending}
+            className="w-full bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+          >
+            {isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Add bed"
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
