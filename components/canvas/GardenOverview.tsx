@@ -3,18 +3,65 @@ import { useRef, useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateBedPosition } from "@/app/actions/garden";
 
-const SCALE = 50;
+// ─── Projection constants ─────────────────────────────────────────────────────
+const TW = 50;        // half-tile width in SVG units per garden foot
+const TH = 25;        // half-tile height in SVG units per garden foot
+const BED_H = 0.5;    // bed wall height in feet
+const BOARD = 0.15;   // wood frame board width in feet
+const TOP_PAD = 65;   // viewBox clearance above origin (labels + drag lift)
+const DRAG_LIFT = 0.4; // extra z when dragging
 
-// Earthy bed palette — cycling through warm greens and ambers
-const BED_PALETTES = [
-  { fill: "#2D5016", stroke: "#4A7C2F", light: "rgba(45,80,22,0.12)" },
-  { fill: "#6B8F47", stroke: "#8FA86B", light: "rgba(107,143,71,0.12)" },
-  { fill: "#C4790A", stroke: "#D4A843", light: "rgba(196,121,10,0.10)" },
-  { fill: "#4A7C2F", stroke: "#6B8F47", light: "rgba(74,124,47,0.12)" },
-  { fill: "#8B6914", stroke: "#A07820", light: "rgba(139,105,20,0.10)" },
-  { fill: "#2D5016", stroke: "#4A7C2F", light: "rgba(45,80,22,0.12)" },
-];
+// ─── Colors ───────────────────────────────────────────────────────────────────
+const LAWN       = "#4a7c3f";
+const LAWN_DARK  = "#3d6b32";
+const LAWN_LIGHT = "#56904a";
+const WOOD_TOP   = "#C49458";
+const WOOD_EAST  = "#7D5630";
+const WOOD_SOUTH = "#5A3A18";
+const SOIL       = "#3d2b1f";
+const SOIL_DARK  = "#2d1f14";
+const LABEL_CLR  = "#f0e0c0";
+const DOT_OUTER  = "#2d5a1b";
+const DOT_INNER  = "#4a8a2e";
 
+// ─── Math ─────────────────────────────────────────────────────────────────────
+function project(x: number, y: number, z = 0) {
+  return { sx: (x - y) * TW, sy: (x + y) * TH - z * TH * 2 };
+}
+
+function pts(coords: [number, number, (number | undefined)?][]): string {
+  return coords
+    .map(([x, y, z = 0]) => {
+      const { sx, sy } = project(x, y, z ?? 0);
+      return `${sx},${sy}`;
+    })
+    .join(" ");
+}
+
+function screenToWorld(sx: number, sy: number) {
+  return {
+    x: sx / (TW * 2) + sy / (TH * 2),
+    y: sy / (TH * 2) - sx / (TW * 2),
+  };
+}
+
+function mulberry32(a: number) {
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 type Bed = {
   id: string;
   name: string;
@@ -24,83 +71,110 @@ type Bed = {
   heightFt: number;
   plantCount: number;
 };
-
 type Garden = { id: string; widthFt: number; heightFt: number };
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }) {
   const router = useRouter();
   const svgRef = useRef<SVGSVGElement>(null);
+
   const [dragging, setDragging] = useState<{
     bedId: string;
-    startMouseX: number;
-    startMouseY: number;
-    startBedX: number;
-    startBedY: number;
+    worldStartX: number;
+    worldStartY: number;
+    bedStartX: number;
+    bedStartY: number;
   } | null>(null);
+
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(
-    Object.fromEntries(beds.map((b) => [b.id, { x: b.xPosition, y: b.yPosition }]))
+    () => Object.fromEntries(beds.map((b) => [b.id, { x: b.xPosition, y: b.yPosition }]))
   );
   const [hoveredBed, setHoveredBed] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const svgWidth = garden.widthFt * SCALE;
-  const svgHeight = garden.heightFt * SCALE;
+  const GW = garden.widthFt;
+  const GH = garden.heightFt;
+  const originX = GH * TW;
+  const originY = TOP_PAD;
+  const viewW = (GW + GH) * TW;
+  const viewH = TOP_PAD + (GW + GH) * TH + 24;
 
-  function getSvgCoords(e: React.PointerEvent) {
+  function getSvgPoint(e: React.PointerEvent) {
     const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (svgWidth / rect.width),
-      y: (e.clientY - rect.top) * (svgHeight / rect.height),
-    };
+    if (!svg) return { sx: 0, sy: 0 };
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { sx: 0, sy: 0 };
+    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+    return { sx: p.x - originX, sy: p.y - originY };
   }
 
   function onBedPointerDown(e: React.PointerEvent, bed: Bed) {
     e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const coords = getSvgCoords(e);
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    const { sx, sy } = getSvgPoint(e);
+    const { x, y } = screenToWorld(sx, sy);
+    const pos = positions[bed.id] ?? { x: bed.xPosition, y: bed.yPosition };
     setDragging({
       bedId: bed.id,
-      startMouseX: coords.x,
-      startMouseY: coords.y,
-      startBedX: positions[bed.id]?.x ?? bed.xPosition,
-      startBedY: positions[bed.id]?.y ?? bed.yPosition,
+      worldStartX: x,
+      worldStartY: y,
+      bedStartX: pos.x,
+      bedStartY: pos.y,
     });
   }
 
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!dragging) return;
-      const coords = getSvgCoords(e);
-      const dx = coords.x - dragging.startMouseX;
-      const dy = coords.y - dragging.startMouseY;
-      const newX = Math.max(0, dragging.startBedX + dx / SCALE);
-      const newY = Math.max(0, dragging.startBedY + dy / SCALE);
-      setPositions((prev) => ({ ...prev, [dragging.bedId]: { x: newX, y: newY } }));
-    },
-    [dragging] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging) return;
+    const { sx, sy } = getSvgPoint(e);
+    const { x, y } = screenToWorld(sx, sy);
+    const newX = Math.max(0, dragging.bedStartX + (x - dragging.worldStartX));
+    const newY = Math.max(0, dragging.bedStartY + (y - dragging.worldStartY));
+    setPositions((prev) => ({ ...prev, [dragging.bedId]: { x: newX, y: newY } }));
+  }, [dragging]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function onPointerUp(e: React.PointerEvent) {
+  function onPointerUp() {
     if (!dragging) return;
     const pos = positions[dragging.bedId];
-    const moved = Math.abs(pos.x - dragging.startBedX) > 0.1 || Math.abs(pos.y - dragging.startBedY) > 0.1;
-    if (moved) {
-      startTransition(() => {
-        updateBedPosition(dragging.bedId, Math.round(pos.x * 10) / 10, Math.round(pos.y * 10) / 10);
-      });
-    } else {
-      router.push(`/garden/${garden.id}/beds/${dragging.bedId}`);
+    const bed = beds.find((b) => b.id === dragging.bedId);
+    if (bed) {
+      const moved =
+        Math.abs(pos.x - dragging.bedStartX) > 0.15 ||
+        Math.abs(pos.y - dragging.bedStartY) > 0.15;
+      if (moved) {
+        startTransition(() =>
+          updateBedPosition(
+            dragging.bedId,
+            Math.round(pos.x * 10) / 10,
+            Math.round(pos.y * 10) / 10
+          )
+        );
+      } else {
+        router.push(`/garden/${garden.id}/beds/${dragging.bedId}`);
+      }
     }
     setDragging(null);
   }
 
+  // Z-sort beds back-to-front; dragging bed always renders last (on top)
+  const sortedBeds = [...beds]
+    .filter((b) => !dragging || b.id !== dragging.bedId)
+    .sort((a, b) => {
+      const pa = positions[a.id] ?? { x: a.xPosition, y: a.yPosition };
+      const pb = positions[b.id] ?? { x: b.xPosition, y: b.yPosition };
+      return pa.x + pa.y - (pb.x + pb.y);
+    });
+  const draggingBed = dragging ? beds.find((b) => b.id === dragging.bedId) : null;
+  const renderList = draggingBed ? [...sortedBeds, draggingBed] : sortedBeds;
+
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-[#E8E2D9] shadow-sm bg-[#F5F0E8]">
+    <div
+      className="w-full rounded-2xl overflow-hidden border shadow-xl"
+      style={{ background: "#19280e", borderColor: "#2a4018" }}
+    >
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+        viewBox={`0 0 ${viewW} ${viewH}`}
         width="100%"
         style={{ display: "block", userSelect: "none", cursor: dragging ? "grabbing" : "default" }}
         onPointerMove={onPointerMove}
@@ -108,159 +182,207 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         onPointerLeave={onPointerUp}
       >
         <defs>
-          {/* Grass texture pattern */}
-          <pattern id="soil" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-            <rect width="8" height="8" fill="#EDE8DF" />
-            <circle cx="2" cy="2" r="0.6" fill="#DDD8CF" />
-            <circle cx="6" cy="6" r="0.6" fill="#DDD8CF" />
-            <circle cx="6" cy="2" r="0.4" fill="#E4DFD6" />
+          {/* Lawn texture */}
+          <pattern id="grass-tex" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+            <rect width="18" height="9" fill={LAWN} />
+            <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill={LAWN_DARK} opacity="0.4" />
+            <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill={LAWN_LIGHT} opacity="0.35" />
+            <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill={LAWN_DARK} opacity="0.3" />
+            <ellipse cx="16" cy="6" rx="0.9" ry="0.6" fill={LAWN_LIGHT} opacity="0.25" />
           </pattern>
 
-          {/* Drop shadow filter */}
-          <filter id="bed-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.18)" />
+          {/* Soil texture */}
+          <pattern id="soil-tex" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+            <rect width="12" height="12" fill={SOIL} />
+            <circle cx="3" cy="3" r="1.3" fill={SOIL_DARK} opacity="0.6" />
+            <circle cx="8.5" cy="7" r="1.1" fill={SOIL_DARK} opacity="0.5" />
+            <circle cx="5" cy="9.5" r="0.8" fill="#4a3325" opacity="0.4" />
+            <circle cx="10" cy="2" r="0.7" fill={SOIL_DARK} opacity="0.35" />
+          </pattern>
+
+          {/* Drop shadows — SE offset for isometric depth */}
+          <filter id="shd-n" x="-25%" y="-25%" width="160%" height="160%">
+            <feDropShadow dx="3" dy="6" stdDeviation="3.5" floodColor="#000" floodOpacity="0.32" />
           </filter>
-          <filter id="bed-shadow-hover" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="rgba(0,0,0,0.25)" />
+          <filter id="shd-h" x="-30%" y="-30%" width="170%" height="170%">
+            <feDropShadow dx="5" dy="9" stdDeviation="5" floodColor="#000" floodOpacity="0.4" />
           </filter>
-          <filter id="bed-shadow-drag" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="2" dy="8" stdDeviation="6" floodColor="rgba(0,0,0,0.3)" />
+          <filter id="shd-d" x="-40%" y="-40%" width="185%" height="185%">
+            <feDropShadow dx="8" dy="16" stdDeviation="9" floodColor="#000" floodOpacity="0.48" />
+          </filter>
+
+          {/* Text shadow */}
+          <filter id="txt-shd" x="-10%" y="-30%" width="120%" height="160%">
+            <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.8" />
           </filter>
         </defs>
 
-        {/* Ground */}
-        <rect width={svgWidth} height={svgHeight} fill="url(#soil)" />
+        <g transform={`translate(${originX}, ${originY})`}>
+          {/* Garden lawn surface */}
+          <polygon
+            points={pts([[0, 0], [GW, 0], [GW, GH], [0, GH]])}
+            fill="url(#grass-tex)"
+          />
+          {/* Subtle lawn edge */}
+          <polygon
+            points={pts([[0, 0], [GW, 0], [GW, GH], [0, GH]])}
+            fill="none"
+            stroke="rgba(0,0,0,0.2)"
+            strokeWidth={1.5}
+          />
 
-        {/* Subtle grid lines */}
-        {Array.from({ length: Math.floor(garden.widthFt) + 1 }, (_, i) => (
-          <line key={`v${i}`} x1={i * SCALE} y1={0} x2={i * SCALE} y2={svgHeight}
-            stroke="#DDD8CF" strokeWidth={0.75} strokeDasharray="3,4" />
-        ))}
-        {Array.from({ length: Math.floor(garden.heightFt) + 1 }, (_, i) => (
-          <line key={`h${i}`} x1={0} y1={i * SCALE} x2={svgWidth} y2={i * SCALE}
-            stroke="#DDD8CF" strokeWidth={0.75} strokeDasharray="3,4" />
-        ))}
+          {/* Beds (painter's algorithm: back → front, dragging bed always last) */}
+          {renderList.map((bed) => {
+            const pos = positions[bed.id] ?? { x: bed.xPosition, y: bed.yPosition };
+            const bx = pos.x;
+            const by = pos.y;
+            const W = bed.widthFt;
+            const D = bed.heightFt;
+            const isD = dragging?.bedId === bed.id;
+            const isH = hoveredBed === bed.id && !isD;
+            const Z = isD ? BED_H + DRAG_LIFT : BED_H;
 
-        {/* Beds */}
-        {beds.map((bed, idx) => {
-          const pos = positions[bed.id] ?? { x: bed.xPosition, y: bed.yPosition };
-          const x = pos.x * SCALE;
-          const y = pos.y * SCALE;
-          const w = bed.widthFt * SCALE;
-          const h = bed.heightFt * SCALE;
-          const palette = BED_PALETTES[idx % BED_PALETTES.length];
-          const isDragging = dragging?.bedId === bed.id;
-          const isHovered = hoveredBed === bed.id && !isDragging;
+            // ── Faces ─────────────────────────────────────────────────────────
+            // South face (y+D edge, faces lower-left toward viewer — darkest)
+            const southFace = pts([
+              [bx, by + D, 0], [bx + W, by + D, 0],
+              [bx + W, by + D, Z], [bx, by + D, Z],
+            ]);
+            // East face (x+W edge, faces lower-right — medium shadow)
+            const eastFace = pts([
+              [bx + W, by, 0], [bx + W, by + D, 0],
+              [bx + W, by + D, Z], [bx + W, by, Z],
+            ]);
+            // Wood frame boards on top face
+            const northBoard = pts([[bx, by, Z], [bx + W, by, Z], [bx + W, by + BOARD, Z], [bx, by + BOARD, Z]]);
+            const southBoard = pts([[bx, by + D - BOARD, Z], [bx + W, by + D - BOARD, Z], [bx + W, by + D, Z], [bx, by + D, Z]]);
+            const westBoard  = pts([[bx, by, Z], [bx + BOARD, by, Z], [bx + BOARD, by + D, Z], [bx, by + D, Z]]);
+            const eastBoard  = pts([[bx + W - BOARD, by, Z], [bx + W, by, Z], [bx + W, by + D, Z], [bx + W - BOARD, by + D, Z]]);
+            // Soil interior
+            const soilFace = pts([
+              [bx + BOARD, by + BOARD, Z],
+              [bx + W - BOARD, by + BOARD, Z],
+              [bx + W - BOARD, by + D - BOARD, Z],
+              [bx + BOARD, by + D - BOARD, Z],
+            ]);
+            // Top outline (hover highlight)
+            const topFace = pts([[bx, by, Z], [bx + W, by, Z], [bx + W, by + D, Z], [bx, by + D, Z]]);
 
-          return (
-            <g
-              key={bed.id}
-              style={{ cursor: isDragging ? "grabbing" : "grab" }}
-              filter={isDragging ? "url(#bed-shadow-drag)" : isHovered ? "url(#bed-shadow-hover)" : "url(#bed-shadow)"}
-              onPointerDown={(e) => onBedPointerDown(e, bed)}
-              onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
-              onPointerLeave={() => setHoveredBed(null)}
-              opacity={isDragging ? 0.92 : 1}
-            >
-              {/* Wood border (outer) */}
-              <rect
-                x={x} y={y} width={w} height={h}
-                rx={6} ry={6}
-                fill="#A07820"
-                stroke="#8B6914"
-                strokeWidth={3}
-              />
-              {/* Soil interior */}
-              <rect
-                x={x + 5} y={y + 5} width={w - 10} height={h - 10}
-                rx={3} ry={3}
-                fill={palette.light}
-                stroke={palette.stroke}
-                strokeWidth={1.5}
-              />
-              {/* Plant fill overlay */}
-              {bed.plantCount > 0 && (
-                <rect
-                  x={x + 5} y={y + 5}
-                  width={(w - 10) * Math.min(1, bed.plantCount / Math.max(1, (bed.widthFt * bed.heightFt)))}
-                  height={h - 10}
-                  rx={3} ry={3}
-                  fill={palette.fill}
-                  fillOpacity={0.18}
-                />
-              )}
-              {/* Bed name */}
-              <text
-                x={x + w / 2}
-                y={y + h / 2 - (bed.plantCount > 0 ? 9 : 0)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={palette.fill}
-                fontSize={Math.min(15, Math.max(9, w / (bed.name.length * 0.75)))}
-                fontWeight="700"
-                fontFamily="Georgia, serif"
-                style={{ pointerEvents: "none" }}
+            // ── Plant scatter dots ─────────────────────────────────────────────
+            const rng = mulberry32(hashStr(bed.id));
+            const dotCount = bed.plantCount > 0 ? Math.min(24, Math.max(3, bed.plantCount * 2)) : 0;
+            const dots = Array.from({ length: dotCount }, () => ({
+              wx: bx + BOARD + rng() * (W - BOARD * 2),
+              wy: by + BOARD + rng() * (D - BOARD * 2),
+            }));
+
+            // ── Label positioning ─────────────────────────────────────────────
+            const lp = project(bx + W / 2, by + D / 2, Z + 0.1);
+            const fs = Math.min(22, Math.max(10, (W * TW * 0.55) / Math.max(2, bed.name.length)));
+
+            return (
+              <g
+                key={bed.id}
+                filter={`url(#${isD ? "shd-d" : isH ? "shd-h" : "shd-n"})`}
+                style={{ cursor: isD ? "grabbing" : "grab" }}
+                onPointerDown={(e) => onBedPointerDown(e, bed)}
+                onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
+                onPointerLeave={() => setHoveredBed(null)}
               >
-                {bed.name}
-              </text>
-              {/* Plant count */}
-              {bed.plantCount > 0 && (
+                {/* Side faces */}
+                <polygon points={southFace} fill={WOOD_SOUTH} />
+                <polygon points={eastFace}  fill={WOOD_EAST} />
+
+                {/* Top: wood frame */}
+                <polygon points={northBoard} fill={WOOD_TOP} />
+                <polygon points={southBoard} fill={WOOD_TOP} />
+                <polygon points={westBoard}  fill={WOOD_TOP} />
+                <polygon points={eastBoard}  fill={WOOD_TOP} />
+
+                {/* Top: soil */}
+                <polygon points={soilFace} fill="url(#soil-tex)" />
+
+                {/* Plant dots */}
+                {dots.map((d, i) => {
+                  const p = project(d.wx, d.wy, Z);
+                  return (
+                    <g key={i} style={{ pointerEvents: "none" }}>
+                      <circle cx={p.sx} cy={p.sy} r={4.5} fill={DOT_OUTER} opacity={0.88} />
+                      <circle cx={p.sx - 1} cy={p.sy - 1} r={2} fill={DOT_INNER} opacity={0.75} />
+                    </g>
+                  );
+                })}
+
+                {/* Hover / drag highlight */}
+                {(isH || isD) && (
+                  <polygon
+                    points={topFace}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.28)"
+                    strokeWidth={2}
+                  />
+                )}
+
+                {/* Bed name */}
                 <text
-                  x={x + w / 2}
-                  y={y + h / 2 + 11}
+                  x={lp.sx}
+                  y={lp.sy}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fill={palette.fill}
-                  fillOpacity={0.75}
-                  fontSize={9}
-                  fontFamily="system-ui, sans-serif"
+                  fill={LABEL_CLR}
+                  fontSize={fs}
+                  fontWeight="600"
+                  fontFamily="Georgia, 'Times New Roman', serif"
+                  filter="url(#txt-shd)"
                   style={{ pointerEvents: "none" }}
                 >
-                  {bed.plantCount} {bed.plantCount === 1 ? "plant" : "plants"}
+                  {bed.name}
                 </text>
-              )}
-              {/* Dimension badge */}
-              <text
-                x={x + 6} y={y + h - 5}
-                fill={palette.fill}
-                fillOpacity={0.55}
-                fontSize={7.5}
-                fontFamily="system-ui, sans-serif"
-                style={{ pointerEvents: "none" }}
-              >
-                {bed.widthFt}×{bed.heightFt}ft
-              </text>
-              {/* Hover indicator arrow */}
-              {(isHovered || isDragging) && (
-                <text
-                  x={x + w - 6} y={y + h - 5}
-                  textAnchor="end"
-                  fill={palette.fill}
-                  fillOpacity={0.7}
-                  fontSize={8}
-                  fontFamily="system-ui, sans-serif"
-                  style={{ pointerEvents: "none" }}
-                >
-                  open →
-                </text>
-              )}
-            </g>
-          );
-        })}
 
-        {/* Empty state */}
-        {beds.length === 0 && (
-          <text
-            x={svgWidth / 2} y={svgHeight / 2}
-            textAnchor="middle" dominantBaseline="middle"
-            fill="#9E9890" fontSize={14}
-            fontFamily="Georgia, serif"
-          >
-            Add a bed to get started
-          </text>
-        )}
+                {/* Plant count sub-label */}
+                {bed.plantCount > 0 && (
+                  <text
+                    x={lp.sx}
+                    y={lp.sy + fs + 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={LABEL_CLR}
+                    fillOpacity={0.6}
+                    fontSize={Math.max(8, fs * 0.68)}
+                    fontFamily="system-ui, sans-serif"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {bed.plantCount} {bed.plantCount === 1 ? "plant" : "plants"}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Empty state */}
+          {beds.length === 0 && (() => {
+            const c = project(GW / 2, GH / 2);
+            return (
+              <text
+                x={c.sx}
+                y={c.sy}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="rgba(255,255,255,0.4)"
+                fontSize={14}
+                fontFamily="Georgia, serif"
+              >
+                Add a bed to get started
+              </text>
+            );
+          })()}
+        </g>
       </svg>
-      <p className="text-[11px] text-center text-[#9E9890] py-2 bg-[#EDE8DF]">
+
+      <p
+        className="text-[11px] text-center py-2 border-t"
+        style={{ color: "#6b8f47", borderColor: "#2a4018", background: "#19280e" }}
+      >
         Drag to reposition · Tap to open
       </p>
     </div>

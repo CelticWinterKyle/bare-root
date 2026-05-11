@@ -143,13 +143,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             {/* Inner soil tray */}
             <div
               className="rounded-xl overflow-hidden"
-              style={{ background: "linear-gradient(160deg, #C8A96E 0%, #B8995E 100%)" }}
+              style={{ background: "linear-gradient(160deg, #3d2b1f 0%, #2d1f14 100%)" }}
             >
               <div
                 className="grid gap-px p-px"
                 style={{
                   gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
-                  background: "#B8995E",
+                  background: "#2d1f14",
                 }}
               >
                 {cells.map((cell) => {
@@ -175,10 +175,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                         background: sunMode
                           ? SUN_BG[sun]
                           : planting
-                          ? `linear-gradient(145deg, ${style!.from}, ${style!.to})`
+                          ? `radial-gradient(circle at 50% 35%, ${style!.from}, ${style!.to})`
                           : preview
                           ? "rgba(107, 143, 71, 0.25)"
-                          : "rgba(248, 244, 234, 0.85)",
+                          : "rgba(58, 38, 22, 0.6)",
                         boxShadow: isSelected
                           ? "inset 0 0 0 2.5px #2D5016, 0 2px 8px rgba(45,80,22,0.3)"
                           : planting
