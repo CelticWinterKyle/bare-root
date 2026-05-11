@@ -1,11 +1,61 @@
 import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { PlantSearch } from "@/components/plants/PlantSearch";
+import type { PlantCategory } from "@/lib/generated/prisma/enums";
 
-export default async function PlantsPage() {
-  await requireUser();
+const CATEGORIES: { value: PlantCategory; label: string; emoji: string }[] = [
+  { value: "VEGETABLE", label: "Vegetables", emoji: "🥦" },
+  { value: "FRUIT", label: "Fruits", emoji: "🍓" },
+  { value: "HERB", label: "Herbs", emoji: "🌿" },
+  { value: "FLOWER", label: "Flowers", emoji: "🌸" },
+  { value: "TREE", label: "Trees", emoji: "🌳" },
+  { value: "SHRUB", label: "Shrubs", emoji: "🌾" },
+];
+
+export default async function PlantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string }>;
+}) {
+  const user = await requireUser();
+  const { q, category } = await searchParams;
+
+  const plants = await db.plantLibrary.findMany({
+    where: {
+      AND: [
+        {
+          OR: [{ customForUserId: null }, { customForUserId: user.id }],
+        },
+        q
+          ? { name: { contains: q, mode: "insensitive" } }
+          : {},
+        category
+          ? { category: category as PlantCategory }
+          : {},
+      ],
+    },
+    orderBy: { name: "asc" },
+    take: 48,
+  });
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-4">Plants</h1>
-      <p className="text-[#6B6560]">Plant library — Phase 2</p>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <header className="mb-6">
+        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">
+          Plant Library
+        </h1>
+        <p className="text-[#6B6560] text-sm mt-1">
+          Search for plants or browse by category.
+        </p>
+      </header>
+
+      <PlantSearch
+        initialPlants={plants}
+        categories={CATEGORIES}
+        initialQuery={q ?? ""}
+        initialCategory={(category as PlantCategory) ?? null}
+        userId={user.id}
+      />
     </div>
   );
 }
