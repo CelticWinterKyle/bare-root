@@ -21,6 +21,23 @@ type Plant = {
 
 type Category = { value: PlantCategory; label: string; emoji: string };
 
+const CATEGORY_STYLE: Record<string, { accent: string; bg: string }> = {
+  VEGETABLE: { accent: "#4A7C2F", bg: "#EEF6E7" },
+  FRUIT:     { accent: "#C4790A", bg: "#FFF4E6" },
+  HERB:      { accent: "#6B8F47", bg: "#F2F6EE" },
+  FLOWER:    { accent: "#9B4BAA", bg: "#F7EEF9" },
+  TREE:      { accent: "#5C4A2A", bg: "#F2EDE6" },
+  SHRUB:     { accent: "#3D6B50", bg: "#E8F2EC" },
+  OTHER:     { accent: "#9E9890", bg: "#F5F0E8" },
+};
+
+const SUN_LABEL: Record<string, string> = {
+  FULL_SUN: "☀️ Full sun",
+  PARTIAL_SUN: "⛅ Part sun",
+  PARTIAL_SHADE: "🌥️ Part shade",
+  FULL_SHADE: "☁️ Full shade",
+};
+
 export function PlantSearch({
   initialPlants,
   categories,
@@ -44,12 +61,15 @@ export function PlantSearch({
   const [isPending, startTransition] = useTransition();
   const [apiSearching, setApiSearching] = useState(false);
 
-  const updateUrl = useCallback((q: string, cat: PlantCategory | null) => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (cat) params.set("category", cat);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [pathname, router]);
+  const updateUrl = useCallback(
+    (q: string, cat: PlantCategory | null) => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (cat) params.set("category", cat);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router]
+  );
 
   function handleCategoryClick(cat: PlantCategory | null) {
     const next = activeCategory === cat ? null : cat;
@@ -64,7 +84,6 @@ export function PlantSearch({
   function handleSearch(q: string) {
     setQuery(q);
     updateUrl(q, activeCategory);
-
     if (q.length === 0) {
       startTransition(async () => {
         const results = await searchPlantsAction("", activeCategory, userId);
@@ -72,9 +91,7 @@ export function PlantSearch({
       });
       return;
     }
-
     if (q.length < 2) return;
-
     startTransition(async () => {
       setApiSearching(true);
       const results = await searchPlantsAction(q, activeCategory, userId);
@@ -101,19 +118,24 @@ export function PlantSearch({
 
       {/* Category pills */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {categories.map((cat) => (
-          <button
-            key={cat.value}
-            onClick={() => handleCategoryClick(cat.value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === cat.value
-                ? "bg-[#2D5016] text-white"
-                : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#E8E2D9]"
-            }`}
-          >
-            {cat.emoji} {cat.label}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const style = CATEGORY_STYLE[cat.value] ?? CATEGORY_STYLE.OTHER;
+          const isActive = activeCategory === cat.value;
+          return (
+            <button
+              key={cat.value}
+              onClick={() => handleCategoryClick(cat.value)}
+              className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+              style={
+                isActive
+                  ? { background: style.accent, color: "#fff" }
+                  : { background: style.bg, color: style.accent }
+              }
+            >
+              {cat.emoji} {cat.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Results */}
@@ -128,75 +150,90 @@ export function PlantSearch({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {plants.map((plant) => (
-            <Link
-              key={plant.id}
-              href={`/plants/${plant.id}`}
-              className="bg-white rounded-xl border border-[#E8E2D9] overflow-hidden hover:border-[#6B8F47] hover:shadow-sm transition-all group"
-            >
-              {plant.imageUrl ? (
-                <div className="aspect-[4/3] relative bg-[#F5F0E8]">
-                  <Image
-                    src={plant.imageUrl}
-                    alt={plant.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 50vw, 33vw"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-[4/3] bg-[#F5F0E8] flex items-center justify-center">
-                  <Leaf className="w-8 h-8 text-[#E8E2D9]" />
-                </div>
-              )}
-              <div className="p-3">
-                <div className="flex items-start justify-between gap-1">
-                  <p className="font-medium text-sm text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors leading-tight">
-                    {plant.name}
-                  </p>
-                  {inventoryByPlant[plant.id] === 0 && (
-                    <span title="Out of stock" className="shrink-0">
-                      <Package className="w-3.5 h-3.5 text-[#B85C3A]" />
-                    </span>
-                  )}
-                  {inventoryByPlant[plant.id] != null && inventoryByPlant[plant.id]! > 0 && (
-                    <span title="In inventory" className="shrink-0">
-                      <Package className="w-3.5 h-3.5 text-[#6B8F47]" />
-                    </span>
-                  )}
-                </div>
-                {plant.scientificName && (
-                  <p className="text-xs text-[#9E9890] mt-0.5 italic truncate">
-                    {plant.scientificName}
-                  </p>
+          {plants.map((plant) => {
+            const style = CATEGORY_STYLE[plant.category] ?? CATEGORY_STYLE.OTHER;
+            const stockQty = inventoryByPlant[plant.id];
+
+            return (
+              <Link
+                key={plant.id}
+                href={`/plants/${plant.id}`}
+                className="bg-white rounded-xl overflow-hidden border border-[#E8E2D9] hover:border-[#6B8F47] hover:shadow-sm transition-all group flex flex-col"
+              >
+                {/* Top accent strip */}
+                <div className="h-1 w-full" style={{ background: style.accent }} />
+
+                {/* Image or placeholder */}
+                {plant.imageUrl ? (
+                  <div className="aspect-[4/3] relative bg-[#F5F0E8]">
+                    <Image
+                      src={plant.imageUrl}
+                      alt={plant.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, 33vw"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="aspect-[4/3] flex items-center justify-center"
+                    style={{ background: style.bg }}
+                  >
+                    <Leaf
+                      className="w-9 h-9"
+                      style={{ color: style.accent, opacity: 0.5 }}
+                    />
+                  </div>
                 )}
-                <div className="flex items-center gap-2 mt-1.5">
-                  {plant.daysToMaturity && (
-                    <span className="text-xs text-[#6B6560]">
-                      {plant.daysToMaturity}d
-                    </span>
+
+                {/* Info */}
+                <div className="p-3 flex-1 flex flex-col gap-1">
+                  <div className="flex items-start justify-between gap-1">
+                    <p
+                      className="font-medium text-sm text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors leading-tight"
+                    >
+                      {plant.name}
+                    </p>
+                    {stockQty === 0 && (
+                      <span title="Out of stock" className="shrink-0">
+                        <Package className="w-3.5 h-3.5 text-[#B85C3A]" />
+                      </span>
+                    )}
+                    {stockQty != null && stockQty > 0 && (
+                      <span title="In inventory" className="shrink-0">
+                        <Package className="w-3.5 h-3.5 text-[#6B8F47]" />
+                      </span>
+                    )}
+                  </div>
+
+                  {plant.scientificName && (
+                    <p className="text-xs text-[#9E9890] italic truncate">
+                      {plant.scientificName}
+                    </p>
                   )}
-                  {plant.sunRequirement && (
-                    <span className="text-xs text-[#6B6560]">
-                      {sunLabel(plant.sunRequirement)}
-                    </span>
-                  )}
+
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-1 mt-auto pt-1">
+                    {plant.daysToMaturity && (
+                      <span
+                        className="text-xs px-1.5 py-0.5 rounded-md font-medium"
+                        style={{ background: "#FFF4E6", color: "#C4790A" }}
+                      >
+                        {plant.daysToMaturity}d
+                      </span>
+                    )}
+                    {plant.sunRequirement && (
+                      <span className="text-xs text-[#6B6560]">
+                        {SUN_LABEL[plant.sunRequirement] ?? plant.sunRequirement}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
-}
-
-function sunLabel(sun: string): string {
-  const map: Record<string, string> = {
-    FULL_SUN: "☀️ Full sun",
-    PARTIAL_SUN: "⛅ Part sun",
-    PARTIAL_SHADE: "🌥️ Part shade",
-    FULL_SHADE: "☁️ Full shade",
-  };
-  return map[sun] ?? sun;
 }

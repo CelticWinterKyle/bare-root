@@ -133,16 +133,44 @@ export default async function GardenPage({
 
       {/* Compact weather strip */}
       {weatherCurrent && (
-        <div className={`flex items-center gap-3 px-4 py-2 rounded-xl mb-4 text-sm ${frostRisk ? "bg-blue-50 border border-blue-200" : "bg-[#F5F0E8] border border-[#E8E2D9]"}`}>
-          {frostRisk ? (
-            <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />
-          ) : (
-            <Thermometer className="w-4 h-4 text-[#9E9890] shrink-0" />
+        <div
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border ${
+            frostRisk
+              ? "bg-blue-50 border-blue-200"
+              : "bg-[#F5F0E8] border-[#E8E2D9]"
+          }`}
+        >
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+              frostRisk ? "bg-blue-100" : "bg-white/60"
+            }`}
+          >
+            {frostRisk ? (
+              <Snowflake className="w-4 h-4 text-blue-500" />
+            ) : (
+              <Thermometer className="w-4 h-4 text-[#9E9890]" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-semibold ${frostRisk ? "text-blue-900" : "text-[#1C1C1A]"}`}>
+              {weatherCurrent.temp}°F · <span className="capitalize">{weatherCurrent.description}</span>
+            </p>
+            {frostRisk && (
+              <p className="text-xs text-blue-700 mt-0.5 font-medium">
+                Frost risk in the next 72 hours
+              </p>
+            )}
+          </div>
+          {weatherCurrent.icon && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`https://openweathermap.org/img/wn/${weatherCurrent.icon}.png`}
+              alt={weatherCurrent.description}
+              width={40}
+              height={40}
+              className="shrink-0 -my-1"
+            />
           )}
-          <span className={frostRisk ? "text-blue-800 font-medium" : "text-[#6B6560]"}>
-            {weatherCurrent.temp}°F · {weatherCurrent.description}
-            {frostRisk && " · Frost risk in forecast"}
-          </span>
         </div>
       )}
 

@@ -5,14 +5,16 @@ import { dismissReminder } from "@/app/actions/reminders";
 import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors } from "lucide-react";
 import Link from "next/link";
 
-const TYPE_ICONS: Record<string, React.ReactNode> = {
-  START_SEEDS: <Sprout className="w-4 h-4 text-[#D4A843]" />,
-  TRANSPLANT: <ArrowUpFromLine className="w-4 h-4 text-[#6B8F47]" />,
-  HARVEST: <Scissors className="w-4 h-4 text-[#C4790A]" />,
-  FROST_ALERT: <Snowflake className="w-4 h-4 text-blue-400" />,
-  WATER: <Leaf className="w-4 h-4 text-blue-400" />,
-  FERTILIZE: <Leaf className="w-4 h-4 text-[#6B8F47]" />,
-  CUSTOM: <Bell className="w-4 h-4 text-[#9E9890]" />,
+const TYPE_CONFIG: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
+  START_SEEDS:       { icon: <Sprout className="w-4 h-4" />,          accent: "#D4A843", bg: "#FFF8E7" },
+  TRANSPLANT:        { icon: <ArrowUpFromLine className="w-4 h-4" />, accent: "#6B8F47", bg: "#EEF6E7" },
+  HARVEST:           { icon: <Scissors className="w-4 h-4" />,        accent: "#C4790A", bg: "#FFF3E8" },
+  FROST_ALERT:       { icon: <Snowflake className="w-4 h-4" />,       accent: "#4B9EBF", bg: "#EFF6FB" },
+  WATER:             { icon: <Leaf className="w-4 h-4" />,            accent: "#4B9EBF", bg: "#EFF6FB" },
+  FERTILIZE:         { icon: <Leaf className="w-4 h-4" />,            accent: "#6B8F47", bg: "#EEF6E7" },
+  CUSTOM:            { icon: <Bell className="w-4 h-4" />,            accent: "#9E9890", bg: "#F5F0E8" },
+  SUCCESSION_PLANTING: { icon: <Sprout className="w-4 h-4" />,        accent: "#6B8F47", bg: "#EEF6E7" },
+  CROP_ROTATION:     { icon: <Sprout className="w-4 h-4" />,          accent: "#C4790A", bg: "#FFF3E8" },
 };
 
 type ReminderItem = {
@@ -51,7 +53,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
   const sent = reminders.filter((r) => r.sentAt);
 
   function ReminderCard({ r }: { r: ReminderItem }) {
-    const icon = TYPE_ICONS[r.type] ?? <Bell className="w-4 h-4 text-[#9E9890]" />;
+    const cfg = TYPE_CONFIG[r.type] ?? TYPE_CONFIG.CUSTOM;
     const href =
       r.gardenId && r.bedId
         ? `/garden/${r.gardenId}/beds/${r.bedId}`
@@ -60,22 +62,55 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
         : null;
 
     return (
-      <div className="flex items-start gap-3 p-4 bg-white border border-[#E8E2D9] rounded-xl">
-        <div className="mt-0.5 shrink-0">{icon}</div>
-        <div className="flex-1 min-w-0">
+      <div
+        className="flex items-start gap-0 bg-white rounded-xl border border-[#E8E2D9] overflow-hidden hover:shadow-sm transition-shadow"
+      >
+        {/* Color left strip */}
+        <div
+          className="w-1 self-stretch shrink-0 rounded-l-xl"
+          style={{ background: cfg.accent }}
+        />
+
+        {/* Icon */}
+        <div
+          className="shrink-0 m-3.5 w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: cfg.bg, color: cfg.accent }}
+        >
+          {cfg.icon}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 py-3.5 pr-3">
           {href ? (
-            <Link href={href} className="text-sm font-medium text-[#1C1C1A] hover:text-[#2D5016]">
+            <Link
+              href={href}
+              className="text-sm font-semibold text-[#1C1C1A] hover:text-[#2D5016] transition-colors leading-tight block"
+            >
               {r.title}
             </Link>
           ) : (
-            <p className="text-sm font-medium text-[#1C1C1A]">{r.title}</p>
+            <p className="text-sm font-semibold text-[#1C1C1A] leading-tight">{r.title}</p>
           )}
-          {r.body && <p className="text-xs text-[#6B6560] mt-0.5 line-clamp-2">{r.body}</p>}
-          <p className="text-xs text-[#9E9890] mt-1">{formatRelativeDate(r.scheduledAt)}</p>
+          {r.body && (
+            <p className="text-xs text-[#6B6560] mt-0.5 line-clamp-2">{r.body}</p>
+          )}
+          <div className="flex items-center gap-2 mt-1.5">
+            <span
+              className="text-xs font-medium px-1.5 py-0.5 rounded-md"
+              style={{ background: cfg.bg, color: cfg.accent }}
+            >
+              {formatRelativeDate(r.scheduledAt)}
+            </span>
+            {r.plantName && (
+              <span className="text-xs text-[#9E9890] truncate">{r.plantName}</span>
+            )}
+          </div>
         </div>
+
+        {/* Dismiss */}
         <button
           onClick={() => handleDismiss(r.id)}
-          className="shrink-0 text-[#9E9890] hover:text-[#1C1C1A] transition-colors"
+          className="shrink-0 p-3.5 text-[#9E9890] hover:text-[#1C1C1A] transition-colors"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />
@@ -103,18 +138,26 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
 
       {pending.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Upcoming</p>
+          <p className="text-xs text-[#9E9890] font-semibold uppercase tracking-wider mb-3">
+            Upcoming
+          </p>
           <div className="space-y-2">
-            {pending.map((r) => <ReminderCard key={r.id} r={r} />)}
+            {pending.map((r) => (
+              <ReminderCard key={r.id} r={r} />
+            ))}
           </div>
         </div>
       )}
 
       {sent.length > 0 && (
         <div>
-          <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Sent</p>
-          <div className="space-y-2">
-            {sent.map((r) => <ReminderCard key={r.id} r={r} />)}
+          <p className="text-xs text-[#9E9890] font-semibold uppercase tracking-wider mb-3">
+            Sent
+          </p>
+          <div className="space-y-2 opacity-75">
+            {sent.map((r) => (
+              <ReminderCard key={r.id} r={r} />
+            ))}
           </div>
         </div>
       )}

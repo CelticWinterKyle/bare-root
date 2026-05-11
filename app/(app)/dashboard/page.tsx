@@ -10,7 +10,10 @@ export default async function DashboardPage() {
 
   const gardens = await db.garden.findMany({
     where: { userId: user.id },
-    include: { _count: { select: { beds: true } }, seasons: { where: { isActive: true }, take: 1 } },
+    include: {
+      _count: { select: { beds: true } },
+      seasons: { where: { isActive: true }, take: 1 },
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -30,17 +33,27 @@ export default async function DashboardPage() {
       </header>
 
       {gardens.length === 0 ? (
-        <div className="bg-[#F5F0E8] rounded-xl p-8 text-center border border-[#E8E2D9]">
-          <Sprout className="w-10 h-10 text-[#6B8F47] mx-auto mb-3" />
-          <p className="font-display text-lg text-[#2D5016] mb-2">
-            Set up your first garden
-          </p>
-          <Link
-            href="/onboarding"
-            className="inline-flex bg-[#2D5016] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#3d6b1e] transition-colors"
-          >
-            Start setup →
-          </Link>
+        <div className="rounded-2xl overflow-hidden border border-[#E8E2D9] shadow-sm">
+          <div className="relative px-6 pt-8 pb-6 bg-gradient-to-br from-[#2D5016] to-[#4A7C2F]">
+            <GridPattern />
+            <div className="relative">
+              <Sprout className="w-10 h-10 text-white/70 mb-3" />
+              <p className="font-display text-2xl font-semibold text-white mb-1">
+                Set up your first garden
+              </p>
+              <p className="text-white/70 text-sm">
+                Add your beds, map your space, and start planning.
+              </p>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-white">
+            <Link
+              href="/onboarding"
+              className="inline-flex bg-[#2D5016] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3d6b1e] transition-colors"
+            >
+              Start setup →
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -48,35 +61,49 @@ export default async function DashboardPage() {
             <Link
               key={garden.id}
               href={`/garden/${garden.id}`}
-              className="block bg-white rounded-xl border border-[#E8E2D9] p-5 hover:border-[#6B8F47] hover:shadow-sm transition-all group"
+              className="block group rounded-2xl overflow-hidden border border-[#E8E2D9] hover:border-[#6B8F47] hover:shadow-md transition-all"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="font-display text-lg font-semibold text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors">
-                    {garden.name}
-                  </h2>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-[#6B6560]">
-                    {garden.usdaZone && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        Zone {garden.usdaZone}
-                      </span>
+              {/* Green header band */}
+              <div className="relative px-5 pt-5 pb-4 bg-gradient-to-br from-[#2D5016] to-[#4A7C2F]">
+                <GridPattern />
+                <div className="relative flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-xl font-semibold text-white leading-tight">
+                      {garden.name}
+                    </h2>
+                    {garden.seasons[0] && (
+                      <p className="text-white/65 text-xs mt-0.5 font-medium">
+                        {garden.seasons[0].name}
+                      </p>
                     )}
-                    <span>
-                      {garden._count.beds}{" "}
-                      {garden._count.beds === 1 ? "bed" : "beds"}
-                    </span>
-                    <span>
-                      {garden.widthFt} × {garden.heightFt} ft
-                    </span>
                   </div>
-                  {garden.seasons[0] && (
-                    <p className="text-xs text-[#9E9890] mt-1">
-                      {garden.seasons[0].name}
-                    </p>
+                  {garden.usdaZone && (
+                    <span className="shrink-0 text-xs font-semibold bg-white/15 text-white/90 px-2.5 py-1 rounded-full border border-white/20">
+                      Zone {garden.usdaZone}
+                    </span>
                   )}
                 </div>
-                <span className="text-[#9E9890] group-hover:text-[#2D5016] transition-colors mt-0.5">
+              </div>
+
+              {/* Stats row */}
+              <div className="px-5 py-3.5 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-4 text-sm text-[#6B6560]">
+                  <span className="flex items-center gap-1.5">
+                    <Sprout className="w-3.5 h-3.5 text-[#6B8F47]" />
+                    {garden._count.beds}{" "}
+                    {garden._count.beds === 1 ? "bed" : "beds"}
+                  </span>
+                  {garden.usdaZone && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-[#9E9890]" />
+                      <span className="text-[#9E9890]">{garden.widthFt} × {garden.heightFt} ft</span>
+                    </span>
+                  )}
+                  {!garden.usdaZone && (
+                    <span className="text-[#9E9890]">{garden.widthFt} × {garden.heightFt} ft</span>
+                  )}
+                </div>
+                <span className="text-[#9E9890] group-hover:text-[#2D5016] text-sm transition-colors">
                   →
                 </span>
               </div>
@@ -84,7 +111,7 @@ export default async function DashboardPage() {
           ))}
 
           {user.subscriptionTier === "FREE" && gardens.length >= 1 && (
-            <div className="rounded-xl border border-dashed border-[#E8E2D9] p-5 text-center">
+            <div className="rounded-xl border border-dashed border-[#E8E2D9] p-4 text-center">
               <p className="text-sm text-[#9E9890]">
                 Free plan includes 1 garden.{" "}
                 <Link href="/settings/billing" className="text-[#C4790A] hover:underline">
@@ -95,10 +122,10 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          {(user.subscriptionTier === "PRO" || gardens.length === 0) && (
+          {user.subscriptionTier === "PRO" && (
             <Link
               href="/onboarding"
-              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#E8E2D9] p-5 text-sm text-[#6B6560] hover:text-[#2D5016] hover:border-[#6B8F47] transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#E8E2D9] p-4 text-sm text-[#6B6560] hover:text-[#2D5016] hover:border-[#6B8F47] transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add another garden
@@ -107,5 +134,18 @@ export default async function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function GridPattern() {
+  return (
+    <div
+      className="absolute inset-0 opacity-[0.07]"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(0deg,transparent,transparent 20px,#fff 20px,#fff 21px)," +
+          "repeating-linear-gradient(90deg,transparent,transparent 20px,#fff 20px,#fff 21px)",
+      }}
+    />
   );
 }

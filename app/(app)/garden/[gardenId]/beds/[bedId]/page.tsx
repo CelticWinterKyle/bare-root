@@ -154,22 +154,36 @@ export default async function BedPage({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
       <Link
         href={`/garden/${gardenId}`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6560] hover:text-[#2D5016] mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-[#9E9890] hover:text-[#2D5016] mb-5 transition-colors group"
       >
-        <ChevronLeft className="w-4 h-4" />
-        {bed.garden.name}
+        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+        <span className="font-medium">{bed.garden.name}</span>
       </Link>
 
       <header className="mb-6">
         <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">
           {bed.name}
         </h1>
-        <p className="text-[#6B6560] text-sm mt-1">
-          {bed.widthFt} × {bed.heightFt} ft · {bed.gridCols} × {bed.gridRows} grid ·{" "}
-          {bed.cellSizeIn}&quot; cells
-        </p>
+        {/* Stat chips */}
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2.5 py-1 rounded-full border border-[#E8E2D9]">
+            {bed.widthFt} × {bed.heightFt} ft
+          </span>
+          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2.5 py-1 rounded-full border border-[#E8E2D9]">
+            {bed.gridCols} × {bed.gridRows} grid
+          </span>
+          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2.5 py-1 rounded-full border border-[#E8E2D9]">
+            {bed.cellSizeIn}&quot; cells
+          </span>
+          {bed.garden.usdaZone && (
+            <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2.5 py-1 rounded-full border border-[#D4E8C4]">
+              Zone {bed.garden.usdaZone}
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Crop rotation warnings */}

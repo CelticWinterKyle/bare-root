@@ -10,31 +10,29 @@ export type CalendarEvent = {
   gardenName: string;
 };
 
-type Props = {
-  events: CalendarEvent[];
-};
+type Props = { events: CalendarEvent[] };
 
 const EVENT_CONFIG = {
   START_SEEDS: {
     label: "Start seeds",
     Icon: Sprout,
-    color: "text-[#D4A843]",
-    bg: "bg-[#FFF8E7]",
-    border: "border-yellow-200",
+    dot: "#D4A843",
+    dotBg: "#FFF8E7",
+    text: "#92700A",
   },
   TRANSPLANT: {
     label: "Transplant",
     Icon: ArrowUpFromLine,
-    color: "text-[#6B8F47]",
-    bg: "bg-[#F5F0E8]",
-    border: "border-[#E8E2D9]",
+    dot: "#6B8F47",
+    dotBg: "#EEF6E7",
+    text: "#3E5F22",
   },
   HARVEST: {
     label: "Harvest",
     Icon: Apple,
-    color: "text-[#C4790A]",
-    bg: "bg-[#FFF3E8]",
-    border: "border-orange-200",
+    dot: "#C4790A",
+    dotBg: "#FFF3E8",
+    text: "#8A4F00",
   },
 } as const;
 
@@ -62,7 +60,7 @@ export function CalendarTimeline({ events }: Props) {
   const months = Object.keys(byMonth).sort();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {months.map((monthKey) => {
         const [year, month] = monthKey.split("-").map(Number);
         const monthLabel = new Date(year, month - 1, 1).toLocaleDateString("en-US", {
@@ -73,46 +71,91 @@ export function CalendarTimeline({ events }: Props) {
 
         return (
           <div key={monthKey}>
-            <h3 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 pb-2 border-b border-[#E8E2D9]">
-              {monthLabel}
-            </h3>
-            <div className="space-y-2">
-              {monthEvents.map((event, i) => {
-                const cfg = EVENT_CONFIG[event.type];
-                const Icon = cfg.Icon;
-                const dayLabel = event.date.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                });
+            {/* Month header */}
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="font-display text-base font-semibold text-[#1C1C1A]">
+                {monthLabel}
+              </h3>
+              <div className="flex-1 h-px bg-[#E8E2D9]" />
+              <span className="text-xs font-medium text-[#9E9890] bg-[#F5F0E8] px-2 py-0.5 rounded-full">
+                {monthEvents.length} {monthEvents.length === 1 ? "event" : "events"}
+              </span>
+            </div>
 
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-3 p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}
-                  >
-                    <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-white border ${cfg.border}`}>
-                      <Icon className={`w-4 h-4 ${cfg.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className={`text-xs font-semibold uppercase tracking-wide ${cfg.color}`}>
-                          {cfg.label}
-                        </span>
-                        <span className="text-xs text-[#9E9890]">{dayLabel}</span>
+            {/* Timeline items */}
+            <div className="relative pl-10">
+              {/* Vertical rail */}
+              <div className="absolute left-3.5 top-3 bottom-3 w-px bg-[#E8E2D9]" />
+
+              <div className="space-y-3">
+                {monthEvents.map((event, i) => {
+                  const cfg = EVENT_CONFIG[event.type];
+                  const Icon = cfg.Icon;
+                  const dayNum = event.date.getDate();
+                  const dayName = event.date.toLocaleDateString("en-US", { weekday: "short" });
+
+                  return (
+                    <div key={i} className="flex items-start gap-3 group/item">
+                      {/* Dot on rail */}
+                      <div
+                        className="absolute left-[5px] w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-10 shadow-sm"
+                        style={{ background: cfg.dot, marginTop: "10px" }}
+                      >
+                        <Icon className="w-2.5 h-2.5 text-white" />
                       </div>
-                      <p className="text-sm font-medium text-[#1C1C1A] truncate">
-                        <Link href={`/plants/${event.plantId}`} className="hover:text-[#2D5016] transition-colors">
-                          {event.plantName}
-                        </Link>
-                      </p>
-                      <p className="text-xs text-[#9E9890]">
-                        {event.gardenName} · {event.bedName}
-                      </p>
+
+                      {/* Card */}
+                      <div
+                        className="flex-1 rounded-xl border p-3.5 transition-shadow hover:shadow-sm"
+                        style={{ background: cfg.dotBg, borderColor: cfg.dot + "33" }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span
+                                className="text-xs font-semibold uppercase tracking-wide"
+                                style={{ color: cfg.text }}
+                              >
+                                {cfg.label}
+                              </span>
+                              <span className="text-xs text-[#9E9890]">
+                                {dayName}
+                              </span>
+                            </div>
+                            <p className="text-sm font-semibold text-[#1C1C1A] truncate">
+                              <Link
+                                href={`/plants/${event.plantId}`}
+                                className="hover:text-[#2D5016] transition-colors"
+                              >
+                                {event.plantName}
+                              </Link>
+                            </p>
+                            <p className="text-xs text-[#9E9890] mt-0.5">
+                              {event.gardenName} · {event.bedName}
+                            </p>
+                          </div>
+
+                          {/* Day badge */}
+                          <div
+                            className="shrink-0 w-10 text-center rounded-lg py-1"
+                            style={{ background: cfg.dot + "22" }}
+                          >
+                            <div
+                              className="text-xl font-bold leading-none"
+                              style={{ color: cfg.dot }}
+                            >
+                              {dayNum}
+                            </div>
+                            <div className="text-[9px] font-medium mt-0.5" style={{ color: cfg.text }}>
+                              {event.date.toLocaleDateString("en-US", { month: "short" }).toUpperCase()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
