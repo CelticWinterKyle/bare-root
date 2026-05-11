@@ -20,23 +20,30 @@ export default async function PlantsPage({
   const user = await requireUser();
   const { q, category } = await searchParams;
 
-  const plants = await db.plantLibrary.findMany({
-    where: {
-      AND: [
-        {
-          OR: [{ customForUserId: null }, { customForUserId: user.id }],
-        },
-        q
-          ? { name: { contains: q, mode: "insensitive" } }
-          : {},
-        category
-          ? { category: category as PlantCategory }
-          : {},
-      ],
-    },
-    orderBy: { name: "asc" },
-    take: 48,
-  });
+  const [plants, inventory] = await Promise.all([
+    db.plantLibrary.findMany({
+      where: {
+        AND: [
+          {
+            OR: [{ customForUserId: null }, { customForUserId: user.id }],
+          },
+          q ? { name: { contains: q, mode: "insensitive" } } : {},
+          category ? { category: category as PlantCategory } : {},
+        ],
+      },
+      orderBy: { name: "asc" },
+      take: 48,
+    }),
+    db.seedInventory.findMany({
+      where: { userId: user.id },
+      select: { plantId: true, quantity: true },
+    }),
+  ]);
+
+  const inventoryByPlant = new Map<string, number>();
+  for (const item of inventory) {
+    inventoryByPlant.set(item.plantId, (inventoryByPlant.get(item.plantId) ?? 0) + item.quantity);
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -55,6 +62,7 @@ export default async function PlantsPage({
         initialQuery={q ?? ""}
         initialCategory={(category as PlantCategory) ?? null}
         userId={user.id}
+        inventoryByPlant={Object.fromEntries(inventoryByPlant)}
       />
     </div>
   );

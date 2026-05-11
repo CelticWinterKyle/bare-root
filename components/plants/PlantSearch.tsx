@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
-import { Search, Loader2, Leaf } from "lucide-react";
+import { Search, Loader2, Leaf, Package } from "lucide-react";
 
 type Plant = {
   id: string;
@@ -27,12 +27,14 @@ export function PlantSearch({
   initialQuery,
   initialCategory,
   userId,
+  inventoryByPlant = {},
 }: {
   initialPlants: Plant[];
   categories: Category[];
   initialQuery: string;
   initialCategory: PlantCategory | null;
   userId: string;
+  inventoryByPlant?: Record<string, number>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -148,9 +150,21 @@ export function PlantSearch({
                 </div>
               )}
               <div className="p-3">
-                <p className="font-medium text-sm text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors leading-tight">
-                  {plant.name}
-                </p>
+                <div className="flex items-start justify-between gap-1">
+                  <p className="font-medium text-sm text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors leading-tight">
+                    {plant.name}
+                  </p>
+                  {inventoryByPlant[plant.id] === 0 && (
+                    <span title="Out of stock" className="shrink-0">
+                      <Package className="w-3.5 h-3.5 text-[#B85C3A]" />
+                    </span>
+                  )}
+                  {inventoryByPlant[plant.id] != null && inventoryByPlant[plant.id]! > 0 && (
+                    <span title="In inventory" className="shrink-0">
+                      <Package className="w-3.5 h-3.5 text-[#6B8F47]" />
+                    </span>
+                  )}
+                </div>
                 {plant.scientificName && (
                   <p className="text-xs text-[#9E9890] mt-0.5 italic truncate">
                     {plant.scientificName}

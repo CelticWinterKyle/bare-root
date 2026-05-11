@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Sprout, CalendarDays, Snowflake, Thermometer } from "lucide-react";
+import { MapPin, Sprout, CalendarDays, Snowflake, Thermometer, Settings } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { GardenOverview } from "@/components/canvas/GardenOverview";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
@@ -120,6 +120,13 @@ export default async function GardenPage({
               {activeSeason ? activeSeason.name : "Seasons"}
             </Link>
             {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
+            <Link
+              href={`/garden/${gardenId}/settings`}
+              className="text-[#9E9890] hover:text-[#2D5016] transition-colors"
+              aria-label="Garden settings"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </header>
