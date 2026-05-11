@@ -2,10 +2,12 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Plus, Sprout, CalendarDays } from "lucide-react";
+import { MapPin, Sprout, CalendarDays, Snowflake, Thermometer } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { GardenOverview } from "@/components/canvas/GardenOverview";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
+import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
+import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
 
 export default async function GardenPage({
   params,
@@ -31,6 +33,7 @@ export default async function GardenPage({
         orderBy: { createdAt: "asc" },
       },
       seasons: { where: { isActive: true }, take: 1 },
+      weatherCache: true,
     },
   });
 
@@ -39,6 +42,37 @@ export default async function GardenPage({
   const activeSeason = garden.seasons[0];
   const bedCount = garden.beds.length;
   const atBedLimit = user.subscriptionTier === "FREE" && bedCount >= 3;
+
+  // Compact weather strip — fetch if stale or missing
+  let weatherCurrent: CurrentWeather | null = null;
+  let weatherForecast: ForecastDay[] | null = null;
+  if (garden.locationZip) {
+    const THREE_HOURS = 3 * 60 * 60 * 1000;
+    const cacheAge = garden.weatherCache
+      ? Date.now() - new Date(garden.weatherCache.updatedAt).getTime()
+      : Infinity;
+
+    if (cacheAge > THREE_HOURS) {
+      const [c, f] = await Promise.all([
+        fetchCurrentWeather(garden.locationZip),
+        fetchForecast(garden.locationZip),
+      ]);
+      weatherCurrent = c;
+      weatherForecast = f;
+      if (c || f) {
+        await db.weatherCache.upsert({
+          where: { gardenId: garden.id },
+          create: { gardenId: garden.id, current: c ?? {}, forecast: f ?? [] },
+          update: { current: c ?? {}, forecast: f ?? [] },
+        });
+      }
+    } else {
+      weatherCurrent = garden.weatherCache?.current as CurrentWeather | null;
+      const raw = garden.weatherCache?.forecast;
+      weatherForecast = Array.isArray(raw) ? (raw as ForecastDay[]) : null;
+    }
+  }
+  const frostRisk = weatherForecast ? hasFrostRisk(weatherForecast) : false;
 
   const beds = garden.beds.map((bed) => ({
     id: bed.id,
@@ -89,6 +123,21 @@ export default async function GardenPage({
           </div>
         </div>
       </header>
+
+      {/* Compact weather strip */}
+      {weatherCurrent && (
+        <div className={`flex items-center gap-3 px-4 py-2 rounded-xl mb-4 text-sm ${frostRisk ? "bg-blue-50 border border-blue-200" : "bg-[#F5F0E8] border border-[#E8E2D9]"}`}>
+          {frostRisk ? (
+            <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />
+          ) : (
+            <Thermometer className="w-4 h-4 text-[#9E9890] shrink-0" />
+          )}
+          <span className={frostRisk ? "text-blue-800 font-medium" : "text-[#6B6560]"}>
+            {weatherCurrent.temp}°F · {weatherCurrent.description}
+            {frostRisk && " · Frost risk in forecast"}
+          </span>
+        </div>
+      )}
 
       {/* Canvas */}
       {garden.beds.length === 0 ? (
