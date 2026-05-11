@@ -9,13 +9,19 @@ import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 const TW = 50;
 const TH = 25;
 const RADIUS = TW * Math.SQRT2;  // ≈ 70.7  — half-tile width per ft (general)
-const VERT   = TH * Math.SQRT2;  // ≈ 35.4  — half-tile height per ft
-const Z_SCALE = TH * 2;          // vertical height per world foot
+const VERT   = TH * Math.SQRT2;  // ≈ 35.4  — used to derive EL_SCALE
 const BED_H = 0.5;               // bed wall height (ft)
 const BOARD = 0.15;              // wood frame board width (ft)
 const DRAG_LIFT = 0.4;           // extra z when dragging
-const INITIAL_AZ = Math.PI / 4;  // classic isometric start angle
-const ROT_PX = 0.006;            // radians of rotation per drag pixel
+const INITIAL_AZ = Math.PI / 4;  // classic isometric start azimuth
+const ROT_PX = 0.006;            // radians of azimuth per drag pixel
+// Elevation (tilt) — controls vertical viewing angle
+const INITIAL_EL = Math.atan(1 / Math.SQRT2); // ≈ 35.26° — true isometric
+const MIN_EL = 0.20;             // ≈ 11° — very dramatic low angle
+const MAX_EL = 1.30;             // ≈ 74° — near top-down
+const TILT_PX = 0.003;           // radians of elevation per drag pixel
+// EL_SCALE is chosen so the view at INITIAL_EL exactly matches the old VERT/Z_SCALE look
+const EL_SCALE = VERT / Math.sin(INITIAL_EL); // ≈ 61.2
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const LAWN       = "#4a7c3f";
@@ -73,34 +79,37 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   } | null>(null);
 
   const [azimuth, setAzimuth] = useState(INITIAL_AZ);
+  const [elevation, setElevation] = useState(INITIAL_EL);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
 
   const [gesture, setGesture] = useState<{
     startClientX: number; startClientY: number;
-    startPanX: number; startPanY: number;
     startAzimuth: number;
+    startElevation: number;
   } | null>(null);
 
   const GW = garden.widthFt;
   const GH = garden.heightFt;
 
   // ── View geometry ──────────────────────────────────────────────────────────
-  // viewBox is sized to contain the garden at any azimuth
+  // viewBox sized to contain garden at any azimuth + maximum elevation
   const DIAG = Math.sqrt(GW * GW + GH * GH);
   const viewW = Math.ceil(DIAG * RADIUS) + 200;
-  const viewH = Math.ceil(DIAG * VERT) + 200;
+  const viewH = Math.ceil(DIAG * EL_SCALE) + 200; // EL_SCALE = worst case (el→90°)
   const vbW = viewW / zoom;
   const vbH = viewH / zoom;
 
-  // Projection using current azimuth
+  // Current projection trig
   const COS_AZ = Math.cos(azimuth);
   const SIN_AZ = Math.sin(azimuth);
+  const COS_EL = Math.cos(elevation);
+  const SIN_EL = Math.sin(elevation);
 
-  // Keep garden center locked to viewBox center as azimuth changes
+  // Keep garden center locked to viewBox center as azimuth/elevation changes
   const gardenCx = (GW / 2 * COS_AZ - GH / 2 * SIN_AZ) * RADIUS;
-  const gardenCy = (GW / 2 * SIN_AZ + GH / 2 * COS_AZ) * VERT;
+  const gardenCy = (GW / 2 * SIN_AZ + GH / 2 * COS_AZ) * SIN_EL * EL_SCALE;
   const originX = viewW / 2 - gardenCx;
   const originY = viewH / 2 - gardenCy;
 
@@ -108,7 +117,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   function pr(x: number, y: number, z = 0) {
     return {
       sx: (x * COS_AZ - y * SIN_AZ) * RADIUS,
-      sy: (x * SIN_AZ + y * COS_AZ) * VERT - z * Z_SCALE,
+      sy: ((x * SIN_AZ + y * COS_AZ) * SIN_EL - z * COS_EL) * EL_SCALE,
     };
   }
 
@@ -119,11 +128,13 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     }).join(" ");
   }
 
-  // Inverse projection: ISO screen coords → world coords
+  // Inverse projection: screen coords → world coords (z=0 floor plane)
   function isoToWorld(sx: number, sy: number) {
+    const U = sx / RADIUS;
+    const V = sy / (SIN_EL * EL_SCALE);
     return {
-      x:  sx / RADIUS * COS_AZ + sy / VERT * SIN_AZ,
-      y:  sy / VERT   * COS_AZ - sx / RADIUS * SIN_AZ,
+      x: U * COS_AZ + V * SIN_AZ,
+      y: V * COS_AZ - U * SIN_AZ,
     };
   }
 
@@ -193,8 +204,8 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     setGesture({
       startClientX: e.clientX, startClientY: e.clientY,
-      startPanX: panX, startPanY: panY,
       startAzimuth: azimuth,
+      startElevation: elevation,
     });
   }
 
@@ -208,14 +219,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     } else if (gesture) {
       const dx = e.clientX - gesture.startClientX;
       const dy = e.clientY - gesture.startClientY;
-      // Horizontal → rotate
+      // Horizontal → pan (azimuth rotation)
       setAzimuth(gesture.startAzimuth + dx * ROT_PX);
-      // Vertical → pan
-      const svg = svgRef.current;
-      if (svg) {
-        const scY = vbH / svg.getBoundingClientRect().height;
-        setPanY(gesture.startPanY - dy * scY);
-      }
+      // Vertical → tilt (elevation angle)
+      setElevation(Math.max(MIN_EL, Math.min(MAX_EL, gesture.startElevation - dy * TILT_PX)));
     }
   }
 
@@ -264,7 +271,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       className="relative w-full rounded-2xl overflow-hidden border shadow-xl flex flex-col"
       style={{ background: "#19280e", borderColor: "#2a4018" }}
     >
-      <div className="relative flex-1" style={{ minHeight: 460 }}>
+      <div className="relative" style={{ height: "clamp(380px, 55vw, 720px)" }}>
       <svg
         ref={svgRef}
         viewBox={`${panX} ${panY} ${vbW} ${vbH}`}
@@ -446,7 +453,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
           { icon: ZoomIn,    label: "Zoom in",  fn: () => applyZoom(zoom * 1.35) },
           { icon: ZoomOut,   label: "Zoom out", fn: () => applyZoom(zoom / 1.35) },
           null,
-          { icon: Maximize2, label: "Reset",    fn: () => { resetView(); setAzimuth(INITIAL_AZ); } },
+          { icon: Maximize2, label: "Reset",    fn: () => { resetView(); setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL); } },
         ] as const).map((ctrl, i) =>
           ctrl === null ? (
             <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
@@ -477,7 +484,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         className="text-[11px] text-center py-2 border-t select-none"
         style={{ color: "#6b8f47", borderColor: "#2a4018", background: "#19280e" }}
       >
-        Drag to rotate · Scroll to zoom · Drag beds to move
+        Drag left/right to rotate · Drag up/down to tilt · Scroll to zoom
       </p>
     </div>
   );
