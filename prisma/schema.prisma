@@ -303,9 +303,10 @@ model PlantLibrary {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  companions  CompanionRelation[] @relation("PlantCompanions")
-  antagonists CompanionRelation[] @relation("PlantAntagonists")
-  plantings   Planting[]
+  companions     CompanionRelation[] @relation("PlantCompanions")
+  antagonists    CompanionRelation[] @relation("PlantAntagonists")
+  plantings      Planting[]
+  seedInventory  SeedInventory[]
 }
 
 model CompanionRelation {
@@ -380,7 +381,8 @@ model SeedInventory {
   expiresAt   DateTime?
   notes       String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plant PlantLibrary @relation(fields: [plantId], references: [id])
 
   @@unique([userId, plantId, variety])
 }
