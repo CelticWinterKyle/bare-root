@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
+
   return (
     <main className="min-h-screen bg-[#FAF7F2]">
       <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto">
