@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
+import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
 
 async function resolveCell(cellId: string, userId: string) {
   const cell = await db.cell.findFirst({
@@ -13,15 +14,49 @@ async function resolveCell(cellId: string, userId: string) {
   return cell;
 }
 
-export async function assignPlant(cellId: string, plantId: string, seasonId: string) {
+export async function assignPlant(
+  cellId: string,
+  plantId: string,
+  seasonId: string
+): Promise<{ spacingWarnings: SpacingWarning[] }> {
   const user = await requireUser();
   const cell = await resolveCell(cellId, user.id);
+
+  const plant = await db.plantLibrary.findUniqueOrThrow({
+    where: { id: plantId },
+    select: { spacingInches: true },
+  });
 
   await db.planting.create({
     data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell: 1 },
   });
 
+  // Check spacing against all other planted cells in this bed for this season
+  const neighbors = await db.planting.findMany({
+    where: {
+      seasonId,
+      cell: { bedId: cell.bedId },
+      cellId: { not: cellId },
+    },
+    include: {
+      plant: { select: { name: true, spacingInches: true } },
+      cell: { select: { row: true, col: true } },
+    },
+  });
+
+  const spacingWarnings = getSpacingWarnings(
+    { row: cell.row, col: cell.col, spacingInches: plant.spacingInches },
+    neighbors.map((n) => ({
+      row: n.cell.row,
+      col: n.cell.col,
+      plantName: n.plant.name,
+      spacingInches: n.plant.spacingInches,
+    })),
+    cell.bed.cellSizeIn
+  );
+
   revalidatePath(`/garden/${cell.bed.gardenId}/beds/${cell.bedId}`);
+  return { spacingWarnings };
 }
 
 export async function removePlanting(plantingId: string) {

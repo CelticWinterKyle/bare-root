@@ -2,9 +2,11 @@
 import { useState, useTransition } from "react";
 import { PlantPicker } from "./PlantPicker";
 import { CellDetail } from "./CellDetail";
+import { SmartLayoutPanel } from "./SmartLayoutPanel";
 import { updateCellSun } from "@/app/actions/planting";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
-import { Sun } from "lucide-react";
+import type { LayoutAssignment } from "@/lib/services/smart-layout";
+import { Sun, Sparkles } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   PLANNED: "bg-[#8FA86B]",
@@ -54,18 +56,22 @@ type Props = {
   seasonId: string;
   userId: string;
   recentPlants: Plant[];
+  isPro?: boolean;
 };
 
 type PanelState =
   | { type: "none" }
   | { type: "picker"; cellId: string }
-  | { type: "detail"; planting: Planting; cell: CellData };
+  | { type: "detail"; planting: Planting; cell: CellData }
+  | { type: "smart-layout" };
 
-export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPlants }: Props) {
+export function BedGrid({ bedId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro }: Props) {
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
   const [sunMode, setSunMode] = useState(false);
   const [, startSunUpdate] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
+  // Preview assignments from smart layout (shown on cells before accepting)
+  const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
 
   function handleCellClick(cell: CellData) {
     if (sunMode) {
@@ -116,6 +122,20 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
             Done
           </button>
         )}
+        {!sunMode && (
+          <button
+            onClick={() => setPanel(panel.type === "smart-layout" ? { type: "none" } : { type: "smart-layout" })}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ml-auto ${
+              panel.type === "smart-layout"
+                ? "bg-[#2D5016] text-white"
+                : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#E8E2D9]"
+            }`}
+            title={isPro ? "AI layout planner" : "Upgrade to Pro for AI layout planner"}
+          >
+            <Sparkles className="w-4 h-4" />
+            Plan bed
+          </button>
+        )}
       </div>
 
       <div className="flex gap-4 items-start">
@@ -133,6 +153,7 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
               const isSelected =
                 (panel.type === "picker" && panel.cellId === cell.id) ||
                 (panel.type === "detail" && panel.cell.id === cell.id);
+              const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
 
               return (
                 <div
@@ -145,6 +166,8 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
                   } ${isSelected ? "ring-2 ring-[#2D5016] ring-offset-1" : ""} ${
                     planting
                       ? STATUS_COLORS[planting.status] ?? "bg-[#8FA86B]"
+                      : preview
+                      ? "bg-[#6B8F47]/20 border-2 border-dashed border-[#6B8F47]"
                       : sunMode
                       ? sunBg(sun)
                       : "bg-[#FAF7F2] border border-[#E8E2D9]"
@@ -161,6 +184,13 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
                   {planting && !sunMode && gridCols <= 16 && (
                     <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium text-white text-center px-0.5 leading-tight">
                       {planting.plant.name.split(" ")[0]}
+                    </span>
+                  )}
+
+                  {/* Smart layout preview label */}
+                  {preview && !planting && !sunMode && gridCols <= 16 && (
+                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium text-[#2D5016] text-center px-0.5 leading-tight italic">
+                      {preview.plantName.split(" ")[0]}
                     </span>
                   )}
 
@@ -205,7 +235,7 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
           <div className="w-64 shrink-0 bg-white rounded-xl border border-[#E8E2D9] p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-medium text-[#1C1C1A]">
-                {panel.type === "picker" ? "Choose a plant" : "Plant details"}
+                {panel.type === "picker" ? "Choose a plant" : panel.type === "smart-layout" ? "AI layout planner" : "Plant details"}
               </p>
               <button
                 onClick={() => setPanel({ type: "none" })}
@@ -233,6 +263,35 @@ export function BedGrid({ gridCols, gridRows, cells, seasonId, userId, recentPla
                 warnings={panel.cell.warnings}
                 onClose={() => setPanel({ type: "none" })}
               />
+            )}
+
+            {panel.type === "smart-layout" && (
+              <div style={{ height: 400 }}>
+                {isPro ? (
+                  <SmartLayoutPanel
+                    bedId={bedId}
+                    seasonId={seasonId}
+                    userId={userId}
+                    recentPlants={recentPlants}
+                    onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
+                    onClose={() => setPanel({ type: "none" })}
+                  />
+                ) : (
+                  <div className="text-center py-8 space-y-3">
+                    <Sparkles className="w-8 h-8 text-[#9E9890] mx-auto" />
+                    <p className="text-sm font-medium text-[#1C1C1A]">AI layout planner</p>
+                    <p className="text-xs text-[#9E9890]">
+                      Build an optimized bed layout from your plant wishlist.
+                    </p>
+                    <a
+                      href="/settings/billing"
+                      className="inline-block text-sm font-medium text-[#C4790A] hover:underline"
+                    >
+                      Upgrade to Pro →
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

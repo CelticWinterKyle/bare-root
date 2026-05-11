@@ -9,8 +9,9 @@ import {
 } from "@/lib/services/planting-calendar";
 import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
+import { getSuccessionSuggestions } from "@/lib/services/succession";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, Sprout } from "lucide-react";
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 
@@ -152,6 +153,23 @@ export default async function CalendarPage() {
 
   events.sort((a, b) => +a.date - +b.date);
 
+  // Succession suggestions
+  const allActivePlantings = gardens.flatMap((g) =>
+    g.beds.flatMap((b) =>
+      b.cells.flatMap((c) =>
+        c.plantings.map((p) => ({
+          plant: p.plant,
+          plantedDate: p.plantedDate,
+          expectedHarvestDate: p.expectedHarvestDate,
+          bedName: b.name,
+          gardenName: g.name,
+        }))
+      )
+    )
+  );
+  const firstFrostDate = gardens.find((g) => g.firstFrostDate)?.firstFrostDate ?? null;
+  const successionSuggestions = getSuccessionSuggestions(allActivePlantings, firstFrostDate);
+
   // Active planting count for frost alert
   const activePlantingCount = gardens.reduce(
     (sum, g) =>
@@ -203,6 +221,42 @@ export default async function CalendarPage() {
       {hasNoFrostDate && gardens.length > 0 && (
         <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6560]">
           Some gardens are missing frost dates — planting calendar events may be incomplete.
+        </div>
+      )}
+
+      {/* Succession suggestions */}
+      {successionSuggestions.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 pb-2 border-b border-[#E8E2D9]">
+            Succession opportunities
+          </h2>
+          <div className="space-y-2">
+            {successionSuggestions.map((s, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 p-3 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9]"
+              >
+                <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-[#E8E2D9]">
+                  <Sprout className="w-4 h-4 text-[#6B8F47]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#1C1C1A]">
+                    Plant another round of{" "}
+                    <Link href={`/plants/${s.plantId}`} className="hover:text-[#2D5016] transition-colors">
+                      {s.plantName}
+                    </Link>
+                  </p>
+                  <p className="text-xs text-[#9E9890] mt-0.5">
+                    {s.gardenName} · {s.bedName} · {s.daysToMaturity} days ·{" "}
+                    Plant by{" "}
+                    {s.suggestedPlantDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
+                    → harvest{" "}
+                    {s.estimatedHarvest.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

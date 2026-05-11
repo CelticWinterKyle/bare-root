@@ -3,8 +3,9 @@ import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant } from "@/app/actions/planting";
-import { Search, Loader2, Leaf } from "lucide-react";
+import { Search, Loader2, Leaf, AlertTriangle } from "lucide-react";
 import Image from "next/image";
+import type { SpacingWarning } from "@/lib/services/spacing";
 
 type Plant = {
   id: string;
@@ -32,6 +33,7 @@ export function PlantPicker({
   const [isSearching, startSearch] = useTransition();
   const [isAssigning, startAssign] = useTransition();
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [spacingWarnings, setSpacingWarnings] = useState<SpacingWarning[]>([]);
 
   function handleSearch(q: string) {
     setQuery(q);
@@ -47,14 +49,34 @@ export function PlantPicker({
 
   function handlePick(plantId: string) {
     setAssigningId(plantId);
+    setSpacingWarnings([]);
     startAssign(async () => {
-      await assignPlant(cellId, plantId, seasonId);
-      onClose();
+      const result = await assignPlant(cellId, plantId, seasonId);
+      if (result.spacingWarnings.length > 0) {
+        setSpacingWarnings(result.spacingWarnings);
+        // Close after a short delay so user sees the warning
+        setTimeout(onClose, 2500);
+      } else {
+        onClose();
+      }
     });
   }
 
   return (
     <div className="flex flex-col h-full">
+      {spacingWarnings.length > 0 && (
+        <div className="mb-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-medium text-yellow-800">Spacing conflict</p>
+            {spacingWarnings.map((w, i) => (
+              <p key={i} className="text-xs text-yellow-700">
+                Too close to {w.neighborPlantName} ({w.distanceIn}" apart, needs {w.requiredIn}")
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9E9890]" />
         <Input

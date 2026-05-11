@@ -2,8 +2,9 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
+import { getCropRotationWarnings } from "@/lib/services/crop-rotation";
 
 export default async function BedPage({
   params,
@@ -53,6 +54,13 @@ export default async function BedPage({
   const activeSeason = await db.season.findFirst({
     where: { gardenId, isActive: true },
   });
+
+  // Crop rotation warnings for this bed
+  const rotationWarnings = activeSeason
+    ? (await getCropRotationWarnings(gardenId, activeSeason.id)).filter(
+        (w) => w.bedId === bed.id
+      )
+    : [];
 
   // All plant IDs in this bed for the active season (for companion lookup)
   const bedPlantIds = [
@@ -164,6 +172,24 @@ export default async function BedPage({
         </p>
       </header>
 
+      {/* Crop rotation warnings */}
+      {rotationWarnings.length > 0 && (
+        <div className="mb-6 space-y-2">
+          {rotationWarnings.map((w, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <RotateCcw className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <span className="font-medium text-yellow-900">Rotation reminder: </span>
+                <span className="text-yellow-800">
+                  {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.
+                  Consider rotating to a different bed.
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <BedGrid
         bedId={bed.id}
         gardenId={gardenId}
@@ -172,6 +198,7 @@ export default async function BedPage({
         cellSizeIn={bed.cellSizeIn}
         cells={cells}
         seasonId={activeSeason?.id ?? ""}
+        isPro={user.subscriptionTier === "PRO"}
         userId={user.id}
         recentPlants={recentPlants}
       />
