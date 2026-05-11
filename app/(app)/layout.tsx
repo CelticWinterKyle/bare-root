@@ -1,48 +1,46 @@
-"use client";
+import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Sprout, BookOpen, CalendarDays, Settings } from "lucide-react";
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const user = await requireUser();
 
-const tabs = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/garden", label: "Garden", icon: Sprout },
-  { href: "/plants", label: "Plants", icon: BookOpen },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  const reminders = await db.reminder.findMany({
+    where: { userId: user.id, dismissed: false, sentAt: { not: null } },
+    orderBy: { scheduledAt: "desc" },
+    take: 10,
+    include: {
+      planting: {
+        include: {
+          cell: { include: { bed: { select: { id: true, gardenId: true } } } },
+        },
+      },
+    },
+  });
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const bellReminders = reminders.map((r) => ({
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    body: r.body,
+    gardenId: r.planting?.cell.bed.gardenId ?? null,
+    bedId: r.planting?.cell.bed.id ?? null,
+  }));
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
-      <main className="flex-1 pb-20">{children}</main>
-
-      {/* Bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8E2D9] z-50 safe-area-inset-bottom">
-        <div className="flex items-stretch max-w-lg mx-auto">
-          {tabs.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "text-[#2D5016]"
-                    : "text-[#9E9890] hover:text-[#6B6560]"
-                }`}
-              >
-                <Icon
-                  className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-2"}`}
-                />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+      {/* Top header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-[#E8E2D9]">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+          <span className="font-display text-lg font-semibold text-[#2D5016]">Bare Root</span>
+          <NotificationBell reminders={bellReminders} unreadCount={bellReminders.length} />
         </div>
-      </nav>
+      </header>
+
+      <main className="flex-1 pb-24">{children}</main>
+
+      <BottomNav />
     </div>
   );
 }

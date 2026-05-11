@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
+import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
 
 async function resolveCell(cellId: string, userId: string) {
   const cell = await db.cell.findFirst({
@@ -24,11 +25,30 @@ export async function assignPlant(
 
   const plant = await db.plantLibrary.findUniqueOrThrow({
     where: { id: plantId },
-    select: { spacingInches: true },
+    select: {
+      name: true,
+      spacingInches: true,
+      indoorStartWeeks: true,
+      transplantWeeks: true,
+      daysToMaturity: true,
+    },
   });
 
-  await db.planting.create({
+  const garden = await db.garden.findUniqueOrThrow({
+    where: { id: cell.bed.gardenId },
+    select: { lastFrostDate: true },
+  });
+
+  const planting = await db.planting.create({
     data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell: 1 },
+  });
+
+  await createRemindersForPlanting({
+    plantingId: planting.id,
+    gardenId: cell.bed.gardenId,
+    userId: user.id,
+    plant,
+    garden,
   });
 
   // Check spacing against all other planted cells in this bed for this season
@@ -102,7 +122,7 @@ export async function updatePlantingDates(
   const planting = await db.planting.findFirst({
     where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
     include: {
-      plant: { select: { daysToMaturity: true } },
+      plant: { select: { name: true, daysToMaturity: true } },
       cell: { include: { bed: true } },
     },
   });
@@ -128,5 +148,17 @@ export async function updatePlantingDates(
     update.transplantDate = data.transplantDate ? new Date(data.transplantDate) : null;
 
   await db.planting.update({ where: { id: plantingId }, data: update });
+
+  if (plantedDate && planting.plant.daysToMaturity) {
+    await upsertHarvestReminder(
+      plantingId,
+      plantedDate,
+      planting.plant.daysToMaturity,
+      user.id,
+      planting.cell.bed.gardenId,
+      planting.plant.name
+    );
+  }
+
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
 }

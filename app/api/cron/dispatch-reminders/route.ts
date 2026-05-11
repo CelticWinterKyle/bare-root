@@ -1,9 +1,103 @@
+import { db } from "@/lib/db";
+import { sendPushNotification } from "@/lib/api/push";
+import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
+
+function isLocalMorning(utcNow: Date, timezone: string): boolean {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      hour12: false,
+    });
+    const hour = parseInt(formatter.format(utcNow));
+    return hour >= 7 && hour < 9;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Phase 8: dispatch reminders with timezone-aware filtering
-  return Response.json({ ok: true });
+  const now = new Date();
+
+  const reminders = await db.reminder.findMany({
+    where: {
+      scheduledAt: { lte: now },
+      sentAt: null,
+      dismissed: false,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          timezone: true,
+          pushSubscriptions: true,
+        },
+      },
+    },
+  });
+
+  // Group by userId
+  const byUser = new Map<string, typeof reminders>();
+  for (const r of reminders) {
+    const arr = byUser.get(r.userId) ?? [];
+    arr.push(r);
+    byUser.set(r.userId, arr);
+  }
+
+  let dispatched = 0;
+
+  for (const [, userReminders] of byUser) {
+    const user = userReminders[0].user;
+
+    if (!isLocalMorning(now, user.timezone)) continue;
+
+    for (const reminder of userReminders) {
+      const pref = await db.notificationPreference.findUnique({
+        where: { userId_type: { userId: user.id, type: reminder.type as never } },
+      });
+
+      const sendEmail = pref?.channelEmail ?? true;
+      const sendPush = pref?.channelPush ?? true;
+      const enabled = pref?.enabled ?? true;
+
+      if (!enabled) {
+        await db.reminder.update({ where: { id: reminder.id }, data: { dismissed: true } });
+        continue;
+      }
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+      const url = reminder.plantingId
+        ? `${appUrl}/reminders`
+        : `${appUrl}/reminders`;
+
+      if (sendEmail) {
+        const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url);
+        await sendReminderEmail(user.email, reminder.title, html);
+      }
+
+      if (sendPush && user.pushSubscriptions.length > 0) {
+        const payload = { title: reminder.title, body: reminder.body ?? "", url };
+        for (const sub of user.pushSubscriptions) {
+          const ok = await sendPushNotification(
+            { endpoint: sub.endpoint, p256dhKey: sub.p256dhKey, authKey: sub.authKey },
+            payload
+          );
+          if (!ok) {
+            await db.pushSubscription.delete({ where: { id: sub.id } });
+          }
+        }
+      }
+
+      await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
+      dispatched++;
+    }
+  }
+
+  return Response.json({ ok: true, dispatched });
 }
