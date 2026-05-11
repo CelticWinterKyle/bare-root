@@ -336,10 +336,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             // y-axis face: south (SIN>0) or north (SIN<0)
             // x-axis face: east (COS>0) or west (COS<0)
             // Colors: y-face = darkest (WOOD_SIDE1), x-face = medium (WOOD_SIDE2)
-            const yFace = SIN_AZ >= 0
+            const yFace = COS_AZ >= 0
               ? ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]])
               : ppts([[bx+W,by,0],[bx,by,0],[bx,by,Z],[bx+W,by,Z]]);
-            const xFace = COS_AZ >= 0
+            const xFace = SIN_AZ >= 0
               ? ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]])
               : ppts([[bx,by+D,0],[bx,by,0],[bx,by,Z],[bx,by+D,Z]]);
 
