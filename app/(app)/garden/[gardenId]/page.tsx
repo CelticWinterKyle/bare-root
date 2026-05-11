@@ -2,9 +2,10 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Plus, Sprout } from "lucide-react";
+import { MapPin, Plus, Sprout, CalendarDays } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { GardenOverview } from "@/components/canvas/GardenOverview";
+import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 
 export default async function GardenPage({
   params,
@@ -77,6 +78,13 @@ export default async function GardenPage({
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href={`/garden/${gardenId}/seasons`}
+              className="flex items-center gap-1.5 text-sm text-[#6B6560] hover:text-[#2D5016] transition-colors"
+            >
+              <CalendarDays className="w-4 h-4" />
+              {activeSeason ? activeSeason.name : "Seasons"}
+            </Link>
             {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
           </div>
         </div>
@@ -97,6 +105,13 @@ export default async function GardenPage({
           garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
           beds={beds}
         />
+      )}
+
+      {!activeSeason && garden.beds.length > 0 && (
+        <div className="mt-4 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9] p-4 flex items-center justify-between">
+          <p className="text-sm text-[#6B6560]">No active season — create one to start assigning plants.</p>
+          <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
+        </div>
       )}
 
       {atBedLimit && (

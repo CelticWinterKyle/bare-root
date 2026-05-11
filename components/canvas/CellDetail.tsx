@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { removePlanting, updatePlantingStatus } from "@/app/actions/planting";
+import { removePlanting, updatePlantingStatus, updatePlantingDates } from "@/app/actions/planting";
 import { Loader2, Trash2 } from "lucide-react";
 import type { PlantingStatus } from "@/lib/generated/prisma/enums";
 import Link from "next/link";
@@ -28,14 +28,26 @@ type Props = {
     status: PlantingStatus;
     plant: { id: string; name: string; category: string };
     cell: { row: number; col: number };
+    plantedDate: Date | null;
+    transplantDate: Date | null;
+    expectedHarvestDate: Date | null;
   };
   warnings: CompanionWarning[];
   onClose: () => void;
 };
 
+function toInputDate(d: Date | null): string {
+  if (!d) return "";
+  return new Date(d).toISOString().split("T")[0];
+}
+
 export function CellDetail({ planting, warnings, onClose }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
+  const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
+  const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
+  const [expectedHarvest, setExpectedHarvest] = useState(toInputDate(planting.expectedHarvestDate));
   const [isUpdating, startUpdate] = useTransition();
+  const [isDating, startDate] = useTransition();
   const [isRemoving, startRemove] = useTransition();
 
   const beneficial = warnings.filter((w) => w.type === "BENEFICIAL");
@@ -45,6 +57,13 @@ export function CellDetail({ planting, warnings, onClose }: Props) {
     setStatus(s);
     startUpdate(async () => {
       await updatePlantingStatus(planting.id, s);
+    });
+  }
+
+  function handleDateBlur(field: "plantedDate" | "transplantDate", value: string) {
+    startDate(async () => {
+      await updatePlantingDates(planting.id, { [field]: value || null });
+      if (field === "plantedDate" && !value) setExpectedHarvest("");
     });
   }
 
@@ -79,9 +98,7 @@ export function CellDetail({ planting, warnings, onClose }: Props) {
 
       {/* Status buttons */}
       <div>
-        <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">
-          Status
-        </p>
+        <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Status</p>
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => (
             <button
@@ -95,6 +112,43 @@ export function CellDetail({ planting, warnings, onClose }: Props) {
               {s.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Dates */}
+      <div>
+        <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Dates</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs text-[#6B6560] shrink-0">Planted</label>
+            <input
+              type="date"
+              value={plantedDate}
+              onChange={(e) => setPlantedDate(e.target.value)}
+              onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
+              disabled={isDating}
+              className="text-xs border border-[#E8E2D9] rounded-md px-2 py-1 text-[#1C1C1A] bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016] disabled:opacity-50"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs text-[#6B6560] shrink-0">Transplanted</label>
+            <input
+              type="date"
+              value={transplantDate}
+              onChange={(e) => setTransplantDate(e.target.value)}
+              onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
+              disabled={isDating}
+              className="text-xs border border-[#E8E2D9] rounded-md px-2 py-1 text-[#1C1C1A] bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016] disabled:opacity-50"
+            />
+          </div>
+          {expectedHarvest && (
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs text-[#6B6560] shrink-0">Est. harvest</label>
+              <span className="text-xs text-[#4A7C2F] font-medium">
+                {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

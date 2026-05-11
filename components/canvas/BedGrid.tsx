@@ -30,6 +30,9 @@ type Planting = {
   id: string;
   status: PlantingStatus;
   plant: Plant;
+  plantedDate: Date | null;
+  transplantDate: Date | null;
+  expectedHarvestDate: Date | null;
 };
 
 type CellData = {

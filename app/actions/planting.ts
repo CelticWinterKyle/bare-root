@@ -57,3 +57,41 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
   await db.planting.update({ where: { id: plantingId }, data: { status } });
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
 }
+
+export async function updatePlantingDates(
+  plantingId: string,
+  data: { plantedDate?: string | null; transplantDate?: string | null }
+) {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    include: {
+      plant: { select: { daysToMaturity: true } },
+      cell: { include: { bed: true } },
+    },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  const plantedDate =
+    data.plantedDate !== undefined
+      ? data.plantedDate ? new Date(data.plantedDate) : null
+      : planting.plantedDate;
+
+  let expectedHarvestDate: Date | null = planting.expectedHarvestDate;
+  if (plantedDate && planting.plant.daysToMaturity) {
+    expectedHarvestDate = new Date(plantedDate);
+    expectedHarvestDate.setDate(expectedHarvestDate.getDate() + planting.plant.daysToMaturity);
+  } else if (!plantedDate) {
+    expectedHarvestDate = null;
+  }
+
+  const update: Record<string, Date | null> = { expectedHarvestDate };
+  if (data.plantedDate !== undefined)
+    update.plantedDate = data.plantedDate ? new Date(data.plantedDate) : null;
+  if (data.transplantDate !== undefined)
+    update.transplantDate = data.transplantDate ? new Date(data.transplantDate) : null;
+
+  await db.planting.update({ where: { id: plantingId }, data: update });
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+}

@@ -135,6 +135,9 @@ export default async function BedPage({
             id: rawPlanting.id,
             status: rawPlanting.status,
             plant: rawPlanting.plant,
+            plantedDate: rawPlanting.plantedDate,
+            transplantDate: rawPlanting.transplantDate,
+            expectedHarvestDate: rawPlanting.expectedHarvestDate,
           }
         : null,
       warnings,
