@@ -6,28 +6,28 @@ import { SmartLayoutPanel } from "./SmartLayoutPanel";
 import { updateCellSun } from "@/app/actions/planting";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
-import { Sun, Sparkles } from "lucide-react";
+import { Sun, Sparkles, X } from "lucide-react";
 
-const STATUS_COLORS: Record<string, string> = {
-  PLANNED: "bg-[#8FA86B]",
-  SEEDS_STARTED: "bg-[#D4A843]",
-  TRANSPLANTED: "bg-[#7AB648]",
-  ACTIVE: "bg-[#4A7C2F]",
-  HARVESTING: "bg-[#C4790A]",
-  HARVESTED: "bg-[#9E9890]",
-  FAILED: "bg-[#B85C3A]",
+// Status → gradient fill + text color
+const STATUS_STYLES: Record<string, { from: string; to: string; label: string }> = {
+  PLANNED:      { from: "#8FA86B", to: "#7A9559", label: "Planned" },
+  SEEDS_STARTED:{ from: "#D4A843", to: "#BA8F2E", label: "Seeds started" },
+  TRANSPLANTED: { from: "#7AB648", to: "#609834", label: "Transplanted" },
+  ACTIVE:       { from: "#4A7C2F", to: "#325A1F", label: "Active" },
+  HARVESTING:   { from: "#C4790A", to: "#A36207", label: "Harvesting" },
+  HARVESTED:    { from: "#9E9890", to: "#837E78", label: "Harvested" },
+  FAILED:       { from: "#B85C3A", to: "#954928", label: "Failed" },
 };
 
 const SUN_CYCLE: SunLevel[] = ["FULL_SUN", "PARTIAL_SUN", "PARTIAL_SHADE", "FULL_SHADE"];
-const SUN_ICONS: Record<string, string> = {
-  FULL_SUN: "☀️",
-  PARTIAL_SUN: "⛅",
-  PARTIAL_SHADE: "🌥️",
-  FULL_SHADE: "☁️",
+const SUN_LABEL: Record<string, string> = {
+  FULL_SUN: "☀️", PARTIAL_SUN: "⛅", PARTIAL_SHADE: "🌥️", FULL_SHADE: "☁️",
+};
+const SUN_BG: Record<string, string> = {
+  FULL_SUN: "#FEF9C3", PARTIAL_SUN: "#FEF3C7", PARTIAL_SHADE: "#E0F2FE", FULL_SHADE: "#F1F5F9",
 };
 
 type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null };
-
 type Planting = {
   id: string;
   status: PlantingStatus;
@@ -36,7 +36,6 @@ type Planting = {
   transplantDate: Date | null;
   expectedHarvestDate: Date | null;
 };
-
 type CellData = {
   id: string;
   row: number;
@@ -45,7 +44,6 @@ type CellData = {
   planting: Planting | null;
   warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[];
 };
-
 type Props = {
   bedId: string;
   gardenId: string;
@@ -58,7 +56,6 @@ type Props = {
   recentPlants: Plant[];
   isPro?: boolean;
 };
-
 type PanelState =
   | { type: "none" }
   | { type: "picker"; cellId: string }
@@ -70,21 +67,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const [sunMode, setSunMode] = useState(false);
   const [, startSunUpdate] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
-  // Preview assignments from smart layout (shown on cells before accepting)
   const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
+  const [justPlanted, setJustPlanted] = useState<Set<string>>(new Set());
 
   function handleCellClick(cell: CellData) {
     if (sunMode) {
       const current = pendingSun[cell.id] ?? cell.sunLevel;
-      const nextIdx = (SUN_CYCLE.indexOf(current) + 1) % SUN_CYCLE.length;
-      const next = SUN_CYCLE[nextIdx];
+      const next = SUN_CYCLE[(SUN_CYCLE.indexOf(current) + 1) % SUN_CYCLE.length];
       setPendingSun((prev) => ({ ...prev, [cell.id]: next }));
-      startSunUpdate(async () => {
-        await updateCellSun(cell.id, next);
-      });
+      startSunUpdate(async () => { await updateCellSun(cell.id, next); });
       return;
     }
-
     if (cell.planting) {
       setPanel({ type: "detail", planting: cell.planting, cell });
     } else {
@@ -92,45 +85,46 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     }
   }
 
-  // Compute effective sun (local optimistic state)
+  function handlePlanted(cellId: string) {
+    setJustPlanted((prev) => new Set([...prev, cellId]));
+    setTimeout(() => setJustPlanted((prev) => { const n = new Set(prev); n.delete(cellId); return n; }), 600);
+  }
+
   function effectiveSun(cell: CellData): SunLevel {
     return pendingSun[cell.id] ?? cell.sunLevel;
   }
 
   const showPanel = panel.type !== "none";
+  const dense = gridCols > 14;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Toolbar */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setSunMode((v) => !v)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          onClick={() => { setSunMode((v) => !v); if (showPanel) setPanel({ type: "none" }); }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             sunMode
-              ? "bg-[#D4A843] text-white"
-              : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#E8E2D9]"
+              ? "bg-amber-400 text-white shadow-sm shadow-amber-200"
+              : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"
           }`}
         >
           <Sun className="w-4 h-4" />
-          {sunMode ? "Editing sun — tap cells" : "Edit sun mapping"}
+          {sunMode ? "Tap cells to change sun" : "Map sun"}
         </button>
         {sunMode && (
-          <button
-            onClick={() => setSunMode(false)}
-            className="text-sm text-[#9E9890] hover:text-[#1C1C1A]"
-          >
+          <button onClick={() => setSunMode(false)} className="text-sm text-[#9E9890] hover:text-[#1C1C1A] transition-colors">
             Done
           </button>
         )}
         {!sunMode && (
           <button
             onClick={() => setPanel(panel.type === "smart-layout" ? { type: "none" } : { type: "smart-layout" })}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ml-auto ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-auto ${
               panel.type === "smart-layout"
-                ? "bg-[#2D5016] text-white"
-                : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#E8E2D9]"
+                ? "bg-[#2D5016] text-white shadow-sm"
+                : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"
             }`}
-            title={isPro ? "AI layout planner" : "Upgrade to Pro for AI layout planner"}
           >
             <Sparkles className="w-4 h-4" />
             Plan bed
@@ -139,176 +133,228 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
       </div>
 
       <div className="flex gap-4 items-start">
-        {/* Grid */}
+        {/* Raised bed frame */}
         <div className="flex-1 min-w-0">
+          {/* Wooden frame */}
           <div
-            className="grid gap-0.5"
-            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+            className="rounded-2xl p-3 shadow-lg"
+            style={{ background: "linear-gradient(135deg, #8B6914 0%, #A07820 40%, #8B6914 100%)" }}
           >
-            {cells.map((cell) => {
-              const sun = effectiveSun(cell);
-              const planting = cell.planting;
-              const hasHarmful = cell.warnings.some((w) => w.type === "HARMFUL");
-              const hasBeneficial = cell.warnings.some((w) => w.type === "BENEFICIAL");
-              const isSelected =
-                (panel.type === "picker" && panel.cellId === cell.id) ||
-                (panel.type === "detail" && panel.cell.id === cell.id);
-              const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
+            {/* Inner soil tray */}
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{ background: "linear-gradient(160deg, #C8A96E 0%, #B8995E 100%)" }}
+            >
+              <div
+                className="grid gap-px p-px"
+                style={{
+                  gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+                  background: "#B8995E",
+                }}
+              >
+                {cells.map((cell) => {
+                  const sun = effectiveSun(cell);
+                  const planting = cell.planting;
+                  const style = planting ? STATUS_STYLES[planting.status] : null;
+                  const hasHarmful = cell.warnings.some((w) => w.type === "HARMFUL");
+                  const hasBeneficial = cell.warnings.some((w) => w.type === "BENEFICIAL");
+                  const isSelected =
+                    (panel.type === "picker" && panel.cellId === cell.id) ||
+                    (panel.type === "detail" && panel.cell.id === cell.id);
+                  const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
+                  const isNew = justPlanted.has(cell.id);
 
-              return (
-                <div
-                  key={cell.id}
-                  onClick={() => handleCellClick(cell)}
-                  className={`relative aspect-square flex items-end justify-center cursor-pointer rounded-sm transition-all select-none ${
-                    sunMode
-                      ? "hover:opacity-80"
-                      : "hover:ring-2 hover:ring-[#2D5016] hover:ring-offset-1"
-                  } ${isSelected ? "ring-2 ring-[#2D5016] ring-offset-1" : ""} ${
-                    planting
-                      ? STATUS_COLORS[planting.status] ?? "bg-[#8FA86B]"
-                      : preview
-                      ? "bg-[#6B8F47]/20 border-2 border-dashed border-[#6B8F47]"
-                      : sunMode
-                      ? sunBg(sun)
-                      : "bg-[#FAF7F2] border border-[#E8E2D9]"
-                  }`}
-                >
-                  {/* Sun icon in sun mode */}
-                  {sunMode && (
-                    <span className="absolute inset-0 flex items-center justify-center text-sm">
-                      {SUN_ICONS[sun]}
-                    </span>
-                  )}
-
-                  {/* Plant name */}
-                  {planting && !sunMode && gridCols <= 16 && (
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium text-white text-center px-0.5 leading-tight">
-                      {planting.plant.name.split(" ")[0]}
-                    </span>
-                  )}
-
-                  {/* Smart layout preview label */}
-                  {preview && !planting && !sunMode && gridCols <= 16 && (
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium text-[#2D5016] text-center px-0.5 leading-tight italic">
-                      {preview.plantName.split(" ")[0]}
-                    </span>
-                  )}
-
-                  {/* Warning badges */}
-                  {!sunMode && planting && (hasHarmful || hasBeneficial) && (
-                    <span
-                      className={`absolute top-0.5 right-0.5 w-2 h-2 rounded-full ${
-                        hasHarmful ? "bg-red-400" : "bg-emerald-400"
+                  return (
+                    <div
+                      key={cell.id}
+                      onClick={() => handleCellClick(cell)}
+                      className={`relative aspect-square flex items-end justify-center cursor-pointer select-none transition-all duration-150 ${
+                        isNew ? "scale-110 z-10" : "scale-100"
                       }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
+                      style={{
+                        background: sunMode
+                          ? SUN_BG[sun]
+                          : planting
+                          ? `linear-gradient(145deg, ${style!.from}, ${style!.to})`
+                          : preview
+                          ? "rgba(107, 143, 71, 0.25)"
+                          : "rgba(248, 244, 234, 0.85)",
+                        boxShadow: isSelected
+                          ? "inset 0 0 0 2.5px #2D5016, 0 2px 8px rgba(45,80,22,0.3)"
+                          : planting
+                          ? "inset 0 -2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)"
+                          : "inset 0 1px 3px rgba(0,0,0,0.08)",
+                      }}
+                    >
+                      {/* Sun mode emoji */}
+                      {sunMode && (
+                        <span className="absolute inset-0 flex items-center justify-center text-base leading-none">
+                          {SUN_LABEL[sun]}
+                        </span>
+                      )}
+
+                      {/* Planted cell content */}
+                      {planting && !sunMode && (
+                        <>
+                          {!dense && (
+                            <div
+                              className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-1 px-0.5"
+                              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%)" }}
+                            >
+                              <span className="text-white font-semibold leading-tight text-center"
+                                style={{ fontSize: Math.max(8, Math.min(11, 110 / gridCols)) }}
+                              >
+                                {planting.plant.name.split(" ")[0]}
+                              </span>
+                            </div>
+                          )}
+                          {/* Status dot for dense grids */}
+                          {dense && (
+                            <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-white/60" />
+                          )}
+                        </>
+                      )}
+
+                      {/* Preview overlay */}
+                      {preview && !planting && !sunMode && !dense && (
+                        <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5"
+                          style={{ background: "linear-gradient(to top, rgba(45,80,22,0.35) 0%, transparent 100%)" }}
+                        >
+                          <span className="text-[#2D5016] font-medium text-center block leading-tight italic"
+                            style={{ fontSize: Math.max(8, Math.min(10, 100 / gridCols)) }}
+                          >
+                            {preview.plantName.split(" ")[0]}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Companion badge */}
+                      {!sunMode && planting && (hasHarmful || hasBeneficial) && (
+                        <span
+                          className="absolute top-0.5 right-0.5 rounded-full"
+                          style={{
+                            width: Math.max(6, 12 - gridCols / 4),
+                            height: Math.max(6, 12 - gridCols / 4),
+                            background: hasHarmful ? "#EF4444" : "#22C55E",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                          }}
+                        />
+                      )}
+
+                      {/* Hover ring (non-sunMode) */}
+                      {!sunMode && (
+                        <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-100"
+                          style={{ boxShadow: "inset 0 0 0 2px rgba(45,80,22,0.6)" }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Legend */}
           {!sunMode && (
-            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3">
-              {Object.entries(STATUS_COLORS).map(([status, color]) => (
-                <div key={status} className="flex items-center gap-1">
-                  <div className={`w-3 h-3 rounded-sm ${color}`} />
-                  <span className="text-xs text-[#9E9890]">
-                    {status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
-                  </span>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-4 px-1">
+              {Object.entries(STATUS_STYLES).map(([status, s]) => (
+                <div key={status} className="flex items-center gap-1.5">
+                  <div
+                    className="w-3 h-3 rounded-sm shadow-sm"
+                    style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }}
+                  />
+                  <span className="text-xs text-[#9E9890]">{s.label}</span>
                 </div>
               ))}
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm" />
                 <span className="text-xs text-[#9E9890]">Conflict</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-emerald-400" />
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm" />
                 <span className="text-xs text-[#9E9890]">Beneficial</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Side panel */}
-        {showPanel && (
-          <div className="w-64 shrink-0 bg-white rounded-xl border border-[#E8E2D9] p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-[#1C1C1A]">
-                {panel.type === "picker" ? "Choose a plant" : panel.type === "smart-layout" ? "AI layout planner" : "Plant details"}
-              </p>
-              <button
-                onClick={() => setPanel({ type: "none" })}
-                className="text-[#9E9890] hover:text-[#1C1C1A] text-lg leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {panel.type === "picker" && (
-              <div style={{ height: 320 }}>
-                <PlantPicker
-                  cellId={panel.cellId}
-                  seasonId={seasonId}
-                  userId={userId}
-                  recentPlants={recentPlants}
-                  onClose={() => setPanel({ type: "none" })}
-                />
+        {/* Side panel — slides in */}
+        <div
+          className="shrink-0 overflow-hidden transition-all duration-300 ease-in-out"
+          style={{
+            width: showPanel ? 272 : 0,
+            opacity: showPanel ? 1 : 0,
+          }}
+        >
+          <div className="w-68" style={{ width: 272 }}>
+            <div className="bg-white rounded-xl border border-[#E8E2D9] shadow-md overflow-hidden">
+              {/* Panel header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#F5F0E8]">
+                <p className="text-sm font-semibold text-[#1C1C1A]">
+                  {panel.type === "picker"
+                    ? "Add a plant"
+                    : panel.type === "smart-layout"
+                    ? "AI layout planner"
+                    : "Plant details"}
+                </p>
+                <button
+                  onClick={() => setPanel({ type: "none" })}
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-[#9E9890] hover:text-[#1C1C1A] hover:bg-[#F5F0E8] transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-            )}
 
-            {panel.type === "detail" && (
-              <CellDetail
-                planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
-                warnings={panel.cell.warnings}
-                gardenId={gardenId}
-                bedId={bedId}
-                onClose={() => setPanel({ type: "none" })}
-              />
-            )}
-
-            {panel.type === "smart-layout" && (
-              <div style={{ height: 400 }}>
-                {isPro ? (
-                  <SmartLayoutPanel
-                    bedId={bedId}
+              <div className="p-4" style={{ maxHeight: 440, overflowY: "auto" }}>
+                {panel.type === "picker" && (
+                  <PlantPicker
+                    cellId={panel.cellId}
                     seasonId={seasonId}
                     userId={userId}
                     recentPlants={recentPlants}
-                    onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
+                    onClose={() => setPanel({ type: "none" })}
+                    onPlanted={() => handlePlanted(panel.cellId)}
+                  />
+                )}
+                {panel.type === "detail" && (
+                  <CellDetail
+                    planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
+                    warnings={panel.cell.warnings}
+                    gardenId={gardenId}
+                    bedId={bedId}
                     onClose={() => setPanel({ type: "none" })}
                   />
-                ) : (
-                  <div className="text-center py-8 space-y-3">
-                    <Sparkles className="w-8 h-8 text-[#9E9890] mx-auto" />
-                    <p className="text-sm font-medium text-[#1C1C1A]">AI layout planner</p>
-                    <p className="text-xs text-[#9E9890]">
-                      Build an optimized bed layout from your plant wishlist.
-                    </p>
-                    <a
-                      href="/settings/billing"
-                      className="inline-block text-sm font-medium text-[#C4790A] hover:underline"
-                    >
-                      Upgrade to Pro →
-                    </a>
-                  </div>
+                )}
+                {panel.type === "smart-layout" && (
+                  isPro ? (
+                    <SmartLayoutPanel
+                      bedId={bedId}
+                      seasonId={seasonId}
+                      userId={userId}
+                      recentPlants={recentPlants}
+                      onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
+                      onClose={() => setPanel({ type: "none" })}
+                    />
+                  ) : (
+                    <div className="text-center py-8 space-y-3">
+                      <div className="w-12 h-12 rounded-xl bg-[#F5F0E8] flex items-center justify-center mx-auto">
+                        <Sparkles className="w-6 h-6 text-[#9E9890]" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#1C1C1A]">AI layout planner</p>
+                      <p className="text-xs text-[#6B6560] leading-relaxed">
+                        Build an optimized bed from your plant wishlist. Respects spacing, sun requirements, and companion relations.
+                      </p>
+                      <a href="/settings/billing" className="inline-block text-sm font-medium text-[#C4790A] hover:underline">
+                        Upgrade to Pro →
+                      </a>
+                    </div>
+                  )
                 )}
               </div>
-            )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
-  );
-}
-
-function sunBg(sun: SunLevel): string {
-  return (
-    {
-      FULL_SUN: "bg-yellow-100",
-      PARTIAL_SUN: "bg-yellow-50",
-      PARTIAL_SHADE: "bg-blue-50",
-      FULL_SHADE: "bg-slate-100",
-    }[sun] ?? "bg-[#FAF7F2]"
   );
 }

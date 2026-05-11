@@ -21,12 +21,14 @@ export function PlantPicker({
   userId,
   recentPlants,
   onClose,
+  onPlanted,
 }: {
   cellId: string;
   seasonId: string;
   userId: string;
   recentPlants: Plant[];
   onClose: () => void;
+  onPlanted?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Plant[]>(recentPlants);
@@ -52,9 +54,9 @@ export function PlantPicker({
     setSpacingWarnings([]);
     startAssign(async () => {
       const result = await assignPlant(cellId, plantId, seasonId);
+      onPlanted?.();
       if (result.spacingWarnings.length > 0) {
         setSpacingWarnings(result.spacingWarnings);
-        // Close after a short delay so user sees the warning
         setTimeout(onClose, 2500);
       } else {
         onClose();
