@@ -65,7 +65,7 @@ type PanelState =
   | { type: "detail"; planting: Planting; cell: CellData }
   | { type: "smart-layout" };
 
-export function BedGrid({ bedId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro }: Props) {
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
   const [sunMode, setSunMode] = useState(false);
   const [, startSunUpdate] = useTransition();
@@ -261,6 +261,8 @@ export function BedGrid({ bedId, gridCols, gridRows, cells, seasonId, userId, re
               <CellDetail
                 planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
                 warnings={panel.cell.warnings}
+                gardenId={gardenId}
+                bedId={bedId}
                 onClose={() => setPanel({ type: "none" })}
               />
             )}

@@ -114,7 +114,9 @@ export default async function SeasonsPage({
                   <div key={season.id} className="bg-white rounded-xl border border-[#E8E2D9] p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h2 className="font-medium text-[#1C1C1A]">{season.name}</h2>
+                        <Link href={`/garden/${gardenId}/seasons/${season.id}`} className="font-medium text-[#1C1C1A] hover:text-[#2D5016] transition-colors">
+                          {season.name}
+                        </Link>
                         <p className="text-xs text-[#9E9890] mt-0.5">
                           {season.startDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                           {season.endDate &&

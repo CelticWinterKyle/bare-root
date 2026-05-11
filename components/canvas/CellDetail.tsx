@@ -33,6 +33,8 @@ type Props = {
     expectedHarvestDate: Date | null;
   };
   warnings: CompanionWarning[];
+  gardenId: string;
+  bedId: string;
   onClose: () => void;
 };
 
@@ -41,7 +43,7 @@ function toInputDate(d: Date | null): string {
   return new Date(d).toISOString().split("T")[0];
 }
 
-export function CellDetail({ planting, warnings, onClose }: Props) {
+export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
@@ -180,6 +182,15 @@ export function CellDetail({ planting, warnings, onClose }: Props) {
           )}
         </div>
       )}
+
+      {/* View full details */}
+      <Link
+        href={`/garden/${gardenId}/beds/${bedId}/plantings/${planting.id}`}
+        className="block text-center text-xs font-medium text-[#6B8F47] hover:text-[#2D5016] transition-colors py-1"
+        onClick={onClose}
+      >
+        View harvest log &amp; photos →
+      </Link>
 
       {/* Remove */}
       <Button
