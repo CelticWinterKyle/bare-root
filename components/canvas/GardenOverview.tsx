@@ -5,20 +5,25 @@ import { updateBedPosition } from "@/app/actions/garden";
 import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 // ─── Projection constants ─────────────────────────────────────────────────────
+// RADIUS / VERT maintain the same visual scale as the original TW/TH at az = π/4
 const TW = 50;
 const TH = 25;
-const BED_H = 0.5;
-const BOARD = 0.15;
-const TOP_PAD = 65;
-const DRAG_LIFT = 0.4;
+const RADIUS = TW * Math.SQRT2;  // ≈ 70.7  — half-tile width per ft (general)
+const VERT   = TH * Math.SQRT2;  // ≈ 35.4  — half-tile height per ft
+const Z_SCALE = TH * 2;          // vertical height per world foot
+const BED_H = 0.5;               // bed wall height (ft)
+const BOARD = 0.15;              // wood frame board width (ft)
+const DRAG_LIFT = 0.4;           // extra z when dragging
+const INITIAL_AZ = Math.PI / 4;  // classic isometric start angle
+const ROT_PX = 0.006;            // radians of rotation per drag pixel
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 const LAWN       = "#4a7c3f";
 const LAWN_DARK  = "#3d6b32";
 const LAWN_LIGHT = "#56904a";
 const WOOD_TOP   = "#C49458";
-const WOOD_EAST  = "#7D5630";
-const WOOD_SOUTH = "#5A3A18";
+const WOOD_SIDE1 = "#5A3A18"; // y-axis face (darkest — "south" when az=π/4)
+const WOOD_SIDE2 = "#7D5630"; // x-axis face (medium — "east" when az=π/4)
 const SOIL       = "#3d2b1f";
 const SOIL_DARK  = "#2d1f14";
 const LABEL_CLR  = "#f0e0c0";
@@ -26,10 +31,6 @@ const DOT_OUTER  = "#2d5a1b";
 const DOT_INNER  = "#4a8a2e";
 
 // ─── Pure math ────────────────────────────────────────────────────────────────
-function project(x: number, y: number, z = 0) {
-  return { sx: (x - y) * TW, sy: (x + y) * TH - z * TH * 2 };
-}
-
 function mulberry32(a: number) {
   return () => {
     a |= 0;
@@ -39,7 +40,6 @@ function mulberry32(a: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-
 function hashStr(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
@@ -48,12 +48,9 @@ function hashStr(s: string): number {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Bed = {
-  id: string;
-  name: string;
-  xPosition: number;
-  yPosition: number;
-  widthFt: number;
-  heightFt: number;
+  id: string; name: string;
+  xPosition: number; yPosition: number;
+  widthFt: number; heightFt: number;
   plantCount: number;
 };
 type Garden = { id: string; widthFt: number; heightFt: number };
@@ -64,77 +61,55 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   const svgRef = useRef<SVGSVGElement>(null);
   const [, startTransition] = useTransition();
 
-  // Bed positions
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(
     () => Object.fromEntries(beds.map((b) => [b.id, { x: b.xPosition, y: b.yPosition }]))
   );
   const [hoveredBed, setHoveredBed] = useState<string | null>(null);
 
-  // Drag state
   const [dragging, setDragging] = useState<{
     bedId: string;
     worldStartX: number; worldStartY: number;
     bedStartX: number; bedStartY: number;
   } | null>(null);
 
-  // View state
-  const [rot, setRot] = useState(0); // 0–3 (×90°)
+  const [azimuth, setAzimuth] = useState(INITIAL_AZ);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
 
-  // Pan gesture state
-  const [panning, setPanning] = useState<{
+  const [gesture, setGesture] = useState<{
     startClientX: number; startClientY: number;
     startPanX: number; startPanY: number;
+    startAzimuth: number;
   } | null>(null);
 
   const GW = garden.widthFt;
   const GH = garden.heightFt;
 
-  // viewBox dimensions (fixed regardless of zoom/pan/rotation)
-  const viewW = (GW + GH) * TW;
-  const viewH = TOP_PAD + (GW + GH) * TH + 24;
+  // ── View geometry ──────────────────────────────────────────────────────────
+  // viewBox is sized to contain the garden at any azimuth
+  const DIAG = Math.sqrt(GW * GW + GH * GH);
+  const viewW = Math.ceil(DIAG * RADIUS) + 200;
+  const viewH = Math.ceil(DIAG * VERT) + 200;
   const vbW = viewW / zoom;
   const vbH = viewH / zoom;
 
-  // Origin shifts depending on rotation so the garden stays centered
-  const originX = (rot % 2 === 0 ? GH : GW) * TW;
-  const originY = TOP_PAD;
+  // Projection using current azimuth
+  const COS_AZ = Math.cos(azimuth);
+  const SIN_AZ = Math.sin(azimuth);
 
-  // ── Ref for wheel handler to avoid stale closures ─────────────────────────
-  const viewRef = useRef({ zoom, panX, panY, vbW, vbH });
-  viewRef.current = { zoom, panX, panY, vbW, vbH };
+  // Keep garden center locked to viewBox center as azimuth changes
+  const gardenCx = (GW / 2 * COS_AZ - GH / 2 * SIN_AZ) * RADIUS;
+  const gardenCy = (GW / 2 * SIN_AZ + GH / 2 * COS_AZ) * VERT;
+  const originX = viewW / 2 - gardenCx;
+  const originY = viewH / 2 - gardenCy;
 
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const handler = (e: WheelEvent) => {
-      e.preventDefault();
-      const { zoom: z, panX: px, panY: py, vbW: vw, vbH: vh } = viewRef.current;
-      const newZ = Math.max(0.4, Math.min(8, z * (e.deltaY < 0 ? 1.13 : 0.87)));
-      const rect = svg.getBoundingClientRect();
-      const rx = (e.clientX - rect.left) / rect.width;
-      const ry = (e.clientY - rect.top) / rect.height;
-      const newVbW = viewW / newZ;
-      const newVbH = viewH / newZ;
-      const cx = px + rx * vw;
-      const cy = py + ry * vh;
-      setZoom(newZ);
-      setPanX(cx - rx * newVbW);
-      setPanY(cy - ry * newVbH);
-    };
-    svg.addEventListener("wheel", handler, { passive: false });
-    return () => svg.removeEventListener("wheel", handler);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Rotation-aware projection ─────────────────────────────────────────────
+  // ── Projection helpers ─────────────────────────────────────────────────────
   function pr(x: number, y: number, z = 0) {
-    let rx = x, ry = y;
-    if (rot === 1)      { rx = GH - y; ry = x; }
-    else if (rot === 2) { rx = GW - x; ry = GH - y; }
-    else if (rot === 3) { rx = y;      ry = GW - x; }
-    return project(rx, ry, z);
+    return {
+      sx: (x * COS_AZ - y * SIN_AZ) * RADIUS,
+      sy: (x * SIN_AZ + y * COS_AZ) * VERT - z * Z_SCALE,
+    };
   }
 
   function ppts(coords: [number, number, (number | undefined)?][]): string {
@@ -144,14 +119,12 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     }).join(" ");
   }
 
-  // Inverse: ISO screen coords → actual world coords (accounts for rotation)
+  // Inverse projection: ISO screen coords → world coords
   function isoToWorld(sx: number, sy: number) {
-    const rx = sx / (TW * 2) + sy / (TH * 2);
-    const ry = sy / (TH * 2) - sx / (TW * 2);
-    if (rot === 1) return { x: ry,      y: GH - rx };
-    if (rot === 2) return { x: GW - rx, y: GH - ry };
-    if (rot === 3) return { x: GW - ry, y: rx };
-    return { x: rx, y: ry };
+    return {
+      x:  sx / RADIUS * COS_AZ + sy / VERT * SIN_AZ,
+      y:  sy / VERT   * COS_AZ - sx / RADIUS * SIN_AZ,
+    };
   }
 
   function getSvgPoint(e: React.PointerEvent) {
@@ -163,25 +136,43 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     return { sx: p.x - originX, sy: p.y - originY };
   }
 
-  // ── Zoom helpers ──────────────────────────────────────────────────────────
+  // ── Wheel zoom (non-passive) ───────────────────────────────────────────────
+  const viewStateRef = useRef({ zoom, panX, panY, vbW, vbH });
+  viewStateRef.current = { zoom, panX, panY, vbW, vbH };
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const { zoom: z, panX: px, panY: py, vbW: vw, vbH: vh } = viewStateRef.current;
+      const newZ = Math.max(0.4, Math.min(8, z * (e.deltaY < 0 ? 1.13 : 0.87)));
+      const rect = svg.getBoundingClientRect();
+      const rx = (e.clientX - rect.left) / rect.width;
+      const ry = (e.clientY - rect.top) / rect.height;
+      const newVw = viewW / newZ;
+      const newVh = viewH / newZ;
+      setZoom(newZ);
+      setPanX(px + rx * vw - rx * newVw);
+      setPanY(py + ry * vh - ry * newVh);
+    };
+    svg.addEventListener("wheel", handler, { passive: false });
+    return () => svg.removeEventListener("wheel", handler);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Zoom controls ─────────────────────────────────────────────────────────
   function applyZoom(newZ: number) {
     const z = Math.max(0.4, Math.min(8, newZ));
-    const newVbW = viewW / z;
-    const newVbH = viewH / z;
-    setPanX(panX + (vbW - newVbW) / 2);
-    setPanY(panY + (vbH - newVbH) / 2);
+    const newVw = viewW / z;
+    const newVh = viewH / z;
+    setPanX(panX + (vbW - newVw) / 2);
+    setPanY(panY + (vbH - newVh) / 2);
     setZoom(z);
   }
 
   function resetView() {
-    setZoom(1);
-    setPanX(0);
-    setPanY(0);
+    setZoom(1); setPanX(0); setPanY(0);
   }
-
-  // ── Rotation controls ─────────────────────────────────────────────────────
-  function rotateCW()  { setRot((r) => (r + 1) % 4); resetView(); }
-  function rotateCCW() { setRot((r) => (r + 3) % 4); resetView(); }
 
   // ── Pointer handlers ──────────────────────────────────────────────────────
   function onBedPointerDown(e: React.PointerEvent, bed: Bed) {
@@ -190,13 +181,21 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     const { sx, sy } = getSvgPoint(e);
     const { x, y } = isoToWorld(sx, sy);
     const pos = positions[bed.id] ?? { x: bed.xPosition, y: bed.yPosition };
-    setDragging({ bedId: bed.id, worldStartX: x, worldStartY: y, bedStartX: pos.x, bedStartY: pos.y });
+    setDragging({
+      bedId: bed.id,
+      worldStartX: x, worldStartY: y,
+      bedStartX: pos.x, bedStartY: pos.y,
+    });
   }
 
   function onSvgPointerDown(e: React.PointerEvent) {
     if (dragging) return;
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    setPanning({ startClientX: e.clientX, startClientY: e.clientY, startPanX: panX, startPanY: panY });
+    setGesture({
+      startClientX: e.clientX, startClientY: e.clientY,
+      startPanX: panX, startPanY: panY,
+      startAzimuth: azimuth,
+    });
   }
 
   function onPointerMove(e: React.PointerEvent) {
@@ -206,14 +205,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       const newX = Math.max(0, dragging.bedStartX + (x - dragging.worldStartX));
       const newY = Math.max(0, dragging.bedStartY + (y - dragging.worldStartY));
       setPositions((prev) => ({ ...prev, [dragging.bedId]: { x: newX, y: newY } }));
-    } else if (panning) {
+    } else if (gesture) {
+      const dx = e.clientX - gesture.startClientX;
+      const dy = e.clientY - gesture.startClientY;
+      // Horizontal → rotate
+      setAzimuth(gesture.startAzimuth + dx * ROT_PX);
+      // Vertical → pan
       const svg = svgRef.current;
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      const scX = vbW / rect.width;
-      const scY = vbH / rect.height;
-      setPanX(panning.startPanX - (e.clientX - panning.startClientX) * scX);
-      setPanY(panning.startPanY - (e.clientY - panning.startClientY) * scY);
+      if (svg) {
+        const scY = vbH / svg.getBoundingClientRect().height;
+        setPanY(gesture.startPanY - dy * scY);
+      }
     }
   }
 
@@ -239,46 +241,42 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       }
       setDragging(null);
     }
-    setPanning(null);
+    setGesture(null);
   }
 
-  // ── Z-sort (painter's algorithm) ──────────────────────────────────────────
+  // ── Z-sort: depth = x·sin(az) + y·cos(az), ascending (back first) ────────
   const sorted = [...beds]
     .filter((b) => !dragging || b.id !== dragging.bedId)
     .sort((a, b) => {
       const pa = positions[a.id] ?? { x: a.xPosition, y: a.yPosition };
       const pb = positions[b.id] ?? { x: b.xPosition, y: b.yPosition };
-      return pa.x + pa.y - (pb.x + pb.y);
+      const dA = (pa.x + a.widthFt / 2) * SIN_AZ + (pa.y + a.heightFt / 2) * COS_AZ;
+      const dB = (pb.x + b.widthFt / 2) * SIN_AZ + (pb.y + b.heightFt / 2) * COS_AZ;
+      return dA - dB;
     });
   const dBed = dragging ? beds.find((b) => b.id === dragging.bedId) : null;
   const renderList = dBed ? [...sorted, dBed] : sorted;
 
-  // ── Control button config ─────────────────────────────────────────────────
-  type Ctrl = { icon: React.ElementType; label: string; action: () => void };
-  const controls: (Ctrl | null)[] = [
-    { icon: RotateCcw, label: "Rotate left",  action: rotateCCW },
-    { icon: RotateCw,  label: "Rotate right", action: rotateCW },
-    null,
-    { icon: ZoomIn,    label: "Zoom in",  action: () => applyZoom(zoom * 1.35) },
-    { icon: ZoomOut,   label: "Zoom out", action: () => applyZoom(zoom / 1.35) },
-    null,
-    { icon: Maximize2, label: "Reset view", action: resetView },
-  ];
+  const isBusy = !!dragging || !!gesture;
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden border shadow-xl"
+      className="relative w-full rounded-2xl overflow-hidden border shadow-xl flex flex-col"
       style={{ background: "#19280e", borderColor: "#2a4018" }}
     >
+      <div className="relative flex-1" style={{ minHeight: 460 }}>
       <svg
         ref={svgRef}
         viewBox={`${panX} ${panY} ${vbW} ${vbH}`}
         width="100%"
+        height="100%"
         style={{
+          position: "absolute",
+          inset: 0,
           display: "block",
           userSelect: "none",
           touchAction: "none",
-          cursor: dragging || panning ? "grabbing" : "grab",
+          cursor: isBusy ? "grabbing" : "grab",
         }}
         onPointerDown={onSvgPointerDown}
         onPointerMove={onPointerMove}
@@ -288,17 +286,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         <defs>
           <pattern id="grass-tex" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
             <rect width="18" height="9" fill={LAWN} />
-            <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill={LAWN_DARK} opacity="0.4" />
-            <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill={LAWN_LIGHT} opacity="0.35" />
-            <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill={LAWN_DARK} opacity="0.3" />
+            <ellipse cx="4"  cy="4.5" rx="1.8" ry="1.1" fill={LAWN_DARK}  opacity="0.4" />
+            <ellipse cx="13" cy="2"   rx="1.2" ry="0.8" fill={LAWN_LIGHT} opacity="0.35" />
+            <ellipse cx="9"  cy="7"   rx="1.4" ry="0.9" fill={LAWN_DARK}  opacity="0.3" />
             <ellipse cx="16" cy="5.5" rx="0.9" ry="0.6" fill={LAWN_LIGHT} opacity="0.25" />
           </pattern>
           <pattern id="soil-tex" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
             <rect width="12" height="12" fill={SOIL} />
-            <circle cx="3" cy="3" r="1.3" fill={SOIL_DARK} opacity="0.6" />
-            <circle cx="8.5" cy="7" r="1.1" fill={SOIL_DARK} opacity="0.5" />
-            <circle cx="5" cy="9.5" r="0.8" fill="#4a3325" opacity="0.4" />
-            <circle cx="10" cy="2" r="0.7" fill={SOIL_DARK} opacity="0.35" />
+            <circle cx="3"   cy="3"   r="1.3" fill={SOIL_DARK} opacity="0.6" />
+            <circle cx="8.5" cy="7"   r="1.1" fill={SOIL_DARK} opacity="0.5" />
+            <circle cx="5"   cy="9.5" r="0.8" fill="#4a3325"   opacity="0.4" />
+            <circle cx="10"  cy="2"   r="0.7" fill={SOIL_DARK} opacity="0.35" />
           </pattern>
           <filter id="shd-n" x="-25%" y="-25%" width="160%" height="160%">
             <feDropShadow dx="3" dy="6" stdDeviation="3.5" floodColor="#000" floodOpacity="0.32" />
@@ -315,11 +313,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         </defs>
 
         <g transform={`translate(${originX}, ${originY})`}>
-          {/* Lawn */}
+          {/* Lawn surface */}
           <polygon points={ppts([[0,0],[GW,0],[GW,GH],[0,GH]])} fill="url(#grass-tex)" />
           <polygon points={ppts([[0,0],[GW,0],[GW,GH],[0,GH]])} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={1.5} />
 
-          {/* Beds */}
           {renderList.map((bed) => {
             const pos = positions[bed.id] ?? { x: bed.xPosition, y: bed.yPosition };
             const bx = pos.x, by = pos.y;
@@ -328,15 +325,26 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             const isH = hoveredBed === bed.id && !isD;
             const Z = isD ? BED_H + DRAG_LIFT : BED_H;
 
-            const southFace  = ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]]);
-            const eastFace   = ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]]);
-            const northBoard = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+BOARD,Z],[bx,by+BOARD,Z]]);
-            const southBoard = ppts([[bx,by+D-BOARD,Z],[bx+W,by+D-BOARD,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
-            const westBoard  = ppts([[bx,by,Z],[bx+BOARD,by,Z],[bx+BOARD,by+D,Z],[bx,by+D,Z]]);
-            const eastBoard  = ppts([[bx+W-BOARD,by,Z],[bx+W,by,Z],[bx+W,by+D,Z],[bx+W-BOARD,by+D,Z]]);
-            const soilFace   = ppts([[bx+BOARD,by+BOARD,Z],[bx+W-BOARD,by+BOARD,Z],[bx+W-BOARD,by+D-BOARD,Z],[bx+BOARD,by+D-BOARD,Z]]);
-            const topFace    = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
+            // ── Dynamic face visibility based on viewer direction ─────────────
+            // y-axis face: south (SIN>0) or north (SIN<0)
+            // x-axis face: east (COS>0) or west (COS<0)
+            // Colors: y-face = darkest (WOOD_SIDE1), x-face = medium (WOOD_SIDE2)
+            const yFace = SIN_AZ >= 0
+              ? ppts([[bx,by+D,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx,by+D,Z]])
+              : ppts([[bx+W,by,0],[bx,by,0],[bx,by,Z],[bx+W,by,Z]]);
+            const xFace = COS_AZ >= 0
+              ? ppts([[bx+W,by,0],[bx+W,by+D,0],[bx+W,by+D,Z],[bx+W,by,Z]])
+              : ppts([[bx,by+D,0],[bx,by,0],[bx,by,Z],[bx,by+D,Z]]);
 
+            // ── Top face ─────────────────────────────────────────────────────
+            const nBoard  = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+BOARD,Z],[bx,by+BOARD,Z]]);
+            const sBoard  = ppts([[bx,by+D-BOARD,Z],[bx+W,by+D-BOARD,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
+            const wBoard  = ppts([[bx,by,Z],[bx+BOARD,by,Z],[bx+BOARD,by+D,Z],[bx,by+D,Z]]);
+            const eBoard  = ppts([[bx+W-BOARD,by,Z],[bx+W,by,Z],[bx+W,by+D,Z],[bx+W-BOARD,by+D,Z]]);
+            const soil    = ppts([[bx+BOARD,by+BOARD,Z],[bx+W-BOARD,by+BOARD,Z],[bx+W-BOARD,by+D-BOARD,Z],[bx+BOARD,by+D-BOARD,Z]]);
+            const topLine = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
+
+            // ── Plant dots (seeded, stable) ──────────────────────────────────
             const rng = mulberry32(hashStr(bed.id));
             const dotCount = bed.plantCount > 0 ? Math.min(24, Math.max(3, bed.plantCount * 2)) : 0;
             const dots = Array.from({ length: dotCount }, () => ({
@@ -344,6 +352,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
               wy: by + BOARD + rng() * (D - BOARD * 2),
             }));
 
+            // ── Label ────────────────────────────────────────────────────────
             const lp = pr(bx + W / 2, by + D / 2, Z + 0.1);
             const fs = Math.min(22, Math.max(10, (W * TW * 0.55) / Math.max(2, bed.name.length)));
 
@@ -356,13 +365,20 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                 onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
                 onPointerLeave={() => setHoveredBed(null)}
               >
-                <polygon points={southFace}  fill={WOOD_SOUTH} />
-                <polygon points={eastFace}   fill={WOOD_EAST} />
-                <polygon points={northBoard} fill={WOOD_TOP} />
-                <polygon points={southBoard} fill={WOOD_TOP} />
-                <polygon points={westBoard}  fill={WOOD_TOP} />
-                <polygon points={eastBoard}  fill={WOOD_TOP} />
-                <polygon points={soilFace}   fill="url(#soil-tex)" />
+                {/* Side faces (drawn before top so top covers them) */}
+                <polygon points={yFace} fill={WOOD_SIDE1} />
+                <polygon points={xFace} fill={WOOD_SIDE2} />
+
+                {/* Wood frame boards on top surface */}
+                <polygon points={nBoard} fill={WOOD_TOP} />
+                <polygon points={sBoard} fill={WOOD_TOP} />
+                <polygon points={wBoard} fill={WOOD_TOP} />
+                <polygon points={eBoard} fill={WOOD_TOP} />
+
+                {/* Soil */}
+                <polygon points={soil} fill="url(#soil-tex)" />
+
+                {/* Plant dots */}
                 {dots.map((d, i) => {
                   const p = pr(d.wx, d.wy, Z);
                   return (
@@ -372,15 +388,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                     </g>
                   );
                 })}
+
+                {/* Hover highlight */}
                 {(isH || isD) && (
-                  <polygon points={topFace} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={2} />
+                  <polygon points={topLine} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={2} />
                 )}
+
+                {/* Label */}
                 <text
                   x={lp.sx} y={lp.sy}
                   textAnchor="middle" dominantBaseline="middle"
-                  fill={LABEL_CLR}
-                  fontSize={fs}
-                  fontWeight="600"
+                  fill={LABEL_CLR} fontSize={fs} fontWeight="600"
                   fontFamily="Georgia, 'Times New Roman', serif"
                   filter="url(#txt-shd)"
                   style={{ pointerEvents: "none" }}
@@ -404,7 +422,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
           })}
 
           {beds.length === 0 && (() => {
-            const c = project(GW / 2, GH / 2);
+            const c = pr(GW / 2, GH / 2);
             return (
               <text
                 x={c.sx} y={c.sy}
@@ -420,35 +438,46 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       </svg>
 
       {/* Controls */}
-      <div className="absolute bottom-10 right-3 flex flex-col gap-1 z-10">
-        {controls.map((ctrl, i) =>
+      <div className="absolute bottom-2 right-3 flex flex-col gap-1 z-10">
+        {([
+          { icon: RotateCcw, label: "Rotate left",  fn: () => { setAzimuth((a) => a + Math.PI / 2); resetView(); } },
+          { icon: RotateCw,  label: "Rotate right", fn: () => { setAzimuth((a) => a - Math.PI / 2); resetView(); } },
+          null,
+          { icon: ZoomIn,    label: "Zoom in",  fn: () => applyZoom(zoom * 1.35) },
+          { icon: ZoomOut,   label: "Zoom out", fn: () => applyZoom(zoom / 1.35) },
+          null,
+          { icon: Maximize2, label: "Reset",    fn: () => { resetView(); setAzimuth(INITIAL_AZ); } },
+        ] as const).map((ctrl, i) =>
           ctrl === null ? (
             <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
           ) : (
             <button
               key={i}
-              onClick={ctrl.action}
+              onClick={ctrl.fn}
               title={ctrl.label}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-              style={{
-                background: "rgba(0,0,0,0.45)",
-                backdropFilter: "blur(4px)",
-                color: "rgba(255,255,255,0.7)",
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+              style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,0.7)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.7)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.7)"; (e.currentTarget as HTMLButtonElement).style.color = "white"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)"; }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+              }}
             >
               <ctrl.icon size={13} />
             </button>
           )
         )}
       </div>
+      </div>
 
       <p
-        className="text-[11px] text-center py-2 border-t"
+        className="text-[11px] text-center py-2 border-t select-none"
         style={{ color: "#6b8f47", borderColor: "#2a4018", background: "#19280e" }}
       >
-        Drag beds to move · Pan canvas · Scroll to zoom
+        Drag to rotate · Scroll to zoom · Drag beds to move
       </p>
     </div>
   );
