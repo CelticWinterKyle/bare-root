@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { Prisma } from "@/lib/generated/prisma";
 import type { ForecastDay } from "@/lib/api/weather";
 
 const FROST_TEMP_F = 35;
@@ -20,7 +19,7 @@ export async function GET(req: Request) {
   }
 
   const caches = await db.weatherCache.findMany({
-    where: { forecast: { not: Prisma.JsonNull } },
+    where: {},
     include: {
       garden: {
         select: {
