@@ -85,7 +85,8 @@ export default async function GardenPage({
   }));
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div>
+      <div className="max-w-3xl mx-auto px-4 pt-8 pb-5">
       {/* Header */}
       <header className="mb-6">
         <div className="flex items-start justify-between">
@@ -174,41 +175,49 @@ export default async function GardenPage({
         </div>
       )}
 
-      {/* Canvas */}
+      </div>
+
+      {/* Canvas — full available width */}
       {garden.beds.length === 0 ? (
-        <div className="bg-[#F5F0E8] rounded-xl p-12 text-center border border-[#E8E2D9]">
-          <Sprout className="w-10 h-10 text-[#6B8F47] mx-auto mb-3" />
-          <p className="font-display text-lg text-[#2D5016] mb-1">No beds yet</p>
-          <p className="text-sm text-[#6B6560] mb-4">
-            Add your first raised bed to start planning.
-          </p>
-          <AddBedDialog gardenId={garden.id} />
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-[#F5F0E8] rounded-xl p-12 text-center border border-[#E8E2D9]">
+            <Sprout className="w-10 h-10 text-[#6B8F47] mx-auto mb-3" />
+            <p className="font-display text-lg text-[#2D5016] mb-1">No beds yet</p>
+            <p className="text-sm text-[#6B6560] mb-4">
+              Add your first raised bed to start planning.
+            </p>
+            <AddBedDialog gardenId={garden.id} />
+          </div>
         </div>
       ) : (
-        <GardenOverview
-          garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
-          beds={beds}
-        />
-      )}
-
-      {!activeSeason && garden.beds.length > 0 && (
-        <div className="mt-4 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9] p-4 flex items-center justify-between">
-          <p className="text-sm text-[#6B6560]">No active season — create one to start assigning plants.</p>
-          <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
+        <div className="px-4">
+          <GardenOverview
+            garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
+            beds={beds}
+          />
         </div>
       )}
 
-      {atBedLimit && (
-        <div className="mt-4 rounded-xl border border-dashed border-[#E8E2D9] p-4 text-center">
-          <p className="text-sm text-[#9E9890]">
-            3 beds used on Free plan.{" "}
-            <Link href="/settings/billing" className="text-[#C4790A] hover:underline">
-              Upgrade to Pro
-            </Link>{" "}
-            for unlimited beds.
-          </p>
-        </div>
-      )}
+      <div className="max-w-3xl mx-auto px-4 pb-8">
+        {!activeSeason && garden.beds.length > 0 && (
+          <div className="mt-4 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9] p-4 flex items-center justify-between">
+            <p className="text-sm text-[#6B6560]">No active season — create one to start assigning plants.</p>
+            <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
+          </div>
+        )}
+
+        {atBedLimit && (
+          <div className="mt-4 rounded-xl border border-dashed border-[#E8E2D9] p-4 text-center">
+            <p className="text-sm text-[#9E9890]">
+              3 beds used on Free plan.{" "}
+              <Link href="/settings/billing" className="text-[#C4790A] hover:underline">
+                Upgrade to Pro
+              </Link>{" "}
+              for unlimited beds.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
