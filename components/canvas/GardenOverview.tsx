@@ -219,10 +219,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     } else if (gesture) {
       const dx = e.clientX - gesture.startClientX;
       const dy = e.clientY - gesture.startClientY;
-      // Horizontal → pan (azimuth rotation)
-      setAzimuth(gesture.startAzimuth + dx * ROT_PX);
-      // Vertical → tilt (elevation angle)
-      setElevation(Math.max(MIN_EL, Math.min(MAX_EL, gesture.startElevation - dy * TILT_PX)));
+      // Horizontal → pan (azimuth rotation) — negative so dragging right spins scene right
+      setAzimuth(gesture.startAzimuth - dx * ROT_PX);
+      // Vertical → tilt (elevation angle) — positive so dragging down tilts toward overhead
+      setElevation(Math.max(MIN_EL, Math.min(MAX_EL, gesture.startElevation + dy * TILT_PX)));
     }
   }
 
