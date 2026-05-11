@@ -50,15 +50,17 @@ export function AddBedDialog({ gardenId }: { gardenId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="border-[#E8E2D9] text-[#2D5016] hover:bg-[#F5F0E8]"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Add bed
-        </Button>
+      <DialogTrigger
+        render={
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#E8E2D9] text-[#2D5016] hover:bg-[#F5F0E8]"
+          />
+        }
+      >
+        <Plus className="w-4 h-4 mr-1" />
+        Add bed
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
