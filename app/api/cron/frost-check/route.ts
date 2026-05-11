@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ReminderType, CollabRole } from "@/lib/generated/prisma/enums";
 import type { ForecastDay } from "@/lib/api/weather";
 
 const FROST_TEMP_F = 35;
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
           name: true,
           userId: true,
           collaborators: {
-            where: { role: "EDITOR", acceptedAt: { not: null } },
+            where: { role: CollabRole.EDITOR, acceptedAt: { not: null } },
             select: { userId: true },
           },
         },
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
     const existing = await db.reminder.findFirst({
       where: {
         gardenId: cache.gardenId,
-        type: "FROST_ALERT",
+        type: ReminderType.FROST_ALERT,
         dismissed: false,
         scheduledAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
         data: {
           userId,
           gardenId: cache.gardenId,
-          type: "FROST_ALERT",
+          type: ReminderType.FROST_ALERT,
           title: `Frost risk at ${cache.garden.name}`,
           body: "Temperatures near or below freezing are forecast in the next 72 hours. Consider protecting sensitive plants.",
           scheduledAt: now,

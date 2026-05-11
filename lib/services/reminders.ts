@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ReminderType } from "@/lib/generated/prisma/enums";
 import {
   calculateStartSeedsDate,
   calculateTransplantDate,
@@ -29,7 +30,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
     userId: string;
     plantingId: string;
     gardenId: string;
-    type: string;
+    type: ReminderType;
     title: string;
     body: string;
     scheduledAt: Date;
@@ -45,7 +46,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
           userId,
           plantingId,
           gardenId,
-          type: "START_SEEDS",
+          type: ReminderType.START_SEEDS,
           title: `Start ${plant.name} seeds indoors`,
           body: `Time to start your ${plant.name} seeds — ${plant.indoorStartWeeks} weeks before last frost.`,
           scheduledAt: startSeeds,
@@ -60,7 +61,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
           userId,
           plantingId,
           gardenId,
-          type: "TRANSPLANT",
+          type: ReminderType.TRANSPLANT,
           title: `Transplant ${plant.name} outdoors`,
           body: `Your ${plant.name} should be ready to move outside now.`,
           scheduledAt: transplant,
@@ -76,7 +77,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
         userId,
         plantingId,
         gardenId,
-        type: "HARVEST",
+        type: ReminderType.HARVEST,
         title: `${plant.name} may be ready to harvest`,
         body: `Your ${plant.name} planted on ${plantedDate.toLocaleDateString()} should be ready around now.`,
         scheduledAt: harvest,
@@ -101,7 +102,7 @@ export async function upsertHarvestReminder(
   const harvest = calculateExpectedHarvest(plantedDate, daysToMaturity);
 
   const existing = await db.reminder.findFirst({
-    where: { plantingId, type: "HARVEST" },
+    where: { plantingId, type: ReminderType.HARVEST },
   });
 
   if (existing) {
@@ -122,7 +123,7 @@ export async function upsertHarvestReminder(
         userId,
         plantingId,
         gardenId,
-        type: "HARVEST",
+        type: ReminderType.HARVEST,
         title: `${plantName} may be ready to harvest`,
         body: `Your ${plantName} planted on ${plantedDate.toLocaleDateString()} should be ready around now.`,
         scheduledAt: harvest,
