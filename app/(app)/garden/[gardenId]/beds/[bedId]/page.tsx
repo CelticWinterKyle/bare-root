@@ -153,10 +153,9 @@ export default async function BedPage({
   });
 
   return (
-    <div className="flex flex-col justify-center" style={{ minHeight: "calc(100dvh - 120px)" }}>
-    <div className="w-full px-8 pt-3 pb-4">
-      {/* Compact header: back · bed name · stat chips — constrained width */}
-      <div className="max-w-3xl">
+    <div className="w-full px-8 pt-6 pb-4">
+      {/* Compact header: back · bed name · stat chips — centered */}
+      <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
           <Link
             href={`/garden/${gardenId}`}
@@ -213,7 +212,6 @@ export default async function BedPage({
         userId={user.id}
         recentPlants={recentPlants}
       />
-    </div>
     </div>
   );
 }

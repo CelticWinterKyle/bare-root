@@ -155,8 +155,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Toolbar — constrained width so controls stay compact above the full-width bed */}
-      <div className="max-w-3xl">
+      {/* Toolbar — centered, constrained width */}
+      <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-2 flex-wrap">
         {/* Sun mapping */}
         <button
