@@ -77,20 +77,26 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const [rotated, setRotated] = useState(() => gridRows > gridCols);
   const [zoom, setZoom] = useState(1);
 
-  // Measure the scrollable viewport so we can auto-fit cells inside it
+  // Measure the scrollable viewport width for horizontal cell fitting
   const viewportRef = useRef<HTMLDivElement>(null);
   const [vpW, setVpW] = useState(700);
-  const [vpH, setVpH] = useState(500);
 
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => {
-      setVpW(e.contentRect.width);
-      setVpH(e.contentRect.height);
-    });
+    const ro = new ResizeObserver(([e]) => setVpW(e.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Height constraint derived from window height — avoids circular dependency
+  // with measuring a container whose size depends on its own content
+  const [maxViewportH, setMaxViewportH] = useState(500);
+  useEffect(() => {
+    const update = () => setMaxViewportH(Math.min(Math.round(window.innerHeight * 0.72), 780));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
   // Display orientation: rotated swaps columns ↔ rows
@@ -104,7 +110,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   // Auto-fit: largest square cell that makes the full bed fit the viewport
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
-  const fitByH = Math.floor((vpH - FRAME_PAD) / displayRows);
+  const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
   const baseCellPx = Math.max(20, Math.min(fitByW, fitByH));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
@@ -209,11 +215,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
       <div className="flex gap-4 items-start">
         {/* Bed column */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
-          {/* Scrollable viewport — fixed height, bed auto-fits inside */}
+          {/* Scrollable viewport — max height caps it, shrinks to content */}
           <div
             ref={viewportRef}
             className="overflow-auto rounded-2xl"
-            style={{ height: "min(72dvh, 780px)" }}
+            style={{ maxHeight: maxViewportH }}
           >
             {/* Center bed in viewport when smaller than viewport */}
             <div className="flex items-center justify-center min-h-full py-3">
