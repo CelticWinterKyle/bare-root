@@ -206,7 +206,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             {/* Plan bed — pushed to the right */}
             <button
               onClick={() => setPanel(panel.type === "smart-layout" ? { type: "none" } : { type: "smart-layout" })}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-auto ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 panel.type === "smart-layout"
                   ? "bg-[#2D5016] text-white shadow-sm"
                   : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"

@@ -166,7 +166,7 @@ export default async function BedPage({
         </Link>
         <span className="text-[#D8D3CB] select-none">/</span>
         <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
-        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
             {bed.widthFt} × {bed.heightFt} ft
           </span>
