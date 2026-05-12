@@ -94,10 +94,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(400);
   useEffect(() => {
-    // header h-14 (56) + main pb-24 (96) + pt-6 (24) + page-header+mb-6 (68)
-    // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 368px → use 380 for safety
+    // header h-14 (56) + main pb-24 (96) + pt-10 (40) + page-header+mb-6 (68)
+    // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 384px → use 396 for safety
     // Cap at 420 so cells don't grow huge on large monitors.
-    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 380, 420)));
+    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
