@@ -93,7 +93,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(500);
   useEffect(() => {
-    const update = () => setMaxViewportH(Math.min(Math.round(window.innerHeight * 0.72), 780));
+    // Subtract fixed chrome: top nav (60) + bottom nav (60) + page header (50) +
+    // toolbar (44) + legend (32) + gaps (20) = 266px
+    const update = () => setMaxViewportH(Math.max(200, window.innerHeight - 266));
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -115,9 +117,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   //   wide beds (>4 cols) use min(fitByW, fitByH) — no horizontal scroll forced
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
-  const targetByH = displayCols <= 4
-    ? Math.min(200, Math.floor((maxViewportH * 0.65 - FRAME_PAD) / displayRows))
-    : 0;
+  const targetByH = Math.min(200, Math.floor((maxViewportH * 0.65 - FRAME_PAD) / displayRows));
   const baseCellPx = Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 

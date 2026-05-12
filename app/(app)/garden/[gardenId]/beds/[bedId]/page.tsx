@@ -153,7 +153,8 @@ export default async function BedPage({
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-3 pb-4">
+    <div className="flex flex-col justify-center" style={{ minHeight: "calc(100dvh - 120px)" }}>
+    <div className="max-w-5xl mx-auto px-4 pt-3 pb-4 w-full">
       {/* Compact header: back · bed name · stat chips all on one line */}
       <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
         <Link
@@ -210,6 +211,7 @@ export default async function BedPage({
         userId={user.id}
         recentPlants={recentPlants}
       />
+    </div>
     </div>
   );
 }
