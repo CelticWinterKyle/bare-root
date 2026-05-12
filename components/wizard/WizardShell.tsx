@@ -137,6 +137,12 @@ export function WizardShell() {
         })}
       </div>
 
+      {step > 1 && (
+        <p className="text-center text-xs text-[#9E9890] mb-4">
+          ✓ Your progress is saved — you can continue anytime.
+        </p>
+      )}
+
       <div className="bg-white rounded-2xl border border-[#E8E2D9] shadow-sm overflow-hidden">
         {/* Step 1 — Garden name */}
         {step === 1 && (

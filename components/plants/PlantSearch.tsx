@@ -138,6 +138,13 @@ export function PlantSearch({
         })}
       </div>
 
+      {/* Result count */}
+      {plants.length > 0 && query && (
+        <p className="text-xs text-[#9E9890] mb-3">
+          {plants.length} result{plants.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
+        </p>
+      )}
+
       {/* Results */}
       {plants.length === 0 ? (
         <div className="text-center py-12">

@@ -219,6 +219,9 @@ export default async function BedPage({
           </span>
           <span className="hidden sm:inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
             {bed.cellSizeIn}&quot; cells
+            {bed.cellSizeIn < 12 && (
+              <span className="ml-1 text-[#9E9890]">({Math.round((12 / bed.cellSizeIn) ** 2)}/sq ft)</span>
+            )}
           </span>
           {bed.garden.usdaZone && (
             <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
@@ -235,7 +238,8 @@ export default async function BedPage({
                 <RotateCcw className="w-3.5 h-3.5 text-[#C4790A] shrink-0" />
                 <span className="text-[#7C4A0A]">
                   <span className="font-semibold">Crop rotation: </span>
-                  {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}. Consider planting a different family.
+                  {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.{" "}
+                  <span className="text-[#A0621A]">Consider a different plant family to prevent disease buildup.</span>
                 </span>
               </div>
             ))}

@@ -225,6 +225,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             >
               <Sparkles className="w-4 h-4" />
               Plan bed
+              {!isPro && panel.type !== "smart-layout" && (
+                <span className="text-[9px] font-semibold bg-[#C4790A] text-white px-1.5 py-0.5 rounded-full ml-0.5 leading-none">
+                  PRO
+                </span>
+              )}
             </button>
           </>
         )}
