@@ -154,7 +154,7 @@ export default async function BedPage({
 
   return (
     <div className="flex flex-col justify-center" style={{ minHeight: "calc(100dvh - 120px)" }}>
-    <div className="max-w-7xl mx-auto px-4 pt-3 pb-4 w-full">
+    <div className="w-full px-8 pt-3 pb-4">
       {/* Compact header: back · bed name · stat chips all on one line */}
       <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
         <Link

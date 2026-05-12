@@ -117,7 +117,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   //   wide beds (>4 cols) use min(fitByW, fitByH) — no horizontal scroll forced
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
-  const targetByH = Math.min(200, Math.floor((maxViewportH * 0.65 - FRAME_PAD) / displayRows));
+  const targetByH = Math.min(240, Math.floor((maxViewportH * 0.82 - FRAME_PAD) / displayRows));
   const baseCellPx = Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
@@ -350,7 +350,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
           {/* Legend */}
           {!sunMode && (
-            <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1">
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
               {Object.entries(STATUS_STYLES).map(([status, s]) => (
                 <div key={status} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm shadow-sm" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }} />
