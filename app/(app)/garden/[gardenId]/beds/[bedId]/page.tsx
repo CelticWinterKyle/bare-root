@@ -159,7 +159,8 @@ export default async function BedPage({
     >
       {/* Compact header: back · bed name · stat chips — centered */}
       <div className="max-w-3xl mx-auto mb-6">
-        <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
+        {/* Row 1: back link + bed name */}
+        <div className="flex items-center gap-2 min-h-[44px]">
           <Link
             href={`/garden/${gardenId}`}
             className="flex items-center gap-1 text-sm text-[#9E9890] hover:text-[#2D5016] transition-colors group shrink-0"
@@ -169,22 +170,23 @@ export default async function BedPage({
           </Link>
           <span className="text-[#D8D3CB] select-none">/</span>
           <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-              {bed.widthFt} × {bed.heightFt} ft
+        </div>
+        {/* Row 2: chips — always-visible + secondary hidden on mobile */}
+        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+            {bed.widthFt} × {bed.heightFt} ft
+          </span>
+          <span className="hidden sm:inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+            {bed.gridCols} × {bed.gridRows} grid
+          </span>
+          <span className="hidden sm:inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+            {bed.cellSizeIn}&quot; cells
+          </span>
+          {bed.garden.usdaZone && (
+            <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
+              Zone {bed.garden.usdaZone}
             </span>
-            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-              {bed.gridCols} × {bed.gridRows} grid
-            </span>
-            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-              {bed.cellSizeIn}&quot; cells
-            </span>
-            {bed.garden.usdaZone && (
-              <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
-                Zone {bed.garden.usdaZone}
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Crop rotation warnings — compact inline strip */}

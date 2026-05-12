@@ -108,17 +108,19 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
         </span>
       </div>
 
-      {/* Status buttons */}
+      {/* Status buttons — 2-col grid for comfortable mobile tap targets */}
       <div>
         <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Status</p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
           {STATUSES.map((s) => (
             <button
               key={s.value}
               onClick={() => handleStatusChange(s.value)}
               disabled={isUpdating}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-opacity ${
-                status === s.value ? s.color : "bg-[#F5F0E8] text-[#6B6560]"
+              className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
+                status === s.value
+                  ? `${s.color} ring-2 ring-inset ring-white/30`
+                  : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF]"
               } disabled:opacity-50`}
             >
               {s.label}
