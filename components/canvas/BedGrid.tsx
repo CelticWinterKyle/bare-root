@@ -152,6 +152,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   const showPanel = panel.type !== "none";
   const canRotate = gridRows !== gridCols;
+  const isEmpty = cells.every((c) => !c.planting);
 
   const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]";
 
@@ -229,9 +230,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
           {/* Scrollable viewport — max height caps it, shrinks to content */}
           <div
             ref={viewportRef}
-            className="overflow-auto rounded-2xl"
+            className="overflow-auto rounded-2xl relative"
             style={{ maxHeight: maxViewportH }}
           >
+            {/* Empty bed hint — shown until the first plant is added */}
+            {isEmpty && !sunMode && panel.type === "none" && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl px-4 py-3 shadow-md border border-[#E8E2D9] text-center">
+                  <p className="text-sm font-semibold text-[#1C1C1A]">Tap any cell</p>
+                  <p className="text-xs text-[#9E9890] mt-0.5">to assign a plant</p>
+                </div>
+              </div>
+            )}
             {/* Center bed in viewport when smaller than viewport */}
             <div className="flex items-center justify-center min-h-full py-3">
               {/* Wooden frame */}

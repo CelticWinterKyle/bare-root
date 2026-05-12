@@ -133,7 +133,7 @@ export default async function GardenPage({
       </header>
 
       {/* Compact weather strip */}
-      {weatherCurrent && (
+      {weatherCurrent ? (
         <div
           className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border ${
             frostRisk
@@ -172,6 +172,24 @@ export default async function GardenPage({
               className="shrink-0 -my-1"
             />
           )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border bg-[#F5F0E8] border-[#E8E2D9]">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/60">
+            <Thermometer className="w-4 h-4 text-[#D8D3CB]" />
+          </div>
+          <p className="text-sm text-[#9E9890]">
+            {garden.locationZip
+              ? "Weather data temporarily unavailable."
+              : <>
+                  Add a zip code in{" "}
+                  <Link href={`/garden/${gardenId}/settings`} className="text-[#6B8F47] hover:text-[#2D5016] underline transition-colors">
+                    garden settings
+                  </Link>
+                  {" "}for local weather and frost alerts.
+                </>
+            }
+          </p>
         </div>
       )}
 
