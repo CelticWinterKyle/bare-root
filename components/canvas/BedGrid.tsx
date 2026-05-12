@@ -91,10 +91,12 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   // Height constraint derived from window height — avoids circular dependency
   // with measuring a container whose size depends on its own content
-  const [maxViewportH, setMaxViewportH] = useState(500);
+  const [maxViewportH, setMaxViewportH] = useState(400);
   useEffect(() => {
-    // Subtract fixed chrome: top nav (60) + bottom nav (60) + compact header/toolbar (60)
-    const update = () => setMaxViewportH(Math.max(200, window.innerHeight - 180));
+    // Fixed overhead: top nav (60) + bottom nav (60) + pt-6 (24) + header (44) +
+    // mb-6 (24) + toolbar (44) + gap-6×2 (48) + legend (20) + pb-4 (16) = 340px
+    // Cap at 440 so cells don't grow huge on large monitors.
+    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 340, 440)));
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
