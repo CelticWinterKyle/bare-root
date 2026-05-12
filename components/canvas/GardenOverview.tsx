@@ -158,7 +158,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     const handler = (e: WheelEvent) => {
       e.preventDefault();
       const { zoom: z, panX: px, panY: py, vbW: vw, vbH: vh } = viewStateRef.current;
-      const newZ = Math.max(0.4, Math.min(8, z * (e.deltaY < 0 ? 1.13 : 0.87)));
+
+      // Normalize across deltaMode (pixels / lines / pages)
+      let delta = e.deltaY;
+      if (e.deltaMode === 1) delta *= 32;
+      else if (e.deltaMode === 2) delta *= 600;
+
+      // Proportional exponential zoom — each pixel of scroll = tiny nudge
+      const clamped = Math.max(-200, Math.min(200, delta));
+      const factor = Math.pow(0.999, clamped);
+
+      const newZ = Math.max(0.4, Math.min(8, z * factor));
       const rect = svg.getBoundingClientRect();
       const rx = (e.clientX - rect.left) / rect.width;
       const ry = (e.clientY - rect.top) / rect.height;
