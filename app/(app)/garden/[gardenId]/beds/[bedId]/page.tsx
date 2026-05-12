@@ -1,18 +1,50 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
+import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { getCropRotationWarnings } from "@/lib/services/crop-rotation";
 
-export default async function BedPage({
+export async function generateMetadata({
   params,
 }: {
   params: Promise<{ gardenId: string; bedId: string }>;
+}): Promise<Metadata> {
+  const { bedId } = await params;
+  const bed = await db.bed.findUnique({
+    where: { id: bedId },
+    select: { name: true, garden: { select: { name: true } } },
+  });
+  return {
+    title: bed ? `${bed.name} — ${bed.garden.name} | Bare Root` : "Bare Root",
+  };
+}
+
+export default async function BedPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ gardenId: string; bedId: string }>;
+  searchParams: Promise<{ season?: string }>;
 }) {
   const { gardenId, bedId } = await params;
+  const { season: seasonParam } = await searchParams;
   const user = await requireUser();
+
+  // Fetch all seasons so we can offer the selector
+  const allSeasons = await db.season.findMany({
+    where: { gardenId },
+    orderBy: { startDate: "desc" },
+  });
+
+  const viewingSeason =
+    allSeasons.find((s) => s.id === seasonParam) ??
+    allSeasons.find((s) => s.isActive) ??
+    null;
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, gardenId, garden: { userId: user.id } },
@@ -29,7 +61,7 @@ export default async function BedPage({
       cells: {
         include: {
           plantings: {
-            where: { season: { isActive: true } },
+            where: viewingSeason ? { seasonId: viewingSeason.id } : { season: { isActive: true } },
             include: {
               plant: {
                 select: {
@@ -50,19 +82,14 @@ export default async function BedPage({
 
   if (!bed) notFound();
 
-  // Active season for this garden
-  const activeSeason = await db.season.findFirst({
-    where: { gardenId, isActive: true },
-  });
-
   // Crop rotation warnings for this bed
-  const rotationWarnings = activeSeason
-    ? (await getCropRotationWarnings(gardenId, activeSeason.id)).filter(
+  const rotationWarnings = viewingSeason
+    ? (await getCropRotationWarnings(gardenId, viewingSeason.id)).filter(
         (w) => w.bedId === bed.id
       )
     : [];
 
-  // All plant IDs in this bed for the active season (for companion lookup)
+  // All plant IDs in this bed for the viewing season (for companion lookup)
   const bedPlantIds = [
     ...new Set(
       bed.cells.flatMap((cell) => cell.plantings.map((p) => p.plantId))
@@ -115,7 +142,6 @@ export default async function BedPage({
     if (rawPlanting) {
       const plantId = rawPlanting.plantId;
 
-      // Relations where this cell's plant is one side
       const relevant = companionRelations.filter(
         (r) => r.plantId === plantId || r.relatedId === plantId
       );
@@ -124,7 +150,6 @@ export default async function BedPage({
       for (const r of relevant) {
         const otherId = r.plantId === plantId ? r.relatedId : r.plantId;
         const otherName = r.plantId === plantId ? r.related.name : r.plant.name;
-        // Only warn if the other plant is actually in this bed
         if (!bedPlantIds.includes(otherId) || otherId === plantId) continue;
         const key = `${r.type}-${otherId}`;
         if (seen.has(key)) continue;
@@ -152,6 +177,8 @@ export default async function BedPage({
     };
   });
 
+  const isPro = user.subscriptionTier === "PRO";
+
   return (
     <div
       className="w-full px-8 py-8 flex flex-col justify-center"
@@ -159,7 +186,7 @@ export default async function BedPage({
     >
       {/* Compact header: back · bed name · stat chips — centered */}
       <div className="max-w-3xl mx-auto mb-6">
-        {/* Row 1: back link + bed name */}
+        {/* Row 1: back link + bed name + season selector */}
         <div className="flex items-center gap-2 min-h-[44px]">
           <Link
             href={`/garden/${gardenId}`}
@@ -170,6 +197,17 @@ export default async function BedPage({
           </Link>
           <span className="text-[#D8D3CB] select-none">/</span>
           <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
+          {allSeasons.length > 1 && (
+            <div className="ml-auto">
+              <Suspense>
+                <SeasonSelector
+                  seasons={allSeasons}
+                  selectedId={viewingSeason?.id ?? ""}
+                  isPro={isPro}
+                />
+              </Suspense>
+            </div>
+          )}
         </div>
         {/* Row 2: chips — always-visible + secondary hidden on mobile */}
         <div className="flex items-center gap-1.5 flex-wrap mt-1">
@@ -212,8 +250,8 @@ export default async function BedPage({
         gridRows={bed.gridRows}
         cellSizeIn={bed.cellSizeIn}
         cells={cells}
-        seasonId={activeSeason?.id ?? ""}
-        isPro={user.subscriptionTier === "PRO"}
+        seasonId={viewingSeason?.id ?? ""}
+        isPro={isPro}
         userId={user.id}
         recentPlants={recentPlants}
       />

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Sprout, BookOpen, CalendarDays, Settings } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, BookOpen, CalendarDays, Settings } from "lucide-react";
 
 const tabs = [
   { href: "/dashboard", label: "Home",     icon: LayoutDashboard },
-  { href: "/garden",    label: "Garden",   icon: Sprout },
+  { href: "/garden",    label: "Garden",   icon: LayoutGrid },
   { href: "/plants",    label: "Plants",   icon: BookOpen },
   { href: "/calendar",  label: "Calendar", icon: CalendarDays },
   { href: "/settings",  label: "Settings", icon: Settings },
@@ -29,13 +29,13 @@ export function BottomNav() {
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                   isActive
-                    ? "bg-[#EEF6E7]"
+                    ? "bg-[#2D5016] shadow-sm"
                     : "bg-transparent hover:bg-[#F5F0E8]"
                 }`}
               >
                 <Icon
                   className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-[#2D5016]" : "text-[#9E9890]"
+                    isActive ? "text-white" : "text-[#9E9890]"
                   }`}
                   strokeWidth={isActive ? 2.5 : 2}
                 />

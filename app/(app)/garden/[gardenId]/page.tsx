@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
@@ -8,6 +9,16 @@ import { GardenOverview } from "@/components/canvas/GardenOverview";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ gardenId: string }>;
+}): Promise<Metadata> {
+  const { gardenId } = await params;
+  const garden = await db.garden.findUnique({ where: { id: gardenId }, select: { name: true } });
+  return { title: garden ? `${garden.name} | Bare Root` : "Bare Root" };
+}
 
 export default async function GardenPage({
   params,

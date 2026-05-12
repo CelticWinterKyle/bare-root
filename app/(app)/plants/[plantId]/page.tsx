@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getPlantAction } from "@/app/actions/plants";
 import { notFound } from "next/navigation";
@@ -27,6 +28,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   SHRUB: "Shrub",
   OTHER: "Other",
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ plantId: string }>;
+}): Promise<Metadata> {
+  const { plantId } = await params;
+  const plant = await getPlantAction(plantId);
+  return {
+    title: plant ? `${plant.name} | Bare Root Plant Library` : "Bare Root",
+  };
+}
 
 export default async function PlantDetailPage({
   params,
