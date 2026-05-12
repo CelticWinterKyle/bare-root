@@ -108,10 +108,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     ? [...cells].sort((a, b) => a.col !== b.col ? a.col - b.col : a.row - b.row)
     : cells;
 
-  // Auto-fit: largest square cell that makes the full bed fit the viewport
+  // Auto-fit cell size:
+  // - fitByH caps cells so the bed never overflows vertically
+  // - targetByH is a floor that fills ~65% of the viewport height (horizontal scroll OK)
+  // - fitByW is the natural width-based size
+  // Result: wide/shallow beds (few rows) grow to fill the screen; tall beds stay fully visible
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
-  const baseCellPx = Math.max(20, Math.min(fitByW, fitByH));
+  const targetByH = Math.min(200, Math.floor((maxViewportH * 0.65 - FRAME_PAD) / displayRows));
+  const baseCellPx = Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
   // Dense mode: hide labels when cells are too small to read them
