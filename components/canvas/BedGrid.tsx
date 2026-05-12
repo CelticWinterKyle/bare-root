@@ -93,9 +93,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(500);
   useEffect(() => {
-    // Subtract fixed chrome: top nav (60) + bottom nav (60) + page header (50) +
-    // toolbar (44) + legend (32) + gaps (20) = 266px
-    const update = () => setMaxViewportH(Math.max(200, window.innerHeight - 266));
+    // Subtract fixed chrome: top nav (60) + bottom nav (60) + compact header/toolbar (60)
+    const update = () => setMaxViewportH(Math.max(200, window.innerHeight - 180));
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -117,7 +116,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   //   wide beds (>4 cols) use min(fitByW, fitByH) — no horizontal scroll forced
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
-  const targetByH = Math.min(240, Math.floor((maxViewportH * 0.82 - FRAME_PAD) / displayRows));
+  const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD) / displayRows));
   const baseCellPx = Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
@@ -154,7 +153,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {/* Toolbar — centered, constrained width */}
       <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-2 flex-wrap">
@@ -223,7 +222,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
       <div className="flex gap-4 items-start">
         {/* Bed column */}
-        <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Scrollable viewport — max height caps it, shrinks to content */}
           <div
             ref={viewportRef}

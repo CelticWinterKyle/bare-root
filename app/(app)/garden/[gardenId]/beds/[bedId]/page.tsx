@@ -155,7 +155,7 @@ export default async function BedPage({
   return (
     <div className="w-full px-8 pt-6 pb-4">
       {/* Compact header: back · bed name · stat chips — centered */}
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto mb-6">
         <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
           <Link
             href={`/garden/${gardenId}`}
