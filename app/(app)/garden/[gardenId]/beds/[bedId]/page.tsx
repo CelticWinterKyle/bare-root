@@ -155,49 +155,51 @@ export default async function BedPage({
   return (
     <div className="flex flex-col justify-center" style={{ minHeight: "calc(100dvh - 120px)" }}>
     <div className="w-full px-8 pt-3 pb-4">
-      {/* Compact header: back · bed name · stat chips all on one line */}
-      <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
-        <Link
-          href={`/garden/${gardenId}`}
-          className="flex items-center gap-1 text-sm text-[#9E9890] hover:text-[#2D5016] transition-colors group shrink-0"
-        >
-          <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="font-medium">{bed.garden.name}</span>
-        </Link>
-        <span className="text-[#D8D3CB] select-none">/</span>
-        <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-            {bed.widthFt} × {bed.heightFt} ft
-          </span>
-          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-            {bed.gridCols} × {bed.gridRows} grid
-          </span>
-          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
-            {bed.cellSizeIn}&quot; cells
-          </span>
-          {bed.garden.usdaZone && (
-            <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
-              Zone {bed.garden.usdaZone}
+      {/* Compact header: back · bed name · stat chips — constrained width */}
+      <div className="max-w-3xl">
+        <div className="flex items-center gap-2 flex-wrap min-h-[44px]">
+          <Link
+            href={`/garden/${gardenId}`}
+            className="flex items-center gap-1 text-sm text-[#9E9890] hover:text-[#2D5016] transition-colors group shrink-0"
+          >
+            <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="font-medium">{bed.garden.name}</span>
+          </Link>
+          <span className="text-[#D8D3CB] select-none">/</span>
+          <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+              {bed.widthFt} × {bed.heightFt} ft
             </span>
-          )}
-        </div>
-      </div>
-
-      {/* Crop rotation warnings — compact inline strip */}
-      {rotationWarnings.length > 0 && (
-        <div className="mt-2 space-y-1.5">
-          {rotationWarnings.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
-              <RotateCcw className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
-              <span className="text-yellow-800">
-                <span className="font-semibold text-yellow-900">Rotation: </span>
-                {w.plantFamily} ({w.currentPlants.join(", ")}) was here in {w.seasonName}.
+            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+              {bed.gridCols} × {bed.gridRows} grid
+            </span>
+            <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+              {bed.cellSizeIn}&quot; cells
+            </span>
+            {bed.garden.usdaZone && (
+              <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
+                Zone {bed.garden.usdaZone}
               </span>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Crop rotation warnings — compact inline strip */}
+        {rotationWarnings.length > 0 && (
+          <div className="mt-2 space-y-1.5">
+            {rotationWarnings.map((w, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
+                <RotateCcw className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
+                <span className="text-yellow-800">
+                  <span className="font-semibold text-yellow-900">Rotation: </span>
+                  {w.plantFamily} ({w.currentPlants.join(", ")}) was here in {w.seasonName}.
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <BedGrid
         bedId={bed.id}

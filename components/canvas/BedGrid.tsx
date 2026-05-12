@@ -155,7 +155,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Toolbar */}
+      {/* Toolbar — constrained width so controls stay compact above the full-width bed */}
+      <div className="max-w-3xl">
       <div className="flex items-center gap-2 flex-wrap">
         {/* Sun mapping */}
         <button
@@ -203,10 +204,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
               </button>
             )}
 
-            {/* Plan bed — pushed to the right */}
+            {/* Plan bed — pushed to right edge of constrained toolbar */}
             <button
               onClick={() => setPanel(panel.type === "smart-layout" ? { type: "none" } : { type: "smart-layout" })}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-auto ${
                 panel.type === "smart-layout"
                   ? "bg-[#2D5016] text-white shadow-sm"
                   : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"
@@ -217,6 +218,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             </button>
           </>
         )}
+      </div>
       </div>
 
       <div className="flex gap-4 items-start">
