@@ -23,6 +23,7 @@ type Props = {
   userId: string;
   recentPlants: Plant[];
   onAssignmentsAccepted: (assignments: LayoutAssignment[]) => void;
+  onHoverAssignment?: (coords: { row: number; col: number } | null) => void;
   onClose: () => void;
 };
 
@@ -34,6 +35,7 @@ export function SmartLayoutPanel({
   userId,
   recentPlants,
   onAssignmentsAccepted,
+  onHoverAssignment,
   onClose,
 }: Props) {
   const [step, setStep] = useState<Step>("wishlist");
@@ -112,7 +114,12 @@ export function SmartLayoutPanel({
 
         <div className="space-y-2 max-h-[280px] overflow-y-auto">
           {assignments.map((a, i) => (
-            <div key={i} className="p-2.5 bg-[#F5F0E8] rounded-lg border border-[#E8E2D9]">
+            <div
+              key={i}
+              className="p-2.5 bg-[#F5F0E8] rounded-lg border border-[#E8E2D9] cursor-default"
+              onMouseEnter={() => onHoverAssignment?.({ row: a.row, col: a.col })}
+              onMouseLeave={() => onHoverAssignment?.(null)}
+            >
               <div className="flex items-center justify-between mb-0.5">
                 <span className="text-sm font-medium text-[#1C1C1A]">{a.plantName}</span>
                 <span className="text-xs text-[#9E9890]">

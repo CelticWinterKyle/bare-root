@@ -193,11 +193,11 @@ export default async function BedPage({
         {rotationWarnings.length > 0 && (
           <div className="mt-2 space-y-1.5">
             {rotationWarnings.map((w, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
-                <RotateCcw className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
-                <span className="text-yellow-800">
-                  <span className="font-semibold text-yellow-900">Rotation: </span>
-                  {w.plantFamily} ({w.currentPlants.join(", ")}) was here in {w.seasonName}.
+              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[#FEF3E2] border border-[#F5D08A] rounded-lg text-xs">
+                <RotateCcw className="w-3.5 h-3.5 text-[#C4790A] shrink-0" />
+                <span className="text-[#7C4A0A]">
+                  <span className="font-semibold">Crop rotation: </span>
+                  {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}. Consider planting a different family.
                 </span>
               </div>
             ))}

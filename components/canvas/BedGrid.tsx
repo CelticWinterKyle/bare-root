@@ -154,6 +154,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const canRotate = gridRows !== gridCols;
   const isEmpty = cells.every((c) => !c.planting);
 
+  // For filtered legend and smart-layout highlight
+  const presentStatuses = new Set(
+    cells.map((c) => c.planting?.status).filter(Boolean) as PlantingStatus[]
+  );
+  const hasAnyWarnings = cells.some((c) => c.warnings.length > 0);
+  const [hoveredAssignment, setHoveredAssignment] = useState<{ row: number; col: number } | null>(null);
+
   const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]";
 
   return (
@@ -273,7 +280,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                       const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
                       const isNew = justPlanted.has(cell.id);
                       const labelSize = Math.max(8, Math.min(13, cellPx * 0.2));
-                      const badgePx = Math.max(5, Math.min(10, cellPx * 0.13));
+                      const badgePx = Math.max(12, Math.min(14, cellPx * 0.2));
+                      const isHoveredByPlanner = hoveredAssignment?.row === cell.row && hoveredAssignment?.col === cell.col;
 
                       return (
                         <div
@@ -292,7 +300,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                               : preview
                               ? "rgba(107, 143, 71, 0.25)"
                               : "rgba(58, 38, 22, 0.6)",
-                            boxShadow: isSelected
+                            boxShadow: isHoveredByPlanner
+                              ? "inset 0 0 0 3px #C4790A, 0 2px 8px rgba(196,121,10,0.4)"
+                              : isSelected
                               ? "inset 0 0 0 2.5px #2D5016, 0 2px 8px rgba(45,80,22,0.3)"
                               : planting
                               ? "inset 0 -2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)"
@@ -318,9 +328,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                             </div>
                           )}
 
-                          {/* Status dot for dense cells */}
+                          {/* Dense mode: abbreviated name instead of invisible dot */}
                           {planting && !sunMode && dense && (
-                            <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-white/60" />
+                            <span
+                              className="absolute inset-0 flex items-center justify-center text-white font-bold select-none pointer-events-none"
+                              style={{
+                                fontSize: Math.max(7, cellPx * 0.28),
+                                textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+                              }}
+                              title={planting.plant.name}
+                            >
+                              {planting.plant.name.slice(0, Math.max(1, Math.floor(cellPx / 14)))}
+                            </span>
                           )}
 
                           {/* Preview overlay */}
@@ -334,15 +353,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                             </div>
                           )}
 
-                          {/* Companion badge */}
+                          {/* Companion badge — min 12px, white ring, earthy colors */}
                           {!sunMode && planting && (hasHarmful || hasBeneficial) && (
                             <span
-                              className="absolute top-0.5 right-0.5 rounded-full"
+                              className="absolute top-1 right-1 rounded-full ring-[1.5px] ring-white shadow-sm"
                               style={{
                                 width: badgePx,
                                 height: badgePx,
-                                background: hasHarmful ? "#EF4444" : "#22C55E",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                                background: hasHarmful ? "#B85C3A" : "#4A7C2F",
                               }}
                             />
                           )}
@@ -362,23 +380,35 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             </div>
           </div>
 
-          {/* Legend */}
+          {/* Legend — only show statuses present in this bed */}
           {!sunMode && (
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
-              {Object.entries(STATUS_STYLES).map(([status, s]) => (
-                <div key={status} className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm shadow-sm" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }} />
-                  <span className="text-xs text-[#9E9890]">{s.label}</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm" />
-                <span className="text-xs text-[#9E9890]">Conflict</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm" />
-                <span className="text-xs text-[#9E9890]">Beneficial</span>
-              </div>
+              {presentStatuses.size === 0 && !hasAnyWarnings ? (
+                <span className="text-xs text-[#9E9890]">Tap any cell to add a plant</span>
+              ) : (
+                <>
+                  {Object.entries(STATUS_STYLES)
+                    .filter(([key]) => presentStatuses.has(key as PlantingStatus))
+                    .map(([key, s]) => (
+                      <div key={key} className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-sm shadow-sm" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }} />
+                        <span className="text-xs text-[#9E9890]">{s.label}</span>
+                      </div>
+                    ))}
+                  {hasAnyWarnings && (
+                    <>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#B85C3A" }} />
+                        <span className="text-xs text-[#9E9890]">Conflict</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#4A7C2F" }} />
+                        <span className="text-xs text-[#9E9890]">Beneficial</span>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -436,6 +466,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                       recentPlants={recentPlants}
                       onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
                       onClose={() => setPanel({ type: "none" })}
+                      onHoverAssignment={setHoveredAssignment}
                     />
                   ) : (
                     <div className="text-center py-8 space-y-3">
