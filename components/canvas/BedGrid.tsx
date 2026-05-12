@@ -27,8 +27,9 @@ const SUN_BG: Record<string, string> = {
   FULL_SUN: "#FEF9C3", PARTIAL_SUN: "#FEF3C7", PARTIAL_SHADE: "#E0F2FE", FULL_SHADE: "#F1F5F9",
 };
 
-// Wooden frame padding (p-3 = 24px × 2 sides, plus gap-px and p-px gaps)
-const FRAME_PAD = 28;
+// Vertical space to subtract from cell sizing:
+// wooden frame p-3 (24) + inner p-px (2) + centering py-3 (24) ≈ 52px
+const FRAME_PAD = 52;
 
 type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null };
 type Planting = {
@@ -93,10 +94,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(400);
   useEffect(() => {
-    // Fixed overhead: top nav (60) + bottom nav (60) + pt-6 (24) + header (44) +
-    // mb-6 (24) + toolbar (44) + gap-6×2 (48) + legend (20) + pb-4 (16) = 340px
-    // Cap at 440 so cells don't grow huge on large monitors.
-    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 340, 440)));
+    // header h-14 (56) + main pb-24 (96) + pt-6 (24) + page-header+mb-6 (68)
+    // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 368px → use 380 for safety
+    // Cap at 420 so cells don't grow huge on large monitors.
+    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 380, 420)));
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
