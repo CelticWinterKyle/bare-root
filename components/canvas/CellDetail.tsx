@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { removePlanting, updatePlantingStatus, updatePlantingDates } from "@/app/actions/planting";
 import { Loader2, Trash2 } from "lucide-react";
@@ -51,6 +51,10 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
   const [isUpdating, startUpdate] = useTransition();
   const [isDating, startDate] = useTransition();
   const [isRemoving, startRemove] = useTransition();
+  const [removeConfirm, setRemoveConfirm] = useState(false);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (removeTimerRef.current) clearTimeout(removeTimerRef.current); }, []);
 
   const beneficial = warnings.filter((w) => w.type === "BENEFICIAL");
   const harmful = warnings.filter((w) => w.type === "HARMFUL");
@@ -69,7 +73,13 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
     });
   }
 
-  function handleRemove() {
+  function handleRemoveClick() {
+    if (!removeConfirm) {
+      setRemoveConfirm(true);
+      removeTimerRef.current = setTimeout(() => setRemoveConfirm(false), 3000);
+      return;
+    }
+    if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
     startRemove(async () => {
       await removePlanting(planting.id);
       onClose();
@@ -192,20 +202,24 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
         View harvest log &amp; photos →
       </Link>
 
-      {/* Remove */}
+      {/* Remove — requires two taps to confirm */}
       <Button
         variant="ghost"
         size="sm"
-        onClick={handleRemove}
+        onClick={handleRemoveClick}
         disabled={isRemoving}
-        className="w-full text-[#B85C3A] hover:text-[#B85C3A] hover:bg-red-50"
+        className={`w-full transition-all duration-200 ${
+          removeConfirm
+            ? "bg-[#B85C3A] text-white hover:bg-[#954928] hover:text-white"
+            : "text-[#B85C3A] hover:text-[#B85C3A] hover:bg-red-50"
+        }`}
       >
         {isRemoving ? (
           <Loader2 className="w-4 h-4 animate-spin mr-2" />
         ) : (
           <Trash2 className="w-4 h-4 mr-2" />
         )}
-        Remove plant
+        {removeConfirm ? "Tap again to confirm" : "Remove plant"}
       </Button>
     </div>
   );
