@@ -31,7 +31,7 @@ export default async function PlantsPage({
           category ? { category: category as PlantCategory } : {},
         ],
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ source: "desc" }, { name: "asc" }],
       take: 48,
     }),
     db.seedInventory.findMany({

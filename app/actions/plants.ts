@@ -34,6 +34,24 @@ function mapCategory(type: string | null, edible?: boolean | null, flowers?: boo
   return flowers ? "FLOWER" : "OTHER";
 }
 
+const VEGETABLE_KEYWORDS = ["tomato", "pepper", "jalape", "lettuce", "spinach", "kale", "cabbage", "carrot", "beet", "radish", "cucumber", "zucchini", "squash", "pumpkin", "bean", " pea", "corn", "onion", "garlic", "leek", "broccoli", "cauliflower", "potato", "eggplant", "celery", "chard", "arugula", "turnip", "artichoke", "asparagus", "okra", "collard", "bok choy", "kohlrabi", "brussels"];
+const HERB_KEYWORDS = ["basil", "mint", "oregano", "thyme", "rosemary", "sage", "dill", "parsley", "cilantro", "chive", "tarragon", "lavender", "lemongrass", "bay leaf", "chamomile", "borage", "lemon balm", "marjoram", "fennel"];
+const FRUIT_KEYWORDS = ["strawberry", "blueberry", "raspberry", "blackberry", "apple", "peach", "cherry", "plum", "melon", "watermelon", "cantaloupe", "grape", "fig", "lemon", "lime", "orange", "mango", "banana", "avocado", "kiwi", "pear", "apricot"];
+const FLOWER_KEYWORDS = ["rose", "sunflower", "marigold", "zinnia", "dahlia", "petunia", "pansy", "daisy", "lily", "tulip", "daffodil", "iris", "poppy", "cosmos", "aster", "chrysanthemum", "snapdragon", "nasturtium", "calendula", "lavender"];
+const TREE_KEYWORDS = ["oak", "maple", "pine", "cedar", "spruce", "fir", "birch", "elm", "ash tree", "willow", "poplar", "magnolia", "dogwood", "palm", "cypress", "juniper", "sequoia", "redwood", " tree"];
+const SHRUB_KEYWORDS = ["boxwood", "holly", "lilac", "hydrangea", "azalea", "rhododendron", "forsythia", "viburnum", "spirea", "privet", "barberry", "shrub", "bush"];
+
+function inferCategoryFromName(name: string): PlantCategory {
+  const n = ` ${name.toLowerCase()} `;
+  if (VEGETABLE_KEYWORDS.some((k) => n.includes(k))) return "VEGETABLE";
+  if (HERB_KEYWORDS.some((k) => n.includes(k))) return "HERB";
+  if (FRUIT_KEYWORDS.some((k) => n.includes(k))) return "FRUIT";
+  if (FLOWER_KEYWORDS.some((k) => n.includes(k))) return "FLOWER";
+  if (TREE_KEYWORDS.some((k) => n.includes(k))) return "TREE";
+  if (SHRUB_KEYWORDS.some((k) => n.includes(k))) return "SHRUB";
+  return "OTHER";
+}
+
 export async function searchPlantsAction(
   query: string,
   category: PlantCategory | null,
@@ -70,7 +88,7 @@ export async function searchPlantsAction(
               name: item.common_name,
               scientificName: item.scientific_name?.[0] ?? null,
               commonNames: item.other_name ?? [],
-              category: mapCategory(null),
+              category: inferCategoryFromName(item.common_name),
               sunRequirement: mapSunlight(item.sunlight ?? []),
               waterRequirement: mapWatering(item.watering),
               imageUrl: item.default_image?.medium_url ?? null,
@@ -105,6 +123,28 @@ export async function getPlantAction(plantId: string) {
     },
   });
   if (!plant) return null;
+
+  // For seed plants without an externalId, find a matching Perenual entry to get an image
+  if (!plant.externalId && !plant.imageUrl && plant.source === "seed") {
+    const result = await searchPerenual(plant.name);
+    const match = result?.data?.[0];
+    if (match?.default_image?.medium_url) {
+      await db.plantLibrary.update({
+        where: { id: plantId },
+        data: {
+          externalId: String(match.id),
+          imageUrl: match.default_image.medium_url,
+        },
+      });
+      return db.plantLibrary.findFirst({
+        where: { id: plantId },
+        include: {
+          companions: { include: { related: true } },
+          antagonists: { include: { plant: true } },
+        },
+      });
+    }
+  }
 
   // Enrich from API if sparse
   if (plant.externalId && !plant.description) {
