@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateBedPosition } from "@/app/actions/garden";
 import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
 
@@ -374,6 +375,8 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       <div className="relative" style={{ height: "clamp(380px, 55vw, 720px)" }}>
       <svg
         ref={svgRef}
+        role="application"
+        aria-label={`Garden overview. ${beds.length} bed${beds.length !== 1 ? "s" : ""}. Tab to a bed and press Enter to open it.`}
         viewBox={`${panX} ${panY} ${vbW} ${vbH}`}
         width="100%"
         height="100%"
@@ -466,11 +469,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             return (
               <g
                 key={bed.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`${bed.name}: ${bed.plantCount} plant${bed.plantCount !== 1 ? "s" : ""}. ${bed.widthFt}×${bed.heightFt} ft. Press Enter to open.`}
                 filter={`url(#${isD ? "shd-d" : isH ? "shd-h" : "shd-n"})`}
                 style={{ cursor: isD ? "grabbing" : "grab" }}
                 onPointerDown={(e) => onBedPointerDown(e, bed)}
                 onPointerEnter={() => !dragging && setHoveredBed(bed.id)}
                 onPointerLeave={() => setHoveredBed(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") router.push(`/garden/${garden.id}/beds/${bed.id}`);
+                }}
               >
                 <polygon points={yFace} fill={yFaceColor} />
                 <polygon points={xFace} fill={xFaceColor} />
@@ -581,6 +590,17 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       >
         Drag to pan · Right-drag or Ctrl+drag to orbit · Pinch or scroll to zoom
       </p>
+
+      {/* Screen reader fallback — visually hidden, fully navigable */}
+      <ul className="sr-only">
+        {beds.map((bed) => (
+          <li key={bed.id}>
+            <Link href={`/garden/${garden.id}/beds/${bed.id}`}>
+              {bed.name}: {bed.plantCount} {bed.plantCount === 1 ? "plant" : "plants"}, {bed.widthFt}×{bed.heightFt} ft
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
