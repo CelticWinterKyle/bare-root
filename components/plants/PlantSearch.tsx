@@ -165,19 +165,19 @@ export function PlantSearch({
               <Link
                 key={plant.id}
                 href={`/plants/${plant.id}`}
-                className="bg-white rounded-xl overflow-hidden border border-[#E8E2D9] hover:border-[#6B8F47] hover:shadow-sm transition-all group flex flex-col"
+                className="bg-white rounded-xl overflow-hidden border border-[#E8E2D9] hover:border-[#6B8F47] hover:shadow-md transition-all group flex flex-col cursor-pointer"
               >
                 {/* Top accent strip */}
                 <div className="h-1 w-full" style={{ background: style.accent }} />
 
                 {/* Image or placeholder */}
                 {plant.imageUrl ? (
-                  <div className="aspect-[4/3] relative bg-[#F5F0E8]">
+                  <div className="aspect-[4/3] relative bg-[#F5F0E8] overflow-hidden">
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
                       fill
-                      className="object-cover"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 33vw"
                     />
                   </div>

@@ -97,7 +97,7 @@ export default async function GardenPage({
 
   return (
     <div>
-      <div className="max-w-3xl mx-auto px-4 pt-8 pb-5">
+      <div className="max-w-3xl mx-auto px-4 pt-8 pb-6">
       {/* Header */}
       <header className="mb-6">
         <div className="flex items-start justify-between">
@@ -146,7 +146,7 @@ export default async function GardenPage({
       {/* Compact weather strip */}
       {weatherCurrent ? (
         <div
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border ${
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
             frostRisk
               ? "bg-blue-50 border-blue-200"
               : "bg-[#F5F0E8] border-[#E8E2D9]"
@@ -185,7 +185,7 @@ export default async function GardenPage({
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5 border bg-[#F5F0E8] border-[#E8E2D9]">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border bg-[#F5F0E8] border-[#E8E2D9]">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/60">
             <Thermometer className="w-4 h-4 text-[#D8D3CB]" />
           </div>

@@ -90,6 +90,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     return () => ro.disconnect();
   }, []);
 
+  // Keyboard zoom shortcuts: +/= to zoom in, - to zoom out, 0 to reset
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(4, z * 1.35));
+      if (e.key === "-") setZoom((z) => Math.max(0.25, z / 1.35));
+      if (e.key === "0") setZoom(1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Height constraint derived from window height — avoids circular dependency
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(400);
@@ -202,10 +214,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             <div className="w-px h-5 bg-[#E8E2D9]" />
 
             {/* Zoom controls */}
-            <button onClick={() => setZoom((z) => Math.min(4, z * 1.35))} title="Zoom in" className={btnBase}>
+            <button onClick={() => setZoom((z) => Math.min(4, z * 1.35))} title="Zoom in (+)" className={btnBase}>
               <ZoomIn className="w-4 h-4" />
             </button>
-            <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.35))} title="Zoom out" className={btnBase}>
+            <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.35))} title="Zoom out (−)" className={btnBase}>
               <ZoomOut className="w-4 h-4" />
             </button>
             {zoom !== 1 && (

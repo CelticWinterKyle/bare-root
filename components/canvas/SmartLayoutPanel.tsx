@@ -107,7 +107,7 @@ export function SmartLayoutPanel({
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#6B8F47]" />
-          <span className="text-sm font-medium text-[#1C1C1A]">
+          <span className="font-display text-sm font-semibold text-[#1C1C1A]">
             {assignments.length} plant{assignments.length !== 1 ? "s" : ""} placed
           </span>
         </div>

@@ -73,8 +73,10 @@ export function NotificationBell({
             </div>
 
             {localReminders.length === 0 ? (
-              <div className="px-4 py-8 text-center text-[#9E9890]">
-                <p className="text-sm">All caught up!</p>
+              <div key="empty" className="px-4 py-8 text-center animate-in fade-in duration-300">
+                <Leaf className="w-7 h-7 text-[#D8D3CB] mx-auto mb-2" />
+                <p className="text-sm font-medium text-[#6B6560]">You&apos;re all caught up</p>
+                <p className="text-xs text-[#9E9890] mt-0.5">No pending reminders</p>
               </div>
             ) : (
               <div className="max-h-80 overflow-y-auto divide-y divide-[#F5F0E8]">
