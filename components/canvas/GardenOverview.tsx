@@ -3,7 +3,7 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateBedPosition } from "@/app/actions/garden";
-import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, X, RotateCcw, RotateCw, ChevronUp, ChevronDown, Home } from "lucide-react";
 
 // ─── Projection constants ─────────────────────────────────────────────────────
 const TW = 50;
@@ -90,6 +90,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [gesturing, setGesturing] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Track SVG pixel width for dense-bed suppression threshold
   const [svgPxW, setSvgPxW] = useState(600);
@@ -207,6 +208,34 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     setZoom(1); setPanX(0); setPanY(0);
   }
 
+  function enterFullscreen() {
+    setIsFullscreen(true);
+  }
+
+  function exitFullscreen() {
+    setIsFullscreen(false);
+    setZoom(1); setPanX(0); setPanY(0);
+    setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL);
+  }
+
+  // Lock body scroll and handle Escape key while fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return;
+    document.body.style.overflow = "hidden";
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+        setZoom(1); setPanX(0); setPanY(0);
+        setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isFullscreen]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Pointer handlers ──────────────────────────────────────────────────────
   function onBedPointerDown(e: React.PointerEvent, bed: Bed) {
     e.stopPropagation();
@@ -228,8 +257,8 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     const pts = activePointersRef.current;
 
     if (pts.size === 1) {
-      // Right-click or Ctrl+drag → orbit (rotate + tilt). Otherwise → pan.
-      if (e.button === 2 || e.ctrlKey) {
+      // Right-click or Ctrl+drag → orbit only when fullscreen; otherwise always pan.
+      if ((e.button === 2 || e.ctrlKey) && isFullscreen) {
         gestureRef.current = {
           mode: "orbit",
           startX: e.clientX, startY: e.clientY,
@@ -313,7 +342,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       setZoom(newZoom);
       setPanX(g.startMidVBX - (curMidCX - g.svgLeft) / g.svgW * newVbW);
       setPanY(g.startMidVBY - (curMidCY - g.svgTop) / g.svgH * newVbH);
-      setAzimuth(g.startAz - (newAngle - g.startAngle));
+      if (isFullscreen) setAzimuth(g.startAz - (newAngle - g.startAngle));
     }
   }
 
@@ -379,10 +408,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
 
   return (
     <div
-      className="relative w-full flex flex-col"
+      className={isFullscreen ? "fixed inset-0 z-50 flex flex-col" : "relative w-full flex flex-col"}
       style={{ background: "#19280e" }}
     >
-      <div className="relative" style={{ height: "clamp(200px, 28vw, 280px)" }}>
+      <div className="relative" style={isFullscreen ? { flex: 1, minHeight: 0 } : { height: "clamp(200px, 28vw, 280px)" }}>
       <svg
         ref={svgRef}
         role="application"
@@ -564,51 +593,100 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
         </g>
       </svg>
 
-      {/* Controls */}
-      <div className="absolute bottom-2 right-3 flex flex-col gap-1 z-10">
-        {([
-          { icon: RotateCcw,   label: "Rotate left",  fn: () => { setAzimuth((a) => a + Math.PI / 2); resetView(); } },
-          { icon: RotateCw,    label: "Rotate right", fn: () => { setAzimuth((a) => a - Math.PI / 2); resetView(); } },
-          null,
-          { icon: ChevronUp,   label: "Tilt up",      fn: () => setElevation((el) => Math.min(MAX_EL, el + 0.15)) },
-          { icon: ChevronDown, label: "Tilt down",    fn: () => setElevation((el) => Math.max(MIN_EL, el - 0.15)) },
-          null,
-          { icon: ZoomIn,      label: "Zoom in",      fn: () => applyZoom(zoom * 1.35) },
-          { icon: ZoomOut,     label: "Zoom out",     fn: () => applyZoom(zoom / 1.35) },
-          null,
-          { icon: Maximize2,   label: "Reset view",   fn: () => { resetView(); setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL); } },
-        ] as const).map((ctrl, i) =>
-          ctrl === null ? (
-            <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
-          ) : (
-            <button
-              key={i}
-              onClick={ctrl.fn}
-              title={ctrl.label}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,0.7)" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.7)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
-              }}
-            >
-              <ctrl.icon size={13} />
-            </button>
-          )
-        )}
-      </div>
+      {/* Inline controls: zoom + expand */}
+      {!isFullscreen && (
+        <div className="absolute bottom-2 right-3 flex flex-col gap-1 z-10">
+          {[
+            { icon: ZoomIn,    label: "Zoom in",    fn: () => applyZoom(zoom * 1.35) },
+            { icon: ZoomOut,   label: "Zoom out",   fn: () => applyZoom(zoom / 1.35) },
+            null,
+            { icon: Maximize2, label: "Fullscreen", fn: enterFullscreen },
+          ].map((ctrl, i) =>
+            ctrl === null ? (
+              <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
+            ) : (
+              <button
+                key={i}
+                onClick={ctrl.fn}
+                title={ctrl.label}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,0.7)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.7)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+                }}
+              >
+                <ctrl.icon size={13} />
+              </button>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Fullscreen controls: full orbit set + close */}
+      {isFullscreen && (
+        <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
+          <button
+            onClick={exitFullscreen}
+            title="Exit fullscreen (Esc)"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+            style={{ background: "rgba(28,61,10,0.85)", backdropFilter: "blur(4px)", color: "#fff" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(28,61,10,1)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(28,61,10,0.85)"; }}
+          >
+            <X size={13} />
+          </button>
+          <div className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
+          {[
+            { icon: RotateCcw,   label: "Rotate left",  fn: () => { setAzimuth((a) => a + Math.PI / 2); resetView(); } },
+            { icon: RotateCw,    label: "Rotate right", fn: () => { setAzimuth((a) => a - Math.PI / 2); resetView(); } },
+            null,
+            { icon: ChevronUp,   label: "Tilt up",      fn: () => setElevation((el) => Math.min(MAX_EL, el + 0.15)) },
+            { icon: ChevronDown, label: "Tilt down",    fn: () => setElevation((el) => Math.max(MIN_EL, el - 0.15)) },
+            null,
+            { icon: ZoomIn,      label: "Zoom in",      fn: () => applyZoom(zoom * 1.35) },
+            { icon: ZoomOut,     label: "Zoom out",     fn: () => applyZoom(zoom / 1.35) },
+            null,
+            { icon: Home,        label: "Reset view",   fn: () => { resetView(); setAzimuth(INITIAL_AZ); setElevation(INITIAL_EL); } },
+          ].map((ctrl, i) =>
+            ctrl === null ? (
+              <div key={i} className="h-px mx-1 my-0.5" style={{ background: "rgba(255,255,255,0.15)" }} />
+            ) : (
+              <button
+                key={i}
+                onClick={ctrl.fn}
+                title={ctrl.label}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,0.7)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.7)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+                }}
+              >
+                <ctrl.icon size={13} />
+              </button>
+            )
+          )}
+        </div>
+      )}
       </div>
 
-      <p
-        className="text-[11px] text-center py-2 border-t select-none"
-        style={{ color: "#6b8f47", borderColor: "#2a4018", background: "#19280e" }}
-      >
-        Drag to pan · Right-drag or Ctrl+drag to orbit · Pinch or scroll to zoom
-      </p>
+      {isFullscreen && (
+        <p
+          className="text-[11px] text-center py-2 border-t select-none shrink-0"
+          style={{ color: "#6b8f47", borderColor: "#2a4018" }}
+        >
+          Drag to pan · Two-finger rotate · Pinch to zoom · Right-drag or Ctrl+drag to orbit · Esc to close
+        </p>
+      )}
 
       {/* Screen reader fallback — visually hidden, fully navigable */}
       <ul className="sr-only">
