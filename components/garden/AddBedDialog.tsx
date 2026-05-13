@@ -14,7 +14,7 @@ import {
 import { createBed } from "@/app/actions/bed";
 import { Plus, Loader2 } from "lucide-react";
 
-export function AddBedDialog({ gardenId }: { gardenId: string }) {
+export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; asTile?: boolean; primary?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -50,18 +50,52 @@ export function AddBedDialog({ gardenId }: { gardenId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-[#E4E4DC] text-[#1C3D0A] hover:bg-[#F4F4EC]"
-          />
-        }
-      >
-        <Plus className="w-4 h-4 mr-1" />
-        Add bed
-      </DialogTrigger>
+      {asTile ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          style={{
+            border: "1.5px dashed #E4E4DC",
+            borderRadius: "10px",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#ADADAA",
+            fontFamily: "var(--font-body)",
+            fontSize: "13px",
+            fontWeight: 500,
+            gap: "6px",
+            background: "transparent",
+            width: "100%",
+            minHeight: "80px",
+          }}
+        >
+          <Plus style={{ width: 14, height: 14 }} />
+          Add Bed
+        </button>
+      ) : (
+        <DialogTrigger
+          render={
+            primary ? (
+              <Button
+                size="sm"
+                className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white border-[#1C3D0A]"
+              />
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-[#E4E4DC] text-[#1C3D0A] hover:bg-[#F4F4EC]"
+              />
+            )
+          }
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Add bed
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-display">Add a raised bed</DialogTitle>

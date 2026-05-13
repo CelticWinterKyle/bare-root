@@ -379,10 +379,10 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden border shadow-xl flex flex-col"
-      style={{ background: "#19280e", borderColor: "#2a4018" }}
+      className="relative w-full flex flex-col"
+      style={{ background: "#19280e" }}
     >
-      <div className="relative" style={{ height: "clamp(380px, 55vw, 720px)" }}>
+      <div className="relative" style={{ height: "clamp(200px, 28vw, 280px)" }}>
       <svg
         ref={svgRef}
         role="application"

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, LayoutGrid, CalendarDays,
-  BookOpen, Package, Bell, Settings,
+  BookOpen, Package, Bell, Settings, BarChart2,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -25,7 +25,8 @@ const NAV_SECTIONS = [
   {
     label: "Activity",
     items: [
-      { href: "/reminders", Icon: Bell, label: "Reminders" },
+      { href: "/reminders",    Icon: Bell,      label: "Reminders" },
+      { href: "/harvest",      Icon: BarChart2,  label: "Harvest Log" },
     ],
   },
 ];
