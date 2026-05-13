@@ -46,50 +46,55 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <TrialBanner daysLeft={trialDaysLeft} />
       )}
 
-      {/* ── Mobile layout (< md) ─────────────────────────── */}
-      <div className="flex flex-col md:hidden min-h-screen">
-        <header
-          className="sticky top-0 z-40"
-          style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC", position: "relative" }}
-        >
-          <div className="px-4 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className="font-display font-bold italic"
-                style={{ fontSize: "22px", color: "#1C3D0A", fontVariationSettings: "'opsz' 32", letterSpacing: "-0.025em", lineHeight: 1 }}
-              >
-                bare root
-              </span>
-              <span
-                className="rounded-full"
-                style={{ width: 5, height: 5, background: "#7DA84E", flexShrink: 0, marginBottom: 2 }}
-              />
-            </div>
-            <NotificationBell reminders={bellReminders} unreadCount={unreadCount} />
+      {/* ── Mobile header (< md) ─────────────────────────── */}
+      <header
+        className="md:hidden sticky top-0 z-40"
+        style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC", position: "relative" }}
+      >
+        <div className="px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className="font-display font-bold italic"
+              style={{ fontSize: "22px", color: "#1C3D0A", fontVariationSettings: "'opsz' 32", letterSpacing: "-0.025em", lineHeight: 1 }}
+            >
+              bare root
+            </span>
+            <span
+              className="rounded-full"
+              style={{ width: 5, height: 5, background: "#7DA84E", flexShrink: 0, marginBottom: 2 }}
+            />
           </div>
-          {/* Green gradient accent line */}
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0, height: "2px",
-            background: "linear-gradient(90deg, #1C3D0A 0%, #7DA84E 60%, transparent 100%)",
-            opacity: 0.25,
-          }} />
-        </header>
+          <NotificationBell reminders={bellReminders} unreadCount={unreadCount} />
+        </div>
+        {/* Green gradient accent line */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "2px",
+          background: "linear-gradient(90deg, #1C3D0A 0%, #7DA84E 60%, transparent 100%)",
+          opacity: 0.25,
+        }} />
+      </header>
 
-        <main className="flex-1 pb-24">{children}</main>
-        <BottomNav />
-      </div>
+      {/* ── Content area — single render of children ─────── */}
+      <div className="md:flex md:min-h-screen">
+        {/* Desktop sidebar */}
+        <div className="hidden md:block">
+          <DesktopSidebar
+            userName={user.name ?? null}
+            userInitial={userInitial}
+            isPro={isPro}
+            unreadCount={unreadCount}
+          />
+        </div>
 
-      {/* ── Desktop layout (≥ md) ─────────────────────────── */}
-      <div className="hidden md:flex min-h-screen">
-        <DesktopSidebar
-          userName={user.name ?? null}
-          userInitial={userInitial}
-          isPro={isPro}
-          unreadCount={unreadCount}
-        />
-        <main className="flex-1 overflow-auto">
+        {/* Main — only rendered once, pb-24 for mobile bottom nav */}
+        <main className="flex-1 overflow-auto pb-24 md:pb-0">
           {children}
         </main>
+      </div>
+
+      {/* ── Mobile bottom nav (< md) ─────────────────────── */}
+      <div className="md:hidden">
+        <BottomNav />
       </div>
 
       <PwaInstallPrompt />
