@@ -126,11 +126,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // Height constraint derived from window height — avoids circular dependency
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(400);
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     // header h-14 (56) + main pb-24 (96) + pt-10 (40) + page-header+mb-6 (68)
     // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 384px → use 396 for safety
     // Cap at 420 so cells don't grow huge on large monitors.
-    const update = () => setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
+    const update = () => {
+      setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
+      setIsMobile(window.innerWidth < 768);
+    };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -254,7 +258,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
         </div>
       </div>
 
-      <div className="flex gap-4 items-start" style={{ marginTop: "20px" }}>
+      <div className="flex flex-col md:flex-row gap-4 items-start" style={{ marginTop: "20px" }}>
         {/* Bed column */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Scrollable viewport — max height caps it, shrinks to content */}
@@ -458,12 +462,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
           )}
         </div>
 
-        {/* Side panel — slides in */}
+        {/* Side panel — slides in (below grid on mobile, beside on desktop) */}
         <div
-          className="shrink-0 overflow-hidden transition-all duration-300 ease-in-out"
-          style={{ width: showPanel ? 272 : 0, opacity: showPanel ? 1 : 0 }}
+          className="overflow-hidden transition-all duration-300 ease-in-out w-full md:w-auto md:shrink-0"
+          style={isMobile
+            ? { maxHeight: showPanel ? 640 : 0, opacity: showPanel ? 1 : 0 }
+            : { width: showPanel ? 272 : 0, opacity: showPanel ? 1 : 0 }}
         >
-          <div className="w-68" style={{ width: 272 }}>
+          <div className="w-full md:w-[272px]" style={{ minWidth: 0 }}>
             <div className="rounded-xl border shadow-md overflow-hidden" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
               {/* Panel header — not shown for CellDetail (it has its own header) */}
               {!(activeTab === "plant" && panel.type === "detail") && activeTab !== "companions" && (
