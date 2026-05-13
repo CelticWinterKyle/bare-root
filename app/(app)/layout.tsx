@@ -37,15 +37,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F2]">
+    <div className="min-h-screen flex flex-col" style={{ background: "#F5EDDA" }}>
       {trialDaysLeft !== null && trialDaysLeft <= 5 && (
         <TrialBanner daysLeft={trialDaysLeft} />
       )}
 
-      {/* Top header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-[#E8E2D9]">
+      {/* Top header — dark wood */}
+      <header
+        className="sticky top-0 z-40 wood-grain"
+        style={{
+          boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
+        }}
+      >
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="font-display text-lg font-semibold text-[#2D5016]">Bare Root</span>
+          <span
+            className="font-display text-xl font-semibold italic tracking-tight"
+            style={{
+              color: "#F5EDDA",
+              fontVariationSettings: "'opsz' 32",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            bare root
+          </span>
           <NotificationBell reminders={bellReminders} unreadCount={bellReminders.length} />
         </div>
       </header>

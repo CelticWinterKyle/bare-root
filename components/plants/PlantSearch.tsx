@@ -21,21 +21,21 @@ type Plant = {
 
 type Category = { value: PlantCategory; label: string; emoji: string };
 
-const CATEGORY_STYLE: Record<string, { accent: string; bg: string }> = {
-  VEGETABLE: { accent: "#4A7C2F", bg: "#EEF6E7" },
-  FRUIT:     { accent: "#C4790A", bg: "#FFF4E6" },
-  HERB:      { accent: "#6B8F47", bg: "#F2F6EE" },
-  FLOWER:    { accent: "#9B4BAA", bg: "#F7EEF9" },
-  TREE:      { accent: "#5C4A2A", bg: "#F2EDE6" },
-  SHRUB:     { accent: "#3D6B50", bg: "#E8F2EC" },
-  OTHER:     { accent: "#9E9890", bg: "#F5F0E8" },
+const CATEGORY_STYLE: Record<string, { accent: string; border: string; label: string }> = {
+  VEGETABLE: { accent: "#2D5016", border: "#4A7C2F", label: "Vegetable" },
+  FRUIT:     { accent: "#8B3A2A", border: "#C4790A", label: "Fruit" },
+  HERB:      { accent: "#4A3820", border: "#6B8F47", label: "Herb" },
+  FLOWER:    { accent: "#6B3A5A", border: "#9B4BAA", label: "Flower" },
+  TREE:      { accent: "#3D2A0E", border: "#7A5C2A", label: "Tree" },
+  SHRUB:     { accent: "#1A3D2A", border: "#3D6B50", label: "Shrub" },
+  OTHER:     { accent: "#4A3820", border: "#8B7A60", label: "Other" },
 };
 
 const SUN_LABEL: Record<string, string> = {
-  FULL_SUN: "☀️ Full sun",
-  PARTIAL_SUN: "⛅ Part sun",
-  PARTIAL_SHADE: "🌥️ Part shade",
-  FULL_SHADE: "☁️ Full shade",
+  FULL_SUN:      "Full sun",
+  PARTIAL_SUN:   "Part sun",
+  PARTIAL_SHADE: "Part shade",
+  FULL_SHADE:    "Full shade",
 };
 
 export function PlantSearch({
@@ -104,15 +104,28 @@ export function PlantSearch({
     <div>
       {/* Search input */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9E9890]" />
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+          style={{ color: "#8B7A60" }}
+        />
         <Input
           placeholder="Search tomato, basil, marigold…"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-9"
+          style={{
+            background: "#EDE3C8",
+            border: "1px solid #D4C8A8",
+            color: "#231A0D",
+            fontFamily: "var(--font-crimson-pro)",
+            fontSize: "16px",
+          }}
         />
         {(isPending || apiSearching) && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9E9890] animate-spin" />
+          <Loader2
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin"
+            style={{ color: "#8B7A60" }}
+          />
         )}
       </div>
 
@@ -125,11 +138,21 @@ export function PlantSearch({
             <button
               key={cat.value}
               onClick={() => handleCategoryClick(cat.value)}
-              className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+              className="px-3 py-1 rounded-sm font-mono text-xs uppercase tracking-wider transition-all"
               style={
                 isActive
-                  ? { background: style.accent, color: "#fff" }
-                  : { background: style.bg, color: style.accent }
+                  ? {
+                      background: style.accent,
+                      color: "#F5EDDA",
+                      border: `1px solid ${style.accent}`,
+                      letterSpacing: "0.1em",
+                    }
+                  : {
+                      background: "transparent",
+                      color: style.accent,
+                      border: `1px solid ${style.border}`,
+                      letterSpacing: "0.1em",
+                    }
               }
             >
               {cat.emoji} {cat.label}
@@ -140,7 +163,7 @@ export function PlantSearch({
 
       {/* Result count */}
       {plants.length > 0 && query && (
-        <p className="text-xs text-[#9E9890] mb-3">
+        <p className="font-mono text-xs mb-3" style={{ color: "#8B7A60", letterSpacing: "0.05em" }}>
           {plants.length} result{plants.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
         </p>
       )}
@@ -148,8 +171,8 @@ export function PlantSearch({
       {/* Results */}
       {plants.length === 0 ? (
         <div className="text-center py-12">
-          <Leaf className="w-10 h-10 text-[#E8E2D9] mx-auto mb-3" />
-          <p className="text-[#6B6560]">
+          <Leaf className="w-10 h-10 mx-auto mb-3" style={{ color: "#D4C8A8" }} />
+          <p style={{ color: "#8B7A60" }}>
             {query
               ? `No plants found for "${query}"`
               : "No plants in library yet. Search to add some."}
@@ -165,37 +188,55 @@ export function PlantSearch({
               <Link
                 key={plant.id}
                 href={`/plants/${plant.id}`}
-                className="bg-white rounded-xl overflow-hidden border border-[#E8E2D9] hover:border-[#6B8F47] hover:shadow-md transition-all group flex flex-col cursor-pointer"
+                className="group flex flex-col overflow-hidden transition-all paper-grain"
+                style={{
+                  background: "#EDE3C8",
+                  border: "1px solid #D4C8A8",
+                  borderRadius: "3px",
+                  boxShadow: "0 1px 3px rgba(35,26,13,0.08)",
+                }}
               >
-                {/* Top accent strip */}
-                <div className="h-1 w-full" style={{ background: style.accent }} />
+                {/* Left border accent stripe — applied as box-shadow trick via wrapper */}
+                <div
+                  style={{
+                    height: "3px",
+                    background: style.border,
+                    width: "100%",
+                  }}
+                />
 
-                {/* Image or placeholder */}
+                {/* Image or initial */}
                 {plant.imageUrl ? (
-                  <div className="aspect-[4/3] relative bg-[#F5F0E8] overflow-hidden">
+                  <div className="aspect-[4/3] relative overflow-hidden" style={{ background: "#E4D8B8" }}>
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
                       fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 33vw"
                     />
                   </div>
                 ) : (
                   <div
                     className="aspect-[4/3] flex items-center justify-center relative overflow-hidden"
-                    style={{ background: style.bg }}
+                    style={{ background: "#E4D8B8" }}
                   >
+                    {/* Subtle dot grid */}
                     <div
-                      className="absolute inset-0 opacity-20"
+                      className="absolute inset-0 opacity-30"
                       style={{
-                        backgroundImage: `radial-gradient(circle, ${style.accent} 1px, transparent 1px)`,
-                        backgroundSize: "16px 16px",
+                        backgroundImage: `radial-gradient(circle, ${style.border} 1px, transparent 1px)`,
+                        backgroundSize: "14px 14px",
                       }}
                     />
                     <span
-                      className="relative font-display text-4xl font-semibold select-none"
-                      style={{ color: style.accent, opacity: 0.35 }}
+                      className="relative font-display font-bold select-none"
+                      style={{
+                        color: style.accent,
+                        opacity: 0.25,
+                        fontSize: "3rem",
+                        fontVariationSettings: "'opsz' 72",
+                      }}
                     >
                       {plant.name[0].toUpperCase()}
                     </span>
@@ -203,43 +244,61 @@ export function PlantSearch({
                 )}
 
                 {/* Info */}
-                <div className="p-3 flex-1 flex flex-col gap-1">
+                <div className="p-2.5 flex-1 flex flex-col gap-1">
                   <div className="flex items-start justify-between gap-1">
                     <p
-                      className="font-medium text-sm text-[#1C1C1A] group-hover:text-[#2D5016] transition-colors leading-tight"
+                      className="font-display font-semibold leading-tight transition-colors"
+                      style={{
+                        color: "#231A0D",
+                        fontSize: "14px",
+                        fontVariationSettings: "'opsz' 18",
+                      }}
                     >
                       {plant.name}
                     </p>
                     {stockQty === 0 && (
-                      <span title="Out of stock" className="shrink-0">
-                        <Package className="w-3.5 h-3.5 text-[#B85C3A]" />
+                      <span title="Out of stock" className="shrink-0 mt-0.5">
+                        <Package className="w-3 h-3" style={{ color: "#8B3A2A" }} />
                       </span>
                     )}
                     {stockQty != null && stockQty > 0 && (
-                      <span title="In inventory" className="shrink-0">
-                        <Package className="w-3.5 h-3.5 text-[#6B8F47]" />
+                      <span title="In inventory" className="shrink-0 mt-0.5">
+                        <Package className="w-3 h-3" style={{ color: "#2D5016" }} />
                       </span>
                     )}
                   </div>
 
                   {plant.scientificName && (
-                    <p className="text-xs text-[#9E9890] italic truncate">
+                    <p
+                      className="italic leading-tight"
+                      style={{ color: "#8B7A60", fontSize: "11px", fontFamily: "var(--font-crimson-pro)" }}
+                    >
                       {plant.scientificName}
                     </p>
                   )}
 
                   {/* Badges */}
-                  <div className="flex flex-wrap gap-1 mt-auto pt-1">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
                     {plant.daysToMaturity && (
                       <span
-                        className="text-xs px-1.5 py-0.5 rounded-md font-medium"
-                        style={{ background: "#FFF4E6", color: "#C4790A" }}
+                        className="font-mono"
+                        style={{
+                          fontSize: "10px",
+                          color: "#C4790A",
+                          background: "rgba(196,121,10,0.12)",
+                          padding: "1px 5px",
+                          borderRadius: "2px",
+                          letterSpacing: "0.04em",
+                        }}
                       >
                         {plant.daysToMaturity}d
                       </span>
                     )}
                     {plant.sunRequirement && (
-                      <span className="text-xs text-[#6B6560]">
+                      <span
+                        className="font-mono"
+                        style={{ fontSize: "10px", color: "#8B7A60", letterSpacing: "0.03em" }}
+                      >
                         {SUN_LABEL[plant.sunRequirement] ?? plant.sunRequirement}
                       </span>
                     )}

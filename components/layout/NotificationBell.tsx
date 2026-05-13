@@ -46,12 +46,13 @@ export function NotificationBell({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-lg hover:bg-[#F5F0E8] transition-colors"
+        className="relative p-2 rounded-lg transition-colors"
+        style={{ color: "rgba(245,237,218,0.7)" }}
         aria-label={`Notifications (${count} unread)`}
       >
-        <Bell className="w-5 h-5 text-[#6B6560]" />
+        <Bell className="w-5 h-5" />
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#B85C3A] text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#C4790A] text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
             {count > 9 ? "9+" : count}
           </span>
         )}
@@ -60,12 +61,13 @@ export function NotificationBell({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-10 z-50 w-80 bg-white border border-[#E8E2D9] rounded-xl shadow-lg overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E8E2D9]">
-              <p className="text-sm font-semibold text-[#1C1C1A]">Reminders</p>
+          <div className="absolute right-0 top-10 z-50 w-80 rounded-xl shadow-2xl overflow-hidden paper-grain" style={{ background: "#F5EDDA", border: "1px solid #D4C8A8" }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #D4C8A8" }}>
+              <p className="font-display text-sm font-semibold" style={{ color: "#231A0D" }}>Reminders</p>
               <Link
                 href="/reminders"
-                className="text-xs text-[#6B8F47] hover:text-[#2D5016]"
+                className="font-mono text-[11px] uppercase tracking-wider transition-colors"
+                style={{ color: "#6B8F47", letterSpacing: "0.1em" }}
                 onClick={() => setOpen(false)}
               >
                 View all
@@ -74,14 +76,14 @@ export function NotificationBell({
 
             {localReminders.length === 0 ? (
               <div key="empty" className="px-4 py-8 text-center animate-in fade-in duration-300">
-                <Leaf className="w-7 h-7 text-[#D8D3CB] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[#6B6560]">You&apos;re all caught up</p>
-                <p className="text-xs text-[#9E9890] mt-0.5">No pending reminders</p>
+                <Leaf className="w-7 h-7 mx-auto mb-2" style={{ color: "#D4C8A8" }} />
+                <p className="font-display text-sm font-semibold" style={{ color: "#4A3820" }}>All caught up</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8B7A60" }}>No pending reminders</p>
               </div>
             ) : (
-              <div className="max-h-80 overflow-y-auto divide-y divide-[#F5F0E8]">
+              <div className="max-h-80 overflow-y-auto" style={{ borderTop: "none" }}>
                 {localReminders.slice(0, 8).map((r) => {
-                  const icon = TYPE_ICONS[r.type] ?? <Bell className="w-3.5 h-3.5 text-[#9E9890]" />;
+                  const icon = TYPE_ICONS[r.type] ?? <Bell className="w-3.5 h-3.5" style={{ color: "#8B7A60" }} />;
                   const href =
                     r.gardenId && r.bedId
                       ? `/garden/${r.gardenId}/beds/${r.bedId}`
@@ -90,21 +92,22 @@ export function NotificationBell({
                       : "/reminders";
 
                   return (
-                    <div key={r.id} className="flex items-start gap-2.5 px-4 py-3 hover:bg-[#FAF7F2]">
+                    <div key={r.id} className="flex items-start gap-2.5 px-4 py-3 transition-colors" style={{ borderBottom: "1px solid rgba(212,200,168,0.5)" }}>
                       <div className="mt-0.5 shrink-0">{icon}</div>
                       <Link
                         href={href}
                         className="flex-1 min-w-0"
                         onClick={() => setOpen(false)}
                       >
-                        <p className="text-xs font-medium text-[#1C1C1A] truncate">{r.title}</p>
+                        <p className="text-sm font-semibold leading-tight" style={{ color: "#231A0D" }}>{r.title}</p>
                         {r.body && (
-                          <p className="text-[11px] text-[#9E9890] line-clamp-1 mt-0.5">{r.body}</p>
+                          <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "#8B7A60" }}>{r.body}</p>
                         )}
                       </Link>
                       <button
                         onClick={(e) => handleDismiss(r.id, e)}
-                        className="shrink-0 text-[#9E9890] hover:text-[#1C1C1A] transition-colors mt-0.5"
+                        className="shrink-0 transition-colors mt-0.5"
+                        style={{ color: "#8B7A60" }}
                         aria-label="Dismiss"
                       >
                         <X className="w-3.5 h-3.5" />

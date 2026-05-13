@@ -48,10 +48,10 @@ export default async function PlantsPage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">
+        <h1 className="font-display text-3xl font-bold" style={{ color: "#231A0D", fontVariationSettings: "'opsz' 36" }}>
           Plant Library
         </h1>
-        <p className="text-[#6B6560] text-sm mt-1">
+        <p className="mt-1" style={{ color: "#8B7A60", fontFamily: "var(--font-crimson-pro)", fontSize: "16px" }}>
           Search for plants or browse by category.
         </p>
       </header>

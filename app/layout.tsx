@@ -1,23 +1,27 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Crimson_Pro, IBM_Plex_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+  axes: ["opsz"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const crimsonPro = Crimson_Pro({
+  variable: "--font-crimson-pro",
   subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -43,9 +47,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+        className={`${fraunces.variable} ${crimsonPro.variable} ${ibmPlexMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col font-sans bg-[#FAF7F2] text-[#1C1C1A]">
+        <body className="min-h-full flex flex-col bg-[#F5EDDA] text-[#231A0D]">
           {children}
         </body>
       </html>

@@ -6,67 +6,85 @@
 
 @theme inline {
   /* Fonts */
-  --font-sans: var(--font-inter);
+  --font-sans:    var(--font-crimson-pro);
   --font-display: var(--font-fraunces);
-  --font-mono: var(--font-jetbrains-mono);
+  --font-mono:    var(--font-ibm-plex-mono);
 
-  /* Bare Root design tokens */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
+  /* Design tokens mapped to shadcn slots */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         var(--destructive);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-sm:  calc(var(--radius) * 0.6);
+  --radius-md:  calc(var(--radius) * 0.8);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
 :root {
-  /* Bare Root earthy palette */
-  --background: #faf7f2;
-  --foreground: #1c1c1a;
-  --card: #f5f0e8;
-  --card-foreground: #1c1c1a;
-  --popover: #ffffff;
-  --popover-foreground: #1c1c1a;
-  --primary: #2d5016;
-  --primary-foreground: #ffffff;
-  --secondary: #6b8f47;
-  --secondary-foreground: #ffffff;
-  --muted: #f5f0e8;
-  --muted-foreground: #6b6560;
-  --accent: #c4790a;
-  --accent-foreground: #ffffff;
-  --destructive: #b85c3a;
-  --border: #e8e2d9;
-  --input: #e8e2d9;
-  --ring: #2d5016;
-  --radius: 0.5rem;
+  /* Workbench palette */
+  --wood:        #1A1208;
+  --wood-mid:    #261B0D;
+  --wood-edge:   #4A3420;
+  --paper:       #F5EDDA;
+  --paper-warm:  #EDE3C8;
+  --paper-aged:  #E4D8B8;
+  --paper-line:  #D4C8A8;
+  --ink:         #231A0D;
+  --ink-mid:     #4A3820;
+  --ink-faint:   #8B7A60;
+  --green:       #2D5016;
+  --green-mid:   #4A7C2F;
+  --green-light: #6B8F47;
+  --amber:       #C4790A;
+  --amber-light: #E8A030;
+  --rust:        #8B3A2A;
+
+  /* shadcn slots → workbench tokens */
+  --background:         #F5EDDA;
+  --foreground:         #231A0D;
+  --card:               #EDE3C8;
+  --card-foreground:    #231A0D;
+  --popover:            #F5EDDA;
+  --popover-foreground: #231A0D;
+  --primary:            #2D5016;
+  --primary-foreground: #F5EDDA;
+  --secondary:          #6B8F47;
+  --secondary-foreground: #F5EDDA;
+  --muted:              #E4D8B8;
+  --muted-foreground:   #8B7A60;
+  --accent:             #C4790A;
+  --accent-foreground:  #F5EDDA;
+  --destructive:        #8B3A2A;
+  --border:             #D4C8A8;
+  --input:              #D4C8A8;
+  --ring:               #2D5016;
+  --radius:             0.375rem;
 
   /* Plant status colors */
-  --status-planned: #8fa86b;
-  --status-seeds-started: #d4a843;
-  --status-transplanted: #7ab648;
-  --status-active: #4a7c2f;
-  --status-harvesting: #c4790a;
-  --status-harvested: #9e9890;
-  --status-failed: #b85c3a;
+  --status-planned:       #8FA86B;
+  --status-seeds-started: #D4A843;
+  --status-transplanted:  #7AB648;
+  --status-active:        #4A7C2F;
+  --status-harvesting:    #C4790A;
+  --status-harvested:     #9E9890;
+  --status-failed:        #8B3A2A;
 }
 
 @layer base {
@@ -74,13 +92,63 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: var(--font-crimson-pro), Georgia, serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-fraunces), Georgia, serif;
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: var(--font-fraunces), serif;
+    font-family: var(--font-fraunces), Georgia, serif;
+  }
+  .font-body {
+    font-family: var(--font-crimson-pro), Georgia, serif;
+  }
+  .font-mono {
+    font-family: var(--font-ibm-plex-mono), monospace;
+  }
+
+  /* Paper grain overlay — apply to any cream surface */
+  .paper-grain {
+    position: relative;
+  }
+  .paper-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Dark wood texture */
+  .wood-grain {
+    background-color: var(--wood);
+    background-image:
+      repeating-linear-gradient(
+        88deg,
+        transparent, transparent 3px,
+        rgba(255,255,255,0.007) 3px, rgba(255,255,255,0.007) 6px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        transparent, transparent 20px,
+        rgba(0,0,0,0.05) 20px, rgba(0,0,0,0.05) 21px
+      );
+  }
+
+  /* Graph paper for bed grid */
+  .graph-paper {
+    background-color: #F5EDDA;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(180,155,110,0.25) 0px, rgba(180,155,110,0.25) 1px, transparent 1px, transparent 100%),
+      repeating-linear-gradient(90deg, rgba(180,155,110,0.25) 0px, rgba(180,155,110,0.25) 1px, transparent 1px, transparent 100%);
+    background-size: 40px 40px;
   }
 }
 
