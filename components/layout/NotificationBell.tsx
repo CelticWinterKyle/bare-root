@@ -46,8 +46,8 @@ export function NotificationBell({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-full transition-colors"
-        style={{ color: "#6B6B5A", background: "#F4F4EC" }}
+        className="relative p-2 transition-colors"
+        style={{ color: "#6B6B5A", background: "none" }}
         aria-label={`Notifications (${count} unread)`}
       >
         <Bell className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />

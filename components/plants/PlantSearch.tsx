@@ -138,25 +138,30 @@ export function PlantSearch({
         )}
       </div>
 
-      {/* Category pills */}
-      <div className="flex gap-2 flex-wrap mb-6">
+      {/* Category pills — horizontal scroll, no emojis */}
+      <div style={{ display: "flex", gap: "6px", overflowX: "auto", flexWrap: "nowrap", paddingBottom: "2px", marginBottom: "20px" }}>
         {categories.map((cat) => {
-          const style = CATEGORY_STYLE[cat.value] ?? CATEGORY_STYLE.OTHER;
           const isActive = activeCategory === cat.value;
           return (
             <button
               key={cat.value}
               onClick={() => handleCategoryClick(cat.value)}
-              className="px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-all"
               style={{
+                whiteSpace: "nowrap" as const,
                 borderRadius: "100px",
                 border: `1.5px solid ${isActive ? "#1C3D0A" : "#E4E4DC"}`,
                 background: isActive ? "#1C3D0A" : "transparent",
                 color: isActive ? "white" : "#6B6B5A",
-                letterSpacing: "0.08em",
+                fontFamily: "var(--font-body)",
+                fontSize: "13px",
+                fontWeight: 500,
+                padding: "6px 14px",
+                cursor: "pointer",
+                transition: "all 0.12s",
+                flexShrink: 0,
               }}
             >
-              {cat.emoji} {cat.label}
+              {cat.label}
             </button>
           );
         })}
@@ -197,9 +202,12 @@ export function PlantSearch({
                   boxShadow: "0 1px 4px rgba(28,61,10,0.04)",
                 }}
               >
-                {/* Image or category gradient initial */}
-                {plant.imageUrl ? (
-                  <div className="relative overflow-hidden" style={{ height: "88px", background: "#EAEADE", borderRadius: "10px 10px 0 0" }}>
+                {/* Card image area — always gradient bg, image overlays on top */}
+                <div
+                  className="relative overflow-hidden flex items-center justify-center"
+                  style={{ height: "88px", background: CATEGORY_GRADIENT[plant.category] ?? CATEGORY_GRADIENT.OTHER, borderRadius: "10px 10px 0 0" }}
+                >
+                  {plant.imageUrl ? (
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
@@ -207,30 +215,7 @@ export function PlantSearch({
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 33vw"
                     />
-                    <span
-                      style={{
-                        position: "absolute",
-                        bottom: "6px",
-                        left: "6px",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "7px",
-                        textTransform: "uppercase" as const,
-                        letterSpacing: "0.1em",
-                        padding: "2px 6px",
-                        borderRadius: "100px",
-                        background: "rgba(255,255,255,0.9)",
-                        border: "1px solid rgba(0,0,0,0.08)",
-                        color: "#6B6B5A",
-                      }}
-                    >
-                      {style.label}
-                    </span>
-                  </div>
-                ) : (
-                  <div
-                    className="relative overflow-hidden flex items-center justify-center"
-                    style={{ height: "88px", background: CATEGORY_GRADIENT[plant.category] ?? CATEGORY_GRADIENT.OTHER, borderRadius: "10px 10px 0 0" }}
-                  >
+                  ) : (
                     <span
                       className="select-none"
                       style={{
@@ -245,26 +230,27 @@ export function PlantSearch({
                     >
                       {plant.name[0].toUpperCase()}
                     </span>
-                    <span
-                      style={{
-                        position: "absolute",
-                        bottom: "6px",
-                        left: "6px",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "7px",
-                        textTransform: "uppercase" as const,
-                        letterSpacing: "0.1em",
-                        padding: "2px 6px",
-                        borderRadius: "100px",
-                        background: "rgba(255,255,255,0.9)",
-                        border: "1px solid rgba(0,0,0,0.08)",
-                        color: "#6B6B5A",
-                      }}
-                    >
-                      {style.label}
-                    </span>
-                  </div>
-                )}
+                  )}
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: "6px",
+                      left: "6px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "7px",
+                      textTransform: "uppercase" as const,
+                      letterSpacing: "0.1em",
+                      padding: "2px 6px",
+                      borderRadius: "100px",
+                      background: "rgba(255,255,255,0.9)",
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      color: "#6B6B5A",
+                      zIndex: 1,
+                    }}
+                  >
+                    {style.label}
+                  </span>
+                </div>
 
                 {/* Info */}
                 <div className="p-2.5 flex-1 flex flex-col gap-1">

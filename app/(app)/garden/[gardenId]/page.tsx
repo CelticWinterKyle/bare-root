@@ -207,25 +207,32 @@ export default async function GardenPage({
         </div>
       ) : (
         <div
-          style={{ margin: "12px 22px", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "12px", background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+          style={{
+            margin: "12px 22px", padding: "14px 16px",
+            background: "#1C3D0A", borderRadius: "12px",
+            display: "flex", alignItems: "center", gap: "12px",
+            position: "relative", overflow: "hidden",
+          }}
         >
-          <div style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "#EAEADE", flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ADADAA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
-            </svg>
+          <div style={{ position: "absolute", right: "-20px", top: "-20px", width: "100px", height: "100px", borderRadius: "50%", background: "#3A6B20", opacity: 0.35 }} />
+          <div style={{ fontFamily: "var(--font-display)", fontSize: "36px", fontWeight: 300, color: "rgba(255,255,255,0.2)", lineHeight: 1, position: "relative", zIndex: 1 }}>
+            —<sup style={{ fontSize: "16px" }}>°</sup>
           </div>
-          <p style={{ fontSize: "14px", color: "#6B6B5A" }}>
-            {garden.locationZip
-              ? "Weather data temporarily unavailable."
-              : <>
-                  Add a zip code in{" "}
-                  <Link href={`/garden/${gardenId}/settings`} style={{ color: "#7DA84E", textDecoration: "underline" }}>
-                    garden settings
-                  </Link>
-                  {" "}for local weather and frost alerts.
-                </>
-            }
-          </p>
+          <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>
+              {garden.locationZip ? "Weather unavailable" : "No location set"}
+            </div>
+            {!garden.locationZip && (
+              <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#A8D870", textDecoration: "none", marginTop: "2px", display: "block" }}>
+                Add zip code →
+              </Link>
+            )}
+            {garden.locationZip && (
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
+                {garden.usdaZone ? `Zone ${garden.usdaZone}` : ""}{garden.locationZip ? ` · ${garden.locationZip}` : ""}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
