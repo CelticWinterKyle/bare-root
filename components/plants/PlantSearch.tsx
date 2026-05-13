@@ -31,6 +31,16 @@ const CATEGORY_STYLE: Record<string, { accent: string; border: string; bg: strin
   OTHER:     { accent: "#3A3A30", border: "#D4D4C8", bg: "#EAEAE0", label: "Other" },
 };
 
+const CATEGORY_GRADIENT: Record<string, string> = {
+  VEGETABLE: "linear-gradient(135deg, #1B4A0A 0%, #3A6B20 100%)",
+  FRUIT:     "linear-gradient(135deg, #3A1A08 0%, #7A2A18 100%)",
+  HERB:      "linear-gradient(135deg, #283010 0%, #4A5A20 100%)",
+  FLOWER:    "linear-gradient(135deg, #2A2A30 0%, #5A4A6A 100%)",
+  TREE:      "linear-gradient(135deg, #1C2A10 0%, #2D4A1A 100%)",
+  SHRUB:     "linear-gradient(135deg, #1A2A15 0%, #3A5A20 100%)",
+  OTHER:     "linear-gradient(135deg, #2A2A20 0%, #4A4A38 100%)",
+};
+
 const SUN_LABEL: Record<string, string> = {
   FULL_SUN:      "Full sun",
   PARTIAL_SUN:   "Part sun",
@@ -140,9 +150,9 @@ export function PlantSearch({
               className="px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-all"
               style={{
                 borderRadius: "100px",
-                border: `1px solid ${isActive ? style.accent : style.border}`,
-                background: isActive ? style.accent : style.bg,
-                color: isActive ? "#FDFDF8" : style.accent,
+                border: `1.5px solid ${isActive ? "#1C3D0A" : "#E4E4DC"}`,
+                background: isActive ? "#1C3D0A" : "transparent",
+                color: isActive ? "white" : "#6B6B5A",
                 letterSpacing: "0.08em",
               }}
             >
@@ -187,18 +197,9 @@ export function PlantSearch({
                   boxShadow: "0 1px 4px rgba(28,61,10,0.04)",
                 }}
               >
-                {/* Left border accent stripe — applied as box-shadow trick via wrapper */}
-                <div
-                  style={{
-                    height: "3px",
-                    background: style.border,
-                    width: "100%",
-                  }}
-                />
-
-                {/* Image or initial */}
+                {/* Image or category gradient initial */}
                 {plant.imageUrl ? (
-                  <div className="aspect-[4/3] relative overflow-hidden" style={{ background: "#EAEADE", borderRadius: "10px 10px 0 0" }}>
+                  <div className="relative overflow-hidden" style={{ height: "88px", background: "#EAEADE", borderRadius: "10px 10px 0 0" }}>
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
@@ -206,22 +207,61 @@ export function PlantSearch({
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 33vw"
                     />
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "6px",
+                        left: "6px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "7px",
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.1em",
+                        padding: "2px 6px",
+                        borderRadius: "100px",
+                        background: "rgba(255,255,255,0.9)",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        color: "#6B6B5A",
+                      }}
+                    >
+                      {style.label}
+                    </span>
                   </div>
                 ) : (
                   <div
-                    className="aspect-[4/3] flex items-center justify-center relative overflow-hidden"
-                    style={{ background: style.bg, borderRadius: "10px 10px 0 0" }}
+                    className="relative overflow-hidden flex items-center justify-center"
+                    style={{ height: "88px", background: CATEGORY_GRADIENT[plant.category] ?? CATEGORY_GRADIENT.OTHER, borderRadius: "10px 10px 0 0" }}
                   >
                     <span
-                      className="relative font-display font-bold italic select-none"
+                      className="select-none"
                       style={{
-                        color: style.accent,
-                        opacity: 0.2,
-                        fontSize: "3.5rem",
+                        fontFamily: "var(--font-display)",
+                        fontStyle: "italic",
+                        fontWeight: 800,
+                        color: "white",
+                        opacity: 0.1,
+                        fontSize: "48px",
                         fontVariationSettings: "'opsz' 72",
                       }}
                     >
                       {plant.name[0].toUpperCase()}
+                    </span>
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "6px",
+                        left: "6px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "7px",
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.1em",
+                        padding: "2px 6px",
+                        borderRadius: "100px",
+                        background: "rgba(255,255,255,0.9)",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        color: "#6B6B5A",
+                      }}
+                    >
+                      {style.label}
                     </span>
                   </div>
                 )}
@@ -230,10 +270,13 @@ export function PlantSearch({
                 <div className="p-2.5 flex-1 flex flex-col gap-1">
                   <div className="flex items-start justify-between gap-1">
                     <p
-                      className="font-display font-semibold leading-tight transition-colors"
                       style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "13px",
+                        fontWeight: 800,
                         color: "#111109",
-                        fontSize: "14px",
+                        letterSpacing: "-0.01em",
+                        lineHeight: 1.15,
                         fontVariationSettings: "'opsz' 18",
                       }}
                     >
@@ -253,8 +296,7 @@ export function PlantSearch({
 
                   {plant.scientificName && (
                     <p
-                      className="italic leading-tight"
-                      style={{ color: "#6B6B5A", fontSize: "11px" }}
+                      style={{ fontStyle: "italic", color: "#6B6B5A", fontSize: "10px", marginTop: "2px", lineHeight: 1.3 }}
                     >
                       {plant.scientificName}
                     </p>
@@ -264,15 +306,15 @@ export function PlantSearch({
                   <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
                     {plant.daysToMaturity && (
                       <span
-                        className="font-mono"
                         style={{
-                          fontSize: "10px",
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "8px",
                           color: "#D4820A",
-                          background: "rgba(212,130,10,0.1)",
-                          padding: "1px 6px",
+                          background: "#FDF2E0",
+                          padding: "2px 6px",
                           borderRadius: "100px",
                           letterSpacing: "0.04em",
-                          border: "1px solid rgba(212,130,10,0.2)",
+                          border: "1px solid rgba(212,130,10,0.25)",
                         }}
                       >
                         {plant.daysToMaturity}d
@@ -280,8 +322,16 @@ export function PlantSearch({
                     )}
                     {plant.sunRequirement && (
                       <span
-                        className="font-mono"
-                        style={{ fontSize: "10px", color: "#ADADAA", letterSpacing: "0.03em" }}
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "8px",
+                          color: "#3A6B20",
+                          background: "#E4F0D4",
+                          padding: "2px 6px",
+                          borderRadius: "100px",
+                          letterSpacing: "0.03em",
+                          border: "1px solid #D4E8BE",
+                        }}
                       >
                         {SUN_LABEL[plant.sunRequirement] ?? plant.sunRequirement}
                       </span>

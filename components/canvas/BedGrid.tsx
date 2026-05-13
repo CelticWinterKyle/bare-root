@@ -8,7 +8,7 @@ import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sun, Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
-// Status → gradient fill + text color
+// Status → light cell fill + border color + label
 const STATUS_STYLES: Record<string, { from: string; to: string; label: string }> = {
   PLANNED:      { from: "#8FA86B", to: "#7A9559", label: "Planned" },
   SEEDS_STARTED:{ from: "#D4A843", to: "#BA8F2E", label: "Seeds started" },
@@ -17,6 +17,26 @@ const STATUS_STYLES: Record<string, { from: string; to: string; label: string }>
   HARVESTING:   { from: "#D4820A", to: "#A36207", label: "Harvesting" },
   HARVESTED:    { from: "#ADADAA", to: "#837E78", label: "Harvested" },
   FAILED:       { from: "#B85C3A", to: "#954928", label: "Failed" },
+};
+
+const CELL_STYLE: Record<string, { bg: string; border: string }> = {
+  PLANNED:       { bg: "#F0F8E8", border: "rgba(125,168,78,0.4)" },
+  SEEDS_STARTED: { bg: "#FFFBEB", border: "rgba(212,130,10,0.35)" },
+  TRANSPLANTED:  { bg: "#E8F5E0", border: "rgba(58,107,32,0.4)" },
+  ACTIVE:        { bg: "#E4F0D4", border: "rgba(58,107,32,0.5)" },
+  HARVESTING:    { bg: "#FDF2E0", border: "rgba(212,130,10,0.4)" },
+  HARVESTED:     { bg: "#F4F4EC", border: "rgba(173,173,170,0.4)" },
+  FAILED:        { bg: "#FBF0EE", border: "rgba(122,42,24,0.25)" },
+};
+
+const STATUS_DOT_COLOR: Record<string, string> = {
+  PLANNED:       "#7DA84E",
+  SEEDS_STARTED: "#D4820A",
+  TRANSPLANTED:  "#3A6B20",
+  ACTIVE:        "#3A6B20",
+  HARVESTING:    "#D4820A",
+  HARVESTED:     "#ADADAA",
+  FAILED:        "#7A2A18",
 };
 
 const SUN_CYCLE: SunLevel[] = ["FULL_SUN", "PARTIAL_SUN", "PARTIAL_SHADE", "FULL_SHADE"];
@@ -28,8 +48,8 @@ const SUN_BG: Record<string, string> = {
 };
 
 // Vertical space to subtract from cell sizing:
-// wooden frame p-3 (24) + inner p-px (2) + centering py-3 (24) ≈ 52px
-const FRAME_PAD = 52;
+// graph-paper wrapper padding 14px*2 + centering py-3 (24) ≈ 28px
+const FRAME_PAD = 28;
 
 type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null };
 type Planting = {
@@ -270,27 +290,31 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             )}
             {/* Center bed in viewport when smaller than viewport */}
             <div className="flex items-center justify-center min-h-full py-3">
-              {/* Wooden frame */}
+              {/* Graph-paper bed container */}
               <div
-                className="rounded-2xl p-3 shadow-lg shrink-0"
-                style={{ background: "linear-gradient(135deg, #8B6914 0%, #A07820 40%, #8B6914 100%)" }}
+                className="shrink-0"
+                style={{
+                  backgroundImage: "repeating-linear-gradient(0deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%), repeating-linear-gradient(90deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%)",
+                  backgroundSize: "40px 40px",
+                  backgroundColor: "#FDFDF8",
+                  borderRadius: "12px",
+                  border: "1.5px solid #E4E4DC",
+                  overflow: "hidden",
+                }}
               >
-                {/* Inner soil tray */}
-                <div
-                  className="rounded-xl overflow-hidden"
-                  style={{ background: "linear-gradient(160deg, #3d2b1f 0%, #2d1f14 100%)" }}
-                >
                   <div
-                    className="grid gap-px p-px"
+                    className="grid"
                     style={{
                       gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
-                      background: "#2d1f14",
+                      gap: "4px",
+                      padding: "14px 16px",
+                      background: "transparent",
                     }}
                   >
                     {displayCells.map((cell) => {
                       const sun = effectiveSun(cell);
                       const planting = cell.planting;
-                      const style = planting ? STATUS_STYLES[planting.status] : null;
+                      const cellStyle = planting ? CELL_STYLE[planting.status] : null;
                       const hasHarmful = cell.warnings.some((w) => w.type === "HARMFUL");
                       const hasBeneficial = cell.warnings.some((w) => w.type === "BENEFICIAL");
                       const isSelected =
@@ -298,9 +322,33 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                         (panel.type === "detail" && panel.cell.id === cell.id);
                       const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
                       const isNew = justPlanted.has(cell.id);
-                      const labelSize = Math.max(8, Math.min(13, cellPx * 0.2));
-                      const badgePx = Math.max(12, Math.min(14, cellPx * 0.2));
+                      const labelSize = Math.max(7, Math.min(10, cellPx * 0.18));
+                      const badgePx = 13;
                       const isHoveredByPlanner = hoveredAssignment?.row === cell.row && hoveredAssignment?.col === cell.col;
+
+                      const cellBg = sunMode
+                        ? SUN_BG[sun]
+                        : planting
+                        ? cellStyle!.bg
+                        : preview
+                        ? "rgba(28,61,10,0.06)"
+                        : "rgba(255,255,255,0.8)";
+
+                      const cellBorder = sunMode
+                        ? "rgba(28,61,10,0.1)"
+                        : planting
+                        ? cellStyle!.border
+                        : preview
+                        ? "rgba(28,61,10,0.15)"
+                        : "rgba(28,61,10,0.1)";
+
+                      const cellBoxShadow = isHoveredByPlanner
+                        ? "inset 0 0 0 2px #D4820A, 0 2px 8px rgba(196,121,10,0.3)"
+                        : isSelected
+                        ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
+                        : planting
+                        ? "0 1px 3px rgba(28,61,10,0.08)"
+                        : "none";
 
                       return (
                         <div
@@ -312,20 +360,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                           style={{
                             width: cellPx,
                             height: cellPx,
-                            background: sunMode
-                              ? SUN_BG[sun]
-                              : planting
-                              ? `radial-gradient(circle at 50% 35%, ${style!.from}, ${style!.to})`
-                              : preview
-                              ? "rgba(107, 143, 71, 0.25)"
-                              : "rgba(58, 38, 22, 0.6)",
-                            boxShadow: isHoveredByPlanner
-                              ? "inset 0 0 0 3px #D4820A, 0 2px 8px rgba(196,121,10,0.4)"
-                              : isSelected
-                              ? "inset 0 0 0 2.5px #1C3D0A, 0 2px 8px rgba(45,80,22,0.3)"
-                              : planting
-                              ? "inset 0 -2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)"
-                              : "inset 0 1px 3px rgba(0,0,0,0.08)",
+                            background: cellBg,
+                            border: `1.5px solid ${cellBorder}`,
+                            borderRadius: "8px",
+                            borderStyle: preview && !planting ? "dashed" : "solid",
+                            boxShadow: cellBoxShadow,
                           }}
                         >
                           {/* Sun mode emoji */}
@@ -335,25 +374,31 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                             </span>
                           )}
 
-                          {/* Planted cell label */}
+                          {/* Empty cell plus icon */}
+                          {!planting && !preview && !sunMode && (
+                            <span className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none" style={{ fontSize: "18px", color: "rgba(28,61,10,0.15)" }}>
+                              +
+                            </span>
+                          )}
+
+                          {/* Planted cell: status dot + label */}
                           {planting && !sunMode && !dense && (
-                            <div
-                              className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-1 px-0.5"
-                              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%)" }}
-                            >
-                              <span className="text-white font-semibold leading-tight text-center" style={{ fontSize: labelSize }}>
+                            <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1 px-0.5 gap-0.5">
+                              <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: STATUS_DOT_COLOR[planting.status] ?? "#ADADAA", flexShrink: 0 }} />
+                              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "#3A3A30", fontSize: labelSize, lineHeight: 1.1, textAlign: "center" }}>
                                 {planting.plant.name.split(" ")[0]}
                               </span>
                             </div>
                           )}
 
-                          {/* Dense mode: abbreviated name instead of invisible dot */}
+                          {/* Dense mode: abbreviated name */}
                           {planting && !sunMode && dense && (
                             <span
-                              className="absolute inset-0 flex items-center justify-center text-white font-bold select-none pointer-events-none"
+                              className="absolute inset-0 flex items-center justify-center font-bold select-none pointer-events-none"
                               style={{
+                                fontFamily: "var(--font-display)",
                                 fontSize: Math.max(7, cellPx * 0.28),
-                                textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+                                color: "#3A3A30",
                               }}
                               title={planting.plant.name}
                             >
@@ -363,23 +408,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
                           {/* Preview overlay */}
                           {preview && !planting && !sunMode && !dense && (
-                            <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5"
-                              style={{ background: "linear-gradient(to top, rgba(45,80,22,0.35) 0%, transparent 100%)" }}
-                            >
-                              <span className="text-[#1C3D0A] font-medium text-center block leading-tight italic" style={{ fontSize: Math.max(8, labelSize - 1) }}>
+                            <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5">
+                              <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic", color: "#1C3D0A", fontSize: Math.max(8, labelSize - 1), textAlign: "center", display: "block", lineHeight: 1.1 }}>
                                 {preview.plantName.split(" ")[0]}
                               </span>
                             </div>
                           )}
 
-                          {/* Companion badge — min 12px, white ring, earthy colors */}
+                          {/* Companion badge */}
                           {!sunMode && planting && (hasHarmful || hasBeneficial) && (
                             <span
                               className="absolute top-1 right-1 rounded-full ring-[1.5px] ring-white shadow-sm"
                               style={{
                                 width: badgePx,
                                 height: badgePx,
-                                background: hasHarmful ? "#B85C3A" : "#3A6B20",
+                                background: hasHarmful ? "#7A2A18" : "#3A6B20",
                               }}
                             />
                           )}
@@ -387,14 +430,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                           {/* Hover ring */}
                           {!sunMode && (
                             <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-100"
-                              style={{ boxShadow: "inset 0 0 0 2px rgba(45,80,22,0.6)" }}
+                              style={{ boxShadow: "inset 0 0 0 2px rgba(28,61,10,0.35)", borderRadius: "8px" }}
                             />
                           )}
                         </div>
                       );
                     })}
                   </div>
-                </div>
               </div>
             </div>
           </div>
@@ -410,7 +452,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                     .filter(([key]) => presentStatuses.has(key as PlantingStatus))
                     .map(([key, s]) => (
                       <div key={key} className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm shadow-sm" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }} />
+                        <div className="w-3 h-3 rounded-sm" style={{ background: CELL_STYLE[key]?.bg ?? s.from, border: `1px solid ${CELL_STYLE[key]?.border ?? "transparent"}` }} />
                         <span className="text-xs text-[#ADADAA]">{s.label}</span>
                       </div>
                     ))}

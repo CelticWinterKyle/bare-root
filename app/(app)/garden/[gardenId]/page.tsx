@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Sprout, CalendarDays, Snowflake, Thermometer, Settings } from "lucide-react";
+import { Sprout, CalendarDays, Settings } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { GardenOverview } from "@/components/canvas/GardenOverview";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
@@ -95,115 +95,131 @@ export default async function GardenPage({
     plantCount: bed.cells.reduce((sum, c) => sum + c.plantings.length, 0),
   }));
 
+  // Split garden name into italic first word + rest
+  const nameParts = garden.name.trim().split(/\s+/);
+  const nameFirst = nameParts[0];
+  const nameRest = nameParts.slice(1).join(" ");
+
+  const BED_ACCENTS = ["#1C3D0A", "#D4820A", "#7DA84E"];
+
   return (
     <div>
-      <div className="max-w-3xl mx-auto px-4 pt-8 pb-6">
-      {/* Header */}
-      <header className="mb-6">
-        <div className="flex items-start justify-between gap-4">
+      {/* Page hero */}
+      <div style={{ padding: "24px 22px 20px", background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
           <div>
-            <p className="font-mono uppercase mb-1" style={{ fontSize: "9px", color: "#7DA84E", letterSpacing: "0.18em" }}>
-              Garden
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+              My Garden
             </p>
             <h1
-              className="font-display font-bold leading-none"
-              style={{ fontSize: "2rem", color: "#111109", letterSpacing: "-0.03em", fontVariationSettings: "'opsz' 36" }}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "34px",
+                fontWeight: 800,
+                color: "#111109",
+                letterSpacing: "-0.03em",
+                lineHeight: 0.95,
+                fontVariationSettings: "'opsz' 36",
+              }}
             >
-              {garden.name}
+              <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{nameFirst}</em>
+              {nameRest ? <> {nameRest}</> : null}
             </h1>
-            <div className="flex items-center gap-3 mt-1.5 font-mono" style={{ fontSize: "11px", color: "#6B6B5A" }}>
+            {/* Tag pills */}
+            <div style={{ display: "flex", gap: "6px", marginTop: "10px", flexWrap: "wrap" as const, alignItems: "center" }}>
               {garden.usdaZone && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" style={{ color: "#ADADAA" }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#1C3D0A", border: "1.5px solid #D4E8BE", background: "#E4F0D4", padding: "3px 8px", borderRadius: "100px" }}>
                   Zone {garden.usdaZone}
                 </span>
               )}
-              {garden.lastFrostDate && (
-                <span>Last frost {formatFrostDate(garden.lastFrostDate)}</span>
+              {activeSeason && (
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#D4820A", border: "1.5px solid rgba(212,130,10,0.3)", background: "#FDF2E0", padding: "3px 8px", borderRadius: "100px" }}>
+                  {activeSeason.name}
+                </span>
               )}
-              <span>{garden.widthFt} × {garden.heightFt} ft</span>
+              {garden.lastFrostDate && (
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#6B6B5A", border: "1.5px solid #E4E4DC", background: "transparent", padding: "3px 8px", borderRadius: "100px" }}>
+                  Last frost {formatFrostDate(garden.lastFrostDate)}
+                </span>
+              )}
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#ADADAA", padding: "3px 0" }}>
+                {garden.widthFt} × {garden.heightFt} ft
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0 mt-1">
+          {/* Header actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginTop: "4px" }}>
             <Link
               href={`/garden/${gardenId}/seasons`}
-              className="flex items-center gap-1.5 font-mono transition-colors"
-              style={{ fontSize: "11px", color: "#6B6B5A", letterSpacing: "0.04em" }}
+              style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "11px", color: "#6B6B5A", letterSpacing: "0.04em", textDecoration: "none" }}
             >
-              <CalendarDays className="w-3.5 h-3.5" />
+              <CalendarDays style={{ width: "14px", height: "14px" }} />
               {activeSeason ? activeSeason.name : "Seasons"}
             </Link>
             {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
             <Link
               href={`/garden/${gardenId}/settings`}
-              className="transition-colors"
               style={{ color: "#ADADAA" }}
               aria-label="Garden settings"
             >
-              <Settings className="w-4 h-4" />
+              <Settings style={{ width: "16px", height: "16px" }} />
             </Link>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Weather strip */}
+      {/* Weather card */}
       {weatherCurrent ? (
         <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 relative overflow-hidden"
           style={{
-            background: frostRisk ? "#1A3055" : "#1C3D0A",
-            border: `1px solid ${frostRisk ? "#2A4875" : "#2A5010"}`,
+            margin: "12px 22px",
+            padding: "14px 16px",
+            background: "#1C3D0A",
+            borderRadius: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <div
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full pointer-events-none"
-            style={{ width: 80, height: 80, background: frostRisk ? "rgba(100,160,255,0.08)" : "rgba(125,168,78,0.12)" }}
-          />
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: frostRisk ? "rgba(100,160,255,0.15)" : "rgba(125,168,78,0.15)" }}
-          >
-            {frostRisk ? (
-              <Snowflake className="w-4 h-4" style={{ color: "#7EB8F5" }} />
-            ) : (
-              <Thermometer className="w-4 h-4" style={{ color: "#A8D870" }} />
-            )}
+          <div style={{ position: "absolute", right: "-20px", top: "-20px", width: "100px", height: "100px", borderRadius: "50%", background: "#3A6B20", opacity: 0.35 }} />
+          <div style={{ position: "absolute", right: "20px", bottom: "-30px", width: "70px", height: "70px", borderRadius: "50%", background: "#7DA84E", opacity: 0.2 }} />
+
+          <div style={{ fontFamily: "var(--font-display)", fontSize: "36px", fontWeight: 300, color: "white", lineHeight: 1, position: "relative", zIndex: 1 }}>
+            {weatherCurrent.temp}<sup style={{ fontSize: "16px" }}>°</sup>
           </div>
-          <div className="flex-1 min-w-0 relative">
-            <p className="text-sm font-semibold" style={{ color: "#FDFDF8" }}>
-              {weatherCurrent.temp}°F · <span className="capitalize">{weatherCurrent.description}</span>
-            </p>
-            {frostRisk && (
-              <p className="text-xs mt-0.5 font-medium" style={{ color: "rgba(126,184,245,0.85)" }}>
-                Frost risk in the next 72 hours — protect tender plants
-              </p>
-            )}
+
+          <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+            <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)", fontWeight: 500, textTransform: "capitalize" as const }}>
+              {weatherCurrent.description}
+            </div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+              {garden.usdaZone ? `Zone ${garden.usdaZone}` : ""}{garden.locationZip ? ` · ${garden.locationZip}` : ""}
+            </div>
           </div>
-          {weatherCurrent.icon && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`https://openweathermap.org/img/wn/${weatherCurrent.icon}.png`}
-              alt={weatherCurrent.description}
-              width={40}
-              height={40}
-              className="shrink-0 -my-1 relative"
-            />
+
+          {frostRisk && (
+            <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "4px 8px", fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "#A8D8FF", zIndex: 1, position: "relative" as const }}>
+              ⚠ Frost Risk
+            </div>
           )}
         </div>
       ) : (
         <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
-          style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+          style={{ margin: "12px 22px", display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "12px", background: "#F4F4EC", border: "1px solid #E4E4DC" }}
         >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#EAEADE" }}>
-            <Thermometer className="w-4 h-4" style={{ color: "#ADADAA" }} />
+          <div style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "#EAEADE", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ADADAA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+            </svg>
           </div>
-          <p className="text-sm" style={{ color: "#6B6B5A" }}>
+          <p style={{ fontSize: "14px", color: "#6B6B5A" }}>
             {garden.locationZip
               ? "Weather data temporarily unavailable."
               : <>
                   Add a zip code in{" "}
-                  <Link href={`/garden/${gardenId}/settings`} style={{ color: "#7DA84E" }} className="underline transition-colors">
+                  <Link href={`/garden/${gardenId}/settings`} style={{ color: "#7DA84E", textDecoration: "underline" }}>
                     garden settings
                   </Link>
                   {" "}for local weather and frost alerts.
@@ -213,27 +229,31 @@ export default async function GardenPage({
         </div>
       )}
 
-      </div>
-
       {/* Canvas */}
       {garden.beds.length === 0 ? (
-        <div className="max-w-3xl mx-auto px-4">
+        <div style={{ margin: "12px 22px" }}>
           <div
-            className="rounded-xl p-12 text-center"
-            style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+            style={{ borderRadius: "12px", padding: "48px 32px", textAlign: "center", background: "#F4F4EC", border: "1px solid #E4E4DC" }}
           >
-            <Sprout className="w-10 h-10 mx-auto mb-3" style={{ color: "#7DA84E" }} />
-            <p className="font-display text-lg font-semibold mb-1" style={{ color: "#1C3D0A", fontVariationSettings: "'opsz' 22" }}>
+            <Sprout style={{ width: "40px", height: "40px", margin: "0 auto 12px", color: "#7DA84E" }} />
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: 700, color: "#1C3D0A", marginBottom: "6px", fontVariationSettings: "'opsz' 22" }}>
               No beds yet
             </p>
-            <p className="text-sm mb-4" style={{ color: "#6B6B5A" }}>
+            <p style={{ fontSize: "14px", color: "#6B6B5A", marginBottom: "16px" }}>
               Add your first raised bed to start planning.
             </p>
             <AddBedDialog gardenId={garden.id} />
           </div>
         </div>
       ) : (
-        <div className="px-4">
+        <div style={{ margin: "12px 22px", borderRadius: "12px", overflow: "hidden", border: "1.5px solid #E4E4DC", position: "relative", boxShadow: "0 2px 16px rgba(28,61,10,0.08)" }}>
+          {/* Frosted topbar overlay */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "28px", background: "rgba(253,253,248,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 10px", borderBottom: "1px solid rgba(228,228,220,0.8)", zIndex: 2 }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase" as const, letterSpacing: "0.14em", color: "#6B6B5A" }}>Garden Canvas</span>
+            <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#ADADAA", textDecoration: "none" }}>
+              {garden.name}
+            </Link>
+          </div>
           <GardenOverview
             garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
             beds={beds}
@@ -241,22 +261,53 @@ export default async function GardenPage({
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-4 pb-8">
+      {/* Beds section */}
+      {garden.beds.length > 0 && (
+        <>
+          <div style={{ padding: "16px 22px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: 700, color: "#111109", letterSpacing: "-0.02em" }}>Beds</h2>
+            {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
+          </div>
+
+          {beds.map((bed, index) => (
+            <Link
+              key={bed.id}
+              href={`/garden/${gardenId}/beds/${bed.id}`}
+              style={{ textDecoration: "none", display: "block", margin: "0 22px 8px" }}
+            >
+              <div style={{ borderRadius: "10px", overflow: "hidden", border: "1px solid #E4E4DC", background: "#FDFDF8", display: "flex", cursor: "pointer", boxShadow: "0 1px 4px rgba(28,61,10,0.04)" }}>
+                <div style={{ width: "4px", flexShrink: 0, background: BED_ACCENTS[index % 3] }} />
+                <div style={{ flex: 1, padding: "12px 14px", display: "flex", flexDirection: "column" as const, gap: "3px" }}>
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: "16px", fontWeight: 700, color: "#111109", letterSpacing: "-0.01em" }}>{bed.name}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase" as const, letterSpacing: "0.06em", color: "#6B6B5A" }}>
+                    {bed.widthFt} × {bed.heightFt} ft · {activeSeason?.name ?? "No season"}
+                  </div>
+                </div>
+                <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column" as const, alignItems: "flex-end", justifyContent: "center", gap: "4px" }}>
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 800, color: "#111109", lineHeight: 1 }}>{bed.plantCount}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#6B6B5A" }}>plants</div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </>
+      )}
+
+      <div style={{ maxWidth: "768px", margin: "0 auto", padding: "0 22px 32px" }}>
         {!activeSeason && garden.beds.length > 0 && (
           <div
-            className="mt-4 rounded-xl p-4 flex items-center justify-between gap-4"
-            style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+            style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "#F4F4EC", border: "1px solid #E4E4DC" }}
           >
-            <p className="text-sm" style={{ color: "#6B6B5A" }}>No active season — create one to start assigning plants.</p>
+            <p style={{ fontSize: "14px", color: "#6B6B5A" }}>No active season — create one to start assigning plants.</p>
             <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
           </div>
         )}
 
         {atBedLimit && (
-          <div className="mt-4 rounded-xl p-4 text-center" style={{ border: "1px dashed #D4E8BE" }}>
-            <p className="text-sm" style={{ color: "#ADADAA" }}>
+          <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", textAlign: "center", border: "1px dashed #D4E8BE" }}>
+            <p style={{ fontSize: "14px", color: "#ADADAA" }}>
               3 beds used on Free plan.{" "}
-              <Link href="/settings/billing" style={{ color: "#D4820A" }} className="hover:underline">
+              <Link href="/settings/billing" style={{ color: "#D4820A" }}>
                 Upgrade to Pro
               </Link>{" "}
               for unlimited beds.
