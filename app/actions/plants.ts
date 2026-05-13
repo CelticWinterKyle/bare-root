@@ -1,4 +1,5 @@
 "use server";
+import { after } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
@@ -124,32 +125,43 @@ export async function getPlantAction(plantId: string) {
   });
   if (!plant) return null;
 
-  // For seed plants without an externalId, find a matching Perenual entry to get an image
-  if (!plant.externalId && !plant.imageUrl && plant.source === "seed") {
-    const result = await searchPerenual(plant.name);
-    const match = result?.data?.[0];
-    if (match?.default_image?.medium_url) {
+  // Enrich missing data in the background — doesn't block this response.
+  // On first visit the page renders with seed data; second visit gets full details.
+  const needsSearch = !plant.externalId && !plant.imageUrl && plant.source === "seed";
+  const needsDetails = !!plant.externalId && !plant.description;
+
+  if (needsSearch) {
+    after(async () => {
+      const result = await searchPerenual(plant.name);
+      const match = result?.data?.[0];
+      if (!match) return;
+      const imageUrl = match.default_image?.medium_url ?? null;
       await db.plantLibrary.update({
         where: { id: plantId },
-        data: {
-          externalId: String(match.id),
-          imageUrl: match.default_image.medium_url,
-        },
+        data: { externalId: String(match.id), imageUrl: imageUrl ?? undefined },
       });
-      return db.plantLibrary.findFirst({
-        where: { id: plantId },
-        include: {
-          companions: { include: { related: true } },
-          antagonists: { include: { plant: true } },
-        },
-      });
-    }
-  }
-
-  // Enrich from API if sparse
-  if (plant.externalId && !plant.description) {
-    const full = await getPerenualPlant(Number(plant.externalId));
-    if (full) {
+      // Also fetch full details while we have the ID
+      const full = await getPerenualPlant(match.id);
+      if (full) {
+        await db.plantLibrary.update({
+          where: { id: plantId },
+          data: {
+            description: full.description ?? undefined,
+            plantFamily: full.family ?? undefined,
+            category: mapCategory(full.type, full.edible_fruit, full.flowers),
+            sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
+            waterRequirement: mapWatering(full.watering) ?? undefined,
+            spacingInches: full.spacing ?? undefined,
+            imageUrl: full.default_image?.medium_url ?? imageUrl ?? undefined,
+            harvestMonths: full.harvest_season ? [full.harvest_season] : [],
+          },
+        });
+      }
+    });
+  } else if (needsDetails) {
+    after(async () => {
+      const full = await getPerenualPlant(Number(plant.externalId));
+      if (!full) return;
       await db.plantLibrary.update({
         where: { id: plantId },
         data: {
@@ -163,14 +175,7 @@ export async function getPlantAction(plantId: string) {
           harvestMonths: full.harvest_season ? [full.harvest_season] : [],
         },
       });
-      return db.plantLibrary.findFirst({
-        where: { id: plantId },
-        include: {
-          companions: { include: { related: true } },
-          antagonists: { include: { plant: true } },
-        },
-      });
-    }
+    });
   }
 
   return plant;
