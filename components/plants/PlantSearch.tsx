@@ -70,6 +70,7 @@ export function PlantSearch({
   const [plants, setPlants] = useState<Plant[]>(initialPlants);
   const [isPending, startTransition] = useTransition();
   const [apiSearching, setApiSearching] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const updateUrl = useCallback(
     (q: string, cat: PlantCategory | null) => {
@@ -207,13 +208,15 @@ export function PlantSearch({
                   className="relative overflow-hidden flex items-center justify-center"
                   style={{ height: "88px", background: CATEGORY_GRADIENT[plant.category] ?? CATEGORY_GRADIENT.OTHER, borderRadius: "10px 10px 0 0" }}
                 >
-                  {plant.imageUrl ? (
+                  {plant.imageUrl && !failedImages.has(plant.id) ? (
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
                       fill
+                      unoptimized
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 33vw"
+                      onError={() => setFailedImages((prev) => new Set([...prev, plant.id]))}
                     />
                   ) : (
                     <span
