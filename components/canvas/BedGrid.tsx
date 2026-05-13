@@ -95,8 +95,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
   const [justPlanted, setJustPlanted] = useState<Set<string>>(new Set());
 
-  // Portrait beds (more rows than cols) auto-rotate to landscape for screen fit
-  const [rotated, setRotated] = useState(() => gridRows > gridCols);
+  // Portrait beds (more rows than cols) auto-rotate on desktop only.
+  // On mobile, rotation creates unscrollable horizontal overflow, so we start un-rotated
+  // and correct to desktop-rotation in the useEffect once we know the viewport.
+  const [rotated, setRotated] = useState(false);
   const [zoom, setZoom] = useState(1);
 
   // Measure the scrollable viewport width for horizontal cell fitting
@@ -132,13 +134,16 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 384px → use 396 for safety
     // Cap at 420 so cells don't grow huge on large monitors.
     const update = () => {
+      const mobile = window.innerWidth < 768;
       setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(mobile);
     };
+    // Set initial rotation: only auto-rotate on desktop
+    if (window.innerWidth >= 768 && gridRows > gridCols) setRotated(true);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Display orientation: rotated swaps columns ↔ rows
   const displayCols = rotated ? gridRows : gridCols;
@@ -150,14 +155,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     : cells;
 
   // Auto-fit cell size:
-  // - fitByH caps cells so the bed never overflows vertically
-  // - fitByW is the natural width-based size
-  // - For narrow beds (≤4 cols) apply a height-floor so shallow beds fill the screen;
-  //   wide beds (>4 cols) use min(fitByW, fitByH) — no horizontal scroll forced
+  // Mobile: fit to viewport width, no height cap — page scrolls down naturally.
+  // Desktop: balance width vs height, cap cells so the bed fits without vertical scroll.
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
   const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD) / displayRows));
-  const baseCellPx = Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
+  const baseCellPx = isMobile
+    ? Math.max(40, fitByW)
+    : Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
   // Dense mode: hide labels when cells are too small to read them
@@ -261,11 +266,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
       <div className="flex flex-col md:flex-row gap-4 items-start" style={{ marginTop: "20px" }}>
         {/* Bed column */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Scrollable viewport — max height caps it, shrinks to content */}
+          {/* Viewport: desktop caps height so grid fits screen; mobile removes cap so page scrolls */}
           <div
             ref={viewportRef}
             className="overflow-auto rounded-2xl relative"
-            style={{ maxHeight: maxViewportH }}
+            style={isMobile ? {} : { maxHeight: maxViewportH }}
           >
             {/* Empty bed hint — shown until the first plant is added */}
             {isEmpty && !sunMode && panel.type === "none" && (
