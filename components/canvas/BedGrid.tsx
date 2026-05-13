@@ -130,6 +130,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   // Height constraint derived from window height — avoids circular dependency
   // with measuring a container whose size depends on its own content
   const [maxViewportH, setMaxViewportH] = useState(400);
+  const [mobileViewportH, setMobileViewportH] = useState(600);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     // header h-14 (56) + main pb-24 (96) + pt-10 (40) + page-header+mb-6 (68)
@@ -138,6 +139,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     const update = () => {
       const mobile = window.innerWidth < 768;
       setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
+      setMobileViewportH(Math.max(200, window.innerHeight - 300));
       setIsMobile(mobile);
     };
     // Set initial rotation: only auto-rotate on desktop
@@ -164,8 +166,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
   const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD) / displayRows));
   const mobileFitByW = Math.floor((vpW - 32 - (displayCols - 1) * 4) / displayCols);
+  // 52 = grid padding 28px (14px top + 14px bottom) + flex centering py-3 (24px)
+  const mobileFitByH = Math.floor((mobileViewportH - 52 - (displayRows - 1) * 4) / displayRows);
   const baseCellPx = isMobile
-    ? Math.max(40, mobileFitByW)
+    ? Math.max(28, Math.min(mobileFitByW, mobileFitByH))
     : Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
