@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Direction C: The Glasshouse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white:      #FDFDF8;
+  --surface:    #F4F4EC;
+  --surface-2:  #EAEAD E;
+  --deep:       #1C3D0A;
+  --mid:        #3A6B20;
+  --sage:       #7DA84E;
+  --pale:       #E4F0D4;
+  --pale-2:     #D4E8BE;
+  --amber:      #D4820A;
+  --amber-pale: #FDF2E0;
+  --rust:       #7A2A18;
+  --ink:        #111109;
+  --ink-2:      #3A3A30;
+  --muted:      #6B6B5A;
+  --ghost:      #ADADAA;
+  --rule:       #E4E4DC;
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'DM Sans', system-ui, sans-serif;
+  --ff-mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: #EAEAE4;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ── Section chrome ─────────────────────────────────── */
+.section-label {
+  background: #EAEAE4;
+  color: #8A8A80;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 40px 40px 16px;
+}
+.section-label em { color: var(--deep); font-style: normal; }
+
+/* ── Phone frame ─────────────────────────────────────── */
+.screens-row {
+  display: flex;
+  gap: 28px;
+  padding: 0 40px 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.phone-frame {
+  width: 375px;
+  flex-shrink: 0;
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 10px #2A2A28,
+    0 0 0 11px #3A3A38,
+    0 40px 100px rgba(0,0,0,0.35);
+  background: var(--white);
+}
+.phone-notch {
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 126px; height: 34px;
+  background: #2A2A28;
+  border-radius: 0 0 20px 20px;
+  z-index: 10;
+}
+.phone-screen {
+  min-height: 812px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--white);
+}
+
+/* Status bar */
+.status-bar {
+  height: 44px;
+  padding: 14px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--white);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+.status-time {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.status-icons {
+  display: flex; gap: 5px; align-items: center;
+}
+.sig-bar {
+  display: flex; align-items: flex-end; gap: 1.5px;
+}
+.sig-bar span {
+  width: 3px;
+  background: var(--ink);
+  border-radius: 1px;
+}
+
+/* App header — clean white with green line accent */
+.app-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  background: var(--white);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--deep) 0%, var(--sage) 60%, transparent 100%);
+  opacity: 0.25;
+}
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wordmark-main {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--deep);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.wordmark-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--sage);
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+.header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.header-icon-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+  position: relative;
+  cursor: pointer;
+}
+.notif-pip {
+  position: absolute;
+  top: 5px; right: 5px;
+  width: 7px; height: 7px;
+  background: var(--amber);
+  border-radius: 50%;
+  border: 1.5px solid var(--white);
+}
+
+/* Main content */
+.phone-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--white);
+  position: relative;
+  z-index: 1;
+}
+
+/* Page section */
+.page-hero {
+  padding: 24px 22px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--rule);
+}
+.page-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 6px;
+}
+.page-title {
+  font-family: var(--ff-display);
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+.page-title em {
+  font-style: italic;
+  color: var(--deep);
+}
+.page-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.tag {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 100px;
+  border: 1px solid;
+}
+.tag-green { color: var(--deep); border-color: var(--pale-2); background: var(--pale); }
+.tag-amber { color: var(--amber); border-color: rgba(212,130,10,0.2); background: var(--amber-pale); }
+.tag-ghost { color: var(--muted); border-color: var(--rule); background: transparent; }
+
+/* Weather widget — clean card */
+.weather-card {
+  margin: 12px 22px;
+  padding: 14px 16px;
+  background: var(--deep);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.weather-card::before {
+  content: '';
+  position: absolute;
+  right: -20px; top: -20px;
+  width: 100px; height: 100px;
+  background: var(--mid);
+  border-radius: 50%;
+  opacity: 0.35;
+}
+.weather-card::after {
+  content: '';
+  position: absolute;
+  right: 20px; bottom: -30px;
+  width: 70px; height: 70px;
+  background: var(--sage);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+.weather-temp-big {
+  font-family: var(--ff-display);
+  font-size: 36px;
+  font-weight: 300;
+  color: #fff;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.weather-temp-big sup {
+  font-size: 16px;
+  font-weight: 400;
+  vertical-align: super;
+  margin-left: 1px;
+}
+.weather-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+.weather-desc {
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 500;
+}
+.weather-sub {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+.weather-frost-alert {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #A8D8FF;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+/* Canvas — glasshouse framing */
+.canvas-zone {
+  margin: 12px 22px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--rule);
+  position: relative;
+  height: 200px;
+  box-shadow: 0 2px 16px rgba(28,61,10,0.08);
+}
+.canvas-topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: rgba(253,253,248,0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(228,228,220,0.8);
+  z-index: 2;
+}
+.canvas-topbar-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.canvas-topbar-actions {
+  display: flex; gap: 4px;
+}
+.canvas-ctrl {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--muted);
+  cursor: pointer;
+}
+
+/* Bed list — clean rows */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px 8px;
+}
+.section-title {
+  font-family: var(--ff-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.section-action {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sage);
+  letter-spacing: 0.01em;
+}
+.bed-card {
+  margin: 0 22px 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--white);
+  display: flex;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 4px rgba(28,61,10,0.04);
+}
+.bed-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+}
+.bed-card-body {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bed-card-name {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.bed-card-meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bed-card-right {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+}
+.bed-plant-count {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+.bed-plant-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bed-arrow {
+  color: var(--ghost);
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+/* ── Floating bottom nav ─────────────────────────────── */
+.bottom-nav-float {
+  position: relative;
+  padding: 8px 16px 12px;
+  display: flex;
+  justify-content: center;
+  background: var(--white);
+  flex-shrink: 0;
+  border-top: 1px solid var(--rule);
+}
+.nav-pill {
+  display: flex;
+  align-items: center;
+  background: var(--ink);
+  border-radius: 100px;
+  padding: 6px 8px;
+  gap: 2px;
+  box-shadow: 0 4px 20px rgba(17,17,9,0.25);
+}
+.nav-item-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 52px;
+}
+.nav-item-pill.active {
+  background: var(--deep);
+}
+.nav-item-pill.active .nav-pip-label { color: rgba(255,255,255,0.9); }
+.nav-item-pill.active .nav-pip-icon { color: #A8D870; }
+.nav-pip-icon {
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255,255,255,0.3);
+}
+.nav-pip-label {
+  font-family: var(--ff-mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  line-height: 1;
+}
+
+/* ══════════════════════════════════════════════════════
+   BED DETAIL — Graph paper in light mode
+   ══════════════════════════════════════════════════════ */
+.grid-header-clean {
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--white);
+}
+.back-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.back-chevron {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--muted);
+}
+.back-label {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.bed-title-large {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.bed-title-large em {
+  color: var(--deep);
+  font-style: italic;
+}
+.bed-sub {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* Toolbar tabs */
+.grid-tabs {
+  display: flex;
+  overflow-x: auto;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--white);
+  gap: 0;
+}
+.grid-tab {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.grid-tab.active {
+  color: var(--deep);
+  border-bottom-color: var(--deep);
+}
+
+/* Graph paper grid — light version */
+.grid-paper {
+  background-color: var(--white);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%),
+    repeating-linear-gradient(90deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%);
+  background-size: 40px 40px;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+.bed-grid {
+  display: grid;
+  gap: 3px;
+  width: fit-content;
+}
+.cell {
+  width: 54px; height: 54px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  position: relative;
+  border: 1.5px solid;
+  overflow: hidden;
+}
+.cell-empty { background: rgba(255,255,255,0.8); border-color: rgba(28,61,10,0.1); }
+.cell-planned { background: #F0F8E8; border-color: rgba(125,168,78,0.4); }
+.cell-active { background: #E4F0D4; border-color: rgba(58,107,32,0.5); }
+.cell-active.selected { border-color: var(--deep); box-shadow: 0 0 0 2px rgba(28,61,10,0.2); }
+.cell-harvesting { background: #FDF2E0; border-color: rgba(212,130,10,0.4); }
+.cell-failed { background: #FBF0EE; border-color: rgba(122,42,24,0.25); }
+.cell-name {
+  font-family: var(--ff-display);
+  font-size: 8px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.1;
+  color: var(--ink-2);
+  padding: 0 3px;
+}
+.cell-status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+.cell-badge {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+}
+.cell-plus-icon {
+  font-size: 18px;
+  color: rgba(28,61,10,0.15);
+  line-height: 1;
+}
+
+/* Plant detail panel — card style */
+.plant-panel {
+  margin: 10px 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--pale-2);
+  box-shadow: 0 2px 12px rgba(28,61,10,0.08);
+}
+.plant-panel-top {
+  background: var(--deep);
+  padding: 14px 16px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.plant-panel-top::before {
+  content: '';
+  position: absolute;
+  right: -16px; top: -16px;
+  width: 80px; height: 80px;
+  background: var(--mid);
+  border-radius: 50%;
+  opacity: 0.4;
+}
+.plant-panel-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+  line-height: 1;
+}
+.plant-panel-sci {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 3px;
+  position: relative;
+  z-index: 1;
+}
+.plant-panel-status {
+  position: absolute;
+  right: 14px; top: 50%; transform: translateY(-50%);
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(168,216,112,0.2);
+  color: #A8D870;
+  padding: 3px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(168,216,112,0.3);
+  z-index: 1;
+}
+.plant-panel-body {
+  padding: 12px 16px;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.companion-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.companion-icon {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.companion-icon.good { background: var(--pale); color: var(--deep); }
+.companion-icon.warn { background: #FDF2E0; color: var(--amber); }
+.plant-panel-actions {
+  display: flex; gap: 6px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--rule);
+}
+.act-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: var(--ff-body);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  border: 1.5px solid;
+}
+.act-btn-primary { background: var(--deep); color: white; border-color: var(--deep); }
+.act-btn-ghost { background: transparent; color: var(--ink-2); border-color: var(--rule); }
+.act-btn-danger { background: transparent; color: var(--rust); border-color: rgba(122,42,24,0.2); }
+
+/* ══════════════════════════════════════════════════════
+   PLANT LIBRARY — Clean cards
+   ══════════════════════════════════════════════════════ */
+.lib-hero {
+  padding: 22px 22px 0;
+  background: var(--white);
+}
+.lib-title {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.lib-title em { color: var(--deep); font-style: italic; }
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  padding: 9px 14px;
+  margin-top: 12px;
+}
+.search-placeholder {
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: var(--ghost);
+  flex: 1;
+}
+.search-icon {
+  color: var(--ghost);
+  font-size: 14px;
+}
+
+/* Category pills */
+.cat-scroll {
+  display: flex;
+  gap: 6px;
+  padding: 12px 22px 12px;
+  overflow-x: auto;
+  background: var(--white);
+  border-bottom: 1px solid var(--rule);
+}
+.cat-pill {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cat-pill-active { background: var(--deep); color: white; border-color: var(--deep); }
+.cat-pill-ghost { background: transparent; color: var(--muted); border-color: var(--rule); }
+
+/* Plant cards — photo editorial */
+.plant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 22px;
+  background: var(--white);
+}
+.plant-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--rule);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 4px rgba(28,61,10,0.04);
+}
+.plant-img {
+  height: 88px;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plant-img-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plant-initial {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 48px;
+  font-weight: 800;
+  opacity: 0.1;
+  color: var(--ink);
+  line-height: 1;
+}
+.plant-cat-tag {
+  position: absolute;
+  bottom: 6px; left: 6px;
+  font-family: var(--ff-mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.08);
+  color: var(--muted);
+}
+.plant-card-body {
+  padding: 10px 10px 8px;
+}
+.plant-card-name {
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.plant-card-sci {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.plant-card-badges {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.plant-tag-small {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 100px;
+  border: 1px solid;
+}
+.plant-tag-amber { color: var(--amber); border-color: rgba(212,130,10,0.25); background: var(--amber-pale); }
+.plant-tag-green { color: var(--mid); border-color: var(--pale-2); background: var(--pale); }
+
+/* ══════════════════════════════════════════════════════
+   DESKTOP LAYOUT
+   ══════════════════════════════════════════════════════ */
+.desktop-wrap {
+  background: var(--surface);
+  padding: 40px;
+}
+.desktop-frame {
+  max-width: 1100px;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 80px rgba(28,61,10,0.15);
+  display: flex;
+  background: var(--white);
+  border: 1.5px solid var(--rule);
+}
+/* Sidebar — clean, light */
+.dt-sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  min-height: 620px;
+}
+.dt-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dt-logo-mark {
+  width: 32px; height: 32px;
+  background: var(--deep);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dt-logo-leaf { font-size: 16px; }
+.dt-logo-text {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.dt-logo-sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  margin-top: 1px;
+}
+.dt-nav-section {
+  padding: 14px 0 6px;
+}
+.dt-nav-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  padding: 0 18px 6px;
+}
+.dt-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 18px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  margin-right: 8px;
+  transition: all 0.12s;
+}
+.dt-nav-item:hover { color: var(--ink); background: var(--surface); }
+.dt-nav-item.active {
+  color: var(--deep);
+  font-weight: 600;
+  border-left-color: var(--deep);
+  background: var(--pale);
+}
+.dt-nav-item.active .dt-icon { color: var(--sage); }
+.dt-icon { font-size: 14px; color: var(--ghost); width: 18px; text-align: center; }
+.dt-badge {
+  margin-left: auto;
+  background: var(--amber);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  line-height: 1.5;
+}
+.dt-sidebar-footer {
+  margin-top: auto;
+  padding: 14px 18px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dt-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--deep);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.dt-username {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dt-pro-badge {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--amber), #F0A030);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Main desktop content */
+.dt-main {
+  flex: 1;
+  background: var(--white);
+  overflow: hidden;
+}
+.dt-page-header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dt-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dt-eyebrow::before {
+  content: '';
+  display: block;
+  width: 16px; height: 1.5px;
+  background: var(--sage);
+  border-radius: 1px;
+}
+.dt-title {
+  font-family: var(--ff-display);
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.dt-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.dt-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.dt-btn {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1.5px solid;
+  transition: all 0.12s;
+}
+.dt-btn-primary { background: var(--deep); color: white; border-color: var(--deep); }
+.dt-btn-ghost { background: transparent; color: var(--ink-2); border-color: var(--rule); }
+.dt-btn-ghost:hover { background: var(--surface); border-color: rgba(28,61,10,0.2); }
+
+/* Canvas in desktop — white card with green border */
+.dt-canvas-section {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--rule);
+}
+.dt-canvas-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--rule);
+  height: 280px;
+  position: relative;
+  background: #19280e;
+  box-shadow: 0 2px 16px rgba(28,61,10,0.1), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+.dt-canvas-pill {
+  position: absolute;
+  top: 10px; left: 10px;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(143,168,90,0.6);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(143,168,90,0.2);
+  z-index: 2;
+}
+.dt-canvas-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(143,168,90,0.3);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Stats + beds row */
+.dt-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.dt-stat {
+  padding: 14px 20px;
+  border-right: 1px solid var(--rule);
+}
+.dt-stat:last-child { border-right: none; }
+.dt-stat-value {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.dt-stat-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.dt-beds-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px 32px 20px;
+}
+.dt-bed-tile {
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.dt-bed-tile:hover { border-color: var(--pale-2); background: var(--pale); }
+.dt-bed-tile-name {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+}
+.dt-bed-tile-meta {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.dt-bed-tile-count {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--sage);
+  font-weight: 600;
+  margin-top: 5px;
+}
+.dt-bed-tile-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0;
+}
+.dt-bed-tile-content { padding-left: 4px; }
+.dt-bed-add {
+  border: 1.5px dashed var(--rule);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ghost);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+}
+
+/* ── Token section ──────────────────────────────────── */
+.token-section {
+  background: var(--surface);
+  padding: 40px;
+}
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.token-swatch {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.swatch-fill { height: 44px; }
+.swatch-label {
+  padding: 7px 10px;
+  background: white;
+}
+.swatch-name {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.swatch-hex {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div style="padding: 48px 40px 28px; background: var(--white); border-bottom: 1px solid var(--rule);">
+  <div style="max-width: 700px;">
+    <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sage); margin-bottom: 10px;">Bare Root · Design Direction</div>
+    <h1 style="font-family: var(--ff-display); font-size: 52px; font-weight: 800; color: var(--ink); letter-spacing: -0.035em; line-height: 0.95; font-style: italic;">C — The Glasshouse</h1>
+    <p style="font-family: var(--ff-body); font-size: 16px; color: var(--muted); margin-top: 12px; line-height: 1.6; max-width: 520px;">
+      Light, editorial, and airy — the opposite of A and B. Clean white surfaces, bold Fraunces headlines, DM Sans body copy, a dark floating nav pill. The 3D canvas gets a clean card frame instead of a dark shell merger.
+    </p>
+    <div style="display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
+      <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--deep); background: var(--pale); border: 1px solid var(--pale-2); padding: 4px 10px; border-radius: 100px;">Fraunces · Display</div>
+      <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--surface); border: 1px solid var(--rule); padding: 4px 10px; border-radius: 100px;">DM Sans · Body (new)</div>
+      <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--surface); border: 1px solid var(--rule); padding: 4px 10px; border-radius: 100px;">IBM Plex Mono · Data</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 1: Three mobile views -->
+<div class="section-label" style="background: var(--surface); padding-top: 40px;">01 · <em>Mobile — Garden · Bed Detail · Plant Library</em></div>
+
+<div class="screens-row" style="background: var(--surface);">
+
+  <!-- Phone 1: Garden overview -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <div class="sig-bar"><span style="height:4px"></span><span style="height:6px"></span><span style="height:9px"></span><span style="height:12px"></span></div>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="0" width="14" height="11" rx="2" stroke="var(--ink)" stroke-width="1.2" fill="none"/><rect x="1.5" y="1.5" width="8" height="8" rx="1" fill="var(--ink)"/><rect x="14.5" y="3.5" width="1.5" height="4" rx="0.75" fill="var(--ink)"/></svg>
+        </div>
+      </div>
+
+      <div class="app-header">
+        <div class="wordmark">
+          <span class="wordmark-main">bare root</span>
+          <div class="wordmark-dot"></div>
+        </div>
+        <div class="header-right">
+          <div class="header-icon-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <div class="notif-pip"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-content">
+
+        <div class="page-hero">
+          <div class="page-eyebrow">My Garden</div>
+          <div class="page-title"><em>Kyle's</em> Garden</div>
+          <div class="page-meta">
+            <span class="tag tag-green">Zone 7b</span>
+            <span class="tag tag-amber">Spring 2026</span>
+            <span class="tag tag-ghost">Last frost Apr 15</span>
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="weather-card">
+          <div>
+            <div class="weather-temp-big">68<sup>°</sup></div>
+          </div>
+          <div class="weather-info">
+            <div class="weather-desc">Partly Cloudy</div>
+            <div class="weather-sub">Zone 7b · 45213</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end; position: relative; z-index: 1;">
+            <svg width="28" height="28" viewBox="0 0 64 64" opacity="0.7">
+              <circle cx="30" cy="24" r="12" fill="#E8A030"/>
+              <path d="M14 42c0-8 5-14 14-14h12c5 0 9 4 9 8H14z" fill="rgba(255,255,255,0.6)"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-zone">
+          <div class="canvas-topbar">
+            <span class="canvas-topbar-label">Garden Canvas</span>
+            <div class="canvas-topbar-actions">
+              <div class="canvas-ctrl">⊕</div>
+              <div class="canvas-ctrl">⊖</div>
+              <div class="canvas-ctrl">⟳</div>
+            </div>
+          </div>
+          <svg width="100%" height="100%" viewBox="0 0 330 172" style="position:absolute;top:28px;left:0;right:0;height:calc(100% - 28px);">
+            <defs>
+              <pattern id="g3" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+                <rect width="18" height="9" fill="#4a7c3f"/>
+                <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+                <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+                <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3"/>
+              </pattern>
+              <pattern id="s3" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                <rect width="12" height="12" fill="#3d2b1f"/>
+                <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6"/>
+                <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5"/>
+              </pattern>
+              <filter id="f3"><feDropShadow dx="3" dy="6" stdDeviation="3.5" floodColor="#000" floodOpacity="0.35"/></filter>
+            </defs>
+            <polygon points="165,18 282,78 165,136 48,78" fill="url(#g3)"/>
+            <g filter="url(#f3)">
+              <polygon points="80,90 126,67 160,84 114,107" fill="#5A3A18"/>
+              <polygon points="126,67 160,84 160,92 126,75" fill="#7D5630"/>
+              <polygon points="80,82 126,59 160,76 114,99" fill="#C49458"/>
+              <polygon points="85,80 123,61 157,77 119,96" fill="url(#s3)"/>
+              <circle cx="102" cy="78" r="4" fill="#2d5a1b" opacity="0.85"/>
+              <circle cx="116" cy="71" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="130" cy="78" r="4" fill="#2d5a1b" opacity="0.85"/>
+              <circle cx="143" cy="71" r="3.5" fill="#4a8a2e" opacity="0.7"/>
+              <text x="124" y="87" text-anchor="middle" fill="#f0e0c0" font-size="9" font-weight="700" font-family="Georgia,serif" filter="url(#f3)">Bed A</text>
+            </g>
+            <g filter="url(#f3)">
+              <polygon points="175,105 228,80 252,92 199,117" fill="#5A3A18"/>
+              <polygon points="228,80 252,92 252,100 228,88" fill="#9A7040"/>
+              <polygon points="175,97 228,72 252,84 199,109" fill="#C49458"/>
+              <polygon points="180,95 225,74 248,85 203,106" fill="url(#s3)"/>
+              <circle cx="200" cy="93" r="3.5" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="215" cy="86" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="230" cy="91" r="3" fill="#2d5a1b" opacity="0.8"/>
+              <text x="214" y="100" text-anchor="middle" fill="#f0e0c0" font-size="9" font-weight="700" font-family="Georgia,serif" filter="url(#f3)">Bed B</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Beds section -->
+        <div class="section-header">
+          <span class="section-title">Beds</span>
+          <span class="section-action">+ Add bed</span>
+        </div>
+
+        <div class="bed-card">
+          <div class="bed-card-accent" style="background: var(--deep);"></div>
+          <div class="bed-card-body">
+            <div class="bed-card-name">Bed A — Tomatoes</div>
+            <div class="bed-card-meta">4 × 8 ft · Spring 2026</div>
+          </div>
+          <div class="bed-card-right">
+            <div class="bed-plant-count">8</div>
+            <div class="bed-plant-label">plants</div>
+          </div>
+        </div>
+
+        <div class="bed-card">
+          <div class="bed-card-accent" style="background: var(--amber);"></div>
+          <div class="bed-card-body">
+            <div class="bed-card-name">Bed B — Herbs</div>
+            <div class="bed-card-meta">3 × 6 ft · Spring 2026</div>
+          </div>
+          <div class="bed-card-right">
+            <div class="bed-plant-count">12</div>
+            <div class="bed-plant-label">plants</div>
+          </div>
+        </div>
+
+        <div style="height: 80px;"></div>
+      </div>
+
+      <!-- Floating pill nav -->
+      <div class="bottom-nav-float">
+        <div class="nav-pill">
+          <div class="nav-item-pill"><div class="nav-pip-icon">⌂</div><div class="nav-pip-label">Home</div></div>
+          <div class="nav-item-pill active"><div class="nav-pip-icon">⊞</div><div class="nav-pip-label">Garden</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">☘</div><div class="nav-pip-label">Plants</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">📅</div><div class="nav-pip-label">Calendar</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">⚙</div><div class="nav-pip-label">Settings</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phone 2: Bed detail -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <div class="sig-bar"><span style="height:4px"></span><span style="height:6px"></span><span style="height:9px"></span><span style="height:12px"></span></div>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="0" width="14" height="11" rx="2" stroke="var(--ink)" stroke-width="1.2" fill="none"/><rect x="1.5" y="1.5" width="8" height="8" rx="1" fill="var(--ink)"/><rect x="14.5" y="3.5" width="1.5" height="4" rx="0.75" fill="var(--ink)"/></svg>
+        </div>
+      </div>
+
+      <div class="app-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="header-icon-btn" style="width:30px;height:30px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+          </div>
+          <div class="wordmark">
+            <span class="wordmark-main" style="font-size:18px;">bare root</span>
+            <div class="wordmark-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-content">
+
+        <div class="grid-header-clean">
+          <div class="back-row">
+            <div class="back-chevron">‹</div>
+            <span class="back-label">Kyle's Garden</span>
+          </div>
+          <div class="bed-title-large">Bed A — <em>Tomatoes</em></div>
+          <div class="bed-sub">4 × 8 ft · 12" cells · 8 plants active</div>
+        </div>
+
+        <div class="grid-tabs">
+          <div class="grid-tab active">Plant</div>
+          <div class="grid-tab">Sun Map</div>
+          <div class="grid-tab">Companions</div>
+          <div class="grid-tab">Smart Layout ✦</div>
+        </div>
+
+        <div class="grid-paper">
+          <div class="bed-grid" style="grid-template-columns: repeat(4, 54px); gap: 4px;">
+
+            <div class="cell cell-active">
+              <div class="cell-status-dot" style="background:#3A6B20;"></div>
+              <div class="cell-name">Cherokee Purple</div>
+              <div class="cell-badge" style="background: rgba(125,168,78,0.9);">✓</div>
+            </div>
+            <div class="cell cell-active">
+              <div class="cell-status-dot" style="background:#3A6B20;"></div>
+              <div class="cell-name">Beefsteak</div>
+            </div>
+            <div class="cell cell-planned">
+              <div class="cell-status-dot" style="background:#7DA84E;"></div>
+              <div class="cell-name">San Marzano</div>
+              <div class="cell-badge" style="background: rgba(212,130,10,0.9);">!</div>
+            </div>
+            <div class="cell cell-empty">
+              <div class="cell-plus-icon">+</div>
+            </div>
+
+            <div class="cell cell-harvesting">
+              <div class="cell-status-dot" style="background:#D4820A;"></div>
+              <div class="cell-name">Basil</div>
+              <div class="cell-badge" style="background: rgba(125,168,78,0.9);">✓</div>
+            </div>
+            <div class="cell cell-active selected">
+              <div class="cell-status-dot" style="background:#3A6B20;"></div>
+              <div class="cell-name">Brandywine</div>
+            </div>
+            <div class="cell cell-active">
+              <div class="cell-status-dot" style="background:#3A6B20;"></div>
+              <div class="cell-name">Early Girl</div>
+            </div>
+            <div class="cell cell-empty">
+              <div class="cell-plus-icon">+</div>
+            </div>
+
+            <div class="cell cell-empty"><div class="cell-plus-icon">+</div></div>
+            <div class="cell cell-planned">
+              <div class="cell-status-dot" style="background:#7DA84E;"></div>
+              <div class="cell-name">Marigold</div>
+            </div>
+            <div class="cell cell-active">
+              <div class="cell-status-dot" style="background:#3A6B20;"></div>
+              <div class="cell-name">Sun Gold</div>
+            </div>
+            <div class="cell cell-empty"><div class="cell-plus-icon">+</div></div>
+
+          </div>
+        </div>
+
+        <!-- Plant panel -->
+        <div class="plant-panel">
+          <div class="plant-panel-top">
+            <div class="plant-panel-name">Brandywine Tomato</div>
+            <div class="plant-panel-sci">Solanum lycopersicum</div>
+            <div class="plant-panel-status">Active</div>
+          </div>
+          <div class="plant-panel-body">
+            <div class="companion-row">
+              <div class="companion-icon good">✓</div>
+              <span>Basil nearby — improves flavor, repels aphids</span>
+            </div>
+            <div class="companion-row">
+              <div class="companion-icon warn">!</div>
+              <span>San Marzano: 18" spacing required</span>
+            </div>
+          </div>
+          <div class="plant-panel-actions">
+            <button class="act-btn act-btn-primary">Log Harvest</button>
+            <button class="act-btn act-btn-ghost">Notes</button>
+            <button class="act-btn act-btn-danger">Remove</button>
+          </div>
+        </div>
+
+        <div style="height: 80px;"></div>
+      </div>
+
+      <div class="bottom-nav-float">
+        <div class="nav-pill">
+          <div class="nav-item-pill"><div class="nav-pip-icon">⌂</div><div class="nav-pip-label">Home</div></div>
+          <div class="nav-item-pill active"><div class="nav-pip-icon">⊞</div><div class="nav-pip-label">Garden</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">☘</div><div class="nav-pip-label">Plants</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">📅</div><div class="nav-pip-label">Calendar</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">⚙</div><div class="nav-pip-label">Settings</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phone 3: Plant library -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <div class="sig-bar"><span style="height:4px"></span><span style="height:6px"></span><span style="height:9px"></span><span style="height:12px"></span></div>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="0" width="14" height="11" rx="2" stroke="var(--ink)" stroke-width="1.2" fill="none"/><rect x="1.5" y="1.5" width="8" height="8" rx="1" fill="var(--ink)"/></svg>
+        </div>
+      </div>
+
+      <div class="app-header">
+        <div class="wordmark">
+          <span class="wordmark-main">bare root</span>
+          <div class="wordmark-dot"></div>
+        </div>
+        <div class="header-right">
+          <div class="header-icon-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-content">
+
+        <div class="lib-hero">
+          <div class="page-eyebrow">140 plants</div>
+          <div class="lib-title"><em>Plant</em> Library</div>
+          <div class="search-row">
+            <span class="search-icon">⌕</span>
+            <span class="search-placeholder">Search tomato, basil, marigold…</span>
+          </div>
+        </div>
+
+        <div class="cat-scroll">
+          <div class="cat-pill cat-pill-active">Vegetables</div>
+          <div class="cat-pill cat-pill-ghost">Herbs</div>
+          <div class="cat-pill cat-pill-ghost">Fruits</div>
+          <div class="cat-pill cat-pill-ghost">Flowers</div>
+          <div class="cat-pill cat-pill-ghost">Trees</div>
+        </div>
+
+        <div class="plant-grid">
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #1B4A0A 0%, #3A6B20 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.15);">T</span></div>
+              <div class="plant-cat-tag">Vegetable</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Cherokee Purple Tomato</div>
+              <div class="plant-card-sci">Solanum lycopersicum</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">80d</span>
+                <span class="plant-tag-small plant-tag-green">Full sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #2A4010 0%, #4A7C2F 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.15);">J</span></div>
+              <div class="plant-cat-tag">Vegetable</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Jalapeño Pepper</div>
+              <div class="plant-card-sci">Capsicum annuum</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">70d</span>
+                <span class="plant-tag-small plant-tag-green">Full sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #1A3A08 0%, #2D5016 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.12);">Z</span></div>
+              <div class="plant-cat-tag">Vegetable</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Zucchini</div>
+              <div class="plant-card-sci">Cucurbita pepo</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">52d</span>
+                <span class="plant-tag-small plant-tag-green">Full sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #3A1A08 0%, #7A2A18 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.12);">S</span></div>
+              <div class="plant-cat-tag">Fruit</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Strawberry</div>
+              <div class="plant-card-sci">Fragaria × ananassa</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">45d</span>
+                <span class="plant-tag-small plant-tag-green">Part sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #283010 0%, #4A5A20 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.12);">B</span></div>
+              <div class="plant-cat-tag">Herb</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Genovese Basil</div>
+              <div class="plant-card-sci">Ocimum basilicum</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">60d</span>
+                <span class="plant-tag-small plant-tag-green">Full sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <div class="plant-img" style="background: linear-gradient(135deg, #2A2A30 0%, #5A4A6A 100%);">
+              <div class="plant-img-bg"><span class="plant-initial" style="color: rgba(255,255,255,0.1);">M</span></div>
+              <div class="plant-cat-tag">Flower</div>
+            </div>
+            <div class="plant-card-body">
+              <div class="plant-card-name">Marigold</div>
+              <div class="plant-card-sci">Tagetes erecta</div>
+              <div class="plant-card-badges">
+                <span class="plant-tag-small plant-tag-amber">50d</span>
+                <span class="plant-tag-small plant-tag-green">Full sun</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="height: 80px;"></div>
+      </div>
+
+      <div class="bottom-nav-float">
+        <div class="nav-pill">
+          <div class="nav-item-pill"><div class="nav-pip-icon">⌂</div><div class="nav-pip-label">Home</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">⊞</div><div class="nav-pip-label">Garden</div></div>
+          <div class="nav-item-pill active"><div class="nav-pip-icon">☘</div><div class="nav-pip-label">Plants</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">📅</div><div class="nav-pip-label">Calendar</div></div>
+          <div class="nav-item-pill"><div class="nav-pip-icon">⚙</div><div class="nav-pip-label">Settings</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- DESKTOP -->
+<div class="section-label" style="background: var(--surface);">02 · <em>Desktop — Full Layout</em></div>
+
+<div class="desktop-wrap">
+  <div class="desktop-frame">
+
+    <!-- Sidebar -->
+    <div class="dt-sidebar">
+      <div class="dt-logo">
+        <div class="dt-logo-mark"><span class="dt-logo-leaf">🌿</span></div>
+        <div>
+          <div class="dt-logo-text">bare root</div>
+          <div class="dt-logo-sub">Garden Planner</div>
+        </div>
+      </div>
+
+      <div class="dt-nav-section">
+        <div class="dt-nav-label">Planning</div>
+        <div class="dt-nav-item"><span class="dt-icon">⌂</span>Dashboard</div>
+        <div class="dt-nav-item active"><span class="dt-icon">⊞</span>Garden</div>
+        <div class="dt-nav-item"><span class="dt-icon">📅</span>Calendar</div>
+      </div>
+
+      <div class="dt-nav-section">
+        <div class="dt-nav-label">Library</div>
+        <div class="dt-nav-item"><span class="dt-icon">☘</span>Plants</div>
+        <div class="dt-nav-item"><span class="dt-icon">📦</span>Inventory</div>
+      </div>
+
+      <div class="dt-nav-section">
+        <div class="dt-nav-label">Activity</div>
+        <div class="dt-nav-item"><span class="dt-icon">🔔</span>Reminders<span class="dt-badge">2</span></div>
+        <div class="dt-nav-item"><span class="dt-icon">📈</span>Harvest Log</div>
+      </div>
+
+      <div style="flex:1;"></div>
+      <div class="dt-nav-item"><span class="dt-icon">⚙</span>Settings</div>
+
+      <div class="dt-sidebar-footer">
+        <div class="dt-avatar">K</div>
+        <div class="dt-username">Kyle</div>
+        <div class="dt-pro-badge">Pro</div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="dt-main">
+
+      <div class="dt-page-header">
+        <div>
+          <div class="dt-eyebrow">My Gardens</div>
+          <div class="dt-title">Kyle's Garden</div>
+          <div class="dt-title-meta">
+            <span class="tag tag-green">Zone 7b</span>
+            <span class="tag tag-amber">Spring 2026</span>
+            <span class="tag tag-ghost">20 × 15 ft</span>
+            <span class="tag tag-ghost">Last frost Apr 15</span>
+          </div>
+        </div>
+        <div class="dt-actions">
+          <button class="dt-btn dt-btn-ghost">⚙ Settings</button>
+          <button class="dt-btn dt-btn-ghost">Seasons</button>
+          <button class="dt-btn dt-btn-primary">+ Add Bed</button>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div class="dt-canvas-section">
+        <div class="dt-canvas-card">
+          <div class="dt-canvas-pill">Garden Canvas — Interactive 3D</div>
+          <svg width="100%" height="100%" viewBox="0 0 700 280" style="position:absolute;inset:0;width:100%;height:100%;">
+            <defs>
+              <pattern id="gd3" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+                <rect width="18" height="9" fill="#4a7c3f"/>
+                <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+                <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+                <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3"/>
+                <ellipse cx="16" cy="5.5" rx="0.9" ry="0.6" fill="#56904a" opacity="0.25"/>
+              </pattern>
+              <pattern id="sd3" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                <rect width="12" height="12" fill="#3d2b1f"/>
+                <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6"/>
+                <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5"/>
+                <circle cx="5" cy="9.5" r="0.8" fill="#4a3325" opacity="0.4"/>
+              </pattern>
+              <filter id="fn3"><feDropShadow dx="4" dy="8" stdDeviation="4" floodColor="#000" floodOpacity="0.4"/></filter>
+              <filter id="fh3"><feDropShadow dx="6" dy="12" stdDeviation="6" floodColor="#000" floodOpacity="0.5"/></filter>
+            </defs>
+            <polygon points="350,28 620,158 350,266 80,158" fill="url(#gd3)"/>
+            <polygon points="350,28 620,158 350,266 80,158" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+            <!-- Bed A (hovered) -->
+            <g filter="url(#fh3)">
+              <polygon points="120,170 220,120 270,145 170,195" fill="#452A10"/>
+              <polygon points="220,120 270,145 270,157 220,132" fill="#9A7040"/>
+              <polygon points="120,158 220,108 270,133 170,183" fill="#C49458"/>
+              <polygon points="126,156 216,110 264,134 174,180" fill="url(#sd3)"/>
+              <circle cx="150" cy="155" r="4.5" fill="#2d5a1b" opacity="0.85"/>
+              <circle cx="170" cy="146" r="4" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="192" cy="153" r="4.5" fill="#2d5a1b" opacity="0.85"/>
+              <circle cx="212" cy="144" r="4" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="230" cy="151" r="4" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="160" cy="165" r="4" fill="#4a8a2e" opacity="0.7"/>
+              <circle cx="182" cy="163" r="4" fill="#2d5a1b" opacity="0.7"/>
+              <polygon points="120,158 220,108 270,133 170,183" fill="none" stroke="rgba(125,168,78,0.4)" stroke-width="2"/>
+              <text x="200" y="160" text-anchor="middle" fill="#f0e0c0" font-size="13" font-weight="700" font-family="Georgia,serif" filter="url(#fn3)">Bed A</text>
+              <text x="200" y="174" text-anchor="middle" fill="#f0e0c0" font-size="9" font-family="system-ui" opacity="0.6" filter="url(#fn3)">8 plants</text>
+            </g>
+            <!-- Bed B -->
+            <g filter="url(#fn3)">
+              <polygon points="365,190 460,145 495,162 400,207" fill="#452A10"/>
+              <polygon points="460,145 495,162 495,172 460,155" fill="#7D5630"/>
+              <polygon points="365,178 460,133 495,150 400,195" fill="#C49458"/>
+              <polygon points="371,176 456,135 489,151 404,192" fill="url(#sd3)"/>
+              <circle cx="395" cy="175" r="4" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="415" cy="167" r="4" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="436" cy="174" r="3.5" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="454" cy="166" r="3.5" fill="#4a8a2e" opacity="0.7"/>
+              <text x="432" y="174" text-anchor="middle" fill="#f0e0c0" font-size="13" font-weight="700" font-family="Georgia,serif" filter="url(#fn3)">Bed B</text>
+              <text x="432" y="187" text-anchor="middle" fill="#f0e0c0" font-size="9" font-family="system-ui" opacity="0.6" filter="url(#fn3)">12 plants</text>
+            </g>
+            <!-- Bed C -->
+            <g filter="url(#fn3)">
+              <polygon points="225,112 295,78 330,94 260,128" fill="#452A10"/>
+              <polygon points="295,78 330,94 330,103 295,87" fill="#7D5630"/>
+              <polygon points="225,101 295,67 330,83 260,117" fill="#C49458"/>
+              <polygon points="229,100 292,68 327,84 264,115" fill="url(#sd3)"/>
+              <circle cx="252" cy="99" r="3.5" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="268" cy="91" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+              <circle cx="284" cy="97" r="3.5" fill="#2d5a1b" opacity="0.8"/>
+              <text x="277" y="100" text-anchor="middle" fill="#f0e0c0" font-size="11" font-weight="700" font-family="Georgia,serif" filter="url(#fn3)">Bed C</text>
+            </g>
+          </svg>
+          <div class="dt-canvas-hint">Drag to pan · Right-drag / Ctrl+drag to orbit · Scroll to zoom</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="dt-bottom-grid">
+        <div class="dt-stat">
+          <div class="dt-stat-value">3</div>
+          <div class="dt-stat-label">Raised Beds</div>
+        </div>
+        <div class="dt-stat">
+          <div class="dt-stat-value">28</div>
+          <div class="dt-stat-label">Active Plants</div>
+        </div>
+        <div class="dt-stat">
+          <div class="dt-stat-value" style="color: var(--amber);">Apr 15</div>
+          <div class="dt-stat-label">Last Frost</div>
+        </div>
+        <div class="dt-stat" style="border-right:none;">
+          <div class="dt-stat-value">68°</div>
+          <div class="dt-stat-label">Current Temp</div>
+        </div>
+      </div>
+
+      <!-- Bed tiles -->
+      <div class="dt-beds-grid">
+        <div class="dt-bed-tile" style="padding-left: 20px;">
+          <div class="dt-bed-tile-bar" style="background: var(--deep);"></div>
+          <div class="dt-bed-tile-name">Bed A — Tomatoes</div>
+          <div class="dt-bed-tile-meta">4 × 8 ft · Spring 2026</div>
+          <div class="dt-bed-tile-count">8 plants active</div>
+        </div>
+        <div class="dt-bed-tile" style="padding-left: 20px;">
+          <div class="dt-bed-tile-bar" style="background: var(--amber);"></div>
+          <div class="dt-bed-tile-name">Bed B — Herbs</div>
+          <div class="dt-bed-tile-meta">3 × 6 ft · Spring 2026</div>
+          <div class="dt-bed-tile-count">12 plants active</div>
+        </div>
+        <div class="dt-bed-tile" style="padding-left: 20px;">
+          <div class="dt-bed-tile-bar" style="background: var(--sage);"></div>
+          <div class="dt-bed-tile-name">Bed C — Flowers</div>
+          <div class="dt-bed-tile-meta">2 × 4 ft · Spring 2026</div>
+          <div class="dt-bed-tile-count">8 plants planned</div>
+        </div>
+        <div class="dt-bed-add">
+          <span>+</span> Add Bed
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- DESIGN TOKENS -->
+<div class="section-label" style="background: var(--surface);">03 · <em>Design Tokens</em></div>
+
+<div class="token-section">
+  <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+    <div style="background: var(--white); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 20px; display: flex; align-items: baseline; gap: 10px;">
+      <span style="font-family: var(--ff-display); font-style: italic; font-size: 28px; font-weight: 800; color: var(--deep); letter-spacing: -0.02em;">bare root</span>
+      <span style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);">Fraunces Italic · 800</span>
+    </div>
+    <div style="background: var(--white); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 20px;">
+      <p style="font-family: var(--ff-body); font-size: 14px; color: var(--ink-2); line-height: 1.5; max-width: 240px;">Tomatoes thrive when planted alongside basil. The pairing improves flavor and deters common pests.</p>
+      <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 6px;">DM Sans · 15px body</div>
+    </div>
+  </div>
+  <div class="token-grid">
+    <div class="token-swatch"><div class="swatch-fill" style="background:#FDFDF8;border-bottom:1px solid #eee;"></div><div class="swatch-label"><div class="swatch-name">White</div><div class="swatch-hex">#FDFDF8</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#F4F4EC;"></div><div class="swatch-label"><div class="swatch-name">Surface</div><div class="swatch-hex">#F4F4EC</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#1C3D0A;"></div><div class="swatch-label"><div class="swatch-name">Deep Green</div><div class="swatch-hex">#1C3D0A</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#3A6B20;"></div><div class="swatch-label"><div class="swatch-name">Mid Green</div><div class="swatch-hex">#3A6B20</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#7DA84E;"></div><div class="swatch-label"><div class="swatch-name">Sage</div><div class="swatch-hex">#7DA84E</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#E4F0D4;"></div><div class="swatch-label"><div class="swatch-name">Pale Green</div><div class="swatch-hex">#E4F0D4</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#D4820A;"></div><div class="swatch-label"><div class="swatch-name">Amber</div><div class="swatch-hex">#D4820A</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#7A2A18;"></div><div class="swatch-label"><div class="swatch-name">Rust</div><div class="swatch-hex">#7A2A18</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#19280e;"></div><div class="swatch-label"><div class="swatch-name">Canvas (live)</div><div class="swatch-hex">#19280e</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#111109;"></div><div class="swatch-label"><div class="swatch-name">Ink</div><div class="swatch-hex">#111109</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#E4E4DC;border-bottom:1px solid #ddd;"></div><div class="swatch-label"><div class="swatch-name">Rule</div><div class="swatch-hex">#E4E4DC</div></div></div>
+    <div class="token-swatch"><div class="swatch-fill" style="background:#6B6B5A;"></div><div class="swatch-label"><div class="swatch-name">Muted</div><div class="swatch-hex">#6B6B5A</div></div></div>
+  </div>
+</div>
+
+<div style="padding: 32px 40px; background: var(--white); border-top: 1px solid var(--rule); font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ghost); text-align: center;">
+  Direction C — The Glasshouse · Bare Root Garden Planner · Mockup only
+</div>
+
+</body>
+</html>

@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Design Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --wood:        #1A1208;
+  --wood-mid:    #261B0D;
+  --wood-edge:   #4A3420;
+  --paper:       #F5EDDA;
+  --paper-warm:  #EDE3C8;
+  --paper-aged:  #E4D8B8;
+  --paper-line:  #D4C8A8;
+  --paper-rule:  rgba(160,140,100,0.25);
+  --ink:         #231A0D;
+  --ink-mid:     #4A3820;
+  --ink-faint:   #8B7A60;
+  --ink-ghost:   rgba(35,26,13,0.12);
+  --green:       #2D5016;
+  --green-mid:   #4A7C2F;
+  --green-light: #6B8F47;
+  --green-pale:  #C8D9B2;
+  --amber:       #C4790A;
+  --amber-light: #E8A030;
+  --amber-pale:  #F5E0B0;
+  --rust:        #8B3A2A;
+  --rust-pale:   #F0D0C8;
+  --ff-display:  'Fraunces', Georgia, serif;
+  --ff-body:     'Crimson Pro', Georgia, serif;
+  --ff-mono:     'IBM Plex Mono', monospace;
+}
+
+body {
+  background: #0E0905;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ── Section labels ─────────────────────────────────────── */
+.section-label {
+  background: #0E0905;
+  color: rgba(245,237,218,0.35);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 32px 40px 16px;
+}
+.section-label span { color: var(--amber); }
+
+/* ── DIRECTION TASTING MENU ─────────────────────────────── */
+.directions-section {
+  padding: 48px 40px;
+  background: #0E0905;
+}
+.directions-section h1 {
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(245,237,218,0.4);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.directions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.direction-card {
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.direction-card:hover { transform: translateY(-2px); }
+.direction-preview {
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+.direction-label {
+  padding: 12px 16px;
+  font-family: var(--ff-display);
+  font-size: 13px;
+}
+
+/* Direction A — The Workbench */
+.dir-a .direction-preview {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.008) 4px, rgba(255,255,255,0.008) 8px),
+    repeating-linear-gradient(180deg, transparent, transparent 24px, rgba(0,0,0,0.06) 24px, rgba(0,0,0,0.06) 25px);
+}
+.dir-a .direction-label { background: #261B0D; color: var(--paper); }
+.dir-a .direction-label span { color: var(--amber); font-size: 10px; display: block; font-family: var(--ff-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Tiny paper panel inside preview */
+.mini-paper {
+  position: absolute;
+  top: 20px; left: 20px; right: 20px; bottom: 20px;
+  background: var(--paper);
+  border-radius: 2px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05);
+  padding: 12px;
+  overflow: hidden;
+}
+.mini-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.mini-nav {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 32px;
+  background: var(--wood-mid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 8px;
+}
+.mini-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(245,237,218,0.2); }
+.mini-nav-dot.active { background: var(--amber); }
+.mini-content {
+  margin-left: 36px;
+}
+.mini-title { font-family: var(--ff-display); font-size: 11px; color: var(--ink); font-weight: 600; margin-bottom: 6px; }
+.mini-beds {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.mini-bed {
+  width: 40px; height: 28px;
+  border-radius: 2px;
+  border: 1px solid var(--paper-line);
+  position: relative;
+  overflow: hidden;
+}
+.mini-bed-fill { position: absolute; inset: 0; opacity: 0.35; }
+
+/* Direction B — Field Book */
+.dir-b .direction-preview {
+  background: #2A2D1E;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.04) 8px, rgba(255,255,255,0.04) 9px),
+    repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.02) 8px, rgba(255,255,255,0.02) 9px);
+}
+.dir-b .direction-label { background: #1C2014; color: #D8D0B8; }
+.dir-b .direction-label span { color: #8FA85A; font-size: 10px; display: block; font-family: var(--ff-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Direction C — Botanical Press */
+.dir-c .direction-preview {
+  background: #FAF6EE;
+  background-image: repeating-linear-gradient(180deg, transparent, transparent 18px, rgba(180,160,120,0.15) 18px, rgba(180,160,120,0.15) 19px);
+}
+.dir-c .direction-label { background: #F0E8D4; color: #3A2A18; border-top: 1px solid #D4C8A8; }
+.dir-c .direction-label span { color: #8B5E20; font-size: 10px; display: block; font-family: var(--ff-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.chosen-badge {
+  display: inline-block;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--amber);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.directions-note {
+  margin-top: 20px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: rgba(245,237,218,0.4);
+  font-style: italic;
+}
+
+/* ─────────────────────────────────────────────────────────
+   THE WORKBENCH — Full execution
+   ───────────────────────────────────────────────────────── */
+
+.workbench-wrap {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.007) 4px, rgba(255,255,255,0.007) 8px),
+    repeating-linear-gradient(180deg, transparent, transparent 28px, rgba(0,0,0,0.05) 28px, rgba(0,0,0,0.05) 29px);
+  padding: 32px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── Sidebar ──────────────────────────────────────────── */
+.sidebar {
+  width: 192px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #110C05;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.4), inset -1px 0 0 var(--wood-edge);
+  min-height: 680px;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-logo-mark {
+  width: 28px; height: 28px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 14px;
+  color: var(--paper);
+  font-style: italic;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sidebar-logo-text {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--paper);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.sidebar-logo-text small {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(245,237,218,0.35);
+  font-style: normal;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  padding: 12px 0;
+  flex: 1;
+}
+
+.nav-section-label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245,237,218,0.2);
+  padding: 12px 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 20px;
+  color: rgba(245,237,218,0.5);
+  font-family: var(--ff-body);
+  font-size: 15px;
+  font-weight: 400;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: rgba(245,237,218,0.8); background: rgba(255,255,255,0.03); }
+.nav-item.active {
+  color: var(--paper);
+  border-left-color: var(--amber);
+  background: rgba(196,121,10,0.08);
+}
+.nav-item.active .nav-icon { color: var(--amber); }
+
+.nav-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--amber);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--green-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 12px;
+  color: white;
+  font-weight: 600;
+}
+.sidebar-user-name {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: rgba(245,237,218,0.6);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tier-badge {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--amber), var(--amber-light));
+  color: white;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+
+/* ── Main paper panel ─────────────────────────────────── */
+.main-panel {
+  flex: 1;
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 0 rgba(255,255,255,0.04);
+  min-height: 680px;
+  position: relative;
+}
+.main-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: multiply;
+}
+
+.page-header {
+  padding: 28px 36px 0;
+  border-bottom: 1px solid var(--paper-line);
+  position: relative;
+}
+.breadcrumb {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.breadcrumb span { color: var(--ink-mid); }
+
+.page-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.page-title {
+  font-family: var(--ff-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.page-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.meta-chip {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.meta-chip::before {
+  content: '·';
+  color: var(--paper-line);
+}
+.meta-chip:first-child::before { display: none; }
+
+.season-tag {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--amber);
+  font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+.btn-ghost {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-mid);
+  padding: 6px 12px;
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.btn-ghost:hover { background: var(--paper-warm); border-color: var(--ink-faint); }
+
+.btn-primary {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  background: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--green-mid); }
+
+/* ── Weather strip ────────────────────────────────────── */
+.weather-strip {
+  margin: 20px 36px;
+  padding: 12px 18px;
+  background: var(--paper-warm);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--ink-mid);
+}
+.weather-temp {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.weather-desc {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-mid);
+  text-transform: capitalize;
+}
+.weather-zone {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+.weather-detail { color: var(--ink-faint); }
+.weather-detail strong { color: var(--ink-mid); font-weight: 500; }
+
+.frost-strip {
+  margin: 20px 36px;
+  padding: 12px 18px;
+  background: #EDF3F8;
+  border: 1px solid #BDD4E4;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: #2A4E6A;
+}
+.frost-icon { font-size: 16px; }
+
+/* ── Garden canvas ────────────────────────────────────── */
+.canvas-area {
+  margin: 0 36px 28px;
+  padding: 28px;
+  background: var(--paper-warm);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.canvas-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, var(--paper-rule) 19px, var(--paper-rule) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, var(--paper-rule) 19px, var(--paper-rule) 20px);
+  pointer-events: none;
+}
+.canvas-label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.garden-svg-area {
+  position: relative;
+  height: 280px;
+  border: 1px solid var(--paper-line);
+  background: white;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.garden-svg-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(160,140,100,0.15) 19px, rgba(160,140,100,0.15) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(160,140,100,0.15) 19px, rgba(160,140,100,0.15) 20px);
+  pointer-events: none;
+}
+
+/* SVG Beds */
+.svg-bed {
+  position: absolute;
+  border-radius: 3px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.svg-bed:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+.bed-green { background: rgba(107,143,71,0.18); border-color: var(--green-light); }
+.bed-amber { background: rgba(196,121,10,0.12); border-color: var(--amber); }
+.bed-sage  { background: rgba(143,168,107,0.2); border-color: var(--green-light); }
+.bed-neutral { background: rgba(160,140,100,0.08); border-color: var(--paper-line); }
+
+.bed-label {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+.bed-count {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: var(--green);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+.bed-hatch {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bed-hatch::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   SCREEN 2: BED DETAIL
+   ───────────────────────────────────────────────────────── */
+.bed-detail-wrap {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.007) 4px, rgba(255,255,255,0.007) 8px),
+    repeating-linear-gradient(180deg, transparent, transparent 28px, rgba(0,0,0,0.05) 28px, rgba(0,0,0,0.05) 29px);
+  padding: 32px;
+  display: flex;
+  gap: 20px;
+}
+
+.bed-main {
+  flex: 1;
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  min-height: 640px;
+  position: relative;
+}
+.bed-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: multiply;
+}
+
+.bed-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--paper-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bed-title-group {}
+.bed-subtitle {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+.bed-title {
+  font-family: var(--ff-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1;
+}
+.bed-spec {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+.spec-pill {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  border: 1px solid var(--paper-line);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.spec-pill.highlighted { background: var(--green-pale); border-color: var(--green-light); color: var(--green); }
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  background: var(--paper-warm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 14px;
+  color: var(--ink-mid);
+  transition: all 0.1s;
+}
+.zoom-btn:hover { background: var(--paper-aged); border-color: var(--ink-faint); }
+.zoom-level {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  min-width: 30px;
+  text-align: center;
+}
+
+/* ── Cell grid ────────────────────────────────────────── */
+.cell-grid-wrap {
+  padding: 20px 28px;
+  overflow: auto;
+}
+.cell-grid {
+  display: inline-grid;
+  grid-template-columns: repeat(8, 52px);
+  grid-template-rows: repeat(4, 52px);
+  border-left: 1.5px solid var(--paper-line);
+  border-top: 1.5px solid var(--paper-line);
+  position: relative;
+}
+.grid-row-label {
+  position: absolute;
+  left: -20px;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+  letter-spacing: 0.05em;
+}
+.col-labels {
+  display: inline-flex;
+  margin-left: 0;
+  margin-bottom: 4px;
+}
+.col-label {
+  width: 52px;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+.cell {
+  width: 52px; height: 52px;
+  border-right: 1px solid var(--paper-line);
+  border-bottom: 1px solid var(--paper-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+  font-size: 10px;
+}
+.cell:hover { background: rgba(107,143,71,0.06); }
+.cell.empty:hover::after {
+  content: '+';
+  font-size: 16px;
+  color: var(--green-light);
+  opacity: 0.6;
+}
+
+.cell.planted { background: var(--green-pale); }
+.cell.planned { background: rgba(143,168,107,0.12); }
+.cell.seeds { background: rgba(228,183,58,0.15); }
+.cell.harvesting { background: rgba(196,121,10,0.12); }
+
+.cell-plant-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 3px;
+}
+.cell-status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+.dot-active { background: var(--green); }
+.dot-planned { background: var(--green-light); }
+.dot-seeds { background: #D4A843; }
+.dot-harvesting { background: var(--amber); }
+
+.cell-warn {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 10px; height: 10px;
+  background: var(--rust);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  color: white;
+  font-weight: 700;
+}
+.cell-good {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 10px; height: 10px;
+  background: var(--green-mid);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  color: white;
+}
+
+/* ── Right panel ──────────────────────────────────────── */
+.right-panel {
+  width: 264px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-card {
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+}
+.panel-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--paper-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.panel-title-icon { font-size: 12px; }
+.panel-close {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--paper-warm);
+  border: 1px solid var(--paper-line);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.panel-search {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--paper-line);
+  position: relative;
+}
+.panel-search-input {
+  width: 100%;
+  padding: 8px 10px 8px 32px;
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  background: var(--paper-warm);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.panel-search-input:focus {
+  border-color: var(--green-light);
+  background: white;
+}
+.panel-search-icon {
+  position: absolute;
+  left: 24px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.panel-recent-label {
+  padding: 8px 14px 4px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.plant-pick-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.plant-pick-item:hover { background: var(--paper-warm); }
+.plant-pick-avatar {
+  width: 34px; height: 34px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--paper-line);
+}
+.plant-pick-avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.plant-pick-avatar-init {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+}
+.plant-pick-name {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.plant-pick-sub {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 1px;
+  letter-spacing: 0.03em;
+}
+
+/* Smart layout panel */
+.smart-panel-body {
+  padding: 14px;
+}
+.smart-panel-hint {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.wishlist-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.wishlist-chip {
+  font-family: var(--ff-body);
+  font-size: 11px;
+  color: var(--paper);
+  background: var(--green);
+  padding: 3px 8px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.wishlist-chip span { opacity: 0.7; font-size: 9px; }
+.btn-plan {
+  width: 100%;
+  padding: 9px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+  transition: background 0.15s;
+}
+.btn-plan:hover { background: var(--green-mid); }
+.btn-plan-icon { font-size: 11px; }
+
+
+/* ─────────────────────────────────────────────────────────
+   SCREEN 3: PLANT LIBRARY
+   ───────────────────────────────────────────────────────── */
+.library-wrap {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.007) 4px, rgba(255,255,255,0.007) 8px),
+    repeating-linear-gradient(180deg, transparent, transparent 28px, rgba(0,0,0,0.05) 28px, rgba(0,0,0,0.05) 29px);
+  padding: 32px;
+  display: flex;
+  gap: 20px;
+}
+
+.library-main {
+  flex: 1;
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.library-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--paper-line);
+}
+.library-title {
+  font-family: var(--ff-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.library-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.library-search {
+  flex: 1;
+  position: relative;
+}
+.library-search input {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  border: 1.5px solid var(--paper-line);
+  border-radius: 3px;
+  background: var(--paper-warm);
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition: all 0.15s;
+}
+.library-search input:focus {
+  border-color: var(--green-light);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(107,143,71,0.1);
+}
+.library-search-icon {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.category-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cat-pill {
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.12s;
+}
+.cat-pill.veg  { background: #EEF6E7; color: #3A6B1A; }
+.cat-pill.herb { background: #EDF5EC; color: #2D5016; }
+.cat-pill.fruit{ background: #FFF4E6; color: #A0620A; }
+.cat-pill.flower{ background: #F7EEF9; color: #7A3A8A; }
+.cat-pill.tree { background: #F2EDE6; color: #5C4A2A; }
+.cat-pill.active { border-color: currentColor; }
+
+.plant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--paper-line);
+}
+
+.plant-card {
+  border-right: 1px solid var(--paper-line);
+  border-bottom: 1px solid var(--paper-line);
+  cursor: pointer;
+  transition: background 0.12s;
+  overflow: hidden;
+  position: relative;
+}
+.plant-card:hover { background: var(--paper-warm); }
+.plant-card:nth-child(3n) { border-right: none; }
+
+.plant-card-accent {
+  height: 3px;
+  width: 100%;
+}
+.plant-card-img {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  position: relative;
+}
+.plant-card-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.plant-card:hover .plant-card-img img { transform: scale(1.04); }
+.plant-card-img-placeholder {
+  aspect-ratio: 4/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.plant-card-img-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0.12;
+}
+.plant-card-initial {
+  font-family: var(--ff-display);
+  font-size: 40px;
+  font-style: italic;
+  font-weight: 700;
+  opacity: 0.28;
+  position: relative;
+}
+
+.plant-card-body {
+  padding: 10px 12px 12px;
+}
+.plant-card-name {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 2px;
+  transition: color 0.12s;
+}
+.plant-card:hover .plant-card-name { color: var(--green); }
+.plant-card-sci {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plant-card-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.badge {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.badge-days { background: var(--amber-pale); color: #8B5E00; }
+.badge-sun  { color: var(--ink-faint); font-size: 10px; }
+.badge-inv  { background: var(--green-pale); color: var(--green); }
+.badge-inv-out { background: var(--rust-pale); color: var(--rust); }
+
+/* ─────────────────────────────────────────────────────────
+   SCREEN 4: DELIGHT DETAIL
+   ───────────────────────────────────────────────────────── */
+.delight-wrap {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.007) 4px, rgba(255,255,255,0.007) 8px),
+    repeating-linear-gradient(180deg, transparent, transparent 28px, rgba(0,0,0,0.05) 28px, rgba(0,0,0,0.05) 29px);
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* Cell detail zoom */
+.cell-zoom {
+  flex: 1;
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.cell-zoom-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--paper-line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cell-zoom-title {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.cell-expanded {
+  padding: 24px;
+}
+.cell-exp-name {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.cell-exp-variety {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-faint);
+  margin-bottom: 16px;
+}
+.cell-exp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.status-active { background: var(--green-pale); color: var(--green); border: 1px solid rgba(107,143,71,0.3); }
+.status-planned { background: rgba(143,168,107,0.12); color: var(--green-light); border: 1px solid rgba(107,143,71,0.2); }
+.status-harvest { background: var(--amber-pale); color: #8B5E00; border: 1px solid rgba(196,121,10,0.3); }
+
+.cell-exp-dates {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--paper-line);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.date-cell {
+  background: var(--paper-warm);
+  padding: 10px 14px;
+}
+.date-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+.date-value {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.date-sub {
+  font-family: var(--ff-body);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-top: 1px;
+}
+
+.companion-section { margin-bottom: 20px; }
+.companion-label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.companion-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.companion-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 5px;
+  border-radius: 2px;
+  font-family: var(--ff-body);
+  font-size: 12px;
+}
+.companion-good { background: var(--green-pale); color: var(--green); }
+.companion-bad { background: var(--rust-pale); color: var(--rust); }
+.companion-icon {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  color: white;
+  flex-shrink: 0;
+}
+.companion-icon-good { background: var(--green-mid); }
+.companion-icon-bad { background: var(--rust); }
+
+.cell-actions { display: flex; gap: 8px; }
+.action-btn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 3px;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  cursor: pointer;
+  border: 1.5px solid var(--paper-line);
+  background: transparent;
+  color: var(--ink-mid);
+  text-align: center;
+  transition: all 0.12s;
+}
+.action-btn:hover { background: var(--paper-warm); border-color: var(--ink-faint); }
+.action-btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.action-btn.primary:hover { background: var(--green-mid); }
+
+/* Mobile bottom nav */
+.mobile-wrap {
+  background: var(--wood);
+  background-image:
+    repeating-linear-gradient(88deg, transparent, transparent 4px, rgba(255,255,255,0.007) 4px, rgba(255,255,255,0.007) 8px);
+  padding: 32px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.mobile-frame {
+  width: 320px;
+  background: var(--paper);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+.mobile-content {
+  padding: 20px 16px 0;
+  min-height: 420px;
+}
+.mobile-title {
+  font-family: var(--ff-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.mobile-meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.mobile-weather {
+  background: var(--paper-warm);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--ink-mid);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mobile-weather-temp { font-size: 18px; font-weight: 500; color: var(--ink); }
+
+.mobile-beds-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mobile-bed-card {
+  border: 1.5px solid var(--paper-line);
+  border-radius: 3px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.mobile-bed-card:hover { border-color: var(--green-light); background: var(--paper-warm); }
+.mobile-bed-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.02) 3px, rgba(0,0,0,0.02) 4px);
+}
+.mobile-bed-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  position: relative;
+}
+.mobile-bed-count {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+  position: relative;
+}
+.mobile-bed-fill-bar {
+  height: 3px;
+  border-radius: 1px;
+  background: var(--paper-line);
+  margin-top: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.mobile-bed-fill-bar-inner {
+  height: 100%;
+  border-radius: 1px;
+  background: var(--green-light);
+}
+
+/* Mobile bottom nav */
+.mobile-nav {
+  display: flex;
+  border-top: 1.5px solid var(--paper-line);
+  background: var(--paper-warm);
+}
+.mobile-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  cursor: pointer;
+  gap: 3px;
+  position: relative;
+  transition: background 0.1s;
+}
+.mobile-nav-item:hover { background: var(--paper-aged); }
+.mobile-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 24px; height: 2px;
+  background: var(--amber);
+  border-radius: 0 0 2px 2px;
+}
+.mobile-nav-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.mobile-nav-item.active .mobile-nav-icon { color: var(--green); }
+.mobile-nav-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.mobile-nav-item.active .mobile-nav-label { color: var(--green); }
+
+/* Typography specimen */
+.type-specimen {
+  background: var(--paper);
+  border-radius: 4px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  max-width: 360px;
+}
+.spec-row {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--paper-line);
+}
+.spec-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.spec-sample { margin-bottom: 4px; }
+.spec-meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+/* spacing token reference */
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.token-item {
+  background: var(--paper-warm);
+  border: 1px solid var(--paper-line);
+  border-radius: 3px;
+  padding: 8px 10px;
+}
+.token-name { font-family: var(--ff-mono); font-size: 9px; color: var(--ink-faint); letter-spacing: 0.08em; margin-bottom: 3px; }
+.token-value { font-family: var(--ff-mono); font-size: 11px; color: var(--ink-mid); }
+
+/* divider */
+.section-divider {
+  padding: 0 40px;
+  background: #0E0905;
+}
+.section-divider hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 0 — Three design directions
+     ═══════════════════════════════════════════════════════ -->
+<div class="section-label">
+  <span>Direction Survey</span> — Three visual identities for Bare Root
+</div>
+
+<div class="directions-section">
+  <h1>Choose a direction</h1>
+  <div class="directions-grid">
+
+    <!-- Direction A -->
+    <div class="direction-card dir-a">
+      <div class="direction-preview">
+        <div style="position:absolute;inset:16px;background:var(--paper);border-radius:2px;box-shadow:0 4px 20px rgba(0,0,0,0.5);overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:36px;background:#110C05;display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:9px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:rgba(245,237,218,0.2);"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:rgba(245,237,218,0.2);"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:rgba(245,237,218,0.2);"></div>
+          </div>
+          <div style="margin-left:40px;padding:12px 10px;">
+            <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">MY GARDEN</div>
+            <div style="font-family:var(--ff-display);font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:10px;">Backyard Plot</div>
+            <div style="background:var(--paper-warm);border:1px solid var(--paper-line);border-radius:2px;padding:6px 8px;font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);margin-bottom:10px;">68°F · Partly Cloudy</div>
+            <div style="position:relative;height:60px;background:white;border:1px solid var(--paper-line);border-radius:2px;overflow:hidden;">
+              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 7px,rgba(160,140,100,0.18)7px,rgba(160,140,100,0.18)8px),repeating-linear-gradient(90deg,transparent,transparent 7px,rgba(160,140,100,0.18)7px,rgba(160,140,100,0.18)8px);"></div>
+              <div style="position:absolute;left:10px;top:8px;width:50px;height:42px;background:rgba(107,143,71,0.18);border:1.5px solid var(--green-light);border-radius:2px;"></div>
+              <div style="position:absolute;left:72px;top:14px;width:70px;height:30px;background:rgba(196,121,10,0.12);border:1.5px solid var(--amber);border-radius:2px;"></div>
+              <div style="position:absolute;left:152px;top:6px;width:45px;height:45px;background:rgba(107,143,71,0.1);border:1.5px solid var(--paper-line);border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-label">
+        <span>Direction A — Recommended</span>
+        The Workbench
+        <span class="chosen-badge">selected ✓</span>
+      </div>
+    </div>
+
+    <!-- Direction B -->
+    <div class="direction-card dir-b">
+      <div class="direction-preview">
+        <div style="position:absolute;inset:16px;background:#E8E4D4;border-radius:2px;box-shadow:0 4px 20px rgba(0,0,0,0.5);overflow:hidden;">
+          <div style="background:#3A4028;padding:8px 12px;display:flex;align-items:center;gap:8px;">
+            <div style="width:20px;height:20px;background:#8FA85A;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;">⊕</div>
+            <span style="font-family:var(--ff-mono);font-size:9px;color:rgba(255,255,255,0.7);letter-spacing:0.1em;text-transform:uppercase;">BARE ROOT FIELD</span>
+          </div>
+          <div style="padding:10px 12px;">
+            <div style="font-family:var(--ff-display);font-size:16px;font-weight:700;color:#2A2D1E;margin-bottom:8px;">Backyard Plot</div>
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:#C8C4A8;border:1px solid #C8C4A8;border-radius:1px;overflow:hidden;margin-bottom:8px;">
+              <div style="background:#D8D4BC;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#D8D4BC;aspect-ratio:1;"></div>
+              <div style="background:#D4A843;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#D8D4BC;aspect-ratio:1;"></div>
+              <div style="background:#D8D4BC;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#8FA85A;aspect-ratio:1;"></div>
+              <div style="background:#D8D4BC;aspect-ratio:1;"></div>
+            </div>
+            <div style="font-family:var(--ff-mono);font-size:8px;color:#5A5E42;letter-spacing:0.08em;">ZONE 7B · SPRING 2025</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-label">
+        <span>Direction B</span>
+        The Field Book
+      </div>
+    </div>
+
+    <!-- Direction C -->
+    <div class="direction-card dir-c">
+      <div class="direction-preview">
+        <div style="position:absolute;inset:16px;background:#FAF6EE;border-radius:2px;box-shadow:0 4px 20px rgba(0,0,0,0.2);overflow:hidden;border:1px solid #E0D4B8;">
+          <div style="border-bottom:2px solid #2D5016;padding:10px 14px;display:flex;align-items:baseline;gap:8px;">
+            <span style="font-family:var(--ff-display);font-style:italic;font-size:18px;font-weight:700;color:#2D5016;">Bare Root</span>
+            <span style="font-family:var(--ff-body);font-style:italic;font-size:11px;color:#8B7060;">Backyard Plot</span>
+          </div>
+          <div style="padding:10px 14px;">
+            <div style="font-family:var(--ff-body);font-style:italic;font-size:11px;color:#6B5A42;border-left:2px solid #C4790A;padding-left:8px;margin-bottom:10px;">Spring Season 2025</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <div style="border:1px solid #C9B896;padding:4px 8px;border-radius:2px;font-family:var(--ff-display);font-size:10px;font-style:italic;color:#2D5016;">Tomato</div>
+              <div style="border:1px solid #C9B896;padding:4px 8px;border-radius:2px;font-family:var(--ff-display);font-size:10px;font-style:italic;color:#8B5E00;">Basil</div>
+              <div style="border:1px solid #C9B896;padding:4px 8px;border-radius:2px;font-family:var(--ff-display);font-size:10px;font-style:italic;color:#2D5016;">Pepper</div>
+              <div style="border:1px solid #C9B896;padding:4px 8px;border-radius:2px;font-family:var(--ff-display);font-size:10px;font-style:italic;color:#7A3A8A;">Marigold</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-label">
+        <span>Direction C</span>
+        Botanical Press
+      </div>
+    </div>
+  </div>
+  <p class="directions-note">Direction A (The Workbench) is developed in full below. B and C are sketched for comparison only.</p>
+</div>
+
+<div class="section-divider"><hr></div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 1 — Garden Overview (desktop)
+     ═══════════════════════════════════════════════════════ -->
+<div class="section-label">
+  <span>Screen 1</span> — Garden Overview · Desktop
+</div>
+
+<div class="workbench-wrap">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">B</div>
+      <div class="sidebar-logo-text">
+        Bare Root
+        <small>Garden Planner</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Planning</div>
+      <div class="nav-item active">
+        <span class="nav-icon">⊞</span>
+        Garden
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🌿</span>
+        Plants
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◫</span>
+        Calendar
+        <span class="nav-badge">3</span>
+      </div>
+
+      <div class="nav-section-label" style="margin-top:8px;">Tools</div>
+      <div class="nav-item">
+        <span class="nav-icon">☰</span>
+        Inventory
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◌</span>
+        Reminders
+      </div>
+
+      <div class="nav-section-label" style="margin-top:8px;">Account</div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙</span>
+        Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">K</div>
+      <div class="sidebar-user-name">Kyle</div>
+      <div class="tier-badge">Pro</div>
+    </div>
+  </div>
+
+  <!-- Main panel -->
+  <div class="main-panel">
+    <div class="page-header">
+      <div class="breadcrumb">My Gardens <span>/ Backyard Plot</span></div>
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Backyard Plot</div>
+          <div class="page-title-meta">
+            <span class="meta-chip">Zone 7b</span>
+            <span class="meta-chip">Last frost Apr 15</span>
+            <span class="meta-chip">24 × 16 ft</span>
+            <span class="season-tag">✦ Spring 2025</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <a class="btn-ghost" href="#">📅 Seasons</a>
+          <button class="btn-primary">+ Add Bed</button>
+          <a class="btn-ghost" href="#">⚙</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather strip -->
+    <div class="weather-strip">
+      <div>
+        <div class="weather-temp">68°F</div>
+        <div class="weather-desc">Partly cloudy</div>
+      </div>
+      <div class="weather-zone">
+        <div class="weather-detail"><strong>High</strong> 74°F</div>
+        <div class="weather-detail"><strong>Low</strong> 52°F</div>
+        <div class="weather-detail"><strong>Zone</strong> 7b</div>
+        <div class="weather-detail"><strong>Last frost</strong> Apr 15</div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-area">
+      <div class="canvas-label">
+        <span>Garden Layout — click a bed to plan</span>
+        <span>24 × 16 ft  ·  3 beds  ·  47 cells planted</span>
+      </div>
+
+      <div class="garden-svg-area">
+        <!-- Ruler ticks top -->
+        <div style="position:absolute;top:4px;left:0;right:0;display:flex;padding:0 16px;justify-content:space-between;">
+          <span style="font-family:var(--ff-mono);font-size:7px;color:var(--ink-faint)">0</span>
+          <span style="font-family:var(--ff-mono);font-size:7px;color:var(--ink-faint)">6</span>
+          <span style="font-family:var(--ff-mono);font-size:7px;color:var(--ink-faint)">12</span>
+          <span style="font-family:var(--ff-mono);font-size:7px;color:var(--ink-faint)">18</span>
+          <span style="font-family:var(--ff-mono);font-size:7px;color:var(--ink-faint)">24 ft</span>
+        </div>
+
+        <!-- Bed 1: Main veggie bed -->
+        <div class="svg-bed bed-green" style="left:28px;top:24px;width:220px;height:140px;">
+          <div class="bed-hatch"></div>
+          <div class="bed-count">32</div>
+          <div class="bed-label">Main Veggie</div>
+          <!-- Mini plant dots -->
+          <div style="position:absolute;inset:16px;display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(7,1fr);gap:1px;padding:4px;">
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:var(--amber);border-radius:1px;opacity:0.6;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="border:1px solid var(--paper-line);border-radius:1px;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:#D4A843;border-radius:1px;opacity:0.6;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+            <div style="background:var(--green);border-radius:1px;opacity:0.7;"></div>
+          </div>
+        </div>
+
+        <!-- Bed 2: Herb spiral -->
+        <div class="svg-bed bed-amber" style="left:264px;top:24px;width:140px;height:100px;">
+          <div class="bed-hatch"></div>
+          <div class="bed-count">12</div>
+          <div class="bed-label">Herb Garden</div>
+        </div>
+
+        <!-- Bed 3: Flower border -->
+        <div class="svg-bed bed-neutral" style="left:264px;top:140px;width:200px;height:60px;">
+          <div class="bed-hatch"></div>
+          <div class="bed-count">3</div>
+          <div class="bed-label">Flower Border</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No active season warning placeholder -->
+    <div style="margin:0 36px 28px;padding:14px 18px;background:var(--paper-warm);border:1px dashed var(--paper-line);border-radius:3px;display:flex;align-items:center;justify-content:space-between;">
+      <p style="font-family:var(--ff-body);font-size:13px;color:var(--ink-faint);">3 beds active · Spring 2025 season · 47 plants placed</p>
+      <button class="btn-ghost" style="font-size:12px;">View history</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 2 — Bed Detail + Plant Picker
+     ═══════════════════════════════════════════════════════ -->
+<div class="section-label">
+  <span>Screen 2</span> — Bed Detail · CSS Grid + Right Panel
+</div>
+
+<div class="bed-detail-wrap">
+
+  <!-- Left: sidebar (collapsed to icons for space) -->
+  <div style="width:52px;background:#110C05;border-radius:4px;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:16px;box-shadow:inset -1px 0 0 var(--wood-edge);">
+    <div style="width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-style:italic;font-size:14px;color:white;">B</div>
+    <div style="font-size:16px;color:var(--amber);cursor:pointer;" title="Garden">⊞</div>
+    <div style="font-size:14px;color:rgba(245,237,218,0.3);cursor:pointer;" title="Plants">🌿</div>
+    <div style="font-size:14px;color:rgba(245,237,218,0.3);cursor:pointer;" title="Calendar">◫</div>
+    <div style="font-size:14px;color:rgba(245,237,218,0.3);cursor:pointer;" title="Inventory">☰</div>
+  </div>
+
+  <!-- Center: Bed grid -->
+  <div class="bed-main">
+    <div class="bed-header">
+      <div class="bed-title-group">
+        <div class="bed-subtitle">Backyard Plot / Bed</div>
+        <div class="bed-title">Main Veggie</div>
+        <div class="bed-spec">
+          <span class="spec-pill">8 × 4 ft</span>
+          <span class="spec-pill highlighted">32 cells (12"/sq ft)</span>
+          <span class="spec-pill">Spring 2025</span>
+        </div>
+      </div>
+      <div class="zoom-controls">
+        <button class="zoom-btn">−</button>
+        <span class="zoom-level">100%</span>
+        <button class="zoom-btn">+</button>
+        <button class="zoom-btn" title="Smart Layout" style="width:auto;padding:0 10px;font-family:var(--ff-body);font-size:12px;color:var(--green);border-color:var(--green-pale);">✦ Plan</button>
+      </div>
+    </div>
+
+    <div class="cell-grid-wrap">
+      <!-- Column labels -->
+      <div style="display:inline-flex;margin-left:20px;margin-bottom:2px;">
+        <div class="col-label">1</div><div class="col-label">2</div><div class="col-label">3</div>
+        <div class="col-label">4</div><div class="col-label">5</div><div class="col-label">6</div>
+        <div class="col-label">7</div><div class="col-label">8</div>
+      </div>
+
+      <div style="display:flex;gap:0;align-items:flex-start;">
+        <!-- Row labels -->
+        <div style="display:flex;flex-direction:column;width:20px;padding-top:14px;">
+          <div style="height:52px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">A</div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">B</div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">C</div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">D</div>
+        </div>
+
+        <!-- The grid -->
+        <div class="cell-grid">
+          <!-- Row A -->
+          <div class="cell planted" title="Tomato — Active">
+            <div class="cell-good">✓</div>
+            <div class="cell-plant-name">Tomato</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planted">
+            <div class="cell-plant-name">Tomato</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planned">
+            <div class="cell-plant-name">Pepper</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell planned">
+            <div class="cell-plant-name">Pepper</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell seeds">
+            <div class="cell-plant-name">Carrot</div>
+            <div class="cell-status-dot dot-seeds"></div>
+          </div>
+          <div class="cell seeds">
+            <div class="cell-plant-name">Carrot</div>
+            <div class="cell-status-dot dot-seeds"></div>
+          </div>
+          <div class="cell seeds">
+            <div class="cell-plant-name">Carrot</div>
+            <div class="cell-status-dot dot-seeds"></div>
+          </div>
+          <div class="cell empty"></div>
+
+          <!-- Row B -->
+          <div class="cell planted">
+            <div class="cell-warn">!</div>
+            <div class="cell-plant-name">Tomato</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planted">
+            <div class="cell-plant-name">Tomato</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planted">
+            <div class="cell-plant-name">Basil</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planned">
+            <div class="cell-plant-name">Jalapeño</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell empty"></div>
+          <div class="cell harvesting">
+            <div class="cell-plant-name">Lettuce</div>
+            <div class="cell-status-dot dot-harvesting"></div>
+          </div>
+          <div class="cell harvesting">
+            <div class="cell-plant-name">Lettuce</div>
+            <div class="cell-status-dot dot-harvesting"></div>
+          </div>
+          <div class="cell empty"></div>
+
+          <!-- Row C -->
+          <div class="cell empty"></div>
+          <div class="cell planted">
+            <div class="cell-good">✓</div>
+            <div class="cell-plant-name">Marigold</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell planted">
+            <div class="cell-plant-name">Marigold</div>
+            <div class="cell-status-dot dot-active"></div>
+          </div>
+          <div class="cell empty"></div>
+          <div class="cell seeds">
+            <div class="cell-plant-name">Beet</div>
+            <div class="cell-status-dot dot-seeds"></div>
+          </div>
+          <div class="cell seeds">
+            <div class="cell-plant-name">Beet</div>
+            <div class="cell-status-dot dot-seeds"></div>
+          </div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+
+          <!-- Row D -->
+          <div class="cell planned">
+            <div class="cell-plant-name">Spinach</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell planned">
+            <div class="cell-plant-name">Spinach</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell planned">
+            <div class="cell-plant-name">Spinach</div>
+            <div class="cell-status-dot dot-planned"></div>
+          </div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+          <div class="cell empty"></div>
+        </div>
+      </div>
+
+      <!-- Status legend -->
+      <div style="display:flex;gap:14px;margin-top:16px;padding-top:12px;border-top:1px solid var(--paper-line);">
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>Active
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green-light);"></div>Planned
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#D4A843;"></div>Seeds
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div>Harvesting
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--rust);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--rust);"></div>! Spacing conflict
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:var(--ff-mono);font-size:9px;color:var(--green-mid);letter-spacing:0.06em;text-transform:uppercase;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green-mid);"></div>✓ Good companion
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: panels -->
+  <div class="right-panel">
+
+    <!-- Plant Picker -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-title-icon">🌿</span>
+          Add Plant
+        </div>
+        <div class="panel-close">✕</div>
+      </div>
+      <div class="panel-search">
+        <span class="panel-search-icon">⌕</span>
+        <input class="panel-search-input" type="text" placeholder="Search plants…" value="tom">
+      </div>
+      <div class="panel-recent-label">Results for "tom"</div>
+      <div class="plant-pick-item" style="background:var(--paper-warm);border-left:2px solid var(--green);">
+        <div class="plant-pick-avatar" style="background:#EEF6E7;">
+          <div class="plant-pick-avatar-init" style="color:var(--green);">T</div>
+        </div>
+        <div>
+          <div class="plant-pick-name">Tomato</div>
+          <div class="plant-pick-sub">75 DAYS · SOLANACEAE</div>
+        </div>
+      </div>
+      <div class="plant-pick-item">
+        <div class="plant-pick-avatar" style="background:#EEF6E7;">
+          <div class="plant-pick-avatar-init" style="color:var(--green);">C</div>
+        </div>
+        <div>
+          <div class="plant-pick-name">Cherry Tomato</div>
+          <div class="plant-pick-sub">65 DAYS · SOLANACEAE</div>
+        </div>
+      </div>
+      <div class="plant-pick-item">
+        <div class="plant-pick-avatar" style="background:#EEF6E7;">
+          <div class="plant-pick-avatar-init" style="color:var(--green);">B</div>
+        </div>
+        <div>
+          <div class="plant-pick-name">Beefsteak Tomato</div>
+          <div class="plant-pick-sub">85 DAYS · SOLANACEAE</div>
+        </div>
+      </div>
+      <div class="plant-pick-item">
+        <div class="plant-pick-avatar" style="background:#EEF6E7;">
+          <div class="plant-pick-avatar-init" style="color:var(--green);">C</div>
+        </div>
+        <div>
+          <div class="plant-pick-name">Cherokee Purple</div>
+          <div class="plant-pick-sub">80 DAYS · SOLANACEAE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart Layout Panel -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-title" style="color:var(--green);">
+          <span class="panel-title-icon">✦</span>
+          Smart Layout
+        </div>
+        <div style="font-family:var(--ff-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);background:var(--amber-pale);padding:2px 6px;border-radius:2px;">PRO</div>
+      </div>
+      <div class="smart-panel-body">
+        <p class="smart-panel-hint">Tell me what you want to grow and I'll find the best spots.</p>
+        <div class="wishlist-chips">
+          <div class="wishlist-chip">Tomato <span>✕</span></div>
+          <div class="wishlist-chip">Basil <span>✕</span></div>
+          <div class="wishlist-chip">Marigold <span>✕</span></div>
+        </div>
+        <div class="panel-search" style="padding:0;margin-top:6px;">
+          <span class="panel-search-icon" style="left:10px;">⌕</span>
+          <input class="panel-search-input" type="text" placeholder="Add to wishlist…">
+        </div>
+        <button class="btn-plan">
+          <span class="btn-plan-icon">✦</span>
+          Plan Bed (3 plants)
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 3 — Plant Library
+     ═══════════════════════════════════════════════════════ -->
+<div class="section-label">
+  <span>Screen 3</span> — Plant Library
+</div>
+
+<div class="library-wrap">
+  <div style="width:52px;background:#110C05;border-radius:4px;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:16px;">
+    <div style="width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-style:italic;font-size:14px;color:white;">B</div>
+    <div style="font-size:16px;color:rgba(245,237,218,0.3);cursor:pointer;">⊞</div>
+    <div style="font-size:14px;color:var(--amber);cursor:pointer;">🌿</div>
+    <div style="font-size:14px;color:rgba(245,237,218,0.3);cursor:pointer;">◫</div>
+  </div>
+
+  <div class="library-main">
+    <div class="library-header">
+      <div class="library-title">Plant Library</div>
+      <div class="library-search-row">
+        <div class="library-search">
+          <span class="library-search-icon">⌕</span>
+          <input type="text" placeholder="Search tomato, basil, marigold…">
+        </div>
+      </div>
+      <div class="category-pills">
+        <span class="cat-pill veg active">🥦 Vegetables</span>
+        <span class="cat-pill fruit">🍓 Fruits</span>
+        <span class="cat-pill herb">🌿 Herbs</span>
+        <span class="cat-pill flower">🌸 Flowers</span>
+        <span class="cat-pill tree">🌳 Trees</span>
+      </div>
+    </div>
+
+    <div class="plant-grid">
+
+      <!-- Card 1 — with image placeholder -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">T</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Tomato</div>
+          <div class="plant-card-sci">Solanum lycopersicum</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">75d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+            <span class="badge badge-inv">● In stock</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">C</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Cherry Tomato</div>
+          <div class="plant-card-sci">Solanum lycopersicum var.</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">65d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 — with inventory out -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">J</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Jalapeño</div>
+          <div class="plant-card-sci">Capsicum annuum</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">75d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+            <span class="badge badge-inv-out">○ Out of stock</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">B</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Broccoli</div>
+          <div class="plant-card-sci">Brassica oleracea</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">80d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">K</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Kale</div>
+          <div class="plant-card-sci">Brassica oleracea var. sabellica</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">55d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="plant-card">
+        <div class="plant-card-accent" style="background:#4A7C2F;"></div>
+        <div class="plant-card-img-placeholder" style="background:#EEF6E7;color:#4A7C2F;">
+          <div class="plant-card-initial">Z</div>
+        </div>
+        <div class="plant-card-body">
+          <div class="plant-card-name">Zucchini</div>
+          <div class="plant-card-sci">Cucurbita pepo</div>
+          <div class="plant-card-badges">
+            <span class="badge badge-days">50d</span>
+            <span class="badge badge-sun">☀ Full sun</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<div class="section-divider"><hr></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCREEN 4 — Delight Detail: Cell Panel + Mobile
+     ═══════════════════════════════════════════════════════ -->
+<div class="section-label">
+  <span>Screen 4</span> — Cell Detail Panel · Mobile View
+</div>
+
+<div class="delight-wrap">
+
+  <!-- Cell expanded detail -->
+  <div class="cell-zoom" style="max-width:380px;">
+    <div class="cell-zoom-header">
+      <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);">Main Veggie</div>
+      <div style="font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);margin-left:auto;">A1</div>
+      <div class="panel-close" style="margin-left:8px;">✕</div>
+    </div>
+    <div class="cell-expanded">
+      <div class="cell-exp-name">Tomato</div>
+      <div class="cell-exp-variety">Cherokee Purple · Spring 2025</div>
+
+      <div class="cell-exp-status status-active">
+        <span>●</span> Active
+      </div>
+
+      <div class="cell-exp-dates">
+        <div class="date-cell">
+          <div class="date-label">Planted</div>
+          <div class="date-value">May 3</div>
+          <div class="date-sub">2025</div>
+        </div>
+        <div class="date-cell">
+          <div class="date-label">Expected harvest</div>
+          <div class="date-value">Aug 16</div>
+          <div class="date-sub">~75 days</div>
+        </div>
+        <div class="date-cell">
+          <div class="date-label">Last watered</div>
+          <div class="date-value">Today</div>
+          <div class="date-sub">7:20am</div>
+        </div>
+      </div>
+
+      <div class="companion-section">
+        <div class="companion-label">Companion plants nearby</div>
+        <div class="companion-list">
+          <div class="companion-chip companion-good">
+            <div class="companion-icon companion-icon-good">✓</div>
+            Basil (A3)
+          </div>
+          <div class="companion-chip companion-good">
+            <div class="companion-icon companion-icon-good">✓</div>
+            Marigold (C2)
+          </div>
+          <div class="companion-chip companion-bad">
+            <div class="companion-icon companion-icon-bad">!</div>
+            Fennel (D5)
+          </div>
+        </div>
+      </div>
+
+      <div class="cell-actions">
+        <button class="action-btn">Log harvest</button>
+        <button class="action-btn">Add note</button>
+        <button class="action-btn primary">Update status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile view -->
+  <div>
+    <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(245,237,218,0.3);margin-bottom:16px;">Mobile — Garden Overview</div>
+    <div class="mobile-frame">
+      <div class="mobile-content">
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">My Garden</div>
+        <div class="mobile-title">Backyard Plot</div>
+        <div class="mobile-meta">Zone 7b · Spring 2025 · 3 beds</div>
+        <div class="mobile-weather">
+          <div class="mobile-weather-temp">68°</div>
+          <div>
+            <div style="font-size:11px;color:var(--ink-mid);">Partly cloudy</div>
+            <div style="font-size:9px;color:var(--ink-faint);margin-top:1px;letter-spacing:0.06em;">NO FROST RISK</div>
+          </div>
+        </div>
+        <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;">Your Beds</div>
+        <div class="mobile-beds-grid">
+          <div class="mobile-bed-card" style="border-top:2px solid var(--green-light);">
+            <div class="mobile-bed-name">Main Veggie</div>
+            <div class="mobile-bed-count">32 / 32 cells</div>
+            <div class="mobile-bed-fill-bar"><div class="mobile-bed-fill-bar-inner" style="width:78%;"></div></div>
+          </div>
+          <div class="mobile-bed-card" style="border-top:2px solid var(--amber);">
+            <div class="mobile-bed-name">Herb Garden</div>
+            <div class="mobile-bed-count">12 / 16 cells</div>
+            <div class="mobile-bed-fill-bar"><div class="mobile-bed-fill-bar-inner" style="width:75%;background:var(--amber-light);"></div></div>
+          </div>
+          <div class="mobile-bed-card" style="border-top:2px solid var(--paper-line);">
+            <div class="mobile-bed-name">Flower Border</div>
+            <div class="mobile-bed-count">3 / 12 cells</div>
+            <div class="mobile-bed-fill-bar"><div class="mobile-bed-fill-bar-inner" style="width:25%;"></div></div>
+          </div>
+          <div class="mobile-bed-card" style="border-top:2px dashed var(--paper-line);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <div style="text-align:center;">
+              <div style="font-size:20px;color:var(--paper-line);margin-bottom:4px;">+</div>
+              <div style="font-family:var(--ff-mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.08em;">Add Bed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-nav">
+        <div class="mobile-nav-item active">
+          <span class="mobile-nav-icon">⊞</span>
+          <span class="mobile-nav-label">Garden</span>
+        </div>
+        <div class="mobile-nav-item">
+          <span class="mobile-nav-icon">🌿</span>
+          <span class="mobile-nav-label">Plants</span>
+        </div>
+        <div class="mobile-nav-item">
+          <span class="mobile-nav-icon">◫</span>
+          <span class="mobile-nav-label">Calendar</span>
+        </div>
+        <div class="mobile-nav-item">
+          <span class="mobile-nav-icon">☰</span>
+          <span class="mobile-nav-label">More</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typography + token reference -->
+  <div class="type-specimen" style="max-width:300px;">
+    <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px;">Design tokens</div>
+
+    <div class="spec-row">
+      <div class="spec-sample" style="font-family:var(--ff-display);font-size:28px;font-weight:700;letter-spacing:-0.025em;color:var(--ink);">Bare Root</div>
+      <div class="spec-meta">Fraunces 700 · Page titles</div>
+    </div>
+
+    <div class="spec-row">
+      <div class="spec-sample" style="font-family:var(--ff-display);font-style:italic;font-size:18px;font-weight:600;color:var(--ink);">Main Veggie Bed</div>
+      <div class="spec-meta">Fraunces Italic 600 · Bed names, labels</div>
+    </div>
+
+    <div class="spec-row">
+      <div class="spec-sample" style="font-family:var(--ff-body);font-size:15px;color:var(--ink);">Cherokee Purple Tomato planted May 3rd. Excellent germination rate this season — moving to active.</div>
+      <div class="spec-meta">Crimson Pro 400 · Body, notes, descriptions</div>
+    </div>
+
+    <div class="spec-row">
+      <div class="spec-sample" style="font-family:var(--ff-mono);font-size:11px;color:var(--ink-mid);letter-spacing:0.08em;">ZONE 7B · 75 DAYS · FULL SUN</div>
+      <div class="spec-meta">IBM Plex Mono 400 · Data, labels, badges</div>
+    </div>
+
+    <!-- Color swatches -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:16px;">
+      <div>
+        <div style="height:24px;border-radius:2px;background:var(--green);margin-bottom:4px;"></div>
+        <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">#2D5016</div>
+      </div>
+      <div>
+        <div style="height:24px;border-radius:2px;background:var(--green-light);margin-bottom:4px;"></div>
+        <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">#6B8F47</div>
+      </div>
+      <div>
+        <div style="height:24px;border-radius:2px;background:var(--amber);margin-bottom:4px;"></div>
+        <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">#C4790A</div>
+      </div>
+      <div>
+        <div style="height:24px;border-radius:2px;background:var(--paper);border:1px solid var(--paper-line);margin-bottom:4px;"></div>
+        <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">#F5EDDA</div>
+      </div>
+      <div>
+        <div style="height:24px;border-radius:2px;background:var(--wood);margin-bottom:4px;"></div>
+        <div style="font-family:var(--ff-mono);font-size:8px;color:var(--ink-faint);">#1A1208</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="padding:48px 40px;background:#0E0905;font-family:var(--ff-mono);font-size:10px;color:rgba(245,237,218,0.2);letter-spacing:0.08em;text-transform:uppercase;text-align:center;">
+  Bare Root · Design Concept — The Workbench · Built for Kyle · 2025
+</div>
+
+</body>
+</html>

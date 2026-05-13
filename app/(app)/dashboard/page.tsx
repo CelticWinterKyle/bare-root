@@ -20,28 +20,25 @@ export default async function DashboardPage() {
   const firstName = user.name?.split(" ")[0];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <p
-          className="font-mono uppercase tracking-widest mb-1"
-          style={{ fontSize: "9px", color: "#7DA84E", letterSpacing: "0.18em" }}
-        >
+    <div>
+      {/* Page header */}
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+          <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Garden Planner
-        </p>
-        <h1
-          className="font-display font-bold leading-none"
-          style={{ fontSize: "2.25rem", color: "#111109", letterSpacing: "-0.03em", fontVariationSettings: "'opsz' 42" }}
-        >
-          {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 5vw, 34px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 0.95, fontVariationSettings: "'opsz' 36" }}>
+          {firstName ? `Welcome, ${firstName}` : "Welcome back"}
         </h1>
-        <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "15px" }}>
+        <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "14px", fontFamily: "var(--font-body)" }}>
           {gardens.length === 1
             ? "Your garden is ready."
             : gardens.length > 1
-            ? `${gardens.length} gardens.`
+            ? `${gardens.length} gardens planned.`
             : "Let's get growing."}
         </p>
-      </header>
+      </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {gardens.length === 0 ? (
         <div
@@ -201,6 +198,7 @@ export default async function DashboardPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

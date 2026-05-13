@@ -56,14 +56,18 @@ export default async function PlantDetailPage({
   const harmful = plant.antagonists ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <Link
-        href="/plants"
-        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Plant Library
-      </Link>
+    <div>
+      {/* Back header */}
+      <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Link
+            href="/plants"
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
+          >‹</Link>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>Plant Library</span>
+        </div>
+      </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {/* Hero */}
       <div className="bg-white rounded-2xl border border-[#E4E4DC] overflow-hidden mb-4">
@@ -188,6 +192,7 @@ export default async function PlantDetailPage({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

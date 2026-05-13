@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Direction B: Field Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Field Book palette */
+  --olive:        #1A1E12;   /* deepest olive — shell bg */
+  --olive-mid:    #232B18;   /* nav panels */
+  --olive-edge:   #3A4428;   /* borders, dividers */
+  --olive-bright: #4A5634;   /* lighter olive for hover states */
+  --field:        #F0EDD8;   /* buff notebook paper */
+  --field-warm:   #E8E4CC;   /* slightly warmer */
+  --field-rule:   rgba(140,130,95,0.22); /* notebook rules */
+  --field-line:   #CCC8A8;   /* heavier lines */
+  --ink:          #1A1E12;   /* text on paper */
+  --ink-mid:      #3A3A28;
+  --ink-faint:    #7A7A5A;
+  --ink-ghost:    rgba(26,30,18,0.15);
+  --green:        #2D5016;   /* forest green — CTAs */
+  --green-field:  #8FA85A;   /* sage field green — accent */
+  --green-pale:   #C8D9A0;
+  --amber:        #C4790A;
+  --amber-light:  #E8A030;
+  --rust:         #8B3A2A;
+  --cream:        #F5F0E0;
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'Crimson Pro', Georgia, serif;
+  --ff-mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: #111408;
+  font-family: var(--ff-body);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ── Section chrome ──────────────────────────────────────── */
+.section-label {
+  background: #111408;
+  color: rgba(240,237,216,0.3);
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 40px 40px 16px;
+}
+.section-label em { color: var(--green-field); font-style: normal; }
+.section-divider {
+  height: 1px;
+  background: rgba(140,160,80,0.15);
+  margin: 0 40px;
+}
+
+/* ── FIELD BOOK ruled paper texture ─────────────────────── */
+.ruled {
+  background-color: var(--field);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 27px,
+      var(--field-rule) 27px,
+      var(--field-rule) 28px
+    );
+}
+.ruled-sm {
+  background-color: var(--field);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 20px,
+      var(--field-rule) 20px,
+      var(--field-rule) 21px
+    );
+}
+
+/* ── Olive shell ─────────────────────────────────────────── */
+.olive-shell {
+  background-color: var(--olive);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,255,255,0.012) 3px,
+      rgba(255,255,255,0.012) 4px
+    );
+}
+
+/* SVG noise grain on paper surfaces */
+.paper-grain { position: relative; }
+.paper-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
+  mix-blend-mode: multiply;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 1 — MOBILE SHELL  (what most users actually see)
+   ══════════════════════════════════════════════════════════ */
+.screens-row {
+  display: flex;
+  gap: 32px;
+  padding: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Phone frame */
+.phone-frame {
+  width: 375px;
+  flex-shrink: 0;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 10px #1A1A1A,
+    0 0 0 11px #333,
+    0 32px 80px rgba(0,0,0,0.7);
+  background: var(--field);
+  position: relative;
+}
+.phone-notch {
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 126px; height: 34px;
+  background: #1A1A1A;
+  border-radius: 0 0 20px 20px;
+  z-index: 10;
+}
+.phone-screen {
+  min-height: 812px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top status bar */
+.phone-status {
+  height: 44px;
+  padding: 14px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.phone-status-time {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--field);
+}
+.phone-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-icon {
+  width: 16px; height: 8px;
+  border: 1.5px solid rgba(240,237,216,0.8);
+  border-radius: 2px;
+  position: relative;
+}
+.status-icon::before {
+  content: '';
+  position: absolute;
+  top: 1px; left: 1px;
+  width: 70%; height: calc(100% - 2px);
+  background: rgba(240,237,216,0.8);
+  border-radius: 1px;
+}
+
+/* App header bar */
+.app-header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  position: relative;
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 16px; right: 16px;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+.header-wordmark {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--field);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.header-wordmark small {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240,237,216,0.3);
+  font-style: normal;
+  font-weight: 400;
+  margin-top: 1px;
+}
+.header-bell {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.header-bell svg { opacity: 0.55; }
+.bell-dot {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 8px; height: 8px;
+  background: var(--amber);
+  border-radius: 50%;
+  border: 1.5px solid var(--olive);
+}
+
+/* Page content */
+.phone-content {
+  flex: 1;
+  overflow: hidden;
+  background: var(--field);
+  position: relative;
+}
+
+/* Ruled content area */
+.content-section {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--field-line);
+  position: relative;
+}
+.content-section.ruled-bg {
+  background-color: var(--field);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 27px,
+      var(--field-rule) 27px,
+      var(--field-rule) 28px
+    );
+}
+
+/* Page breadcrumb */
+.page-crumb {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.page-crumb::before {
+  content: '▸';
+  color: var(--green-field);
+  font-size: 8px;
+}
+
+/* Page title */
+.page-title {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.page-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.meta-tag {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: rgba(26,30,18,0.06);
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid rgba(26,30,18,0.1);
+}
+.meta-tag.green { color: var(--green); border-color: rgba(45,80,22,0.2); background: rgba(45,80,22,0.06); }
+.meta-tag.amber { color: var(--amber); border-color: rgba(196,121,10,0.25); background: rgba(196,121,10,0.07); }
+.season-italic {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--amber);
+}
+
+/* Weather strip */
+.weather-strip {
+  margin: 0 20px 0;
+  padding: 10px 14px;
+  background: var(--olive-mid);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.weather-temp {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--field);
+  line-height: 1;
+}
+.weather-desc {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(240,237,216,0.5);
+  margin-top: 2px;
+}
+.weather-zone {
+  margin-left: auto;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green-field);
+  background: rgba(143,168,90,0.12);
+  padding: 3px 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(143,168,90,0.25);
+}
+
+/* Canvas placeholder */
+.canvas-placeholder {
+  margin: 12px 20px 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  height: 220px;
+  background: #19280e;
+  border: 1px solid #2a4018;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.canvas-label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(143,168,90,0.5);
+}
+.canvas-iso-preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Isometric bed (CSS mockup) */
+.iso-bed {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+/* Garden bed cards (below canvas) */
+.bed-list {
+  padding: 0 20px 16px;
+}
+.bed-list-header {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--field-line);
+  margin-bottom: 8px;
+}
+.bed-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(140,130,95,0.12);
+  cursor: pointer;
+}
+.bed-row:last-child { border-bottom: none; }
+.bed-color-swatch {
+  width: 10px;
+  height: 28px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.bed-row-name {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+  flex: 1;
+}
+.bed-row-sub {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+.bed-row-arrow {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  height: 72px;
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  position: relative;
+}
+.bottom-nav::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(143,168,90,0.3) 20%,
+    rgba(143,168,90,0.3) 80%,
+    transparent
+  );
+}
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  position: relative;
+}
+.nav-tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 2px;
+  background: var(--green-field);
+  border-radius: 0 0 2px 2px;
+}
+.nav-tab-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.nav-tab-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 2 — BED DETAIL (mobile, graph paper grid)
+   ══════════════════════════════════════════════════════════ */
+.grid-header {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--field-line);
+  background: var(--field);
+}
+.grid-breadcrumb {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.grid-breadcrumb span { color: var(--ink-mid); }
+.grid-title {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.grid-meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+.grid-toolbar {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--field-line);
+  background: var(--field-warm);
+  overflow-x: auto;
+}
+.toolbar-chip {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--field-line);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent;
+}
+.toolbar-chip.active {
+  background: var(--green);
+  color: var(--field);
+  border-color: var(--green);
+}
+.toolbar-sep { width: 1px; height: 16px; background: var(--field-line); flex-shrink: 0; }
+
+/* Graph paper cell grid */
+.bed-grid-container {
+  padding: 16px 20px;
+  overflow: auto;
+  background-color: var(--field);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(140,130,95,0.2) 0, rgba(140,130,95,0.2) 1px, transparent 1px, transparent 100%),
+    repeating-linear-gradient(90deg, rgba(140,130,95,0.2) 0, rgba(140,130,95,0.2) 1px, transparent 1px, transparent 100%);
+  background-size: 40px 40px;
+}
+.bed-grid {
+  display: grid;
+  gap: 3px;
+  width: fit-content;
+}
+.bed-cell {
+  width: 54px;
+  height: 54px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid transparent;
+  transition: all 0.12s;
+  overflow: hidden;
+}
+.cell-empty {
+  background: rgba(240,237,216,0.7);
+  border-color: rgba(140,130,95,0.3);
+}
+.cell-empty:hover {
+  background: rgba(240,237,216,0.95);
+  border-color: rgba(143,168,90,0.5);
+}
+.cell-planned {
+  background: rgba(143,168,90,0.15);
+  border-color: rgba(143,168,90,0.4);
+}
+.cell-active {
+  background: rgba(74,124,47,0.18);
+  border-color: rgba(74,124,47,0.5);
+}
+.cell-harvesting {
+  background: rgba(196,121,10,0.15);
+  border-color: rgba(196,121,10,0.4);
+}
+.cell-name {
+  font-family: var(--ff-display);
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.1;
+  color: var(--ink-mid);
+  padding: 0 3px;
+}
+.cell-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cell-warn {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 12px; height: 12px;
+  background: rgba(196,121,10,0.85);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  color: white;
+  font-weight: 700;
+  line-height: 1;
+}
+.cell-good {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 12px; height: 12px;
+  background: rgba(45,80,22,0.75);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  color: white;
+  line-height: 1;
+}
+.cell-plus {
+  font-size: 20px;
+  color: rgba(140,130,95,0.4);
+  line-height: 1;
+}
+
+/* Selected cell panel */
+.cell-panel {
+  margin: 0 20px 16px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(26,30,18,0.08);
+}
+.cell-panel-header {
+  padding: 10px 14px;
+  background: var(--olive-mid);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cell-panel-name {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--field);
+  font-style: italic;
+}
+.cell-panel-sci {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(240,237,216,0.45);
+  margin-top: 1px;
+}
+.cell-panel-body {
+  padding: 12px 14px;
+  background: var(--field-warm);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 24px,
+      var(--field-rule) 24px,
+      var(--field-rule) 25px
+    );
+}
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.status-badge {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.status-active-badge { background: rgba(74,124,47,0.15); color: var(--green); border: 1px solid rgba(74,124,47,0.3); }
+.status-planned-badge { background: rgba(143,168,90,0.12); color: #5A7A2A; border: 1px solid rgba(143,168,90,0.3); }
+.status-harvest-badge { background: rgba(196,121,10,0.12); color: var(--amber); border: 1px solid rgba(196,121,10,0.25); }
+.companion-note {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: var(--ink-mid);
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 4px;
+}
+.companion-icon { font-size: 11px; margin-top: 1px; flex-shrink: 0; }
+.panel-actions {
+  padding: 8px 14px;
+  background: var(--field);
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid var(--field-line);
+}
+.panel-btn {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+}
+.panel-btn-primary { background: var(--green); color: var(--field); border-color: var(--green); }
+.panel-btn-ghost { background: transparent; color: var(--ink-mid); border-color: var(--field-line); }
+.panel-btn-danger { background: transparent; color: var(--rust); border-color: rgba(139,58,42,0.3); }
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 3 — PLANT LIBRARY
+   ══════════════════════════════════════════════════════════ */
+.library-header {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--field-line);
+  background: var(--field);
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--field-warm);
+  border: 1px solid var(--field-line);
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin-top: 12px;
+}
+.search-icon { font-size: 13px; color: var(--ink-faint); }
+.search-text {
+  font-family: var(--ff-body);
+  font-size: 15px;
+  color: var(--ink-faint);
+  flex: 1;
+}
+
+/* Category tabs (field dividers) */
+.cat-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 0;
+  border-bottom: 1px solid var(--field-line);
+  background: var(--field-warm);
+  padding: 0 20px;
+}
+.cat-tab {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  color: var(--ink-faint);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cat-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green-field);
+}
+
+/* Plant card grid */
+.plant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--field-line);
+  padding: 0;
+}
+.plant-card {
+  background: var(--field);
+  padding: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.plant-card:hover { background: var(--field-warm); }
+.plant-card-img {
+  width: 100%; height: 80px;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--field-warm);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.plant-img-initial {
+  font-family: var(--ff-display);
+  font-size: 32px;
+  font-weight: 700;
+  opacity: 0.12;
+  color: var(--ink);
+  line-height: 1;
+}
+.plant-img-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26,30,18,0.08) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.plant-cat-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.plant-card-name {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  padding-left: 8px;
+}
+.plant-card-sci {
+  font-family: var(--ff-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-faint);
+  padding-left: 8px;
+  line-height: 1.2;
+}
+.plant-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 8px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.plant-badge {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  background: rgba(196,121,10,0.1);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+.plant-badge-sun {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DESKTOP SIDEBAR — DETAIL SHOT
+   ══════════════════════════════════════════════════════════ */
+.desktop-shell {
+  background: var(--olive);
+  padding: 40px;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,255,255,0.01) 3px,
+      rgba(255,255,255,0.01) 4px
+    );
+}
+.desktop-layout {
+  display: flex;
+  max-width: 1100px;
+  margin: 0 auto;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #14180D;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+.sidebar-logo {
+  padding: 24px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sidebar-logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-emblem {
+  width: 30px; height: 30px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-leaf {
+  font-size: 15px;
+  line-height: 1;
+}
+.logo-text {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--field);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.logo-sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(240,237,216,0.25);
+  margin-top: 2px;
+}
+.sidebar-section {
+  padding: 16px 0 4px;
+}
+.sidebar-section-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240,237,216,0.18);
+  padding: 0 16px 6px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: rgba(240,237,216,0.45);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.sidebar-item:hover {
+  color: rgba(240,237,216,0.75);
+  background: rgba(255,255,255,0.025);
+}
+.sidebar-item.active {
+  color: var(--field);
+  border-left-color: var(--green-field);
+  background: rgba(143,168,90,0.06);
+}
+.sidebar-item.active .s-icon { color: var(--green-field); }
+.s-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  color: rgba(240,237,216,0.3);
+}
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--amber);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--green-mid, #4A7C2F);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 11px;
+  color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sidebar-username {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: rgba(240,237,216,0.45);
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sidebar-tier {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--amber), var(--amber-light));
+  color: white;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+
+/* Main desktop content panel */
+.desktop-main {
+  flex: 1;
+  background: var(--field);
+  position: relative;
+  overflow: hidden;
+  min-height: 600px;
+}
+.desktop-main-inner { position: relative; z-index: 1; }
+/* paper grain */
+.desktop-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 0;
+}
+.desktop-page-header {
+  padding: 28px 36px 18px;
+  border-bottom: 1px solid var(--field-line);
+  position: relative;
+  z-index: 1;
+}
+.desktop-page-header.ruled {
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 27px,
+      var(--field-rule) 27px,
+      var(--field-rule) 28px
+    );
+}
+.desktop-breadcrumb {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.desktop-breadcrumb span { color: var(--ink-mid); }
+.desktop-breadcrumb .sep { color: rgba(140,130,95,0.4); }
+.desktop-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.desktop-page-title {
+  font-family: var(--ff-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.desktop-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.desktop-meta-chip {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.desktop-meta-chip + .desktop-meta-chip::before {
+  content: '·';
+  color: var(--field-line);
+  margin-right: 4px;
+}
+.desktop-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+.btn-field {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid;
+  transition: all 0.12s;
+}
+.btn-field-primary { background: var(--green); color: var(--field); border-color: var(--green); }
+.btn-field-ghost { background: transparent; color: var(--ink-mid); border-color: var(--field-line); }
+.btn-field-ghost:hover { background: var(--field-warm); border-color: var(--ink-faint); }
+
+/* Canvas in desktop context */
+.desktop-canvas-zone {
+  position: relative;
+  z-index: 1;
+  padding: 20px 36px;
+}
+.canvas-wrap {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2a4018;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  height: 320px;
+  background: #19280e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+.canvas-wrap-label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(143,168,90,0.4);
+}
+/* Isometric bed CSS preview */
+.iso-preview {
+  position: relative;
+  width: 320px;
+  height: 160px;
+}
+.iso-bed-css {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+/* Simple CSS iso bed - top face */
+.bed-top {
+  position: absolute;
+  background: #C49458;
+  transform: rotateX(60deg) rotateZ(-45deg);
+  transform-origin: center;
+}
+.canvas-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(143,168,90,0.35);
+  white-space: nowrap;
+}
+
+/* Stat tiles below canvas */
+.stat-row {
+  display: flex;
+  gap: 10px;
+  padding: 0 36px 24px;
+  position: relative;
+  z-index: 1;
+}
+.stat-tile {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--field-warm);
+  border: 1px solid var(--field-line);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+}
+.stat-tile.green::before { background: var(--green-field); }
+.stat-tile.amber::before { background: var(--amber); }
+.stat-tile.rust::before { background: var(--rust); }
+.stat-value {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+.stat-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+
+/* Bed list in desktop sidebar-right panel */
+.desktop-bed-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 36px 24px;
+  position: relative;
+  z-index: 1;
+}
+.desktop-bed-card {
+  padding: 12px 14px;
+  border: 1px solid var(--field-line);
+  border-radius: 3px;
+  background: var(--field);
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.desktop-bed-card:hover { background: var(--field-warm); border-color: var(--ink-faint); }
+.desktop-bed-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+}
+.desktop-bed-card.c1::after { background: #4A7C2F; }
+.desktop-bed-card.c2::after { background: #8B3A2A; }
+.desktop-bed-card.c3::after { background: #8FA85A; }
+.desktop-bed-card.c4::after { background: #C4790A; }
+.bed-card-name {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.bed-card-meta {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.bed-card-count {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--green);
+  margin-top: 2px;
+}
+
+/* ── Design token reference ──────────────────────────────── */
+.token-section {
+  padding: 40px;
+  background: var(--olive-mid);
+}
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.token-swatch {
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.swatch-color {
+  height: 48px;
+}
+.swatch-info {
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+}
+.swatch-name {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(240,237,216,0.7);
+}
+.swatch-hex {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: rgba(240,237,216,0.4);
+  margin-top: 1px;
+}
+
+/* ── Contrast note ───────────────────────────────────────── */
+.contrast-box {
+  margin: 0 40px;
+  padding: 20px 24px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(143,168,90,0.2);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.contrast-canvas {
+  width: 120px;
+  height: 80px;
+  border-radius: 4px;
+  background: #19280e;
+  border: 1px solid #2a4018;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.contrast-note {
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: rgba(240,237,216,0.6);
+  line-height: 1.5;
+}
+.contrast-note strong {
+  color: var(--green-field);
+  font-style: normal;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(143,168,90,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════ -->
+<div style="padding: 48px 40px 24px; background: #111408;">
+  <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(143,168,90,0.5); margin-bottom: 12px;">Bare Root · Design Direction</div>
+  <h1 style="font-family: var(--ff-display); font-size: 42px; font-weight: 700; color: var(--field); letter-spacing: -0.03em; line-height: 1; font-style: italic;">B — Field Book</h1>
+  <p style="font-family: var(--ff-body); font-size: 16px; color: rgba(240,237,216,0.45); margin-top: 8px; max-width: 560px; line-height: 1.5;">Dark olive shell + buff ruled notebook paper. Designed around the live 3D isometric garden canvas — the dark green shell recedes into the canvas rather than fighting it.</p>
+
+  <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+    <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green-field); background: rgba(143,168,90,0.1); border: 1px solid rgba(143,168,90,0.25); padding: 4px 10px; border-radius: 2px;">Fraunces · Display</div>
+    <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); background: rgba(240,237,216,0.06); border: 1px solid rgba(240,237,216,0.1); padding: 4px 10px; border-radius: 2px;">Crimson Pro · Body</div>
+    <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); background: rgba(240,237,216,0.06); border: 1px solid rgba(240,237,216,0.1); padding: 4px 10px; border-radius: 2px;">IBM Plex Mono · Data</div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     CANVAS HARMONY NOTE
+     ═══════════════════════════════════════════════ -->
+<div class="section-label">00 · <em>Canvas Relationship</em></div>
+<div class="contrast-box">
+  <div class="contrast-canvas">
+    <!-- Mini isometric SVG -->
+    <svg width="90" height="60" viewBox="0 0 90 60">
+      <defs>
+        <pattern id="g" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+          <rect width="18" height="9" fill="#4a7c3f"/>
+          <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+          <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+        </pattern>
+      </defs>
+      <!-- Ground -->
+      <polygon points="45,8 78,24 45,40 12,24" fill="url(#g)"/>
+      <!-- Bed left face -->
+      <polygon points="16,32 30,25 30,32 16,39" fill="#5A3A18"/>
+      <!-- Bed right face -->
+      <polygon points="30,25 44,32 44,39 30,32" fill="#7D5630"/>
+      <!-- Bed top face -->
+      <polygon points="16,25 30,18 44,25 30,32" fill="#C49458"/>
+      <!-- Soil -->
+      <polygon points="18,24 30,18.5 42,24 30,29.5" fill="#3d2b1f"/>
+    </svg>
+  </div>
+  <div class="contrast-note">
+    The live canvas uses <strong>#19280e dark forest</strong> as its shell background with <strong>#4a7c3f lawn green</strong>. Direction B's <strong>dark olive (#1A1E12)</strong> is in the same family — the chrome melts into the canvas edges rather than creating a hard frame. The buff paper surfaces only appear in content panels, never behind the canvas itself.
+  </div>
+</div>
+
+<div style="height: 32px;"></div>
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 1 — MOBILE: GARDEN PAGE
+     ═══════════════════════════════════════════════ -->
+<div class="section-label">01 · <em>Mobile — Garden Overview</em> (primary surface)</div>
+
+<div class="screens-row">
+
+  <!-- Phone 1: Garden page -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <!-- Status bar -->
+      <div class="phone-status olive-shell">
+        <span class="phone-status-time">9:41</span>
+        <div class="phone-status-icons">
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+            <rect x="0" y="3" width="3" height="7" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="4.5" y="2" width="3" height="8" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="9" y="0.5" width="3" height="9.5" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="13.5" y="0" width="2" height="10" rx="1" fill="rgba(240,237,216,0.6)"/>
+          </svg>
+          <div class="status-icon"></div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="app-header olive-shell">
+        <div class="header-wordmark">
+          bare root
+          <small>garden planner</small>
+        </div>
+        <div class="header-bell">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,237,216,0.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <div class="bell-dot"></div>
+        </div>
+      </div>
+
+      <!-- Page content -->
+      <div class="phone-content ruled-sm" style="overflow-y: auto;">
+
+        <!-- Garden title section -->
+        <div class="content-section" style="background: transparent; padding-bottom: 8px;">
+          <div class="page-crumb" style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+            <span style="color: var(--green-field);">▸</span> My Gardens
+          </div>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+            <div>
+              <div class="page-title" style="font-size: 24px;">Kyle's Garden</div>
+              <div class="page-title-meta">
+                <span class="meta-tag green">Zone 7b</span>
+                <span class="meta-tag">Last frost Apr 15</span>
+                <span class="season-italic" style="font-size: 12px;">Spring 2026</span>
+              </div>
+            </div>
+            <button class="btn-field btn-field-ghost" style="margin-top: 4px; white-space: nowrap; font-size: 8px; padding: 4px 8px;">+ Bed</button>
+          </div>
+        </div>
+
+        <!-- Weather strip -->
+        <div class="weather-strip">
+          <div>
+            <div class="weather-temp">68°</div>
+            <div class="weather-desc">Partly cloudy</div>
+          </div>
+          <svg width="32" height="32" viewBox="0 0 64 64" style="opacity: 0.6;">
+            <circle cx="30" cy="24" r="12" fill="#E8A030"/>
+            <path d="M14 42c0-8 5-14 14-14h12c5 0 9 4 9 8H14z" fill="#ddd"/>
+          </svg>
+          <div class="weather-zone">Zone 7b</div>
+        </div>
+
+        <!-- 3D Canvas placeholder — dark, seamless -->
+        <div class="canvas-placeholder">
+          <svg width="100%" height="100%" viewBox="0 0 330 220" style="position:absolute;inset:0;">
+            <defs>
+              <pattern id="grass2" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+                <rect width="18" height="9" fill="#4a7c3f"/>
+                <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+                <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+                <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3"/>
+              </pattern>
+              <pattern id="soil2" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                <rect width="12" height="12" fill="#3d2b1f"/>
+                <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6"/>
+                <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5"/>
+              </pattern>
+              <filter id="s1"><feDropShadow dx="3" dy="6" stdDeviation="3" floodColor="#000" floodOpacity="0.4"/></filter>
+            </defs>
+            <!-- Lawn -->
+            <polygon points="165,40 285,100 165,160 45,100" fill="url(#grass2)"/>
+            <!-- Bed 1 -->
+            <g filter="url(#s1)">
+              <polygon points="85,108 125,88 155,103 115,123" fill="#5A3A18"/>
+              <polygon points="125,88 155,103 155,110 125,95" fill="#7D5630"/>
+              <polygon points="85,100 125,80 155,95 115,115" fill="#C49458"/>
+              <polygon points="90,98 120,84 148,96 118,110" fill="url(#soil2)"/>
+              <circle cx="105" cy="96" r="3" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="120" cy="90" r="3" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="135" cy="96" r="3" fill="#2d5a1b" opacity="0.8"/>
+              <text x="122" y="104" text-anchor="middle" fill="#f0e0c0" font-size="9" font-weight="600" font-family="Georgia,serif" filter="url(#s1)" opacity="0.9">Bed A</text>
+            </g>
+            <!-- Bed 2 -->
+            <g filter="url(#s1)">
+              <polygon points="170,120 220,96 240,106 190,130" fill="#5A3A18"/>
+              <polygon points="220,96 240,106 240,114 220,104" fill="#9A7040"/>
+              <polygon points="170,112 220,88 240,98 190,122" fill="#C49458"/>
+              <polygon points="177,110 218,90 236,99 195,119" fill="url(#soil2)"/>
+              <circle cx="195" cy="105" r="2.5" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="210" cy="98" r="2.5" fill="#2d5a1b" opacity="0.8"/>
+              <circle cx="222" cy="103" r="2.5" fill="#2d5a1b" opacity="0.8"/>
+              <text x="208" y="112" text-anchor="middle" fill="#f0e0c0" font-size="9" font-weight="600" font-family="Georgia,serif" filter="url(#s1)" opacity="0.9">Bed B</text>
+            </g>
+          </svg>
+          <div class="canvas-hint">Drag to pan · Ctrl+drag to orbit · Pinch to zoom</div>
+        </div>
+
+        <!-- Bed list -->
+        <div class="bed-list">
+          <div class="bed-list-header">Beds (2)</div>
+          <div class="bed-row">
+            <div class="bed-color-swatch" style="background: #4A7C2F;"></div>
+            <div>
+              <div class="bed-row-name">Bed A — Tomatoes</div>
+              <div class="bed-row-sub">4×8 ft · 8 plants</div>
+            </div>
+            <div class="bed-row-arrow">›</div>
+          </div>
+          <div class="bed-row">
+            <div class="bed-color-swatch" style="background: #8B3A2A;"></div>
+            <div>
+              <div class="bed-row-name">Bed B — Herbs</div>
+              <div class="bed-row-sub">3×6 ft · 12 plants</div>
+            </div>
+            <div class="bed-row-arrow">›</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="bottom-nav olive-shell">
+        <div class="nav-tab">
+          <div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⌂</div>
+          <div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Home</div>
+        </div>
+        <div class="nav-tab active">
+          <div class="nav-tab-icon" style="color: var(--green-field);">⊞</div>
+          <div class="nav-tab-label" style="color: rgba(240,237,216,0.8);">Garden</div>
+        </div>
+        <div class="nav-tab">
+          <div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">☘</div>
+          <div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Plants</div>
+        </div>
+        <div class="nav-tab">
+          <div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">📅</div>
+          <div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Calendar</div>
+        </div>
+        <div class="nav-tab">
+          <div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⚙</div>
+          <div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Settings</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phone 2: Bed detail -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <div class="phone-status olive-shell">
+        <span class="phone-status-time">9:41</span>
+        <div class="phone-status-icons">
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+            <rect x="0" y="3" width="3" height="7" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="4.5" y="2" width="3" height="8" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="9" y="0.5" width="3" height="9.5" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="13.5" y="0" width="2" height="10" rx="1" fill="rgba(240,237,216,0.6)"/>
+          </svg>
+          <div class="status-icon"></div>
+        </div>
+      </div>
+
+      <div class="app-header olive-shell">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: rgba(240,237,216,0.4); font-size: 18px;">‹</span>
+          <div class="header-wordmark" style="font-size: 16px;">
+            bare root
+            <small>bed detail</small>
+          </div>
+        </div>
+        <div class="header-bell">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,237,216,0.4)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="phone-content" style="overflow-y: auto; background: var(--field);">
+
+        <!-- Grid header -->
+        <div class="grid-header">
+          <div class="grid-breadcrumb">Kyle's Garden <span>›</span> Bed A</div>
+          <div class="grid-title">Bed A — Tomatoes</div>
+          <div class="grid-meta">4 × 8 ft · 12" cells · Spring 2026</div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="grid-toolbar">
+          <button class="toolbar-chip active">Plant</button>
+          <button class="toolbar-chip">Sun Map</button>
+          <div class="toolbar-sep"></div>
+          <button class="toolbar-chip">Companions</button>
+          <button class="toolbar-chip">Smart Layout</button>
+        </div>
+
+        <!-- Cell grid -->
+        <div class="bed-grid-container" style="padding: 12px 16px;">
+          <div class="bed-grid" style="grid-template-columns: repeat(4, 54px); gap: 3px;">
+
+            <!-- Row 1 -->
+            <div class="bed-cell cell-active">
+              <div class="cell-dot" style="background:#4A7C2F;"></div>
+              <div class="cell-name">Cherokee Purple</div>
+              <div class="cell-good">✓</div>
+            </div>
+            <div class="bed-cell cell-active">
+              <div class="cell-dot" style="background:#4A7C2F;"></div>
+              <div class="cell-name">Beefsteak</div>
+            </div>
+            <div class="bed-cell cell-planned">
+              <div class="cell-dot" style="background:#8FA85A;"></div>
+              <div class="cell-name">San Marzano</div>
+              <div class="cell-warn">!</div>
+            </div>
+            <div class="bed-cell cell-empty">
+              <div class="cell-plus">+</div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="bed-cell cell-harvesting">
+              <div class="cell-dot" style="background:#C4790A;"></div>
+              <div class="cell-name">Basil</div>
+              <div class="cell-good">✓</div>
+            </div>
+            <div class="bed-cell cell-active" style="background: rgba(74,124,47,0.18); border-color: rgba(74,124,47,0.5); outline: 2px solid var(--green-field); outline-offset: 1px;">
+              <div class="cell-dot" style="background:#4A7C2F;"></div>
+              <div class="cell-name">Brandywine</div>
+            </div>
+            <div class="bed-cell cell-active">
+              <div class="cell-dot" style="background:#4A7C2F;"></div>
+              <div class="cell-name">Early Girl</div>
+            </div>
+            <div class="bed-cell cell-empty">
+              <div class="cell-plus">+</div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="bed-cell cell-empty"><div class="cell-plus">+</div></div>
+            <div class="bed-cell cell-planned">
+              <div class="cell-dot" style="background:#8FA85A;"></div>
+              <div class="cell-name">Marigold</div>
+            </div>
+            <div class="bed-cell cell-active">
+              <div class="cell-dot" style="background:#4A7C2F;"></div>
+              <div class="cell-name">Sun Gold</div>
+            </div>
+            <div class="bed-cell cell-empty"><div class="cell-plus">+</div></div>
+
+          </div>
+        </div>
+
+        <!-- Selected cell detail panel -->
+        <div class="cell-panel">
+          <div class="cell-panel-header">
+            <div>
+              <div class="cell-panel-name">Brandywine Tomato</div>
+              <div class="cell-panel-sci">Solanum lycopersicum</div>
+            </div>
+            <div class="status-active-badge status-badge">Active</div>
+          </div>
+          <div class="cell-panel-body">
+            <div class="companion-note">
+              <span class="companion-icon" style="color: var(--green);">✓</span>
+              <span>Basil nearby — beneficial companion, improves flavor</span>
+            </div>
+            <div class="companion-note" style="margin-top: 6px;">
+              <span class="companion-icon" style="color: var(--amber);">!</span>
+              <span>San Marzano: check spacing — 18" minimum required</span>
+            </div>
+          </div>
+          <div class="panel-actions">
+            <button class="panel-btn panel-btn-primary">Log harvest</button>
+            <button class="panel-btn panel-btn-ghost">Notes</button>
+            <button class="panel-btn panel-btn-danger">Remove</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="bottom-nav olive-shell">
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⌂</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Home</div></div>
+        <div class="nav-tab active"><div class="nav-tab-icon" style="color: var(--green-field);">⊞</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.8);">Garden</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">☘</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Plants</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">📅</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Calendar</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⚙</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Settings</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phone 3: Plant library -->
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <div class="phone-status olive-shell">
+        <span class="phone-status-time">9:41</span>
+        <div class="phone-status-icons">
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+            <rect x="0" y="3" width="3" height="7" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="4.5" y="2" width="3" height="8" rx="1" fill="rgba(240,237,216,0.6)"/>
+            <rect x="9" y="0.5" width="3" height="9.5" rx="1" fill="rgba(240,237,216,0.6)"/>
+          </svg>
+          <div class="status-icon"></div>
+        </div>
+      </div>
+
+      <div class="app-header olive-shell">
+        <div class="header-wordmark">bare root <small>plant library</small></div>
+        <div class="header-bell">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(240,237,216,0.4)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="phone-content" style="overflow-y: auto; background: var(--field);">
+
+        <div class="library-header">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <div class="page-title" style="font-size: 22px;">Plant Library</div>
+            <span style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint);">140 plants</span>
+          </div>
+          <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <span class="search-text">Search tomato, basil…</span>
+          </div>
+        </div>
+
+        <!-- Category tabs -->
+        <div class="cat-tabs">
+          <div class="cat-tab active">Vegetables</div>
+          <div class="cat-tab">Herbs</div>
+          <div class="cat-tab">Fruits</div>
+          <div class="cat-tab">Flowers</div>
+          <div class="cat-tab">Trees</div>
+        </div>
+
+        <!-- Plant grid -->
+        <div class="plant-grid">
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #4A7C2F;"></div>
+            <div class="plant-card-img" style="background: #2D5016;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #fff; opacity: 0.2;">T</span>
+            </div>
+            <div class="plant-card-name">Cherokee Purple Tomato</div>
+            <div class="plant-card-sci">Solanum lycopersicum</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">80d</span>
+              <span class="plant-badge-sun">Full sun</span>
+            </div>
+          </div>
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #4A7C2F;"></div>
+            <div class="plant-card-img" style="background: #3d5a1b; display:flex; align-items:center; justify-content:center;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #8FA85A; opacity: 0.5; font-size: 28px;">J</span>
+            </div>
+            <div class="plant-card-name">Jalapeño Pepper</div>
+            <div class="plant-card-sci">Capsicum annuum</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">70d</span>
+              <span class="plant-badge-sun">Full sun</span>
+            </div>
+          </div>
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #4A7C2F;"></div>
+            <div class="plant-card-img" style="background: #1e3a0f; display:flex; align-items:center; justify-content:center;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #6B8F47; opacity: 0.45; font-size: 24px;">Z</span>
+            </div>
+            <div class="plant-card-name">Zucchini</div>
+            <div class="plant-card-sci">Cucurbita pepo</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">52d</span>
+              <span class="plant-badge-sun">Full sun</span>
+            </div>
+          </div>
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #4A7C2F;"></div>
+            <div class="plant-card-img" style="background: #1f3020; display:flex; align-items:center; justify-content:center;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #8FA85A; opacity: 0.4; font-size: 28px;">B</span>
+            </div>
+            <div class="plant-card-name">Beefsteak Tomato</div>
+            <div class="plant-card-sci">Solanum lycopersicum</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">85d</span>
+              <span class="plant-badge-sun">Full sun</span>
+            </div>
+          </div>
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #5A7A2A;"></div>
+            <div class="plant-card-img" style="background: #283d12; display:flex; align-items:center; justify-content:center;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #8FA85A; opacity: 0.45; font-size: 24px;">B</span>
+            </div>
+            <div class="plant-card-name">Genovese Basil</div>
+            <div class="plant-card-sci">Ocimum basilicum</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">60d</span>
+              <span class="plant-badge-sun">Full sun</span>
+            </div>
+          </div>
+
+          <div class="plant-card" style="position:relative; overflow:hidden;">
+            <div class="plant-cat-bar" style="background: #8B3A2A;"></div>
+            <div class="plant-card-img" style="background: #2a1810; display:flex; align-items:center; justify-content:center;">
+              <div class="plant-img-dot-grid"></div>
+              <span class="plant-img-initial" style="color: #C4790A; opacity: 0.35; font-size: 28px;">S</span>
+            </div>
+            <div class="plant-card-name">Strawberry</div>
+            <div class="plant-card-sci">Fragaria × ananassa</div>
+            <div class="plant-card-badges">
+              <span class="plant-badge">45d</span>
+              <span class="plant-badge-sun">Part sun</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="bottom-nav olive-shell">
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⌂</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Home</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⊞</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Garden</div></div>
+        <div class="nav-tab active"><div class="nav-tab-icon" style="color: var(--green-field);">☘</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.8);">Plants</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">📅</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Calendar</div></div>
+        <div class="nav-tab"><div class="nav-tab-icon" style="color: rgba(240,237,216,0.3);">⚙</div><div class="nav-tab-label" style="color: rgba(240,237,216,0.25);">Settings</div></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /screens-row -->
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN 4 — DESKTOP LAYOUT
+     ═══════════════════════════════════════════════ -->
+<div class="section-label">02 · <em>Desktop — Garden Overview with 3D Canvas</em></div>
+
+<div class="desktop-shell">
+  <div class="desktop-layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">
+          <div class="logo-emblem">
+            <span class="logo-leaf">🌿</span>
+          </div>
+          <div>
+            <div class="logo-text">bare root</div>
+            <div class="logo-sub">Garden Planner</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Planning</div>
+        <div class="sidebar-item">
+          <span class="s-icon">⌂</span> Dashboard
+        </div>
+        <div class="sidebar-item active">
+          <span class="s-icon">⊞</span> Garden
+        </div>
+        <div class="sidebar-item">
+          <span class="s-icon">📅</span> Calendar
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Library</div>
+        <div class="sidebar-item">
+          <span class="s-icon">☘</span> Plants
+        </div>
+        <div class="sidebar-item">
+          <span class="s-icon">📦</span> Inventory
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Activity</div>
+        <div class="sidebar-item">
+          <span class="s-icon">🔔</span> Reminders
+          <span class="sidebar-badge">2</span>
+        </div>
+        <div class="sidebar-item">
+          <span class="s-icon">📈</span> Harvest Log
+        </div>
+      </div>
+
+      <div style="flex: 1;"></div>
+
+      <div class="sidebar-item">
+        <span class="s-icon">⚙</span> Settings
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-avatar">K</div>
+        <div class="sidebar-username">Kyle</div>
+        <div class="sidebar-tier">Pro</div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="desktop-main">
+      <div class="desktop-main-inner">
+
+        <div class="desktop-page-header ruled">
+          <div class="desktop-breadcrumb">
+            My Gardens <span class="sep">›</span> <span>Kyle's Garden</span>
+          </div>
+          <div class="desktop-title-row">
+            <div>
+              <div class="desktop-page-title">Kyle's Garden</div>
+              <div class="desktop-title-meta">
+                <div class="desktop-meta-chip">Zone 7b</div>
+                <div class="desktop-meta-chip">Last frost Apr 15</div>
+                <div class="desktop-meta-chip">20 × 15 ft</div>
+                <div class="desktop-meta-chip" style="color: var(--amber);">Spring 2026</div>
+              </div>
+            </div>
+            <div class="desktop-actions">
+              <button class="btn-field btn-field-ghost">⚙ Settings</button>
+              <button class="btn-field btn-field-ghost">Seasons</button>
+              <button class="btn-field btn-field-primary">+ Add Bed</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas zone -->
+        <div class="desktop-canvas-zone">
+          <div class="canvas-wrap">
+            <svg width="580" height="280" viewBox="0 0 580 280" style="position:absolute;inset:0;width:100%;height:100%;">
+              <defs>
+                <pattern id="gd" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+                  <rect width="18" height="9" fill="#4a7c3f"/>
+                  <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+                  <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+                  <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3"/>
+                  <ellipse cx="16" cy="5.5" rx="0.9" ry="0.6" fill="#56904a" opacity="0.25"/>
+                </pattern>
+                <pattern id="sd" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                  <rect width="12" height="12" fill="#3d2b1f"/>
+                  <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6"/>
+                  <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5"/>
+                  <circle cx="5" cy="9.5" r="0.8" fill="#4a3325" opacity="0.4"/>
+                </pattern>
+                <filter id="sn"><feDropShadow dx="4" dy="8" stdDeviation="4" floodColor="#000" floodOpacity="0.4"/></filter>
+                <filter id="sh"><feDropShadow dx="6" dy="12" stdDeviation="6" floodColor="#000" floodOpacity="0.5"/></filter>
+              </defs>
+              <!-- Big lawn -->
+              <polygon points="290,30 520,150 290,265 60,150" fill="url(#gd)"/>
+              <polygon points="290,30 520,150 290,265 60,150" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+
+              <!-- Bed 1 (hovered glow) -->
+              <g filter="url(#sh)">
+                <polygon points="100,163 185,120 230,142 145,185" fill="#452A10"/>
+                <polygon points="185,120 230,142 230,154 185,132" fill="#9A7040"/>
+                <polygon points="100,152 185,109 230,131 145,174" fill="#C49458"/>
+                <polygon points="106,150 181,111 226,132 151,171" fill="url(#sd)"/>
+                <!-- plant dots -->
+                <circle cx="135" cy="148" r="4" fill="#2d5a1b" opacity="0.85"/>
+                <circle cx="150" cy="140" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+                <circle cx="165" cy="148" r="4" fill="#2d5a1b" opacity="0.85"/>
+                <circle cx="180" cy="139" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+                <circle cx="195" cy="146" r="4" fill="#2d5a1b" opacity="0.85"/>
+                <circle cx="148" cy="160" r="3.5" fill="#4a8a2e" opacity="0.7"/>
+                <circle cx="168" cy="158" r="3.5" fill="#2d5a1b" opacity="0.7"/>
+                <!-- glow outline on hover -->
+                <polygon points="100,152 185,109 230,131 145,174" fill="none" stroke="rgba(143,168,90,0.35)" stroke-width="1.5"/>
+                <text x="170" y="155" text-anchor="middle" fill="#f0e0c0" font-size="11" font-weight="700" font-family="Georgia,serif" filter="url(#sn)">Bed A</text>
+                <text x="170" y="168" text-anchor="middle" fill="#f0e0c0" font-size="8" font-family="system-ui" opacity="0.6" filter="url(#sn)">8 plants</text>
+              </g>
+
+              <!-- Bed 2 -->
+              <g filter="url(#sn)">
+                <polygon points="295,180 380,137 410,152 325,195" fill="#452A10"/>
+                <polygon points="380,137 410,152 410,162 380,147" fill="#7D5630"/>
+                <polygon points="295,170 380,127 410,142 325,185" fill="#C49458"/>
+                <polygon points="301,168 376,129 406,143 331,182" fill="url(#sd)"/>
+                <circle cx="325" cy="164" r="3.5" fill="#2d5a1b" opacity="0.8"/>
+                <circle cx="340" cy="156" r="3.5" fill="#4a8a2e" opacity="0.75"/>
+                <circle cx="358" cy="162" r="3" fill="#2d5a1b" opacity="0.8"/>
+                <circle cx="373" cy="155" r="3" fill="#4a8a2e" opacity="0.7"/>
+                <text x="357" y="165" text-anchor="middle" fill="#f0e0c0" font-size="11" font-weight="700" font-family="Georgia,serif" filter="url(#sn)">Bed B</text>
+                <text x="357" y="177" text-anchor="middle" fill="#f0e0c0" font-size="8" font-family="system-ui" opacity="0.6" filter="url(#sn)">12 plants</text>
+              </g>
+
+              <!-- Bed 3 (smaller) -->
+              <g filter="url(#sn)">
+                <polygon points="160,110 215,83 245,97 190,124" fill="#452A10"/>
+                <polygon points="215,83 245,97 245,106 215,92" fill="#7D5630"/>
+                <polygon points="160,101 215,74 245,88 190,115" fill="#C49458"/>
+                <polygon points="164,100 212,75 242,89 194,114" fill="url(#sd)"/>
+                <circle cx="185" cy="100" r="3" fill="#2d5a1b" opacity="0.8"/>
+                <circle cx="200" cy="93" r="3" fill="#4a8a2e" opacity="0.75"/>
+                <circle cx="215" cy="99" r="3" fill="#2d5a1b" opacity="0.8"/>
+                <text x="205" y="100" text-anchor="middle" fill="#f0e0c0" font-size="10" font-weight="700" font-family="Georgia,serif" filter="url(#sn)">Bed C</text>
+              </g>
+
+            </svg>
+            <div class="canvas-hint">Drag to pan · Ctrl+drag to orbit · Scroll to zoom</div>
+          </div>
+        </div>
+
+        <!-- Stat row -->
+        <div class="stat-row">
+          <div class="stat-tile green">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Raised Beds</div>
+          </div>
+          <div class="stat-tile green">
+            <div class="stat-value">28</div>
+            <div class="stat-label">Plants</div>
+          </div>
+          <div class="stat-tile amber">
+            <div class="stat-value">Apr 15</div>
+            <div class="stat-label">Last Frost</div>
+          </div>
+          <div class="stat-tile amber">
+            <div class="stat-value">68°F</div>
+            <div class="stat-label">Current Temp</div>
+          </div>
+        </div>
+
+        <!-- Bed quick access -->
+        <div style="padding: 0 36px 8px; font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); border-bottom: 1px solid var(--field-line); padding-bottom: 6px; position: relative; z-index: 1;">Beds</div>
+        <div class="desktop-bed-list" style="margin-top: 12px;">
+          <div class="desktop-bed-card c1">
+            <div class="bed-card-name">Bed A — Tomatoes</div>
+            <div class="bed-card-meta">4 × 8 ft · Spring 2026</div>
+            <div class="bed-card-count">8 plants active</div>
+          </div>
+          <div class="desktop-bed-card c2">
+            <div class="bed-card-name">Bed B — Herbs</div>
+            <div class="bed-card-meta">3 × 6 ft · Spring 2026</div>
+            <div class="bed-card-count">12 plants active</div>
+          </div>
+          <div class="desktop-bed-card c3">
+            <div class="bed-card-name">Bed C — Flowers</div>
+            <div class="bed-card-meta">2 × 4 ft · Spring 2026</div>
+            <div class="bed-card-count">8 plants planned</div>
+          </div>
+          <div class="desktop-bed-card" style="border-style: dashed; background: transparent; align-items: center; justify-content: center; padding: 20px; cursor: pointer;">
+            <div style="font-family: var(--ff-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); text-align: center;">+ Add Bed</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div><!-- /desktop-shell -->
+
+<div style="height: 20px;"></div>
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     DESIGN TOKENS
+     ═══════════════════════════════════════════════ -->
+<div class="section-label">03 · <em>Design Tokens</em></div>
+<div class="token-section">
+  <div class="token-grid">
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #1A1E12;"></div>
+      <div class="swatch-info"><div class="swatch-name">Shell / Nav</div><div class="swatch-hex">#1A1E12</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #232B18;"></div>
+      <div class="swatch-info"><div class="swatch-name">Shell Mid</div><div class="swatch-hex">#232B18</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #14180D;"></div>
+      <div class="swatch-info"><div class="swatch-name">Sidebar Dark</div><div class="swatch-hex">#14180D</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #19280e;"></div>
+      <div class="swatch-info"><div class="swatch-name">Canvas (live)</div><div class="swatch-hex">#19280e</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #F0EDD8;"></div>
+      <div class="swatch-info"><div class="swatch-name">Field Paper</div><div class="swatch-hex">#F0EDD8</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #E8E4CC;"></div>
+      <div class="swatch-info"><div class="swatch-name">Paper Warm</div><div class="swatch-hex">#E8E4CC</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #2D5016;"></div>
+      <div class="swatch-info"><div class="swatch-name">Forest Green</div><div class="swatch-hex">#2D5016</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #8FA85A;"></div>
+      <div class="swatch-info"><div class="swatch-name">Field Sage</div><div class="swatch-hex">#8FA85A</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #C4790A;"></div>
+      <div class="swatch-info"><div class="swatch-name">Harvest Amber</div><div class="swatch-hex">#C4790A</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #8B3A2A;"></div>
+      <div class="swatch-info"><div class="swatch-name">Rust / Danger</div><div class="swatch-hex">#8B3A2A</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #1A1E12; display:flex; align-items:center; justify-content:center; height:48px;">
+        <span style="font-family:'Fraunces',Georgia,serif; font-size:22px; font-style:italic; color:#F0EDD8; font-weight:700;">bare root</span>
+      </div>
+      <div class="swatch-info"><div class="swatch-name">Display Font</div><div class="swatch-hex">Fraunces Italic</div></div>
+    </div>
+    <div class="token-swatch">
+      <div class="swatch-color" style="background: #F0EDD8; display:flex; align-items:center; justify-content:center; height:48px;">
+        <span style="font-family:'Crimson Pro',Georgia,serif; font-size:15px; color:#1A1E12; line-height:1.4; text-align:center; padding: 0 8px;">Tomatoes thrive<br>with basil nearby</span>
+      </div>
+      <div class="swatch-info"><div class="swatch-name">Body Font</div><div class="swatch-hex">Crimson Pro</div></div>
+    </div>
+  </div>
+</div>
+
+<div style="padding: 40px; background: #111408; font-family: var(--ff-body); font-size: 14px; color: rgba(240,237,216,0.35); text-align: center; letter-spacing: 0.02em;">
+  Direction B — Field Book · Bare Root Garden Planner · Mockup only, not functional
+</div>
+
+</body>
+</html>

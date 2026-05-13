@@ -68,20 +68,32 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
   const needToBuy = shoppingList.filter((s) => !s.inInventory);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl font-semibold text-[#111109]">Inventory</h1>
-        {tab === "inventory" && (
-          <Button
-            size="sm"
-            onClick={() => setAddOpen(true)}
-            className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add seeds
-          </Button>
-        )}
+    <div>
+      {/* Page header */}
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+              <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
+              Tracking
+            </div>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 30px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 1, fontVariationSettings: "'opsz' 32" }}>
+              Inventory
+            </h1>
+          </div>
+          {tab === "inventory" && (
+            <Button
+              size="sm"
+              onClick={() => setAddOpen(true)}
+              className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add seeds
+            </Button>
+          )}
+        </div>
       </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-[#F4F4EC] rounded-xl p-1">
@@ -255,6 +267,7 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

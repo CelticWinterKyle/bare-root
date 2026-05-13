@@ -78,11 +78,13 @@ export function BillingClient({
 
   if (justUpgraded) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+      <div className="px-[22px] md:px-8 py-16 text-center">
         <div className="w-16 h-16 bg-[#F4F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
           <Star className="w-8 h-8 text-[#D4820A] fill-[#D4820A]" />
         </div>
-        <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Welcome to Pro!</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "28px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", marginBottom: "8px" }}>
+          Welcome to Pro!
+        </h1>
         <p className="text-[#6B6B5A] mb-8">All Pro features are now unlocked. Happy growing.</p>
         <Link href="/dashboard" className="inline-flex bg-[#1C3D0A] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#3A6B20] transition-colors">
           Go to your garden →
@@ -92,8 +94,17 @@ export function BillingClient({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Billing</h1>
+    <div>
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+          <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
+          Settings
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px, 4vw, 28px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 28" }}>
+          Billing <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>&amp; Plan</em>
+        </h1>
+      </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {isPro && trialDaysLeft !== null && trialDaysLeft > 0 && (
         <div className="mb-6 bg-[#FFF3E8] border border-orange-200 rounded-xl px-4 py-3">
@@ -194,6 +205,7 @@ export function BillingClient({
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

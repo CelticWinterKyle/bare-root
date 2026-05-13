@@ -119,22 +119,37 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
     );
   }
 
+  const PageHeader = () => (
+    <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+        <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
+        Activity
+      </div>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 30px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 1, fontVariationSettings: "'opsz' 32" }}>
+        Reminders
+      </h1>
+    </div>
+  );
+
   if (reminders.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="font-display text-3xl font-semibold text-[#111109] mb-8">Reminders</h1>
-        <div className="text-center py-16 text-[#ADADAA]">
-          <Bell className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
-          <p className="text-sm">No reminders right now.</p>
-          <p className="text-xs mt-1">You're all caught up.</p>
+      <div>
+        <PageHeader />
+        <div className="px-[22px] md:px-8 py-5">
+          <div className="text-center py-16 text-[#ADADAA]">
+            <Bell className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
+            <p className="text-sm">No reminders right now.</p>
+            <p className="text-xs mt-1">You&apos;re all caught up.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-8">Reminders</h1>
+    <div>
+      <PageHeader />
+      <div className="px-[22px] md:px-8 py-5">
 
       {pending.length > 0 && (
         <div className="mb-6">
@@ -161,6 +176,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

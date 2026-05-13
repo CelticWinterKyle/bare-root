@@ -187,9 +187,19 @@ export default async function CalendarPage() {
   const hasNoFrostDate = gardens.some((g) => !g.lastFrostDate);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-6">Calendar</h1>
+    <div>
+      {/* Page header */}
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+          <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
+          Planning
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 30px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 1, fontVariationSettings: "'opsz' 32" }}>
+          Planting <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Calendar</em>
+        </h1>
+      </div>
 
+      <div className="px-[22px] md:px-8 py-5">
       <div className="space-y-4 mb-8">
         {/* Frost alert */}
         {hasFrost && forecast && (
@@ -262,6 +272,7 @@ export default async function CalendarPage() {
 
       {/* Timeline */}
       <CalendarTimeline events={events} />
+      </div>
     </div>
   );
 }

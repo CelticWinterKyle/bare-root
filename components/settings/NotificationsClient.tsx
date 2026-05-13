@@ -23,9 +23,18 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Notifications</h1>
-      <p className="text-sm text-[#6B6B5A] mb-8">Choose what you get notified about and how.</p>
+    <div>
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+          <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
+          Settings
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px, 4vw, 28px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 28" }}>
+          Notifications
+        </h1>
+        <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "14px" }}>Choose what you get notified about and how.</p>
+      </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       <div className="space-y-3">
         {settings.map((s) => (
@@ -59,6 +68,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
             )}
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

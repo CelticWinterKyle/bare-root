@@ -46,18 +46,17 @@ export default async function PlantsPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <header className="mb-6">
-        <p className="font-mono uppercase mb-1" style={{ fontSize: "9px", color: "#7DA84E", letterSpacing: "0.18em" }}>
+    <div>
+      {/* Page header */}
+      <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+          <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Library
-        </p>
-        <h1 className="font-display text-3xl font-bold" style={{ color: "#111109", letterSpacing: "-0.03em", fontVariationSettings: "'opsz' 36" }}>
-          Plant Library
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 28px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 28" }}>
+          Plant <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Library</em>
         </h1>
-        <p className="mt-1" style={{ color: "#6B6B5A", fontSize: "15px" }}>
-          Search for plants or browse by category.
-        </p>
-      </header>
+      </div>
 
       <PlantSearch
         initialPlants={plants}

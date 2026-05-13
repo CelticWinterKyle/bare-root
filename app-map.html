@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — App Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #111109;
+  --ink-2:   #3A3A30;
+  --muted:   #6B6B5A;
+  --ghost:   #ADADAA;
+  --rule:    #E4E4DC;
+  --surface: #F4F4EC;
+  --white:   #FDFDF8;
+  --deep:    #1C3D0A;
+  --mid:     #3A6B20;
+  --sage:    #7DA84E;
+  --pale:    #E4F0D4;
+  --pale2:   #D4E8BE;
+  --amber:   #D4820A;
+  --amber-p: #FDF2E0;
+  --rust:    #7A2A18;
+  --blue:    #3B6EA5;
+  --blue-p:  #EAF0FA;
+  --purple:  #5A3B8A;
+  --purple-p:#F0EAF8;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #F0EFE8;
+  color: var(--ink);
+  line-height: 1.4;
+  padding: 32px 24px 80px;
+  min-width: 1100px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 36px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 800;
+  font-style: italic;
+  color: var(--deep);
+  letter-spacing: -0.03em;
+}
+.page-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ghost);
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────── */
+.diagram {
+  display: grid;
+  gap: 20px;
+}
+
+/* Layer row */
+.layer {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0;
+  align-items: start;
+}
+.layer-label {
+  padding: 14px 16px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  text-align: right;
+  position: sticky;
+  top: 16px;
+}
+.layer-label-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ghost);
+  white-space: nowrap;
+}
+.layer-label-accent {
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  margin-left: auto;
+}
+.layer-content {
+  border-left: 1.5px solid var(--rule);
+  padding-left: 20px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* ── Card grid ──────────────────────────────────────────────────────── */
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.card-group {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 160px;
+}
+.card-group-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ghost);
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.card {
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: default;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card:hover {
+  filter: brightness(0.96);
+  transform: translateX(2px);
+}
+.card-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Color variants */
+.c-green  { background: var(--pale); }
+.c-amber  { background: var(--amber-p); }
+.c-blue   { background: var(--blue-p); }
+.c-purple { background: var(--purple-p); }
+.c-rust   { background: #FBE8E4; }
+.c-dark   { background: #E4E8E0; }
+.c-neutral{ background: var(--surface); }
+
+.b-green  { background: var(--pale2); color: var(--deep); }
+.b-amber  { background: #F5D9A0; color: #7A4A00; }
+.b-blue   { background: #C8D8F0; color: #1A3A6A; }
+.b-purple { background: #D8C8F0; color: var(--purple); }
+.b-rust   { background: #F0C8C0; color: var(--rust); }
+.b-ghost  { background: var(--rule); color: var(--muted); }
+
+/* ── Flow arrows section ────────────────────────────────────────────── */
+.flows-section {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+}
+.flows-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.flow-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.flow-card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.flow-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: white;
+  background: var(--deep);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.flow-arrow {
+  color: var(--ghost);
+  font-size: 10px;
+  padding: 0 4px;
+}
+.flow-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--deep);
+  background: var(--pale);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ── DB section ─────────────────────────────────────────────────────── */
+.db-section {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+}
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.db-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.db-card-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--deep);
+  margin-bottom: 6px;
+}
+.db-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.db-field {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.db-field-key {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--sage);
+}
+.db-rel {
+  font-size: 10px;
+  color: var(--amber);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid var(--rule);
+}
+
+/* ── Env section ────────────────────────────────────────────────────── */
+.env-section {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+}
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.env-group {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.env-group-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ghost);
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.env-var {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--deep);
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.env-note {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  color: var(--ghost);
+}
+
+/* ── Section header ─────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.section-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ghost);
+}
+
+/* ── Central entity callout ─────────────────────────────────────────── */
+.central-entity {
+  background: var(--deep);
+  color: white;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.central-entity::before {
+  content: '';
+  position: absolute;
+  right: -20px; top: -20px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: var(--mid);
+  opacity: 0.4;
+}
+.central-title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.central-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  position: relative;
+}
+.central-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.central-pill {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">bare root</div>
+  <div class="page-sub">App Architecture Map · v1</div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#E4F0D4"></div>Pages / Routes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FDF2E0"></div>Server Actions</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#EAF0FA"></div>Components (Client)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#F0EAF8"></div>Services (Logic)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FBE8E4"></div>API Routes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E4E8E0"></div>Lib / Utilities</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#F4F4EC"></div>External Services</div>
+</div>
+
+<!-- Central Entity -->
+<div class="central-entity">
+  <div>
+    <div class="central-title">Planting</div>
+    <div class="central-desc">The central hub entity — everything else connects here</div>
+  </div>
+  <div class="central-pills">
+    <div class="central-pill">HarvestLog</div>
+    <div class="central-pill">PlantingPhoto</div>
+    <div class="central-pill">GrowthNote</div>
+    <div class="central-pill">Reminder</div>
+    <div class="central-pill">Cell → Bed → Garden</div>
+    <div class="central-pill">Season</div>
+    <div class="central-pill">PlantLibrary</div>
+  </div>
+</div>
+
+<!-- ── DIAGRAM LAYERS ──────────────────────────────────────────────── -->
+<div class="diagram">
+
+  <!-- EXTERNAL SERVICES -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">External</div>
+      <div class="layer-label-text">Services</div>
+      <div class="layer-label-accent" style="background:var(--ghost)"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Auth & Payments</div>
+          <div class="cards">
+            <div class="card c-neutral">🔐 Clerk <span class="card-badge b-ghost">auth</span></div>
+            <div class="card c-neutral">💳 Stripe <span class="card-badge b-ghost">billing</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Plant & Weather Data</div>
+          <div class="cards">
+            <div class="card c-neutral">🌿 Perenual API <span class="card-badge b-ghost">plants</span></div>
+            <div class="card c-neutral">🌤 OpenWeatherMap <span class="card-badge b-ghost">weather</span></div>
+            <div class="card c-neutral">🗂 zones.json <span class="card-badge b-green">local</span></div>
+            <div class="card c-neutral">🗂 frost-dates.json <span class="card-badge b-green">local</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Notifications & AI</div>
+          <div class="cards">
+            <div class="card c-neutral">📧 Resend <span class="card-badge b-ghost">email</span></div>
+            <div class="card c-neutral">🔔 web-push <span class="card-badge b-ghost">push</span></div>
+            <div class="card c-neutral">🤖 Claude API <span class="card-badge b-purple">AI</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Storage & Infra</div>
+          <div class="cards">
+            <div class="card c-neutral">🗄 Neon PostgreSQL <span class="card-badge b-ghost">db</span></div>
+            <div class="card c-neutral">📦 Vercel Blob <span class="card-badge b-ghost">photos</span></div>
+            <div class="card c-neutral">⏱ Vercel Cron <span class="card-badge b-ghost">jobs</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API ROUTES -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">API Routes</div>
+      <div class="layer-label-accent" style="background:#B85C3A"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Webhooks (inbound)</div>
+          <div class="cards">
+            <div class="card c-rust">/api/webhooks/clerk <span class="card-badge b-rust">user.created</span></div>
+            <div class="card c-rust">/api/webhooks/stripe <span class="card-badge b-rust">subscription.*</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Cron Jobs (scheduled)</div>
+          <div class="cards">
+            <div class="card c-rust">/api/cron/dispatch-reminders <span class="card-badge b-rust">hourly</span></div>
+            <div class="card c-rust">/api/cron/refresh-weather <span class="card-badge b-rust">3hr</span></div>
+            <div class="card c-rust">/api/cron/frost-check <span class="card-badge b-rust">daily</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Stripe Redirect Routes</div>
+          <div class="cards">
+            <div class="card c-rust">/api/stripe/checkout <span class="card-badge b-rust">POST</span></div>
+            <div class="card c-rust">/api/stripe/portal <span class="card-badge b-rust">POST</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Push</div>
+          <div class="cards">
+            <div class="card c-rust">/api/push/subscribe <span class="card-badge b-rust">POST</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIB / FOUNDATION -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">Lib</div>
+      <div class="layer-label-text">Foundation</div>
+      <div class="layer-label-accent" style="background:#888880"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Core</div>
+          <div class="cards">
+            <div class="card c-dark">lib/db.ts <span class="card-badge b-ghost">Prisma + PrismaPg</span></div>
+            <div class="card c-dark">lib/auth.ts <span class="card-badge b-ghost">requireUser()</span></div>
+            <div class="card c-dark">lib/tier.ts <span class="card-badge b-ghost">TIER_LIMITS</span></div>
+            <div class="card c-dark">lib/stripe.ts <span class="card-badge b-ghost">stripe client</span></div>
+            <div class="card c-dark">lib/utils.ts <span class="card-badge b-ghost">cn()</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">API Clients</div>
+          <div class="cards">
+            <div class="card c-dark">lib/api/perenual.ts</div>
+            <div class="card c-dark">lib/api/weather.ts</div>
+            <div class="card c-dark">lib/api/email.ts</div>
+            <div class="card c-dark">lib/api/push.ts</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Data Lookups</div>
+          <div class="cards">
+            <div class="card c-dark">lib/data/location.ts <span class="card-badge b-green">zip→zone+frost</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">Service</div>
+      <div class="layer-label-text">Layer</div>
+      <div class="layer-label-accent" style="background:var(--purple)"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Planting Intelligence</div>
+          <div class="cards">
+            <div class="card c-purple">planting-calendar.ts <span class="card-badge b-purple">dates</span></div>
+            <div class="card c-purple">reminders.ts <span class="card-badge b-purple">schedule</span></div>
+            <div class="card c-purple">spacing.ts <span class="card-badge b-purple">warnings</span></div>
+            <div class="card c-purple">crop-rotation.ts <span class="card-badge b-purple">history</span></div>
+            <div class="card c-purple">succession.ts <span class="card-badge b-purple">suggestions</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Plant Library</div>
+          <div class="cards">
+            <div class="card c-purple">plants.ts <span class="card-badge b-purple">cache-first</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">AI</div>
+          <div class="cards">
+            <div class="card c-purple">smart-layout.ts <span class="card-badge b-purple">Claude</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER ACTIONS -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">Server</div>
+      <div class="layer-label-text">Actions</div>
+      <div class="layer-label-accent" style="background:var(--amber)"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Garden & Beds</div>
+          <div class="cards">
+            <div class="card c-amber">garden.ts → updateBedPosition()</div>
+            <div class="card c-amber">bed.ts → createBed() <span class="card-badge b-amber">tier</span></div>
+            <div class="card c-amber">bed.ts → deleteBed()</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Plantings</div>
+          <div class="cards">
+            <div class="card c-amber">planting.ts → assignPlant()</div>
+            <div class="card c-amber">planting.ts → removePlanting()</div>
+            <div class="card c-amber">planting.ts → updatePlantingStatus()</div>
+            <div class="card c-amber">planting.ts → updatePlantingDates()</div>
+            <div class="card c-amber">planting.ts → updateCellSun()</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Plants & Seasons</div>
+          <div class="cards">
+            <div class="card c-amber">plants.ts → searchPlantsAction()</div>
+            <div class="card c-amber">plants.ts → getPlantAction()</div>
+            <div class="card c-amber">plants.ts → createCustomPlant()</div>
+            <div class="card c-amber">seasons.ts → createSeason()</div>
+            <div class="card c-amber">seasons.ts → archiveSeason()</div>
+            <div class="card c-amber">seasons.ts → ratePlanting()</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Tracking</div>
+          <div class="cards">
+            <div class="card c-amber">tracking.ts → addHarvestLog()</div>
+            <div class="card c-amber">tracking.ts → uploadPhoto() <span class="card-badge b-amber">tier</span></div>
+            <div class="card c-amber">tracking.ts → addGrowthNote()</div>
+            <div class="card c-amber">tracking.ts → upsertSeedInventory()</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Reminders & Notifs</div>
+          <div class="cards">
+            <div class="card c-amber">reminders.ts → dismissReminder()</div>
+            <div class="card c-amber">reminders.ts → updateNotificationPreference()</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Setup & Collab</div>
+          <div class="cards">
+            <div class="card c-amber">onboarding.ts → completeOnboarding()</div>
+            <div class="card c-amber">location.ts → lookupLocation()</div>
+            <div class="card c-amber">collaborators.ts → inviteCollaborator() <span class="card-badge b-amber">PRO</span></div>
+            <div class="card c-amber">collaborators.ts → acceptInvitation()</div>
+            <div class="card c-amber">smart-layout.ts → generateLayoutAction() <span class="card-badge b-amber">PRO</span></div>
+            <div class="card c-amber">smart-layout.ts → acceptLayoutAssignments()</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">Pages</div>
+      <div class="layer-label-text">(RSC)</div>
+      <div class="layer-label-accent" style="background:var(--sage)"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Core Nav</div>
+          <div class="cards">
+            <div class="card c-green">/dashboard</div>
+            <div class="card c-green">/garden/[id] <span class="card-badge b-green">3D canvas</span></div>
+            <div class="card c-green">/garden/[id]/beds/[id]</div>
+            <div class="card c-green">/plants</div>
+            <div class="card c-green">/plants/[id]</div>
+            <div class="card c-green">/calendar</div>
+            <div class="card c-green">/reminders</div>
+            <div class="card c-green">/inventory</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Garden Sub-pages</div>
+          <div class="cards">
+            <div class="card c-green">/garden/[id]/seasons</div>
+            <div class="card c-green">/garden/[id]/seasons/[id] <span class="card-badge b-green">recap</span></div>
+            <div class="card c-green">/garden/[id]/beds/[id]/plantings/[id]</div>
+            <div class="card c-green">/garden/[id]/settings <span class="card-badge b-green">collab</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Settings</div>
+          <div class="cards">
+            <div class="card c-green">/settings</div>
+            <div class="card c-green">/settings/billing</div>
+            <div class="card c-green">/settings/notifications</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Onboarding & Auth</div>
+          <div class="cards">
+            <div class="card c-green">/onboarding <span class="card-badge b-ghost">middleware</span></div>
+            <div class="card c-green">/invite/[token]</div>
+            <div class="card c-green">/sign-in · /sign-up</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Marketing (public)</div>
+          <div class="cards">
+            <div class="card c-green">/ <span class="card-badge b-ghost">landing</span></div>
+            <div class="card c-green">/pricing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div class="layer">
+    <div class="layer-label">
+      <div class="layer-label-text">Components</div>
+      <div class="layer-label-text">(Client)</div>
+      <div class="layer-label-accent" style="background:var(--blue)"></div>
+    </div>
+    <div class="layer-content">
+      <div class="card-grid">
+        <div class="card-group">
+          <div class="card-group-label">Canvas (core UI)</div>
+          <div class="cards">
+            <div class="card c-blue">GardenOverview <span class="card-badge b-blue">SVG 3D</span></div>
+            <div class="card c-blue">BedGrid <span class="card-badge b-blue">CSS grid</span></div>
+            <div class="card c-blue">PlantPicker</div>
+            <div class="card c-blue">CellDetail</div>
+            <div class="card c-blue">SmartLayoutPanel <span class="card-badge b-blue">PRO</span></div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Layout / Shell</div>
+          <div class="cards">
+            <div class="card c-blue">DesktopSidebar</div>
+            <div class="card c-blue">BottomNav</div>
+            <div class="card c-blue">NotificationBell</div>
+            <div class="card c-blue">TrialBanner</div>
+            <div class="card c-blue">PwaInstallPrompt</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Seasons</div>
+          <div class="cards">
+            <div class="card c-blue">CreateSeasonDialog</div>
+            <div class="card c-blue">EndSeasonDialog</div>
+            <div class="card c-blue">SeasonSelector</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Tracking</div>
+          <div class="cards">
+            <div class="card c-blue">HarvestLogSection</div>
+            <div class="card c-blue">PhotoGallery</div>
+            <div class="card c-blue">GrowthNotes</div>
+            <div class="card c-blue">SeedInventoryClient</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Calendar</div>
+          <div class="cards">
+            <div class="card c-blue">CalendarTimeline</div>
+            <div class="card c-blue">WeatherWidget</div>
+            <div class="card c-blue">FrostAlert</div>
+          </div>
+        </div>
+        <div class="card-group">
+          <div class="card-group-label">Settings & Misc</div>
+          <div class="cards">
+            <div class="card c-blue">BillingClient</div>
+            <div class="card c-blue">NotificationsClient</div>
+            <div class="card c-blue">CollaboratorsClient</div>
+            <div class="card c-blue">RemindersClient</div>
+            <div class="card c-blue">WizardShell</div>
+            <div class="card c-blue">AddBedDialog</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /diagram -->
+
+
+<!-- ── KEY FLOWS ─────────────────────────────────────────────────────── -->
+<div class="flows-section">
+  <div class="section-header">
+    <div class="section-title">Key Flows</div>
+    <div class="section-sub">How the pieces move together</div>
+  </div>
+
+  <div class="flow-grid">
+
+    <div class="flow-card">
+      <div class="flow-card-title">🌱 New User Signup</div>
+      <div class="flow-step"><div class="flow-num">1</div> User signs up at <span class="flow-code">/sign-up</span> via Clerk</div>
+      <div class="flow-step"><div class="flow-num">2</div> Clerk fires <span class="flow-code">user.created</span> webhook</div>
+      <div class="flow-step"><div class="flow-num">3</div> Webhook creates Stripe customer + User in DB</div>
+      <div class="flow-step"><div class="flow-num">4</div> Checks for pending GardenInvitations → auto-accepts</div>
+      <div class="flow-step"><div class="flow-num">5</div> Middleware detects <span class="flow-code">onboardingComplete=false</span> → redirect to <span class="flow-code">/onboarding</span></div>
+      <div class="flow-step"><div class="flow-num">6</div> <span class="flow-code">WizardShell</span> → <span class="flow-code">completeOnboarding()</span></div>
+      <div class="flow-step"><div class="flow-num">7</div> Creates Garden + Season + Bed in DB transaction</div>
+      <div class="flow-step"><div class="flow-num">8</div> Redirect to <span class="flow-code">/garden/[id]</span></div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-card-title">🪴 Assigning a Plant to a Cell</div>
+      <div class="flow-step"><div class="flow-num">1</div> User taps empty cell in <span class="flow-code">BedGrid</span></div>
+      <div class="flow-step"><div class="flow-num">2</div> <span class="flow-code">PlantPicker</span> opens in side panel</div>
+      <div class="flow-step"><div class="flow-num">3</div> Search calls <span class="flow-code">searchPlantsAction()</span> → Perenual or DB cache</div>
+      <div class="flow-step"><div class="flow-num">4</div> User selects plant → <span class="flow-code">assignPlant()</span> fires</div>
+      <div class="flow-step"><div class="flow-num">5</div> Creates Planting row in DB</div>
+      <div class="flow-step"><div class="flow-num">6</div> <span class="flow-code">createRemindersForPlanting()</span> generates START_SEEDS, TRANSPLANT, HARVEST reminders (future dates only)</div>
+      <div class="flow-step"><div class="flow-num">7</div> Spacing check runs → warns if neighbors too close</div>
+      <div class="flow-step"><div class="flow-num">8</div> Page revalidates → cell shows plant + status color</div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-card-title">🔔 Reminder Delivery</div>
+      <div class="flow-step"><div class="flow-num">1</div> Vercel Cron fires hourly → <span class="flow-code">/api/cron/dispatch-reminders</span></div>
+      <div class="flow-step"><div class="flow-num">2</div> Finds reminders with <span class="flow-code">scheduledAt ≤ now</span>, not sent, not dismissed</div>
+      <div class="flow-step"><div class="flow-num">3</div> Groups by user; checks if it's 7–9am in user's timezone</div>
+      <div class="flow-step"><div class="flow-num">4</div> Checks <span class="flow-code">NotificationPreference</span> for each type</div>
+      <div class="flow-step"><div class="flow-num">5</div> Sends email via <span class="flow-code">Resend</span> if channelEmail=true</div>
+      <div class="flow-step"><div class="flow-num">6</div> Sends push via <span class="flow-code">web-push</span> if channelPush=true</div>
+      <div class="flow-step"><div class="flow-num">7</div> Marks <span class="flow-code">sentAt=now</span></div>
+      <div class="flow-step"><div class="flow-num">8</div> Removes dead push subscriptions (410 response)</div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-card-title">❄️ Frost Alert</div>
+      <div class="flow-step"><div class="flow-num">1</div> Cron every 3h → <span class="flow-code">/api/cron/refresh-weather</span></div>
+      <div class="flow-step"><div class="flow-num">2</div> Fetches forecast for gardens with active plantings → upserts <span class="flow-code">WeatherCache</span></div>
+      <div class="flow-step"><div class="flow-num">3</div> Daily cron → <span class="flow-code">/api/cron/frost-check</span></div>
+      <div class="flow-step"><div class="flow-num">4</div> Reads WeatherCache; finds any day ≤ 35°F in 72h</div>
+      <div class="flow-step"><div class="flow-num">5</div> Creates <span class="flow-code">FROST_ALERT</span> Reminder for owner + editors (deduped)</div>
+      <div class="flow-step"><div class="flow-num">6</div> Next reminder dispatch delivers email + push</div>
+      <div class="flow-step"><div class="flow-num">7</div> <span class="flow-code">FrostAlert</span> banner also shows live on Calendar page from cache</div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-card-title">💳 Upgrading to Pro</div>
+      <div class="flow-step"><div class="flow-num">1</div> User clicks upgrade in <span class="flow-code">BillingClient</span></div>
+      <div class="flow-step"><div class="flow-num">2</div> POST to <span class="flow-code">/api/stripe/checkout</span> with priceId</div>
+      <div class="flow-step"><div class="flow-num">3</div> Creates Stripe Checkout Session (with 7-day trial if <span class="flow-code">hadTrial=false</span>)</div>
+      <div class="flow-step"><div class="flow-num">4</div> User completes payment on Stripe</div>
+      <div class="flow-step"><div class="flow-num">5</div> Stripe fires <span class="flow-code">customer.subscription.created</span></div>
+      <div class="flow-step"><div class="flow-num">6</div> Webhook sets <span class="flow-code">subscriptionTier=PRO</span> in DB</div>
+      <div class="flow-step"><div class="flow-num">7</div> Pro features unlock on next page load</div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-card-title">🤖 Smart Layout (AI)</div>
+      <div class="flow-step"><div class="flow-num">1</div> User opens Smart Layout tab in <span class="flow-code">BedGrid</span> (PRO)</div>
+      <div class="flow-step"><div class="flow-num">2</div> Builds plant wishlist in <span class="flow-code">SmartLayoutPanel</span></div>
+      <div class="flow-step"><div class="flow-num">3</div> Calls <span class="flow-code">generateLayoutAction()</span></div>
+      <div class="flow-step"><div class="flow-num">4</div> Fetches bed context: sun map, companions, spacing, zone</div>
+      <div class="flow-step"><div class="flow-num">5</div> Calls Claude (opus-4-7) with structured prompt</div>
+      <div class="flow-step"><div class="flow-num">6</div> Returns row/col/plantId/reasoning assignments</div>
+      <div class="flow-step"><div class="flow-num">7</div> Preview shown on bed grid; user reviews reasoning</div>
+      <div class="flow-step"><div class="flow-num">8</div> Accept → <span class="flow-code">acceptLayoutAssignments()</span> bulk-creates Plantings</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── DATABASE SCHEMA ───────────────────────────────────────────────── -->
+<div class="db-section">
+  <div class="section-header">
+    <div class="section-title">Database Schema</div>
+    <div class="section-sub">Key fields per table</div>
+  </div>
+
+  <div class="db-grid">
+
+    <div class="db-card">
+      <div class="db-card-name">User</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id (Clerk ID)</div>
+        <div class="db-field">email · name</div>
+        <div class="db-field">subscriptionTier (FREE|PRO)</div>
+        <div class="db-field">stripeCustomerId</div>
+        <div class="db-field">trialEndsAt · hadTrial</div>
+        <div class="db-field">onboardingComplete</div>
+        <div class="db-field">timezone</div>
+      </div>
+      <div class="db-rel">→ Garden · SeedInventory · Reminder · PushSubscription · NotificationPreference</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">Garden</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">userId · name</div>
+        <div class="db-field">widthFt · heightFt</div>
+        <div class="db-field">locationZip · usdaZone</div>
+        <div class="db-field">lastFrostDate (MM-DD)</div>
+        <div class="db-field">firstFrostDate (MM-DD)</div>
+      </div>
+      <div class="db-rel">→ Bed · Season · GardenCollaborator · GardenInvitation · WeatherCache · Reminder</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">Bed</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">gardenId · name</div>
+        <div class="db-field">xPosition · yPosition (ft)</div>
+        <div class="db-field">widthFt · heightFt</div>
+        <div class="db-field">gridCols · gridRows</div>
+        <div class="db-field">cellSizeIn (default 12)</div>
+      </div>
+      <div class="db-rel">→ Cell</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">Cell</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">bedId</div>
+        <div class="db-field">row · col</div>
+        <div class="db-field">sunLevel (enum)</div>
+        <div class="db-field">notes</div>
+        <div class="db-field" style="opacity:0.4">unique(bedId, row, col)</div>
+      </div>
+      <div class="db-rel">→ Planting</div>
+    </div>
+
+    <div class="db-card" style="border-color: var(--deep); box-shadow: 0 0 0 1px var(--pale);">
+      <div class="db-card-name" style="color:var(--deep); font-size:13px;">⭐ Planting</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">cellId · seasonId · plantId</div>
+        <div class="db-field">status (7 states)</div>
+        <div class="db-field">plantedDate · transplantDate</div>
+        <div class="db-field">expectedHarvestDate</div>
+        <div class="db-field">rating · growAgain</div>
+        <div class="db-field">variety · quantityPerCell</div>
+      </div>
+      <div class="db-rel">→ HarvestLog · PlantingPhoto · GrowthNote · Reminder</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">Season</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">gardenId · name</div>
+        <div class="db-field">startDate · endDate</div>
+        <div class="db-field">isActive (one per garden)</div>
+      </div>
+      <div class="db-rel">→ Planting</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">PlantLibrary</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">externalId (Perenual)</div>
+        <div class="db-field">name · scientificName · category</div>
+        <div class="db-field">plantFamily · spacingInches</div>
+        <div class="db-field">daysToMaturity · sunRequirement</div>
+        <div class="db-field">indoorStartWeeks · transplantWeeks</div>
+        <div class="db-field">customForUserId (null = shared)</div>
+      </div>
+      <div class="db-rel">→ CompanionRelation (both sides) · Planting</div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">Reminder</div>
+      <div class="db-fields">
+        <div class="db-field"><span class="db-field-key">PK</span> id</div>
+        <div class="db-field">userId · plantingId · gardenId</div>
+        <div class="db-field">type (8 types)</div>
+        <div class="db-field">title · body</div>
+        <div class="db-field">scheduledAt · sentAt</div>
+        <div class="db-field">dismissed</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">HarvestLog</div>
+      <div class="db-fields">
+        <div class="db-field">plantingId</div>
+        <div class="db-field">quantity · unit</div>
+        <div class="db-field">harvestedAt · notes</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">SeedInventory</div>
+      <div class="db-fields">
+        <div class="db-field">userId · plantId · variety</div>
+        <div class="db-field">quantity · unit</div>
+        <div class="db-field">notes · expiresAt</div>
+        <div class="db-field" style="opacity:0.4">unique(userId, plantId, variety)</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">GardenCollaborator</div>
+      <div class="db-fields">
+        <div class="db-field">gardenId · userId</div>
+        <div class="db-field">role (EDITOR | VIEWER)</div>
+        <div class="db-field">acceptedAt</div>
+        <div class="db-field" style="opacity:0.4">unique(gardenId, userId)</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">GardenInvitation</div>
+      <div class="db-fields">
+        <div class="db-field">gardenId · email</div>
+        <div class="db-field">role · token (64-hex)</div>
+        <div class="db-field">expiresAt (7 days)</div>
+        <div class="db-field">acceptedAt</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">WeatherCache</div>
+      <div class="db-fields">
+        <div class="db-field">gardenId (unique)</div>
+        <div class="db-field">current (JSON)</div>
+        <div class="db-field">forecast (JSON)</div>
+        <div class="db-field">updatedAt</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">NotificationPreference</div>
+      <div class="db-fields">
+        <div class="db-field">userId · type</div>
+        <div class="db-field">enabled</div>
+        <div class="db-field">channelEmail · channelPush</div>
+        <div class="db-field" style="font-size:10px;color:var(--amber)">null = opted in (opt-out model)</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">PushSubscription</div>
+      <div class="db-fields">
+        <div class="db-field">userId</div>
+        <div class="db-field">endpoint (unique)</div>
+        <div class="db-field">p256dhKey · authKey</div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-name">CompanionRelation</div>
+      <div class="db-fields">
+        <div class="db-field">plantId · relatedId</div>
+        <div class="db-field">type (BENEFICIAL | HARMFUL)</div>
+        <div class="db-field">notes</div>
+        <div class="db-field" style="font-size:10px;color:var(--amber)">Query BOTH plantId + relatedId</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── ENV VARS ──────────────────────────────────────────────────────── -->
+<div class="env-section">
+  <div class="section-header">
+    <div class="section-title">Environment Variables</div>
+    <div class="section-sub">All required env vars by service</div>
+  </div>
+
+  <div class="env-grid">
+    <div class="env-group">
+      <div class="env-group-label">Database</div>
+      <div class="env-var">DATABASE_URL <span class="env-note">— pooled (Neon)</span></div>
+      <div class="env-var">DIRECT_URL <span class="env-note">— direct (migrations only)</span></div>
+    </div>
+    <div class="env-group">
+      <div class="env-group-label">Clerk Auth</div>
+      <div class="env-var">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</div>
+      <div class="env-var">CLERK_SECRET_KEY</div>
+      <div class="env-var">CLERK_WEBHOOK_SECRET</div>
+    </div>
+    <div class="env-group">
+      <div class="env-group-label">Stripe</div>
+      <div class="env-var">STRIPE_SECRET_KEY</div>
+      <div class="env-var">STRIPE_WEBHOOK_SECRET</div>
+      <div class="env-var">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</div>
+      <div class="env-var">STRIPE_PRO_MONTHLY_PRICE_ID</div>
+      <div class="env-var">STRIPE_PRO_ANNUAL_PRICE_ID</div>
+    </div>
+    <div class="env-group">
+      <div class="env-group-label">Plant & Weather APIs</div>
+      <div class="env-var">PERENUAL_API_KEY</div>
+      <div class="env-var">OPENWEATHER_API_KEY</div>
+    </div>
+    <div class="env-group">
+      <div class="env-group-label">Notifications</div>
+      <div class="env-var">RESEND_API_KEY</div>
+      <div class="env-var">NEXT_PUBLIC_VAPID_PUBLIC_KEY</div>
+      <div class="env-var">VAPID_PRIVATE_KEY</div>
+    </div>
+    <div class="env-group">
+      <div class="env-group-label">Storage, AI & App</div>
+      <div class="env-var">BLOB_READ_WRITE_TOKEN</div>
+      <div class="env-var">ANTHROPIC_API_KEY</div>
+      <div class="env-var">CRON_SECRET</div>
+      <div class="env-var">NEXT_PUBLIC_APP_URL</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

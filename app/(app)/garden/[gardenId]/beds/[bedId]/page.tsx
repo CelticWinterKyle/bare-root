@@ -184,73 +184,71 @@ export default async function BedPage({
   const bedNameRest = bedNameParts.slice(1).join(" ");
 
   return (
-    <div className="w-full flex flex-col" style={{ minHeight: "calc(100dvh - 120px)" }}>
+    <div className="w-full flex flex-col">
       {/* Header — grid-header-clean */}
-      <div style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
-        <div className="max-w-3xl mx-auto" style={{ padding: "20px 32px 16px" }}>
-          {/* Back row */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <Link
-              href={`/garden/${gardenId}`}
-              style={{
-                width: "22px", height: "22px", borderRadius: "6px",
-                background: "#F4F4EC", display: "inline-flex", alignItems: "center",
-                justifyContent: "center", fontSize: "13px", color: "#6B6B5A",
-                fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none",
-              }}
-            >‹</Link>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
-              {bed.garden.name}
-            </span>
-            {allSeasons.length > 1 && (
-              <div style={{ marginLeft: "auto" }}>
-                <Suspense>
-                  <SeasonSelector
-                    seasons={allSeasons}
-                    selectedId={viewingSeason?.id ?? ""}
-                    isPro={isPro}
-                  />
-                </Suspense>
-              </div>
-            )}
-          </div>
-          {/* Bed title */}
-          <h1 style={{
-            fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800,
-            color: "#111109", letterSpacing: "-0.025em", lineHeight: 1,
-            fontVariationSettings: "'opsz' 28",
-          }}>
-            <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{bedNameFirst}</em>
-            {bedNameRest ? ` ${bedNameRest}` : null}
-          </h1>
-          {/* Sub — mono meta */}
-          <p style={{
-            fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px",
-          }}>
-            {bed.widthFt} × {bed.heightFt} ft · {bed.gridCols} × {bed.gridRows} grid · {bed.cellSizeIn}&quot; cells
-            {bed.garden.usdaZone ? ` · Zone ${bed.garden.usdaZone}` : ""}
-          </p>
-          {/* Crop rotation warnings */}
-          {rotationWarnings.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {rotationWarnings.map((w, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#FDF2E0", border: "1px solid rgba(212,130,10,0.25)" }}>
-                  <RotateCcw className="w-3.5 h-3.5 shrink-0" style={{ color: "#D4820A" }} />
-                  <span style={{ color: "#7A4A0A" }}>
-                    <span className="font-semibold">Crop rotation: </span>
-                    {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.{" "}
-                    <span style={{ color: "#A06010" }}>Consider a different plant family to prevent disease buildup.</span>
-                  </span>
-                </div>
-              ))}
+      <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
+        {/* Back row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <Link
+            href={`/garden/${gardenId}`}
+            style={{
+              width: "22px", height: "22px", borderRadius: "6px",
+              background: "#F4F4EC", display: "inline-flex", alignItems: "center",
+              justifyContent: "center", fontSize: "13px", color: "#6B6B5A",
+              fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none",
+            }}
+          >‹</Link>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
+            {bed.garden.name}
+          </span>
+          {allSeasons.length > 1 && (
+            <div style={{ marginLeft: "auto" }}>
+              <Suspense>
+                <SeasonSelector
+                  seasons={allSeasons}
+                  selectedId={viewingSeason?.id ?? ""}
+                  isPro={isPro}
+                />
+              </Suspense>
             </div>
           )}
         </div>
+        {/* Bed title */}
+        <h1 style={{
+          fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800,
+          color: "#111109", letterSpacing: "-0.025em", lineHeight: 1,
+          fontVariationSettings: "'opsz' 28",
+        }}>
+          <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{bedNameFirst}</em>
+          {bedNameRest ? ` ${bedNameRest}` : null}
+        </h1>
+        {/* Sub — mono meta */}
+        <p style={{
+          fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em",
+          textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px",
+        }}>
+          {bed.widthFt} × {bed.heightFt} ft · {bed.gridCols} × {bed.gridRows} grid · {bed.cellSizeIn}&quot; cells
+          {bed.garden.usdaZone ? ` · Zone ${bed.garden.usdaZone}` : ""}
+        </p>
+        {/* Crop rotation warnings */}
+        {rotationWarnings.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {rotationWarnings.map((w, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#FDF2E0", border: "1px solid rgba(212,130,10,0.25)" }}>
+                <RotateCcw className="w-3.5 h-3.5 shrink-0" style={{ color: "#D4820A" }} />
+                <span style={{ color: "#7A4A0A" }}>
+                  <span className="font-semibold">Crop rotation: </span>
+                  {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.{" "}
+                  <span style={{ color: "#A06010" }}>Consider a different plant family to prevent disease buildup.</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* BedGrid */}
-      <div className="flex-1 w-full px-8 py-8">
+      {/* BedGrid — full width, no extra padding */}
+      <div className="flex-1 w-full">
         <BedGrid
           bedId={bed.id}
           gardenId={gardenId}

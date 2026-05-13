@@ -38,14 +38,29 @@ export default async function PlantingDetailPage({
   const statusLabel = planting.status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <Link
-        href={`/garden/${gardenId}/beds/${bedId}`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        {planting.cell.bed.name}
-      </Link>
+    <div>
+      <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <Link
+            href={`/garden/${gardenId}/beds/${bedId}`}
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
+          >‹</Link>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
+            {planting.cell.bed.name}
+          </span>
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 26" }}>
+          <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>
+            <Link href={`/plants/${planting.plant.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+              {planting.plant.name}
+            </Link>
+          </em>
+        </h1>
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px" }}>
+          {planting.season.name} · {planting.cell.bed.name} · {statusLabel}
+        </p>
+      </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {/* Header */}
       <header className="mb-8">
@@ -125,6 +140,7 @@ export default async function PlantingDetailPage({
           plantingId={plantingId}
           notes={planting.growthNotes.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))}
         />
+      </div>
       </div>
     </div>
   );

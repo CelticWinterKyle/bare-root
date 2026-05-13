@@ -39,19 +39,25 @@ export default async function SeasonsPage({
   const pastSeasons = garden.seasons.filter((s) => !s.isActive);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <Link
-        href={`/garden/${gardenId}`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        {garden.name}
-      </Link>
-
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl font-semibold text-[#111109]">Seasons</h1>
-        <CreateSeasonDialog gardenId={gardenId} hasActiveSeason={!!activeSeason} />
+    <div>
+      <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <Link
+            href={`/garden/${gardenId}`}
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
+          >‹</Link>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
+            {garden.name}
+          </span>
+          <div style={{ marginLeft: "auto" }}>
+            <CreateSeasonDialog gardenId={gardenId} hasActiveSeason={!!activeSeason} />
+          </div>
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 26" }}>
+          Seasons
+        </h1>
       </div>
+      <div className="px-[22px] md:px-8 py-5">
 
       {/* Active season */}
       {activeSeason && (
@@ -172,6 +178,7 @@ export default async function SeasonsPage({
           <p className="text-sm">No seasons yet. Create your first season to start tracking.</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

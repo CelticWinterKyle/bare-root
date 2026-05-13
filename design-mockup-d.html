@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Direction D: The Observatory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Night Garden palette */
+    --void:     #080E14;   /* deepest background */
+    --midnight: #0D1A24;   /* surfaces */
+    --navy:     #142230;   /* elevated panels */
+    --slate:    #1E3347;   /* borders, dividers */
+    --mist:     #2A4A63;   /* inactive elements */
+    --fog:      #3E6480;   /* secondary text */
+    --ash:      #8BAABD;   /* body text */
+    --snow:     #D8EBF5;   /* primary text */
+    --white:    #EEF6FC;   /* headings */
+
+    /* Phosphorescent accents */
+    --glow:     #3FDB7A;   /* primary accent — phosphorescent green */
+    --glow-dim: #1E8A4A;   /* muted glow */
+    --pulse:    #78FFB0;   /* bright glow highlights */
+    --amber:    #E8A83A;   /* warm alert / harvest */
+    --rose:     #E85A5A;   /* danger / failed */
+    --violet:   #A87BFF;   /* planned / upcoming */
+
+    /* Plant status — all phosphorescent */
+    --status-planned:      #6B8FFF;
+    --status-seeds:        #FFD166;
+    --status-transplanted: #4DFFAA;
+    --status-active:       #3FDB7A;
+    --status-harvesting:   #E8A83A;
+    --status-harvested:    #5A7A8A;
+    --status-failed:       #E85A5A;
+
+    --font-display: 'Syne', sans-serif;
+    --font-body:    'DM Mono', monospace;
+    --font-serif:   'Instrument Serif', serif;
+    --radius:       6px;
+    --radius-sm:    3px;
+  }
+
+  body {
+    background: var(--void);
+    color: var(--ash);
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Label system ──────────────────────────────── */
+  .section-label {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--glow);
+    margin-bottom: 6px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-body);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+  }
+
+  /* ── Glow effects ──────────────────────────────── */
+  .glow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 6px var(--glow), 0 0 12px rgba(63,219,122,0.4);
+  }
+  .glow-line {
+    height: 1px;
+    background: linear-gradient(90deg, var(--glow) 0%, transparent 100%);
+    opacity: 0.4;
+  }
+
+  /* ── Page layout ──────────────────────────────── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
+  .direction-header {
+    text-align: center;
+    padding: 60px 32px 48px;
+    border-bottom: 1px solid var(--slate);
+    margin-bottom: 60px;
+  }
+  .direction-header h1 {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--glow);
+    margin-bottom: 16px;
+  }
+  .direction-header h2 {
+    font-family: var(--font-display);
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+  .direction-header p {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ash);
+    max-width: 560px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  /* ── Color swatches ──────────────────────────────── */
+  .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+  .swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .swatch-label {
+    font-size: 8px;
+    color: var(--fog);
+    text-align: center;
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+  }
+  .swatch-group { text-align: center; }
+
+  /* ── Screen sections ──────────────────────────────── */
+  .screens-section { margin-bottom: 80px; }
+  .screens-section > h3 {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--glow);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--slate);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .screens-section > h3::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--slate) 0%, transparent 100%);
+  }
+
+  /* ── Phone frame ──────────────────────────────── */
+  .phone-row { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+  .phone-frame {
+    width: 280px;
+    background: var(--midnight);
+    border-radius: 32px;
+    border: 1.5px solid var(--slate);
+    overflow: hidden;
+    box-shadow:
+      0 0 0 6px rgba(13,26,36,0.8),
+      0 24px 64px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+    flex-shrink: 0;
+  }
+  .phone-screen { overflow: hidden; }
+  .phone-notch {
+    height: 28px;
+    background: var(--void);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-notch-pill {
+    width: 80px;
+    height: 10px;
+    background: var(--midnight);
+    border-radius: 10px;
+    border: 1px solid var(--slate);
+  }
+  .phone-label {
+    text-align: center;
+    margin-top: 16px;
+    font-family: var(--font-body);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fog);
+  }
+
+  /* ── Mobile nav ──────────────────────────────── */
+  .mob-nav {
+    background: var(--void);
+    border-top: 1px solid var(--slate);
+    padding: 8px 0 16px;
+    display: flex;
+    justify-content: space-around;
+  }
+  .mob-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    color: var(--mist);
+    flex: 1;
+  }
+  .mob-nav-item.active { color: var(--white); }
+  .mob-nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .mob-nav-item.active .mob-nav-icon {
+    background: var(--glow-dim);
+    box-shadow: 0 0 8px rgba(63,219,122,0.3);
+  }
+  .mob-nav-item.active .mob-nav-icon svg { color: var(--glow); }
+  .mob-nav-text {
+    font-family: var(--font-body);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── App header (mobile) ──────────────────────────── */
+  .mob-header {
+    background: var(--void);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--slate);
+  }
+  .mob-wordmark {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .wordmark-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 5px var(--glow);
+  }
+
+  /* ── Dashboard screen ──────────────────────────────── */
+  .dash-screen { background: var(--midnight); }
+  .dash-hero {
+    background: var(--navy);
+    padding: 16px;
+    border-bottom: 1px solid var(--slate);
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(63,219,122,0.08) 0%, transparent 70%);
+  }
+  .dash-greeting {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+  .dash-sub {
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--fog);
+    letter-spacing: 0.08em;
+  }
+  .dash-zone-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    padding: 3px 8px;
+    background: rgba(63,219,122,0.1);
+    border: 1px solid rgba(63,219,122,0.25);
+    border-radius: 3px;
+    font-size: 9px;
+    color: var(--glow);
+    letter-spacing: 0.1em;
+  }
+  .dash-stats {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--navy);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--glow) 0%, transparent 100%); }
+  .stat-card.amber::before { background: linear-gradient(90deg, var(--amber) 0%, transparent 100%); }
+  .stat-card.violet::before { background: linear-gradient(90deg, var(--violet) 0%, transparent 100%); }
+  .stat-card.blue::before { background: linear-gradient(90deg, #4DA8FF 0%, transparent 100%); }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .stat-label {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .dash-garden-card {
+    margin: 0 16px 8px;
+    background: var(--navy);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .dash-garden-top {
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--slate);
+  }
+  .dash-garden-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+  .dash-garden-season {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .dash-garden-arrow {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--glow);
+  }
+  .dash-garden-meta {
+    padding: 8px 14px;
+    display: flex;
+    gap: 12px;
+  }
+  .dash-meta-item {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dash-meta-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 4px var(--glow);
+  }
+
+  /* ── Bed/canvas screen ──────────────────────────────── */
+  .bed-screen { background: var(--midnight); }
+  .bed-header {
+    background: var(--void);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--slate);
+  }
+  .bed-back {
+    color: var(--glow);
+    font-size: 16px;
+    font-family: var(--font-display);
+  }
+  .bed-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    flex: 1;
+  }
+  .bed-season {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.1em;
+  }
+  .bed-grid-area {
+    padding: 16px;
+    background: var(--midnight);
+  }
+  .bed-grid-label {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bed-grid-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--slate);
+  }
+  .bed-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    background: var(--void);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+  .bed-cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 7px;
+    letter-spacing: 0.05em;
+    text-align: center;
+    overflow: hidden;
+    border: 1px solid transparent;
+    padding: 3px 2px;
+  }
+  .bed-cell.empty {
+    background: var(--midnight);
+    border-color: var(--slate);
+  }
+  .bed-cell.empty:hover { border-color: var(--mist); }
+  .bed-cell.active {
+    background: rgba(63,219,122,0.08);
+    border-color: rgba(63,219,122,0.3);
+    color: var(--glow);
+  }
+  .bed-cell.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--glow);
+    box-shadow: 0 0 4px var(--glow);
+  }
+  .bed-cell.seeds {
+    background: rgba(255,209,102,0.08);
+    border-color: rgba(255,209,102,0.3);
+    color: var(--status-seeds);
+  }
+  .bed-cell.seeds::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--status-seeds);
+  }
+  .bed-cell.planned {
+    background: rgba(107,143,255,0.08);
+    border-color: rgba(107,143,255,0.25);
+    color: var(--status-planned);
+  }
+  .bed-cell.planned::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--status-planned);
+  }
+  .bed-cell.harvesting {
+    background: rgba(232,168,58,0.08);
+    border-color: rgba(232,168,58,0.3);
+    color: var(--amber);
+  }
+  .bed-cell.harvesting::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--amber);
+    box-shadow: 0 0 4px var(--amber);
+  }
+  .bed-cell-name {
+    font-family: var(--font-body);
+    font-size: 7px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+  .cell-warning {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--rose);
+    box-shadow: 0 0 4px var(--rose);
+  }
+  .bed-legend {
+    padding: 10px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+  }
+  .legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* ── Plant library screen ──────────────────────────────── */
+  .plants-screen { background: var(--midnight); }
+  .search-bar-wrap {
+    padding: 10px 16px;
+    background: var(--void);
+    border-bottom: 1px solid var(--slate);
+  }
+  .search-input {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px 6px 28px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--snow);
+    outline: none;
+    position: relative;
+  }
+  .search-wrap {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--fog);
+    font-size: 11px;
+  }
+  .filter-pills {
+    padding: 8px 16px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--slate);
+  }
+  .filter-pills::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+    border: 1px solid var(--slate);
+    background: transparent;
+    color: var(--fog);
+    white-space: nowrap;
+  }
+  .filter-pill.active {
+    background: rgba(63,219,122,0.12);
+    border-color: rgba(63,219,122,0.35);
+    color: var(--glow);
+  }
+  .plant-grid {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .plant-card {
+    background: var(--navy);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .plant-card-img {
+    height: 70px;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--midnight) 100%);
+    border-bottom: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .plant-card-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 60%, rgba(63,219,122,0.08) 0%, transparent 60%);
+  }
+  .plant-initial {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: rgba(63,219,122,0.2);
+    position: relative;
+  }
+  .plant-card-body { padding: 8px 10px; }
+  .plant-card-name {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 1px;
+  }
+  .plant-card-sci {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 9px;
+    color: var(--fog);
+    margin-bottom: 6px;
+  }
+  .plant-card-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-family: var(--font-body);
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+  }
+  .badge-days {
+    background: rgba(63,219,122,0.1);
+    border: 1px solid rgba(63,219,122,0.25);
+    color: var(--glow);
+  }
+  .badge-sun {
+    background: rgba(255,209,102,0.1);
+    border: 1px solid rgba(255,209,102,0.25);
+    color: var(--status-seeds);
+  }
+
+  /* ── Desktop layout ──────────────────────────────── */
+  .desktop-section { margin-bottom: 80px; }
+  .desktop-frame {
+    background: var(--midnight);
+    border: 1px solid var(--slate);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+  .desktop-titlebar {
+    background: var(--void);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--slate);
+  }
+  .titlebar-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .td-red   { background: #FF5F56; }
+  .td-amber { background: #FEBC2E; }
+  .td-green { background: #28C840; }
+  .titlebar-url {
+    flex: 1;
+    background: var(--midnight);
+    border: 1px solid var(--slate);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 10px;
+    color: var(--fog);
+    text-align: center;
+    font-family: var(--font-body);
+  }
+  .desktop-shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 520px;
+  }
+  .desktop-sidebar {
+    background: var(--void);
+    border-right: 1px solid var(--slate);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--glow-dim);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(63,219,122,0.3);
+  }
+  .sidebar-wordmark {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+  .sidebar-wordmark span { color: var(--glow); }
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+  .sidebar-item {
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+    position: relative;
+    font-family: var(--font-body);
+  }
+  .sidebar-item.active {
+    color: var(--white);
+    background: rgba(255,255,255,0.03);
+  }
+  .sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--glow);
+    box-shadow: 0 0 8px rgba(63,219,122,0.5);
+  }
+  .sidebar-item-icon { width: 14px; text-align: center; }
+  .sidebar-section-divider {
+    padding: 8px 20px 4px;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mist);
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+  .sidebar-garden-item {
+    padding: 6px 20px 6px 44px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--fog);
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+  .sidebar-garden-item.active { color: var(--ash); }
+  .sidebar-garden-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 4px var(--glow);
+    flex-shrink: 0;
+  }
+  .sidebar-user {
+    padding: 14px 20px;
+    border-top: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--glow-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--glow);
+  }
+  .sidebar-user-name {
+    font-size: 11px;
+    color: var(--ash);
+    font-family: var(--font-body);
+  }
+  .sidebar-user-tier {
+    font-size: 8px;
+    color: var(--glow);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .desktop-main { background: var(--midnight); display: flex; flex-direction: column; }
+  .desktop-topbar {
+    background: var(--void);
+    border-bottom: 1px solid var(--slate);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .desktop-page-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .breadcrumb {
+    font-size: 10px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+    font-family: var(--font-body);
+  }
+  .breadcrumb span { color: var(--glow); }
+  .desktop-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-ghost {
+    padding: 5px 12px;
+    border: 1px solid var(--slate);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--ash);
+    background: transparent;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .btn-primary {
+    padding: 5px 12px;
+    border: 1px solid var(--glow-dim);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: var(--glow);
+    background: rgba(63,219,122,0.08);
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 0 8px rgba(63,219,122,0.1);
+  }
+  .desktop-content { padding: 24px; flex: 1; }
+  .garden-overview-desktop {
+    background: #080E12;
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    height: 280px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .iso-preview-desktop {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  /* Grid line atmosphere */
+  .garden-overview-desktop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(63,219,122,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63,219,122,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  /* Glow vignette from center */
+  .garden-overview-desktop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 60%, rgba(63,219,122,0.04) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .canvas-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 8px;
+    color: rgba(63,219,122,0.5);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+  }
+  .canvas-controls {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+  }
+  .canvas-btn {
+    width: 24px;
+    height: 24px;
+    background: rgba(13,26,36,0.8);
+    border: 1px solid var(--slate);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--fog);
+  }
+
+  /* ── Isometric bed placeholder ──────────────────────────────── */
+  .iso-beds-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .iso-bed-svg { overflow: visible; }
+
+  /* ── Weather strip ──────────────────────────────── */
+  .weather-strip {
+    padding: 10px 24px;
+    background: var(--navy);
+    border-bottom: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .weather-current {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .weather-temp {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .weather-desc {
+    font-size: 10px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+  }
+  .weather-sep { width: 1px; height: 24px; background: var(--slate); }
+  .weather-forecast { display: flex; gap: 12px; flex: 1; }
+  .forecast-day { text-align: center; }
+  .forecast-day-name { font-size: 8px; color: var(--fog); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+  .forecast-temp { font-family: var(--font-display); font-size: 11px; font-weight: 600; color: var(--ash); }
+  .weather-frost-alert {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(232,90,90,0.1);
+    border: 1px solid rgba(232,90,90,0.3);
+    border-radius: 3px;
+    font-size: 9px;
+    color: var(--rose);
+    letter-spacing: 0.06em;
+  }
+  .frost-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--rose);
+    box-shadow: 0 0 5px var(--rose);
+    animation: blink 1.5s infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Detail / delight section ──────────────────────────────── */
+  .delight-section { margin-bottom: 80px; }
+  .delight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .delight-panel {
+    background: var(--midnight);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .delight-panel-header {
+    padding: 12px 16px;
+    background: var(--navy);
+    border-bottom: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .delight-panel-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 0.05em;
+  }
+  .delight-panel-sub {
+    font-size: 9px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+    margin-left: auto;
+  }
+  .delight-panel-body { padding: 16px; }
+  .cell-detail-large {
+    border: 1.5px solid rgba(63,219,122,0.4);
+    background: rgba(63,219,122,0.06);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell-detail-large::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--glow), var(--pulse));
+    box-shadow: 0 0 8px var(--glow);
+  }
+  .cell-detail-plant {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+  .cell-detail-variety {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ash);
+    margin-bottom: 10px;
+  }
+  .cell-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+    background: rgba(63,219,122,0.12);
+    border: 1px solid rgba(63,219,122,0.3);
+    color: var(--glow);
+    margin-bottom: 12px;
+  }
+  .cell-dates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cell-date-item {
+    background: var(--navy);
+    border: 1px solid var(--slate);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .cell-date-label {
+    font-size: 8px;
+    color: var(--fog);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .cell-date-val {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .companion-section { margin-top: 12px; }
+  .companion-label {
+    font-size: 8px;
+    color: var(--fog);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .companion-label::after { content: ''; flex: 1; height: 1px; background: var(--slate); }
+  .companion-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .companion-chip {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .companion-chip.good {
+    background: rgba(63,219,122,0.1);
+    border: 1px solid rgba(63,219,122,0.25);
+    color: var(--glow);
+  }
+  .companion-chip.bad {
+    background: rgba(232,90,90,0.1);
+    border: 1px solid rgba(232,90,90,0.25);
+    color: var(--rose);
+  }
+  .actions-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+  }
+  .action-btn.primary {
+    background: rgba(63,219,122,0.1);
+    border: 1px solid rgba(63,219,122,0.3);
+    color: var(--glow);
+  }
+  .action-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--slate);
+    color: var(--fog);
+  }
+  .action-btn.danger {
+    background: rgba(232,90,90,0.08);
+    border: 1px solid rgba(232,90,90,0.25);
+    color: var(--rose);
+  }
+
+  /* Smart layout panel */
+  .smart-panel { }
+  .smart-wishlist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--slate);
+  }
+  .smart-wishlist-item:last-child { border-bottom: none; }
+  .smart-plant-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .smart-plant-name {
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--ash);
+    flex: 1;
+  }
+  .smart-plant-count {
+    font-size: 9px;
+    color: var(--fog);
+    font-family: var(--font-body);
+  }
+  .smart-remove {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--fog);
+  }
+  .smart-generate {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px;
+    background: rgba(63,219,122,0.1);
+    border: 1px solid rgba(63,219,122,0.3);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--glow);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 0 16px rgba(63,219,122,0.08);
+  }
+  .smart-generate:hover {
+    box-shadow: 0 0 20px rgba(63,219,122,0.15);
+  }
+  .ai-indicator {
+    font-size: 8px;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  /* ── Typography specimen ──────────────────────────────── */
+  .type-specimen {
+    background: var(--midnight);
+    border: 1px solid var(--slate);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .type-specimen h1 {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .type-specimen .serif-line {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-style: italic;
+    color: var(--ash);
+    margin-bottom: 16px;
+  }
+  .type-specimen .mono-line {
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--fog);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Harvest log section */
+  .harvest-strip {
+    padding: 10px 16px;
+    background: var(--navy);
+    border-bottom: 1px solid var(--slate);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .harvest-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .harvest-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 5px var(--amber);
+  }
+  .harvest-total {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--amber);
+  }
+  .harvest-row {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--slate);
+  }
+  .harvest-row:last-child { border-bottom: none; }
+  .harvest-date {
+    font-family: var(--font-body);
+    font-size: 9px;
+    color: var(--fog);
+    width: 50px;
+    flex-shrink: 0;
+  }
+  .harvest-plant {
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--ash);
+    flex: 1;
+  }
+  .harvest-qty {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--amber);
+  }
+
+  hr { border: none; border-top: 1px solid var(--slate); margin: 48px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DIRECTION HEADER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="direction-header">
+  <h1>Direction D</h1>
+  <h2>The Observatory</h2>
+  <p>
+    Midnight dark. Phosphorescent greens. You're planning your garden the way an astronomer maps stars — clinical precision meets living wonder. Every status glows. Data is the beauty.
+  </p>
+
+  <div class="swatch-row" style="margin-bottom: 8px;">
+    <div class="swatch-group">
+      <div class="swatch" style="background:#080E14;"></div>
+      <div class="swatch-label">void</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#0D1A24;"></div>
+      <div class="swatch-label">midnight</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#142230;"></div>
+      <div class="swatch-label">navy</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#1E3347;"></div>
+      <div class="swatch-label">slate</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#3FDB7A; box-shadow: 0 0 10px rgba(63,219,122,0.6);"></div>
+      <div class="swatch-label">glow</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#E8A83A; box-shadow: 0 0 8px rgba(232,168,58,0.4);"></div>
+      <div class="swatch-label">amber</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#E85A5A; box-shadow: 0 0 8px rgba(232,90,90,0.4);"></div>
+      <div class="swatch-label">rose</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#6B8FFF; box-shadow: 0 0 8px rgba(107,143,255,0.4);"></div>
+      <div class="swatch-label">violet</div>
+    </div>
+    <div class="swatch-group">
+      <div class="swatch" style="background:#D8EBF5;"></div>
+      <div class="swatch-label">snow</div>
+    </div>
+  </div>
+
+  <div style="font-family: var(--font-body); font-size: 10px; color: var(--fog); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 8px;">
+    Syne&nbsp;&nbsp;+&nbsp;&nbsp;Instrument Serif&nbsp;&nbsp;+&nbsp;&nbsp;DM Mono
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TYPOGRAPHY SPECIMEN -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="screens-section">
+    <h3>Typography</h3>
+    <div class="type-specimen">
+      <div class="mono-line" style="margin-bottom: 10px;">Zone 7B · Last Frost April 18 · Spring 2026</div>
+      <h1>Backyard Kitchen Garden</h1>
+      <div class="serif-line">Three beds. Forty-two plantings. The tomatoes are ahead of schedule.</div>
+      <div class="mono-line">4 beds · 38 active plantings · 12 days to first harvest</div>
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MOBILE SCREENS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="screens-section">
+    <h3>Mobile — 3 key screens</h3>
+    <div class="phone-row">
+
+      <!-- PHONE 1: Dashboard -->
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <!-- Header -->
+            <div class="mob-header">
+              <div class="mob-wordmark">
+                <div class="wordmark-dot"></div>
+                bare root
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div style="width:18px;height:18px;border-radius:3px;background:var(--navy);border:1px solid var(--slate);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--fog);">🔔</div>
+                <div style="width:22px;height:22px;border-radius:5px;background:var(--glow-dim);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--glow);">K</div>
+              </div>
+            </div>
+            <!-- Hero -->
+            <div class="dash-hero">
+              <div class="dash-greeting">Good morning, Kyle</div>
+              <div class="dash-sub">Tuesday · May 12 · Zone 7B</div>
+              <div class="dash-zone-pill">
+                <div class="glow-dot" style="width:4px;height:4px;"></div>
+                Last frost: April 18 · 24 days ago
+              </div>
+            </div>
+            <!-- Stats -->
+            <div class="dash-stats">
+              <div class="stat-card green">
+                <div class="stat-num">38</div>
+                <div class="stat-label">Active plants</div>
+              </div>
+              <div class="stat-card amber">
+                <div class="stat-num">6</div>
+                <div class="stat-label">Ready to harvest</div>
+              </div>
+              <div class="stat-card violet">
+                <div class="stat-num">12</div>
+                <div class="stat-label">Days to harvest</div>
+              </div>
+              <div class="stat-card blue">
+                <div class="stat-num">4</div>
+                <div class="stat-label">Reminders</div>
+              </div>
+            </div>
+            <!-- Garden card -->
+            <div class="dash-garden-card">
+              <div class="dash-garden-top">
+                <div>
+                  <div class="dash-garden-name">Backyard Kitchen Garden</div>
+                  <div class="dash-garden-season">Spring 2026 · Active</div>
+                </div>
+                <div class="dash-garden-arrow">→</div>
+              </div>
+              <div class="dash-garden-meta">
+                <div class="dash-meta-item"><div class="dash-meta-dot"></div>3 beds</div>
+                <div class="dash-meta-item"><div class="dash-meta-dot" style="background:var(--amber);box-shadow:0 0 4px var(--amber);"></div>12×8 ft</div>
+                <div class="dash-meta-item"><div class="dash-meta-dot" style="background:var(--violet);box-shadow:0 0 4px var(--violet);"></div>Zone 7b</div>
+              </div>
+            </div>
+            <!-- Nav -->
+            <div class="mob-nav">
+              <div class="mob-nav-item active">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="mob-nav-text">Garden</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div class="mob-nav-text">Plants</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="mob-nav-text">Calendar</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <div class="mob-nav-text">Account</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Dashboard</div>
+      </div>
+
+      <!-- PHONE 2: Bed Grid -->
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <!-- Bed header -->
+            <div class="bed-header">
+              <div class="bed-back">←</div>
+              <div>
+                <div class="bed-title">South Raised Bed</div>
+                <div class="bed-season">4×5 ft · 20 cells · Spring 2026</div>
+              </div>
+            </div>
+            <!-- Grid -->
+            <div class="bed-grid-area">
+              <div class="bed-grid-label">Cell map</div>
+              <div class="bed-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="bed-cell active"><div class="bed-cell-name">Cherry Tomato</div></div>
+                <div class="bed-cell active"><div class="bed-cell-name">Cherry Tomato</div></div>
+                <div class="bed-cell seeds"><div class="bed-cell-name">Pepper</div></div>
+                <div class="bed-cell seeds"><div class="bed-cell-name">Pepper</div></div>
+                <div class="bed-cell active"><div class="bed-cell-name">Basil</div></div>
+                <div class="bed-cell active"><div class="bed-cell-name">Basil</div></div>
+                <div class="bed-cell active"><div class="bed-cell-name">Basil</div><div class="cell-warning"></div></div>
+                <div class="bed-cell empty"></div>
+                <div class="bed-cell planned"><div class="bed-cell-name">Marigold</div></div>
+                <div class="bed-cell planned"><div class="bed-cell-name">Marigold</div></div>
+                <div class="bed-cell harvesting"><div class="bed-cell-name">Lettuce</div></div>
+                <div class="bed-cell harvesting"><div class="bed-cell-name">Lettuce</div></div>
+                <div class="bed-cell empty"></div>
+                <div class="bed-cell empty"></div>
+                <div class="bed-cell empty"></div>
+                <div class="bed-cell empty"></div>
+              </div>
+              <!-- Legend -->
+              <div class="bed-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--status-active);box-shadow:0 0 4px var(--status-active);"></div>Active</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--status-seeds);"></div>Seeds</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--status-planned);"></div>Planned</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--amber);box-shadow:0 0 4px var(--amber);"></div>Harvest</div>
+              </div>
+            </div>
+            <!-- Harvest log strip -->
+            <div class="harvest-strip">
+              <div class="harvest-title"><div class="harvest-dot"></div>Recent Harvests</div>
+              <div class="harvest-total">4.2 lbs</div>
+            </div>
+            <div class="harvest-row">
+              <div class="harvest-date">May 10</div>
+              <div class="harvest-plant">Lettuce (Romaine)</div>
+              <div class="harvest-qty">1.2 lbs</div>
+            </div>
+            <div class="harvest-row">
+              <div class="harvest-date">May 7</div>
+              <div class="harvest-plant">Cherry Tomato</div>
+              <div class="harvest-qty">3.0 lbs</div>
+            </div>
+            <!-- Nav -->
+            <div class="mob-nav">
+              <div class="mob-nav-item active">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="mob-nav-text">Garden</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div class="mob-nav-text">Plants</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="mob-nav-text">Calendar</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <div class="mob-nav-text">Account</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Bed Detail</div>
+      </div>
+
+      <!-- PHONE 3: Plant Library -->
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <!-- Header -->
+            <div class="mob-header" style="padding: 10px 16px;">
+              <div class="mob-wordmark" style="font-size:13px;">Plant Library</div>
+              <div style="font-size:9px;color:var(--fog);letter-spacing:0.1em;">142 plants</div>
+            </div>
+            <!-- Search -->
+            <div class="search-bar-wrap">
+              <div class="search-wrap">
+                <span class="search-icon">⌕</span>
+                <div class="search-input">tomato</div>
+              </div>
+            </div>
+            <!-- Filters -->
+            <div class="filter-pills">
+              <div class="filter-pill active">All</div>
+              <div class="filter-pill">Vegetables</div>
+              <div class="filter-pill">Herbs</div>
+              <div class="filter-pill">Flowers</div>
+              <div class="filter-pill">Fruits</div>
+            </div>
+            <!-- Grid -->
+            <div class="plant-grid">
+              <div class="plant-card">
+                <div class="plant-card-img">
+                  <div class="plant-initial">T</div>
+                </div>
+                <div class="plant-card-body">
+                  <div class="plant-card-name">Tomato</div>
+                  <div class="plant-card-sci">Solanum lycopersicum</div>
+                  <div class="plant-card-badges">
+                    <div class="badge badge-days">70d</div>
+                    <div class="badge badge-sun">Full ☀</div>
+                  </div>
+                </div>
+              </div>
+              <div class="plant-card">
+                <div class="plant-card-img" style="background:linear-gradient(160deg,#0D1A24,#0A1520);">
+                  <div class="plant-initial" style="color:rgba(232,90,90,0.25);">P</div>
+                </div>
+                <div class="plant-card-body">
+                  <div class="plant-card-name">Pepper</div>
+                  <div class="plant-card-sci">Capsicum annuum</div>
+                  <div class="plant-card-badges">
+                    <div class="badge badge-days">80d</div>
+                    <div class="badge badge-sun">Full ☀</div>
+                  </div>
+                </div>
+              </div>
+              <div class="plant-card">
+                <div class="plant-card-img" style="background:linear-gradient(160deg,#0D1A24,#0A1520);">
+                  <div class="plant-initial" style="color:rgba(107,143,255,0.25);">B</div>
+                </div>
+                <div class="plant-card-body">
+                  <div class="plant-card-name">Basil</div>
+                  <div class="plant-card-sci">Ocimum basilicum</div>
+                  <div class="plant-card-badges">
+                    <div class="badge badge-days">60d</div>
+                    <div class="badge badge-sun">Part ⛅</div>
+                  </div>
+                </div>
+              </div>
+              <div class="plant-card">
+                <div class="plant-card-img" style="background:linear-gradient(160deg,#0D1A24,#0A1520);">
+                  <div class="plant-initial" style="color:rgba(255,209,102,0.25);">M</div>
+                </div>
+                <div class="plant-card-body">
+                  <div class="plant-card-name">Marigold</div>
+                  <div class="plant-card-sci">Tagetes erecta</div>
+                  <div class="plant-card-badges">
+                    <div class="badge badge-days">50d</div>
+                    <div class="badge badge-sun">Full ☀</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Nav -->
+            <div class="mob-nav">
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="mob-nav-text">Garden</div>
+              </div>
+              <div class="mob-nav-item active">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div class="mob-nav-text">Plants</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="mob-nav-text">Calendar</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <div class="mob-nav-text">Account</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Plant Library</div>
+      </div>
+
+      <!-- PHONE 4: Garden Overview (Canvas) -->
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <!-- Header -->
+            <div class="mob-header">
+              <div>
+                <div style="font-size:9px;color:var(--fog);letter-spacing:0.12em;text-transform:uppercase;font-family:var(--font-body);margin-bottom:1px;">Backyard Kitchen Garden</div>
+                <div style="font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--white);">Overview</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <div style="padding:4px 8px;background:rgba(63,219,122,0.1);border:1px solid rgba(63,219,122,0.25);border-radius:3px;font-size:8px;color:var(--glow);letter-spacing:0.1em;font-family:var(--font-body);">Spring 2026</div>
+                <div style="width:26px;height:26px;border:1px solid var(--slate);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fog);">⋯</div>
+              </div>
+            </div>
+            <!-- Weather mini strip -->
+            <div style="background:var(--navy);border-bottom:1px solid var(--slate);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--white);">62°F</div>
+                <div style="font-size:9px;color:var(--fog);letter-spacing:0.06em;font-family:var(--font-body);">Partly cloudy</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;padding:3px 8px;background:rgba(232,90,90,0.1);border:1px solid rgba(232,90,90,0.3);border-radius:3px;font-size:8px;color:var(--rose);letter-spacing:0.06em;font-family:var(--font-body);">
+                <div style="width:4px;height:4px;border-radius:50%;background:var(--rose);box-shadow:0 0 4px var(--rose);animation:blink 1.5s infinite;"></div>
+                Frost Sat
+              </div>
+            </div>
+            <!-- Canvas area -->
+            <div style="background:#0A1018;position:relative;height:260px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+              <!-- Subtle grid atmosphere -->
+              <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(63,219,122,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(63,219,122,0.025) 1px,transparent 1px);background-size:24px 24px;"></div>
+              <!-- Center glow -->
+              <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(63,219,122,0.05) 0%,transparent 65%);pointer-events:none;"></div>
+              <!-- Canvas controls -->
+              <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2;">
+                <div style="width:22px;height:22px;background:rgba(13,26,36,0.85);border:1px solid var(--slate);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--fog);">−</div>
+                <div style="width:22px;height:22px;background:rgba(13,26,36,0.85);border:1px solid var(--slate);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--fog);">+</div>
+              </div>
+              <div style="position:absolute;top:8px;left:10px;font-size:7px;color:rgba(63,219,122,0.4);letter-spacing:0.2em;text-transform:uppercase;font-family:var(--font-body);z-index:2;">3D · Tap bed to open</div>
+              <!-- Isometric SVG beds -->
+              <svg width="248" height="220" viewBox="0 0 248 220" overflow="visible">
+                <defs>
+                  <filter id="mglow">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+
+                <!-- BED 1 (South) — large tomato bed -->
+                <polygon points="30,72 110,45 185,80 105,107" fill="#182E1A" stroke="rgba(63,219,122,0.35)" stroke-width="0.8"/>
+                <polygon points="185,80 185,115 105,142 105,107" fill="#0D1E0F" stroke="rgba(63,219,122,0.12)" stroke-width="0.5"/>
+                <polygon points="30,72 30,107 105,142 105,107" fill="#0A1A0C" stroke="rgba(63,219,122,0.08)" stroke-width="0.5"/>
+                <!-- Soil -->
+                <polygon points="38,75 107,50 177,82 108,107" fill="#0D200F"/>
+                <!-- Glow plants — active green -->
+                <circle cx="65"  cy="80" r="4" fill="rgba(63,219,122,0.75)" filter="url(#mglow)"/>
+                <circle cx="82"  cy="74" r="4" fill="rgba(63,219,122,0.75)" filter="url(#mglow)"/>
+                <circle cx="100" cy="68" r="4" fill="rgba(63,219,122,0.7)" filter="url(#mglow)"/>
+                <circle cx="118" cy="74" r="3.5" fill="rgba(63,219,122,0.55)"/>
+                <circle cx="136" cy="80" r="3.5" fill="rgba(63,219,122,0.55)"/>
+                <circle cx="154" cy="74" r="3.5" fill="rgba(232,168,58,0.65)" filter="url(#mglow)"/>
+                <circle cx="75"  cy="90" r="3" fill="rgba(63,219,122,0.5)"/>
+                <circle cx="93"  cy="84" r="3" fill="rgba(63,219,122,0.5)"/>
+                <circle cx="111" cy="78" r="3" fill="rgba(255,209,102,0.55)"/>
+                <!-- Rim glow -->
+                <polygon points="30,72 110,45 185,80 105,107" fill="none" stroke="rgba(63,219,122,0.55)" stroke-width="1" filter="url(#mglow)"/>
+                <text x="107" y="60" font-family="'Syne',sans-serif" font-size="7.5" font-weight="700" fill="rgba(216,235,245,0.65)" text-anchor="middle" letter-spacing="0.14em">SOUTH BED</text>
+
+                <!-- BED 2 (Herb) — medium -->
+                <polygon points="148,105 210,83 258,107 196,130" fill="#182E1A" stroke="rgba(107,143,255,0.3)" stroke-width="0.8"/>
+                <polygon points="258,107 258,138 196,162 196,130" fill="#0D1E0F" stroke="rgba(107,143,255,0.1)" stroke-width="0.5"/>
+                <polygon points="148,105 148,136 196,162 196,130" fill="#0A1A0C" stroke="rgba(107,143,255,0.08)" stroke-width="0.5"/>
+                <polygon points="154,108 207,87 252,108 199,130" fill="#0D200F"/>
+                <circle cx="170" cy="112" r="3" fill="rgba(107,143,255,0.7)" filter="url(#mglow)"/>
+                <circle cx="184" cy="107" r="3" fill="rgba(107,143,255,0.6)"/>
+                <circle cx="198" cy="102" r="3" fill="rgba(63,219,122,0.65)" filter="url(#mglow)"/>
+                <circle cx="212" cy="107" r="3" fill="rgba(63,219,122,0.55)"/>
+                <circle cx="226" cy="112" r="3" fill="rgba(255,209,102,0.6)"/>
+                <polygon points="148,105 210,83 258,107 196,130" fill="none" stroke="rgba(107,143,255,0.4)" stroke-width="1"/>
+                <text x="202" y="94" font-family="'Syne',sans-serif" font-size="7.5" font-weight="700" fill="rgba(216,235,245,0.65)" text-anchor="middle" letter-spacing="0.14em">HERB BED</text>
+
+                <!-- BED 3 (North) — harvesting amber glow -->
+                <polygon points="58,138 130,116 178,138 106,160" fill="#182E1A" stroke="rgba(232,168,58,0.45)" stroke-width="0.8"/>
+                <polygon points="178,138 178,168 106,190 106,160" fill="#0D1E0F" stroke="rgba(232,168,58,0.12)" stroke-width="0.5"/>
+                <polygon points="58,138 58,168 106,190 106,160" fill="#0A1A0C" stroke="rgba(232,168,58,0.08)" stroke-width="0.5"/>
+                <polygon points="65,141 128,119 173,139 110,161" fill="#0D200F"/>
+                <circle cx="88"  cy="145" r="3.5" fill="rgba(232,168,58,0.85)" filter="url(#mglow)"/>
+                <circle cx="103" cy="140" r="3.5" fill="rgba(232,168,58,0.8)"  filter="url(#mglow)"/>
+                <circle cx="118" cy="135" r="3.5" fill="rgba(232,168,58,0.75)" filter="url(#mglow)"/>
+                <circle cx="133" cy="140" r="3"   fill="rgba(232,168,58,0.6)"/>
+                <circle cx="148" cy="145" r="3"   fill="rgba(232,168,58,0.5)"/>
+                <polygon points="58,138 130,116 178,138 106,160" fill="none" stroke="rgba(232,168,58,0.55)" stroke-width="1" filter="url(#mglow)"/>
+                <text x="117" y="127" font-family="'Syne',sans-serif" font-size="7.5" font-weight="700" fill="rgba(216,235,245,0.65)" text-anchor="middle" letter-spacing="0.14em">NORTH BED</text>
+              </svg>
+            </div>
+            <!-- Bed quick-access strip -->
+            <div style="background:var(--navy);border-top:1px solid var(--slate);padding:8px 14px;display:flex;gap:6px;overflow-x:auto;">
+              <div style="flex-shrink:0;padding:5px 10px;background:rgba(63,219,122,0.1);border:1px solid rgba(63,219,122,0.3);border-radius:3px;font-size:8px;font-family:var(--font-body);color:var(--glow);letter-spacing:0.08em;white-space:nowrap;display:flex;align-items:center;gap:5px;">
+                <div style="width:4px;height:4px;border-radius:50%;background:var(--glow);box-shadow:0 0 4px var(--glow);"></div>
+                South Bed
+              </div>
+              <div style="flex-shrink:0;padding:5px 10px;background:transparent;border:1px solid var(--slate);border-radius:3px;font-size:8px;font-family:var(--font-body);color:var(--fog);letter-spacing:0.08em;white-space:nowrap;display:flex;align-items:center;gap:5px;">
+                <div style="width:4px;height:4px;border-radius:50%;background:var(--violet);"></div>
+                Herb Bed
+              </div>
+              <div style="flex-shrink:0;padding:5px 10px;background:transparent;border:1px solid rgba(232,168,58,0.25);border-radius:3px;font-size:8px;font-family:var(--font-body);color:var(--amber);letter-spacing:0.08em;white-space:nowrap;display:flex;align-items:center;gap:5px;">
+                <div style="width:4px;height:4px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px var(--amber);"></div>
+                North Bed ✦
+              </div>
+            </div>
+            <!-- Nav -->
+            <div class="mob-nav">
+              <div class="mob-nav-item active">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="mob-nav-text">Garden</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div class="mob-nav-text">Plants</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="mob-nav-text">Calendar</div>
+              </div>
+              <div class="mob-nav-item">
+                <div class="mob-nav-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </div>
+                <div class="mob-nav-text">Account</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Garden Overview</div>
+      </div>
+
+    </div><!-- end phone-row -->
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DESKTOP LAYOUT -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="desktop-section">
+    <div class="screens-section">
+      <h3>Desktop — Garden Overview</h3>
+    </div>
+    <div class="desktop-frame">
+      <div class="desktop-titlebar">
+        <div class="titlebar-dot td-red"></div>
+        <div class="titlebar-dot td-amber"></div>
+        <div class="titlebar-dot td-green"></div>
+        <div class="titlebar-url">bareroot.garden / garden / kjh2x9</div>
+      </div>
+      <div class="desktop-shell">
+        <!-- Sidebar -->
+        <div class="desktop-sidebar">
+          <div class="sidebar-logo">
+            <div class="sidebar-logo-mark">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--glow)" stroke-width="2.5"><path d="M12 2a10 10 0 0 1 0 20M12 2C6.5 2 2 6.5 2 12M12 2c3 4 4 8 4 10"/><path d="M2 12h20"/></svg>
+            </div>
+            <div>
+              <div class="sidebar-wordmark">bare<span>root</span></div>
+            </div>
+          </div>
+          <div class="sidebar-nav">
+            <div class="sidebar-item active">
+              <span class="sidebar-item-icon">⊞</span>
+              Dashboard
+            </div>
+            <div class="sidebar-section-divider">Gardens</div>
+            <div class="sidebar-garden-item active">
+              <div class="sidebar-garden-dot"></div>
+              Backyard Kitchen
+            </div>
+            <div class="sidebar-garden-item">
+              <div class="sidebar-garden-dot" style="background:var(--mist);box-shadow:none;"></div>
+              Front Herb Bed
+            </div>
+            <div style="padding: 6px 20px 6px 44px;">
+              <div style="font-size:9px;color:var(--glow-dim);letter-spacing:0.1em;display:flex;align-items:center;gap:4px;font-family:var(--font-body);">＋ Add garden</div>
+            </div>
+            <div class="sidebar-section-divider" style="margin-top:8px;">Library</div>
+            <div class="sidebar-item">
+              <span class="sidebar-item-icon">⬡</span>
+              Plants
+            </div>
+            <div class="sidebar-item">
+              <span class="sidebar-item-icon">◷</span>
+              Calendar
+            </div>
+            <div class="sidebar-item">
+              <span class="sidebar-item-icon">◫</span>
+              Inventory
+            </div>
+            <div class="sidebar-section-divider" style="margin-top:8px;">Account</div>
+            <div class="sidebar-item">
+              <span class="sidebar-item-icon">◎</span>
+              Settings
+            </div>
+          </div>
+          <div class="sidebar-user">
+            <div class="sidebar-avatar">K</div>
+            <div>
+              <div class="sidebar-user-name">Kyle</div>
+              <div class="sidebar-user-tier">Pro · 14 days trial</div>
+            </div>
+          </div>
+        </div>
+        <!-- Main -->
+        <div class="desktop-main">
+          <div class="desktop-topbar">
+            <div>
+              <div class="breadcrumb"><span>Backyard Kitchen Garden</span> / Overview</div>
+              <div class="desktop-page-title" style="margin-top:2px;">
+                Garden Overview
+                <div style="width:6px;height:6px;border-radius:50%;background:var(--glow);box-shadow:0 0 6px var(--glow);"></div>
+              </div>
+            </div>
+            <div class="desktop-actions">
+              <div class="btn-ghost">Seasons</div>
+              <div class="btn-ghost">Edit beds</div>
+              <div class="btn-primary">＋ Add bed</div>
+            </div>
+          </div>
+          <!-- Weather strip -->
+          <div class="weather-strip">
+            <div class="weather-current">
+              <div>
+                <div class="weather-temp">62°F</div>
+                <div class="weather-desc">Partly cloudy · Zone 7b</div>
+              </div>
+            </div>
+            <div class="weather-sep"></div>
+            <div class="weather-forecast">
+              <div class="forecast-day">
+                <div class="forecast-day-name">Wed</div>
+                <div class="forecast-temp">68°</div>
+              </div>
+              <div class="forecast-day">
+                <div class="forecast-day-name">Thu</div>
+                <div class="forecast-temp">54°</div>
+              </div>
+              <div class="forecast-day">
+                <div class="forecast-day-name">Fri</div>
+                <div class="forecast-temp">48°</div>
+              </div>
+              <div class="forecast-day">
+                <div class="forecast-day-name">Sat</div>
+                <div class="forecast-temp" style="color:var(--rose);">34°</div>
+              </div>
+              <div class="forecast-day">
+                <div class="forecast-day-name">Sun</div>
+                <div class="forecast-temp">58°</div>
+              </div>
+            </div>
+            <div class="weather-frost-alert">
+              <div class="frost-dot"></div>
+              Frost risk Saturday
+            </div>
+          </div>
+          <!-- Canvas area -->
+          <div class="desktop-content">
+            <div class="garden-overview-desktop">
+              <div class="canvas-label">Garden Canvas · Isometric 3D</div>
+              <div class="canvas-controls">
+                <div class="canvas-btn">−</div>
+                <div class="canvas-btn">+</div>
+                <div class="canvas-btn">⟳</div>
+              </div>
+              <!-- Simplified SVG isometric beds -->
+              <div class="iso-beds-container">
+                <svg class="iso-bed-svg" width="500" height="240" viewBox="0 0 500 240">
+                  <defs>
+                    <filter id="glow-filter">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                  </defs>
+
+                  <!-- Ground plane suggestion -->
+                  <ellipse cx="250" cy="200" rx="220" ry="40" fill="rgba(63,219,122,0.02)" />
+
+                  <!-- BED 1 — isometric box, large (tomatoes) -->
+                  <!-- Top face -->
+                  <polygon points="80,80 180,50 260,90 160,120" fill="#1A3A20" stroke="rgba(63,219,122,0.3)" stroke-width="0.5"/>
+                  <!-- East face -->
+                  <polygon points="260,90 260,130 160,160 160,120" fill="#0E2213" stroke="rgba(63,219,122,0.15)" stroke-width="0.5"/>
+                  <!-- South face -->
+                  <polygon points="80,80 80,120 160,160 160,120" fill="#0B1A0E" stroke="rgba(63,219,122,0.1)" stroke-width="0.5"/>
+                  <!-- Soil on top -->
+                  <polygon points="88,83 175,55 250,92 163,120" fill="#0D2610"/>
+                  <!-- Glow plants -->
+                  <circle cx="120" cy="87" r="4" fill="rgba(63,219,122,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="140" cy="80" r="4" fill="rgba(63,219,122,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="160" cy="73" r="4" fill="rgba(63,219,122,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="180" cy="80" r="3" fill="rgba(63,219,122,0.5)"/>
+                  <circle cx="200" cy="87" r="3" fill="rgba(63,219,122,0.5)"/>
+                  <circle cx="220" cy="80" r="3" fill="rgba(232,168,58,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="130" cy="97" r="3" fill="rgba(63,219,122,0.5)"/>
+                  <circle cx="150" cy="90" r="3" fill="rgba(63,219,122,0.5)"/>
+                  <circle cx="170" cy="83" r="3" fill="rgba(255,209,102,0.6)"/>
+                  <!-- Board frame glow -->
+                  <polygon points="80,80 180,50 260,90 160,120" fill="none" stroke="rgba(63,219,122,0.5)" stroke-width="1" filter="url(#glow-filter)"/>
+                  <!-- Label -->
+                  <text x="168" y="68" font-family="'Syne',sans-serif" font-size="9" fill="rgba(216,235,245,0.7)" text-anchor="middle" letter-spacing="0.1em">SOUTH BED</text>
+
+                  <!-- BED 2 — medium box (herbs) -->
+                  <polygon points="280,100 360,75 420,105 340,130" fill="#1A3A20" stroke="rgba(63,219,122,0.25)" stroke-width="0.5"/>
+                  <polygon points="420,105 420,140 340,165 340,130" fill="#0E2213" stroke="rgba(63,219,122,0.1)" stroke-width="0.5"/>
+                  <polygon points="280,100 280,135 340,165 340,130" fill="#0B1A0E" stroke="rgba(63,219,122,0.08)" stroke-width="0.5"/>
+                  <polygon points="287,103 357,79 413,106 343,130" fill="#0D2610"/>
+                  <circle cx="310" cy="107" r="3" fill="rgba(107,143,255,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="325" cy="100" r="3" fill="rgba(107,143,255,0.6)"/>
+                  <circle cx="340" cy="95" r="3" fill="rgba(63,219,122,0.6)"/>
+                  <circle cx="355" cy="100" r="3" fill="rgba(63,219,122,0.6)"/>
+                  <circle cx="370" cy="107" r="3" fill="rgba(255,209,102,0.6)"/>
+                  <circle cx="385" cy="100" r="3" fill="rgba(63,219,122,0.5)"/>
+                  <polygon points="280,100 360,75 420,105 340,130" fill="none" stroke="rgba(107,143,255,0.35)" stroke-width="1"/>
+                  <text x="350" y="88" font-family="'Syne',sans-serif" font-size="9" fill="rgba(216,235,245,0.7)" text-anchor="middle" letter-spacing="0.1em">HERB BED</text>
+
+                  <!-- BED 3 — small (lettuce, harvesting) -->
+                  <polygon points="170,145 250,122 305,147 225,170" fill="#1A3A20" stroke="rgba(232,168,58,0.4)" stroke-width="0.5"/>
+                  <polygon points="305,147 305,180 225,205 225,170" fill="#0E2213" stroke="rgba(232,168,58,0.15)" stroke-width="0.5"/>
+                  <polygon points="170,145 170,178 225,205 225,170" fill="#0B1A0E" stroke="rgba(232,168,58,0.1)" stroke-width="0.5"/>
+                  <polygon points="177,148 246,126 298,148 229,170" fill="#0D2610"/>
+                  <circle cx="205" cy="152" r="3" fill="rgba(232,168,58,0.8)" filter="url(#glow-filter)"/>
+                  <circle cx="220" cy="147" r="3" fill="rgba(232,168,58,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="235" cy="142" r="3" fill="rgba(232,168,58,0.7)" filter="url(#glow-filter)"/>
+                  <circle cx="250" cy="147" r="3" fill="rgba(232,168,58,0.6)"/>
+                  <circle cx="265" cy="152" r="2.5" fill="rgba(232,168,58,0.5)"/>
+                  <polygon points="170,145 250,122 305,147 225,170" fill="none" stroke="rgba(232,168,58,0.5)" stroke-width="1" filter="url(#glow-filter)"/>
+                  <text x="236" y="136" font-family="'Syne',sans-serif" font-size="9" fill="rgba(216,235,245,0.7)" text-anchor="middle" letter-spacing="0.1em">NORTH BED</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DELIGHT DETAIL: Cell panel + Smart Layout -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="screens-section">
+    <h3>Detail views — cell panel + smart layout</h3>
+    <div class="delight-grid">
+
+      <!-- Cell detail panel -->
+      <div class="delight-panel">
+        <div class="delight-panel-header">
+          <div class="delight-panel-title">Cell Detail</div>
+          <div class="delight-panel-sub">Row 1 · Col 3</div>
+        </div>
+        <div class="delight-panel-body">
+          <div class="cell-detail-large">
+            <div style="font-size:9px;color:var(--glow-dim);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;font-family:var(--font-body);">South Raised Bed</div>
+            <div class="cell-detail-plant">Cherry Tomato</div>
+            <div class="cell-detail-variety">Sun Gold, indeterminate</div>
+            <div class="cell-status-badge">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--glow);box-shadow:0 0 5px var(--glow);"></div>
+              Active · Planted May 2
+            </div>
+            <div class="cell-dates-grid">
+              <div class="cell-date-item">
+                <div class="cell-date-label">Planted</div>
+                <div class="cell-date-val">May 2</div>
+              </div>
+              <div class="cell-date-item">
+                <div class="cell-date-label">Expected harvest</div>
+                <div class="cell-date-val">Jul 11</div>
+              </div>
+              <div class="cell-date-item">
+                <div class="cell-date-label">Days to maturity</div>
+                <div class="cell-date-val">70 days</div>
+              </div>
+              <div class="cell-date-item">
+                <div class="cell-date-label">Quantity</div>
+                <div class="cell-date-val">1 plant</div>
+              </div>
+            </div>
+          </div>
+          <div class="companion-section">
+            <div class="companion-label">Companion relations</div>
+            <div class="companion-row">
+              <div class="companion-chip good">
+                <span>▲</span> Basil
+              </div>
+              <div class="companion-chip good">
+                <span>▲</span> Marigold
+              </div>
+              <div class="companion-chip good">
+                <span>▲</span> Parsley
+              </div>
+              <div class="companion-chip bad">
+                <span>▼</span> Fennel
+              </div>
+              <div class="companion-chip bad">
+                <span>▼</span> Brassicas
+              </div>
+            </div>
+          </div>
+          <div class="actions-row">
+            <div class="action-btn primary">Log harvest</div>
+            <div class="action-btn secondary">Notes</div>
+            <div class="action-btn danger">Remove</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart layout panel -->
+      <div class="delight-panel">
+        <div class="delight-panel-header">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--violet);box-shadow:0 0 6px var(--violet);"></div>
+          <div class="delight-panel-title">Smart Layout</div>
+          <div class="delight-panel-sub">Pro feature</div>
+        </div>
+        <div class="delight-panel-body">
+          <div style="font-size:9px;color:var(--fog);letter-spacing:0.08em;margin-bottom:12px;font-family:var(--font-body);line-height:1.6;">
+            Add plants to your wishlist. The layout planner will optimize placement based on sun, spacing, and companion relations.
+          </div>
+          <div class="companion-label">Wishlist</div>
+          <div>
+            <div class="smart-wishlist-item">
+              <div class="smart-plant-dot" style="background:var(--glow);box-shadow:0 0 4px var(--glow);"></div>
+              <div class="smart-plant-name">Cherry Tomato</div>
+              <div class="smart-plant-count">×4 cells</div>
+              <div class="smart-remove">×</div>
+            </div>
+            <div class="smart-wishlist-item">
+              <div class="smart-plant-dot" style="background:var(--violet);box-shadow:0 0 4px var(--violet);"></div>
+              <div class="smart-plant-name">Sweet Basil</div>
+              <div class="smart-plant-count">×3 cells</div>
+              <div class="smart-remove">×</div>
+            </div>
+            <div class="smart-wishlist-item">
+              <div class="smart-plant-dot" style="background:var(--amber);box-shadow:0 0 4px var(--amber);"></div>
+              <div class="smart-plant-name">Marigold</div>
+              <div class="smart-plant-count">×2 cells</div>
+              <div class="smart-remove">×</div>
+            </div>
+            <div class="smart-wishlist-item">
+              <div class="smart-plant-dot" style="background:var(--rose);box-shadow:0 0 4px var(--rose);"></div>
+              <div class="smart-plant-name">Bell Pepper</div>
+              <div class="smart-plant-count">×2 cells</div>
+              <div class="smart-remove">×</div>
+            </div>
+            <div class="smart-wishlist-item" style="border-bottom:none;">
+              <div class="smart-plant-dot" style="background:var(--fog);"></div>
+              <div class="smart-plant-name" style="color:var(--glow);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;">+ Add plant</div>
+            </div>
+          </div>
+          <div class="smart-generate">⚡ Generate Layout</div>
+          <div class="ai-indicator">Powered by Claude · Respects sun + spacing + companions</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CANVAS HARMONY NOTE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+  <div style="background:var(--midnight);border:1px solid var(--slate);border-radius:var(--radius);padding:28px;margin-bottom:80px;">
+    <div class="section-label" style="margin-bottom:12px;">Canvas Harmony</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div style="width:40px;height:40px;border-radius:4px;background:#19280e;border:1px solid var(--slate);"></div>
+        <div style="font-size:16px;color:var(--fog);">→</div>
+        <div style="width:40px;height:40px;border-radius:4px;background:var(--void);border:1px solid var(--slate);box-shadow:0 0 8px rgba(63,219,122,0.05);"></div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--white);margin-bottom:4px;">The live canvas (#19280e) dissolves into the app void (#080E14)</div>
+        <div style="font-size:11px;color:var(--fog);line-height:1.6;font-family:var(--font-body);">
+          Both are deep, near-black greens. The 3D isometric beds become luminous elements floating in the dark — beds glow, status dots phosphoresce, and the chrome disappears. The canvas isn't a widget in a UI; it <em>is</em> the interface.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DIRECTION COMPARISON -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+  <div style="background:var(--midnight);border:1px solid var(--slate);border-radius:var(--radius);padding:28px;margin-bottom:80px;">
+    <div class="section-label" style="margin-bottom:16px;">All four directions at a glance</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;">
+
+      <div style="border:1px solid var(--slate);border-radius:4px;overflow:hidden;">
+        <div style="height:60px;background:#1A1208;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:#F5EDDA;">bare root</span>
+        </div>
+        <div style="padding:10px;">
+          <div style="font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--white);margin-bottom:4px;">A · The Workbench</div>
+          <div style="font-size:9px;color:var(--fog);line-height:1.5;font-family:var(--font-body);">Dark walnut + aged cream. Fraunces + Crimson Pro. Warm, analog, handcrafted.</div>
+          <div style="margin-top:8px;font-size:8px;color:var(--glow);letter-spacing:0.1em;font-family:var(--font-body);">✓ LIVE IN APP</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--slate);border-radius:4px;overflow:hidden;">
+        <div style="height:60px;background:#1A1E12;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:#F0EDD8;">bare root</span>
+        </div>
+        <div style="padding:10px;">
+          <div style="font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--white);margin-bottom:4px;">B · The Field Book</div>
+          <div style="font-size:9px;color:var(--fog);line-height:1.5;font-family:var(--font-body);">Dark olive + ruled buff paper. Notebook lineage. Sage green accent.</div>
+          <div style="margin-top:8px;font-size:8px;color:var(--fog);letter-spacing:0.1em;font-family:var(--font-body);">Mockup only</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--slate);border-radius:4px;overflow:hidden;">
+        <div style="height:60px;background:#FDFDF8;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;color:#1C3D0A;letter-spacing:-0.02em;">bare root</span>
+        </div>
+        <div style="padding:10px;">
+          <div style="font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--white);margin-bottom:4px;">C · The Glasshouse</div>
+          <div style="font-size:9px;color:var(--fog);line-height:1.5;font-family:var(--font-body);">Light white + DM Sans. Clean, modern, botanical. Floating pill nav.</div>
+          <div style="margin-top:8px;font-size:8px;color:var(--fog);letter-spacing:0.1em;font-family:var(--font-body);">Mockup only</div>
+        </div>
+      </div>
+
+      <div style="border:2px solid rgba(63,219,122,0.4);border-radius:4px;overflow:hidden;box-shadow:0 0 16px rgba(63,219,122,0.08);">
+        <div style="height:60px;background:#080E14;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <div style="width:4px;height:4px;border-radius:50%;background:#3FDB7A;box-shadow:0 0 6px #3FDB7A;"></div>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#EEF6FC;letter-spacing:-0.01em;">bare<span style="color:#3FDB7A;">root</span></span>
+        </div>
+        <div style="padding:10px;">
+          <div style="font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--glow);margin-bottom:4px;">D · The Observatory ←</div>
+          <div style="font-size:9px;color:var(--fog);line-height:1.5;font-family:var(--font-body);">Midnight dark + phosphorescent glow. Syne + DM Mono. Data as beauty.</div>
+          <div style="margin-top:8px;font-size:8px;color:var(--glow);letter-spacing:0.1em;font-family:var(--font-body);">This mockup</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end page -->
+
+</body>
+</html>

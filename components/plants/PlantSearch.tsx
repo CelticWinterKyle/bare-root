@@ -111,7 +111,7 @@ export function PlantSearch({
   }
 
   return (
-    <div>
+    <div className="px-[22px] md:px-8 pt-4 pb-8">
       {/* Search input */}
       <div className="relative mb-4">
         <Search
