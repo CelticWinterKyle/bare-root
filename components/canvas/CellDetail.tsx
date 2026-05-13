@@ -1,8 +1,7 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { removePlanting, updatePlantingStatus, updatePlantingDates } from "@/app/actions/planting";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, X } from "lucide-react";
 import type { PlantingStatus } from "@/lib/generated/prisma/enums";
 import Link from "next/link";
 
@@ -89,140 +88,198 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
   const statusInfo = STATUSES.find((s) => s.value === status);
 
   return (
-    <div className="space-y-4">
-      {/* Plant name */}
-      <div className="flex items-start justify-between">
-        <div>
-          <Link
-            href={`/plants/${planting.plant.id}`}
-            className="font-display text-xl font-semibold text-[#111109] hover:text-[#1C3D0A] transition-colors"
-          >
-            {planting.plant.name}
-          </Link>
-          <p className="text-sm text-[#ADADAA] mt-0.5">
-            Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
-          </p>
+    <div>
+      {/* Deep green header — plant-panel-top */}
+      <div style={{
+        background: "#1C3D0A", padding: "14px 16px 12px",
+        position: "relative", overflow: "hidden",
+      }}>
+        {/* Decorative circle */}
+        <div style={{
+          position: "absolute", right: "-16px", top: "-16px",
+          width: "80px", height: "80px", background: "#3A6B20",
+          borderRadius: "50%", opacity: 0.4,
+        }} />
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute", top: "10px", right: "10px",
+            width: "22px", height: "22px", borderRadius: "50%",
+            background: "rgba(255,255,255,0.15)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            color: "rgba(255,255,255,0.7)", zIndex: 2, cursor: "pointer",
+            border: "none",
+          }}
+        >
+          <X className="w-3 h-3" />
+        </button>
+        {/* Plant name */}
+        <div style={{
+          fontFamily: "var(--font-display)", fontStyle: "italic",
+          fontSize: "20px", fontWeight: 800, color: "#fff",
+          letterSpacing: "-0.02em", position: "relative", zIndex: 1, lineHeight: 1,
+          fontVariationSettings: "'opsz' 22", paddingRight: "28px",
+        }}>
+          {planting.plant.name}
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusInfo?.color}`}>
+        {/* Category sub */}
+        <div style={{
+          fontFamily: "var(--font-body)", fontStyle: "italic",
+          fontSize: "11px", color: "rgba(255,255,255,0.5)",
+          marginTop: "3px", position: "relative", zIndex: 1,
+        }}>
+          {planting.plant.category.charAt(0) + planting.plant.category.slice(1).toLowerCase()}
+          {" · "}Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
+        </div>
+        {/* Status pill */}
+        <div style={{
+          position: "absolute", right: "14px", top: "50%",
+          transform: "translateY(-50%)",
+          fontFamily: "var(--font-mono)", fontSize: "8px",
+          letterSpacing: "0.1em", textTransform: "uppercase",
+          background: "rgba(168,216,112,0.2)", color: "#A8D870",
+          padding: "3px 8px", borderRadius: "100px",
+          border: "1px solid rgba(168,216,112,0.3)", zIndex: 1,
+        }}>
           {statusInfo?.label}
-        </span>
-      </div>
-
-      {/* Status buttons — 2-col grid for comfortable mobile tap targets */}
-      <div>
-        <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">Status</p>
-        <div className="grid grid-cols-2 gap-1.5">
-          {STATUSES.map((s) => (
-            <button
-              key={s.value}
-              onClick={() => handleStatusChange(s.value)}
-              disabled={isUpdating}
-              className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
-                status === s.value
-                  ? `${s.color} ring-2 ring-inset ring-white/30`
-                  : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE]"
-              } disabled:opacity-50`}
-            >
-              {s.label}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* Dates */}
-      <div>
-        <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">Dates</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-xs text-[#6B6B5A] shrink-0">Planted</label>
-            <input
-              type="date"
-              value={plantedDate}
-              onChange={(e) => setPlantedDate(e.target.value)}
-              onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
-              disabled={isDating}
-              className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
-            />
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-xs text-[#6B6B5A] shrink-0">Transplanted</label>
-            <input
-              type="date"
-              value={transplantDate}
-              onChange={(e) => setTransplantDate(e.target.value)}
-              onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
-              disabled={isDating}
-              className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
-            />
-          </div>
-          {expectedHarvest && (
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-xs text-[#6B6B5A] shrink-0">Est. harvest</label>
-              <span className="text-xs text-[#3A6B20] font-medium">
-                {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Body */}
+      <div style={{ padding: "12px 16px", background: "#FDFDF8", display: "flex", flexDirection: "column", gap: "16px" }}>
 
-      {/* Companion warnings */}
-      {(harmful.length > 0 || beneficial.length > 0) && (
+        {/* Status buttons */}
         <div>
-          <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">
-            Companions in this bed
-          </p>
-          {harmful.length > 0 && (
-            <div className="mb-2 p-2.5 bg-red-50 rounded-lg border border-red-100">
-              <p className="text-xs font-medium text-[#B85C3A] mb-1">⚠ Conflicts with</p>
-              {harmful.map((w) => (
-                <p key={w.plantName} className="text-xs text-[#B85C3A]">
-                  {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
-                </p>
-              ))}
-            </div>
-          )}
-          {beneficial.length > 0 && (
-            <div className="p-2.5 bg-[#F4F4EC] rounded-lg border border-[#E4E4DC]">
-              <p className="text-xs font-medium text-[#3A6B20] mb-1">✓ Beneficial with</p>
-              {beneficial.map((w) => (
-                <p key={w.plantName} className="text-xs text-[#6B6B5A]">
-                  {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
-                </p>
-              ))}
-            </div>
-          )}
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Status</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {STATUSES.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => handleStatusChange(s.value)}
+                disabled={isUpdating}
+                className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
+                  status === s.value
+                    ? `${s.color} ring-2 ring-inset ring-white/30`
+                    : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE]"
+                } disabled:opacity-50`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* View full details */}
-      <Link
-        href={`/garden/${gardenId}/beds/${bedId}/plantings/${planting.id}`}
-        className="block text-center text-xs font-medium text-[#7DA84E] hover:text-[#1C3D0A] transition-colors py-1"
-        onClick={onClose}
-      >
-        View harvest log &amp; photos →
-      </Link>
+        {/* Dates */}
+        <div>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Dates</p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Planted</label>
+              <input
+                type="date"
+                value={plantedDate}
+                onChange={(e) => setPlantedDate(e.target.value)}
+                onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
+                disabled={isDating}
+                className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Transplanted</label>
+              <input
+                type="date"
+                value={transplantDate}
+                onChange={(e) => setTransplantDate(e.target.value)}
+                onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
+                disabled={isDating}
+                className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
+              />
+            </div>
+            {expectedHarvest && (
+              <div className="flex items-center justify-between gap-2">
+                <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Est. harvest</label>
+                <span style={{ fontSize: "12px", color: "#3A6B20", fontWeight: 600 }}>
+                  {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Remove — requires two taps to confirm */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleRemoveClick}
-        disabled={isRemoving}
-        className={`w-full transition-all duration-200 ${
-          removeConfirm
-            ? "bg-[#B85C3A] text-white hover:bg-[#954928] hover:text-white"
-            : "text-[#B85C3A] hover:text-[#B85C3A] hover:bg-red-50"
-        }`}
-      >
-        {isRemoving ? (
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        ) : (
-          <Trash2 className="w-4 h-4 mr-2" />
+        {/* Companion warnings */}
+        {(harmful.length > 0 || beneficial.length > 0) && (
+          <div>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Companions in this bed</p>
+            <div className="space-y-1.5">
+              {harmful.map((w) => (
+                <div key={w.plantName} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}>
+                  <div style={{
+                    width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0, marginTop: "1px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", background: "#FDF2E0", color: "#D4820A",
+                  }}>!</div>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
+                    {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                  </span>
+                </div>
+              ))}
+              {beneficial.map((w) => (
+                <div key={w.plantName} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}>
+                  <div style={{
+                    width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0, marginTop: "1px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", background: "#E4F0D4", color: "#1C3D0A",
+                  }}>✓</div>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
+                    {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
-        {removeConfirm ? "Tap again to confirm" : "Remove plant"}
-      </Button>
+      </div>
+
+      {/* Actions footer — plant-panel-actions */}
+      <div style={{
+        display: "flex", gap: "6px",
+        padding: "10px 16px",
+        background: "#F4F4EC",
+        borderTop: "1px solid #E4E4DC",
+      }}>
+        <Link
+          href={`/garden/${gardenId}/beds/${bedId}/plantings/${planting.id}`}
+          onClick={onClose}
+          style={{
+            flex: 1, padding: "8px 10px", borderRadius: "8px",
+            fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 600,
+            background: "#1C3D0A", color: "white",
+            border: "1.5px solid #1C3D0A",
+            textAlign: "center", textDecoration: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          Harvest log
+        </Link>
+        <button
+          onClick={handleRemoveClick}
+          disabled={isRemoving}
+          style={{
+            flex: 1, padding: "8px 10px", borderRadius: "8px",
+            fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 600,
+            background: removeConfirm ? "#7A2A18" : "transparent",
+            color: removeConfirm ? "white" : "#7A2A18",
+            border: `1.5px solid ${removeConfirm ? "#7A2A18" : "rgba(122,42,24,0.2)"}`,
+            cursor: isRemoving ? "not-allowed" : "pointer",
+            opacity: isRemoving ? 0.5 : 1,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+          }}
+        >
+          {isRemoving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+          {removeConfirm ? "Confirm" : "Remove"}
+        </button>
+      </div>
     </div>
   );
 }
