@@ -101,9 +101,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const [rotated, setRotated] = useState(false);
   const [zoom, setZoom] = useState(1);
 
-  // Measure the scrollable viewport width for horizontal cell fitting
+  // Measure the scrollable viewport width for horizontal cell fitting.
+  // Start at 0 so cells render at minimum size before ResizeObserver fires — avoids
+  // a large initial render that triggers a cascade of ResizeObserver callbacks.
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [vpW, setVpW] = useState(700);
+  const [vpW, setVpW] = useState(0);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -155,13 +157,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     : cells;
 
   // Auto-fit cell size:
-  // Mobile: fit to viewport width, no height cap — page scrolls down naturally.
+  // Mobile: fit exactly to viewport width accounting for grid's actual horizontal padding
+  //   (16px left + 16px right = 32px) + gaps ((cols-1) × 4px). No height cap — page scrolls.
   // Desktop: balance width vs height, cap cells so the bed fits without vertical scroll.
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
   const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
   const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD) / displayRows));
+  const mobileFitByW = Math.floor((vpW - 32 - (displayCols - 1) * 4) / displayCols);
   const baseCellPx = isMobile
-    ? Math.max(40, fitByW)
+    ? Math.max(40, mobileFitByW)
     : Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
@@ -266,10 +270,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
       <div className="flex flex-col md:flex-row gap-4 items-start" style={{ marginTop: "20px" }}>
         {/* Bed column */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Viewport: desktop caps height so grid fits screen; mobile removes cap so page scrolls */}
+          {/* Viewport: desktop caps height + scrolls; mobile flows naturally so page scrolls */}
           <div
             ref={viewportRef}
-            className="overflow-auto rounded-2xl relative"
+            className={`rounded-2xl relative ${isMobile ? "overflow-hidden" : "overflow-auto"}`}
             style={isMobile ? {} : { maxHeight: maxViewportH }}
           >
             {/* Empty bed hint — shown until the first plant is added */}
