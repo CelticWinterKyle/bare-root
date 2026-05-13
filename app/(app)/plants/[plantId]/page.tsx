@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getPlantAction } from "@/app/actions/plants";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, Leaf } from "lucide-react";
+import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 
 const SUN_LABELS: Record<string, string> = {
   FULL_SUN: "☀️ Full sun (6+ hours)",
@@ -59,7 +58,7 @@ export default async function PlantDetailPage({
     <div>
       {/* Back header */}
       <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="max-w-3xl mx-auto" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Link
             href="/plants"
             style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
@@ -68,24 +67,11 @@ export default async function PlantDetailPage({
         </div>
       </div>
       <div className="px-[22px] md:px-8 py-5">
+      <div className="max-w-3xl mx-auto">
 
       {/* Hero */}
-      <div className="bg-white rounded-2xl border border-[#E4E4DC] overflow-hidden mb-4">
-        {plant.imageUrl ? (
-          <div className="aspect-[16/7] relative">
-            <Image
-              src={plant.imageUrl}
-              alt={plant.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 672px"
-            />
-          </div>
-        ) : (
-          <div className="aspect-[16/7] bg-[#F4F4EC] flex items-center justify-center">
-            <Leaf className="w-12 h-12 text-[#E4E4DC]" />
-          </div>
-        )}
+      <div className="rounded-2xl border border-[#E4E4DC] overflow-hidden mb-4">
+        <PlantHeroImage imageUrl={plant.imageUrl} name={plant.name} category={plant.category} />
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -192,6 +178,7 @@ export default async function PlantDetailPage({
           )}
         </div>
       )}
+      </div>
       </div>
     </div>
   );
