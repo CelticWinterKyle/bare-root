@@ -37,29 +37,39 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#F5EDDA" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#FDFDF8" }}>
       {trialDaysLeft !== null && trialDaysLeft <= 5 && (
         <TrialBanner daysLeft={trialDaysLeft} />
       )}
 
-      {/* Top header — dark wood */}
+      {/* Top header — clean white with green gradient line */}
       <header
-        className="sticky top-0 z-40 wood-grain"
+        className="sticky top-0 z-40"
         style={{
-          boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
+          background: "#FDFDF8",
+          borderBottom: "1px solid #E4E4DC",
+          boxShadow: "0 1px 0 #E4E4DC",
         }}
       >
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span
-            className="font-display text-xl font-semibold italic tracking-tight"
-            style={{
-              color: "#F5EDDA",
-              fontVariationSettings: "'opsz' 32",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            bare root
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="font-display font-bold italic"
+              style={{
+                fontSize: "22px",
+                color: "#1C3D0A",
+                fontVariationSettings: "'opsz' 32",
+                letterSpacing: "-0.025em",
+                lineHeight: 1,
+              }}
+            >
+              bare root
+            </span>
+            <span
+              className="rounded-full"
+              style={{ width: 5, height: 5, background: "#7DA84E", flexShrink: 0, marginBottom: 2 }}
+            />
+          </div>
           <NotificationBell reminders={bellReminders} unreadCount={bellReminders.length} />
         </div>
       </header>

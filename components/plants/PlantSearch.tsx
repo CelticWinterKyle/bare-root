@@ -21,14 +21,14 @@ type Plant = {
 
 type Category = { value: PlantCategory; label: string; emoji: string };
 
-const CATEGORY_STYLE: Record<string, { accent: string; border: string; label: string }> = {
-  VEGETABLE: { accent: "#2D5016", border: "#4A7C2F", label: "Vegetable" },
-  FRUIT:     { accent: "#8B3A2A", border: "#C4790A", label: "Fruit" },
-  HERB:      { accent: "#4A3820", border: "#6B8F47", label: "Herb" },
-  FLOWER:    { accent: "#6B3A5A", border: "#9B4BAA", label: "Flower" },
-  TREE:      { accent: "#3D2A0E", border: "#7A5C2A", label: "Tree" },
-  SHRUB:     { accent: "#1A3D2A", border: "#3D6B50", label: "Shrub" },
-  OTHER:     { accent: "#4A3820", border: "#8B7A60", label: "Other" },
+const CATEGORY_STYLE: Record<string, { accent: string; border: string; bg: string; label: string }> = {
+  VEGETABLE: { accent: "#1C3D0A", border: "#D4E8BE", bg: "#E4F0D4", label: "Vegetable" },
+  FRUIT:     { accent: "#7A2A18", border: "#F0C8C0", bg: "#FBE8E4", label: "Fruit" },
+  HERB:      { accent: "#3A6B20", border: "#C8DEB0", bg: "#E0EDCC", label: "Herb" },
+  FLOWER:    { accent: "#5A2A7A", border: "#DCC8F0", bg: "#EDE4F8", label: "Flower" },
+  TREE:      { accent: "#3D2A0E", border: "#D4C8A8", bg: "#F0EAD8", label: "Tree" },
+  SHRUB:     { accent: "#1A3D2A", border: "#B8D4C4", bg: "#D4EBE0", label: "Shrub" },
+  OTHER:     { accent: "#3A3A30", border: "#D4D4C8", bg: "#EAEAE0", label: "Other" },
 };
 
 const SUN_LABEL: Record<string, string> = {
@@ -106,7 +106,7 @@ export function PlantSearch({
       <div className="relative mb-4">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-          style={{ color: "#8B7A60" }}
+          style={{ color: "#ADADAA" }}
         />
         <Input
           placeholder="Search tomato, basil, marigold…"
@@ -114,17 +114,16 @@ export function PlantSearch({
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-9"
           style={{
-            background: "#EDE3C8",
-            border: "1px solid #D4C8A8",
-            color: "#231A0D",
-            fontFamily: "var(--font-crimson-pro)",
-            fontSize: "16px",
+            background: "#F4F4EC",
+            border: "1px solid #E4E4DC",
+            color: "#111109",
+            fontSize: "15px",
           }}
         />
         {(isPending || apiSearching) && (
           <Loader2
             className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin"
-            style={{ color: "#8B7A60" }}
+            style={{ color: "#ADADAA" }}
           />
         )}
       </div>
@@ -138,22 +137,14 @@ export function PlantSearch({
             <button
               key={cat.value}
               onClick={() => handleCategoryClick(cat.value)}
-              className="px-3 py-1 rounded-sm font-mono text-xs uppercase tracking-wider transition-all"
-              style={
-                isActive
-                  ? {
-                      background: style.accent,
-                      color: "#F5EDDA",
-                      border: `1px solid ${style.accent}`,
-                      letterSpacing: "0.1em",
-                    }
-                  : {
-                      background: "transparent",
-                      color: style.accent,
-                      border: `1px solid ${style.border}`,
-                      letterSpacing: "0.1em",
-                    }
-              }
+              className="px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-all"
+              style={{
+                borderRadius: "100px",
+                border: `1px solid ${isActive ? style.accent : style.border}`,
+                background: isActive ? style.accent : style.bg,
+                color: isActive ? "#FDFDF8" : style.accent,
+                letterSpacing: "0.08em",
+              }}
             >
               {cat.emoji} {cat.label}
             </button>
@@ -163,7 +154,7 @@ export function PlantSearch({
 
       {/* Result count */}
       {plants.length > 0 && query && (
-        <p className="font-mono text-xs mb-3" style={{ color: "#8B7A60", letterSpacing: "0.05em" }}>
+        <p className="font-mono text-xs mb-3" style={{ color: "#6B6B5A", letterSpacing: "0.05em" }}>
           {plants.length} result{plants.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
         </p>
       )}
@@ -171,8 +162,8 @@ export function PlantSearch({
       {/* Results */}
       {plants.length === 0 ? (
         <div className="text-center py-12">
-          <Leaf className="w-10 h-10 mx-auto mb-3" style={{ color: "#D4C8A8" }} />
-          <p style={{ color: "#8B7A60" }}>
+          <Leaf className="w-10 h-10 mx-auto mb-3" style={{ color: "#D4E8BE" }} />
+          <p style={{ color: "#6B6B5A" }}>
             {query
               ? `No plants found for "${query}"`
               : "No plants in library yet. Search to add some."}
@@ -188,12 +179,12 @@ export function PlantSearch({
               <Link
                 key={plant.id}
                 href={`/plants/${plant.id}`}
-                className="group flex flex-col overflow-hidden transition-all paper-grain"
+                className="group flex flex-col overflow-hidden transition-all"
                 style={{
-                  background: "#EDE3C8",
-                  border: "1px solid #D4C8A8",
-                  borderRadius: "3px",
-                  boxShadow: "0 1px 3px rgba(35,26,13,0.08)",
+                  background: "#FDFDF8",
+                  border: "1px solid #E4E4DC",
+                  borderRadius: "10px",
+                  boxShadow: "0 1px 4px rgba(28,61,10,0.04)",
                 }}
               >
                 {/* Left border accent stripe — applied as box-shadow trick via wrapper */}
@@ -207,7 +198,7 @@ export function PlantSearch({
 
                 {/* Image or initial */}
                 {plant.imageUrl ? (
-                  <div className="aspect-[4/3] relative overflow-hidden" style={{ background: "#E4D8B8" }}>
+                  <div className="aspect-[4/3] relative overflow-hidden" style={{ background: "#EAEADE", borderRadius: "10px 10px 0 0" }}>
                     <Image
                       src={plant.imageUrl}
                       alt={plant.name}
@@ -219,22 +210,14 @@ export function PlantSearch({
                 ) : (
                   <div
                     className="aspect-[4/3] flex items-center justify-center relative overflow-hidden"
-                    style={{ background: "#E4D8B8" }}
+                    style={{ background: style.bg, borderRadius: "10px 10px 0 0" }}
                   >
-                    {/* Subtle dot grid */}
-                    <div
-                      className="absolute inset-0 opacity-30"
-                      style={{
-                        backgroundImage: `radial-gradient(circle, ${style.border} 1px, transparent 1px)`,
-                        backgroundSize: "14px 14px",
-                      }}
-                    />
                     <span
-                      className="relative font-display font-bold select-none"
+                      className="relative font-display font-bold italic select-none"
                       style={{
                         color: style.accent,
-                        opacity: 0.25,
-                        fontSize: "3rem",
+                        opacity: 0.2,
+                        fontSize: "3.5rem",
                         fontVariationSettings: "'opsz' 72",
                       }}
                     >
@@ -249,7 +232,7 @@ export function PlantSearch({
                     <p
                       className="font-display font-semibold leading-tight transition-colors"
                       style={{
-                        color: "#231A0D",
+                        color: "#111109",
                         fontSize: "14px",
                         fontVariationSettings: "'opsz' 18",
                       }}
@@ -258,12 +241,12 @@ export function PlantSearch({
                     </p>
                     {stockQty === 0 && (
                       <span title="Out of stock" className="shrink-0 mt-0.5">
-                        <Package className="w-3 h-3" style={{ color: "#8B3A2A" }} />
+                        <Package className="w-3 h-3" style={{ color: "#7A2A18" }} />
                       </span>
                     )}
                     {stockQty != null && stockQty > 0 && (
                       <span title="In inventory" className="shrink-0 mt-0.5">
-                        <Package className="w-3 h-3" style={{ color: "#2D5016" }} />
+                        <Package className="w-3 h-3" style={{ color: "#3A6B20" }} />
                       </span>
                     )}
                   </div>
@@ -271,7 +254,7 @@ export function PlantSearch({
                   {plant.scientificName && (
                     <p
                       className="italic leading-tight"
-                      style={{ color: "#8B7A60", fontSize: "11px", fontFamily: "var(--font-crimson-pro)" }}
+                      style={{ color: "#6B6B5A", fontSize: "11px" }}
                     >
                       {plant.scientificName}
                     </p>
@@ -284,11 +267,12 @@ export function PlantSearch({
                         className="font-mono"
                         style={{
                           fontSize: "10px",
-                          color: "#C4790A",
-                          background: "rgba(196,121,10,0.12)",
-                          padding: "1px 5px",
-                          borderRadius: "2px",
+                          color: "#D4820A",
+                          background: "rgba(212,130,10,0.1)",
+                          padding: "1px 6px",
+                          borderRadius: "100px",
                           letterSpacing: "0.04em",
+                          border: "1px solid rgba(212,130,10,0.2)",
                         }}
                       >
                         {plant.daysToMaturity}d
@@ -297,7 +281,7 @@ export function PlantSearch({
                     {plant.sunRequirement && (
                       <span
                         className="font-mono"
-                        style={{ fontSize: "10px", color: "#8B7A60", letterSpacing: "0.03em" }}
+                        style={{ fontSize: "10px", color: "#ADADAA", letterSpacing: "0.03em" }}
                       >
                         {SUN_LABEL[plant.sunRequirement] ?? plant.sunRequirement}
                       </span>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Crimson_Pro, IBM_Plex_Mono } from "next/font/google";
+import { Fraunces, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
@@ -10,11 +10,10 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const crimsonPro = Crimson_Pro({
-  variable: "--font-crimson-pro",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "600"],
-  style: ["normal", "italic"],
+  axes: ["opsz"],
   display: "swap",
 });
 
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
   description:
     "Plan your garden. Grow with confidence. Bare Root is the visual garden planner that knows your climate, your beds, and what grows well together.",
   manifest: "/manifest.json",
-  themeColor: "#2D5016",
+  themeColor: "#1C3D0A",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -47,9 +46,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${fraunces.variable} ${crimsonPro.variable} ${ibmPlexMono.variable} h-full antialiased`}
+        className={`${fraunces.variable} ${dmSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col bg-[#F5EDDA] text-[#231A0D]">
+        <body className="min-h-full flex flex-col bg-[#FDFDF8] text-[#111109]">
           {children}
         </body>
       </html>

@@ -17,39 +17,50 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom wood-grain"
+      className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom"
       style={{
-        boxShadow: "0 -2px 16px rgba(0,0,0,0.4)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
+        background: "#FDFDF8",
+        borderTop: "1px solid #E4E4DC",
+        padding: "8px 16px 12px",
+        display: "flex",
+        justifyContent: "center",
       }}
     >
-      <div className="flex items-stretch max-w-lg mx-auto h-16">
+      <div
+        className="flex items-center gap-0.5"
+        style={{
+          background: "#111109",
+          borderRadius: 100,
+          padding: "6px 8px",
+          boxShadow: "0 4px 20px rgba(17,17,9,0.25)",
+        }}
+      >
         {tabs.map(({ href, label, icon: Icon }) => {
           const isActive = pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors relative"
+              className="flex flex-col items-center gap-0.5 transition-colors"
+              style={{
+                padding: "6px 12px",
+                borderRadius: 100,
+                minWidth: 52,
+                background: isActive ? "#1C3D0A" : "transparent",
+              }}
             >
-              {/* Active amber underline */}
-              {isActive && (
-                <span
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full"
-                  style={{ background: "#C4790A" }}
-                />
-              )}
-
               <Icon
-                className="w-5 h-5 transition-colors"
+                className="w-4 h-4"
                 strokeWidth={isActive ? 2 : 1.5}
-                style={{ color: isActive ? "#E8A030" : "rgba(245,237,218,0.4)" }}
+                style={{ color: isActive ? "#A8D870" : "rgba(255,255,255,0.3)" }}
               />
               <span
-                className="font-mono text-[9px] uppercase tracking-widest leading-none transition-colors"
+                className="font-mono leading-none"
                 style={{
-                  color: isActive ? "rgba(245,237,218,0.9)" : "rgba(245,237,218,0.3)",
+                  fontSize: 7,
                   letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)",
                 }}
               >
                 {label}

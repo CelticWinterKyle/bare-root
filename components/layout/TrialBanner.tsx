@@ -29,8 +29,8 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
     <div
       className="flex items-center gap-3 px-4 py-2"
       style={{
-        background: urgent ? "#8B3A2A" : "#C4790A",
-        color: "#F5EDDA",
+        background: urgent ? "#7A2A18" : "#D4820A",
+        color: "#FDFDF8",
       }}
     >
       <p className="flex-1 text-center font-mono uppercase tracking-wider" style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
