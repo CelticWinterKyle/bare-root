@@ -411,7 +411,7 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
       className={isFullscreen ? "fixed inset-0 z-50 flex flex-col" : "relative w-full flex flex-col"}
       style={{ background: "#19280e" }}
     >
-      <div className="relative" style={isFullscreen ? { flex: 1, minHeight: 0 } : { height: "clamp(200px, 28vw, 280px)" }}>
+      <div className="relative" style={isFullscreen ? { flex: 1, minHeight: 0 } : { height: "clamp(320px, 42vh, 520px)" }}>
       <svg
         ref={svgRef}
         role="application"
