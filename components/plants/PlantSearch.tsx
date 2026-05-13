@@ -183,13 +183,22 @@ export function PlantSearch({
                   </div>
                 ) : (
                   <div
-                    className="aspect-[4/3] flex items-center justify-center"
+                    className="aspect-[4/3] flex items-center justify-center relative overflow-hidden"
                     style={{ background: style.bg }}
                   >
-                    <Leaf
-                      className="w-9 h-9"
-                      style={{ color: style.accent, opacity: 0.5 }}
+                    <div
+                      className="absolute inset-0 opacity-20"
+                      style={{
+                        backgroundImage: `radial-gradient(circle, ${style.accent} 1px, transparent 1px)`,
+                        backgroundSize: "16px 16px",
+                      }}
                     />
+                    <span
+                      className="relative font-display text-4xl font-semibold select-none"
+                      style={{ color: style.accent, opacity: 0.35 }}
+                    >
+                      {plant.name[0].toUpperCase()}
+                    </span>
                   </div>
                 )}
 

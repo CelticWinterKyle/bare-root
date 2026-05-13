@@ -115,8 +115,10 @@ export function PlantPicker({
                   <Image src={plant.imageUrl} alt={plant.name} fill className="object-cover" sizes="40px" />
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-[#F5F0E8] flex items-center justify-center shrink-0">
-                  <Leaf className="w-5 h-5 text-[#9E9890]" />
+                <div className="w-10 h-10 rounded-lg bg-[#F5F0E8] flex items-center justify-center shrink-0 border border-[#E8E2D9]">
+                  <span className="font-display text-base font-semibold text-[#9E9890] select-none">
+                    {plant.name[0].toUpperCase()}
+                  </span>
                 </div>
               )}
               <div className="flex-1 min-w-0">

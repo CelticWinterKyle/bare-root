@@ -91,6 +91,16 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
   const [panY, setPanY] = useState(0);
   const [gesturing, setGesturing] = useState(false);
 
+  // Track SVG pixel width for dense-bed suppression threshold
+  const [svgPxW, setSvgPxW] = useState(600);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setSvgPxW(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Tracks all active pointer positions for multi-touch
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const gestureRef = useRef<GestureData | null>(null);
@@ -454,9 +464,16 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
             const soil    = ppts([[bx+BOARD,by+BOARD,Z],[bx+W-BOARD,by+BOARD,Z],[bx+W-BOARD,by+D-BOARD,Z],[bx+BOARD,by+D-BOARD,Z]]);
             const topLine = ppts([[bx,by,Z],[bx+W,by,Z],[bx+W,by+D,Z],[bx,by+D,Z]]);
 
+            // ── Dense-bed suppression ────────────────────────────────────────
+            // Compute projected screen size; hide label + dots when bed is tiny
+            const pxPerSvgUnit = svgPxW / vbW;
+            const projW = Math.abs(pr(bx + W, by, Z).sx - pr(bx, by, Z).sx);
+            const projH = Math.abs(pr(bx, by + D, Z).sy - pr(bx, by, Z).sy);
+            const tooSmall = (projW * pxPerSvgUnit < 40) || (projH * pxPerSvgUnit < 25);
+
             // ── Plant dots (seeded, stable) ──────────────────────────────────
             const rng = mulberry32(hashStr(bed.id));
-            const dotCount = bed.plantCount > 0 ? Math.min(24, Math.max(3, bed.plantCount * 2)) : 0;
+            const dotCount = !tooSmall && bed.plantCount > 0 ? Math.min(24, Math.max(3, bed.plantCount * 2)) : 0;
             const dots = Array.from({ length: dotCount }, () => ({
               wx: bx + BOARD + rng() * (W - BOARD * 2),
               wy: by + BOARD + rng() * (D - BOARD * 2),
@@ -503,17 +520,19 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
                   <polygon points={topLine} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={2} />
                 )}
 
-                <text
-                  x={lp.sx} y={lp.sy}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fill={LABEL_CLR} fontSize={fs} fontWeight="600"
-                  fontFamily="Georgia, 'Times New Roman', serif"
-                  filter="url(#txt-shd)"
-                  style={{ pointerEvents: "none" }}
-                >
-                  {bed.name}
-                </text>
-                {bed.plantCount > 0 && (
+                {!tooSmall && (
+                  <text
+                    x={lp.sx} y={lp.sy}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill={LABEL_CLR} fontSize={fs} fontWeight="600"
+                    fontFamily="Georgia, 'Times New Roman', serif"
+                    filter="url(#txt-shd)"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {bed.name}
+                  </text>
+                )}
+                {!tooSmall && bed.plantCount > 0 && (
                   <text
                     x={lp.sx} y={lp.sy + fs + 2}
                     textAnchor="middle" dominantBaseline="middle"
