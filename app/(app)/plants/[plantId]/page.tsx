@@ -59,14 +59,14 @@ export default async function PlantDetailPage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link
         href="/plants"
-        className="inline-flex items-center gap-1 text-sm text-[#6B6560] hover:text-[#2D5016] mb-6 transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         Plant Library
       </Link>
 
       {/* Hero */}
-      <div className="bg-white rounded-2xl border border-[#E8E2D9] overflow-hidden mb-4">
+      <div className="bg-white rounded-2xl border border-[#E4E4DC] overflow-hidden mb-4">
         {plant.imageUrl ? (
           <div className="aspect-[16/7] relative">
             <Image
@@ -78,29 +78,29 @@ export default async function PlantDetailPage({
             />
           </div>
         ) : (
-          <div className="aspect-[16/7] bg-[#F5F0E8] flex items-center justify-center">
-            <Leaf className="w-12 h-12 text-[#E8E2D9]" />
+          <div className="aspect-[16/7] bg-[#F4F4EC] flex items-center justify-center">
+            <Leaf className="w-12 h-12 text-[#E4E4DC]" />
           </div>
         )}
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl font-semibold text-[#1C1C1A]">
+              <h1 className="font-display text-2xl font-semibold text-[#111109]">
                 {plant.name}
               </h1>
               {plant.scientificName && (
-                <p className="text-sm text-[#9E9890] italic mt-0.5">
+                <p className="text-sm text-[#ADADAA] italic mt-0.5">
                   {plant.scientificName}
                 </p>
               )}
             </div>
-            <span className="shrink-0 text-xs font-medium bg-[#F5F0E8] text-[#2D5016] px-2.5 py-1 rounded-full">
+            <span className="shrink-0 text-xs font-medium bg-[#F4F4EC] text-[#1C3D0A] px-2.5 py-1 rounded-full">
               {CATEGORY_LABELS[plant.category]}
             </span>
           </div>
 
           {plant.description && (
-            <p className="text-sm text-[#6B6560] mt-4 leading-relaxed">
+            <p className="text-sm text-[#6B6B5A] mt-4 leading-relaxed">
               {plant.description}
             </p>
           )}
@@ -125,8 +125,8 @@ export default async function PlantDetailPage({
 
       {/* Growing details */}
       {(plant.plantFamily || plant.plantingSeasons?.length > 0 || plant.soilPhRange || plant.indoorStartWeeks) && (
-        <div className="bg-white rounded-xl border border-[#E8E2D9] p-5 mb-4">
-          <h2 className="font-medium text-[#1C1C1A] mb-3">Growing details</h2>
+        <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
+          <h2 className="font-medium text-[#111109] mb-3">Growing details</h2>
           <dl className="space-y-2">
             {plant.plantFamily && <Detail label="Plant family" value={plant.plantFamily} />}
             {plant.plantingSeasons?.length > 0 && (
@@ -148,11 +148,11 @@ export default async function PlantDetailPage({
 
       {/* Companion planting */}
       {(beneficial.length > 0 || harmful.length > 0) && (
-        <div className="bg-white rounded-xl border border-[#E8E2D9] p-5">
-          <h2 className="font-medium text-[#1C1C1A] mb-3">Companion planting</h2>
+        <div className="bg-white rounded-xl border border-[#E4E4DC] p-5">
+          <h2 className="font-medium text-[#111109] mb-3">Companion planting</h2>
           {beneficial.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs font-medium text-[#4A7C2F] uppercase tracking-wide mb-2">
+              <p className="text-xs font-medium text-[#3A6B20] uppercase tracking-wide mb-2">
                 Beneficial companions
               </p>
               <div className="flex flex-wrap gap-2">
@@ -160,7 +160,7 @@ export default async function PlantDetailPage({
                   <Link
                     key={r.id}
                     href={`/plants/${r.relatedId}`}
-                    className="px-2.5 py-1 bg-[#F5F0E8] text-[#2D5016] text-sm rounded-full hover:bg-[#E8E2D9] transition-colors"
+                    className="px-2.5 py-1 bg-[#F4F4EC] text-[#1C3D0A] text-sm rounded-full hover:bg-[#E4E4DC] transition-colors"
                   >
                     ✓ {r.related.name}
                   </Link>
@@ -194,9 +194,9 @@ export default async function PlantDetailPage({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#F5F0E8] rounded-xl p-3 border border-[#E8E2D9]">
-      <p className="text-xs text-[#9E9890] mb-0.5">{label}</p>
-      <p className="text-sm font-medium text-[#1C1C1A]">{value}</p>
+    <div className="bg-[#F4F4EC] rounded-xl p-3 border border-[#E4E4DC]">
+      <p className="text-xs text-[#ADADAA] mb-0.5">{label}</p>
+      <p className="text-sm font-medium text-[#111109]">{value}</p>
     </div>
   );
 }
@@ -204,8 +204,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-sm gap-4">
-      <dt className="text-[#9E9890] shrink-0">{label}</dt>
-      <dd className="text-[#1C1C1A] text-right">{value}</dd>
+      <dt className="text-[#ADADAA] shrink-0">{label}</dt>
+      <dd className="text-[#111109] text-right">{value}</dd>
     </div>
   );
 }

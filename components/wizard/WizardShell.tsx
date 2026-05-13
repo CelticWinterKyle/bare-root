@@ -117,10 +117,10 @@ export function WizardShell() {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                   done
-                    ? "bg-[#2D5016] text-white"
+                    ? "bg-[#1C3D0A] text-white"
                     : active
-                    ? "bg-[#6B8F47] text-white"
-                    : "bg-[#E8E2D9] text-[#9E9890]"
+                    ? "bg-[#7DA84E] text-white"
+                    : "bg-[#E4E4DC] text-[#ADADAA]"
                 }`}
               >
                 {done ? <Check className="w-4 h-4" /> : n}
@@ -128,7 +128,7 @@ export function WizardShell() {
               {i < STEPS.length - 1 && (
                 <div
                   className={`w-8 h-px ${
-                    step > n ? "bg-[#2D5016]" : "bg-[#E8E2D9]"
+                    step > n ? "bg-[#1C3D0A]" : "bg-[#E4E4DC]"
                   }`}
                 />
               )}
@@ -138,19 +138,19 @@ export function WizardShell() {
       </div>
 
       {step > 1 && (
-        <p className="text-center text-xs text-[#9E9890] mb-4">
+        <p className="text-center text-xs text-[#ADADAA] mb-4">
           ✓ Your progress is saved — you can continue anytime.
         </p>
       )}
 
-      <div className="bg-white rounded-2xl border border-[#E8E2D9] shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E4E4DC] shadow-sm overflow-hidden">
         {/* Step 1 — Garden name */}
         {step === 1 && (
           <div className="p-8">
-            <h2 className="font-display text-2xl font-semibold text-[#1C1C1A] mb-1">
+            <h2 className="font-display text-2xl font-semibold text-[#111109] mb-1">
               What's your garden called?
             </h2>
-            <p className="text-[#6B6560] text-sm mb-6">
+            <p className="text-[#6B6B5A] text-sm mb-6">
               Pick a name that helps you recognize this space.
             </p>
             <div className="space-y-2">
@@ -170,7 +170,7 @@ export function WizardShell() {
               <Button
                 onClick={() => setStep(2)}
                 disabled={!step1Valid}
-                className="bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+                className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
               >
                 Continue →
               </Button>
@@ -181,10 +181,10 @@ export function WizardShell() {
         {/* Step 2 — Dimensions */}
         {step === 2 && (
           <div className="p-8">
-            <h2 className="font-display text-2xl font-semibold text-[#1C1C1A] mb-1">
+            <h2 className="font-display text-2xl font-semibold text-[#111109] mb-1">
               How big is your garden space?
             </h2>
-            <p className="text-[#6B6560] text-sm mb-6">
+            <p className="text-[#6B6B5A] text-sm mb-6">
               The total outdoor area — you'll add individual raised beds inside it.
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -213,7 +213,7 @@ export function WizardShell() {
                 />
               </div>
             </div>
-            <p className="text-xs text-[#9E9890] mt-3">
+            <p className="text-xs text-[#ADADAA] mt-3">
               Don't know exactly? A rough estimate works fine — you can adjust later.
             </p>
             <div className="mt-8 flex justify-between">
@@ -223,7 +223,7 @@ export function WizardShell() {
               <Button
                 onClick={() => setStep(3)}
                 disabled={!step2Valid}
-                className="bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+                className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
               >
                 Continue →
               </Button>
@@ -234,10 +234,10 @@ export function WizardShell() {
         {/* Step 3 — Location */}
         {step === 3 && (
           <div className="p-8">
-            <h2 className="font-display text-2xl font-semibold text-[#1C1C1A] mb-1">
+            <h2 className="font-display text-2xl font-semibold text-[#111109] mb-1">
               Where is your garden?
             </h2>
-            <p className="text-[#6B6560] text-sm mb-6">
+            <p className="text-[#6B6B5A] text-sm mb-6">
               Your zip code tells us your growing zone and frost dates.
             </p>
             <div className="space-y-2">
@@ -260,7 +260,7 @@ export function WizardShell() {
                   onClick={lookupZip}
                   disabled={data.zip.replace(/\D/g, "").length < 5 || locationState === "loading"}
                   variant="outline"
-                  className="border-[#E8E2D9] shrink-0"
+                  className="border-[#E4E4DC] shrink-0"
                 >
                   {locationState === "loading" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -272,14 +272,14 @@ export function WizardShell() {
             </div>
 
             {locationState === "found" && (
-              <div className="mt-4 p-4 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9]">
+              <div className="mt-4 p-4 bg-[#F4F4EC] rounded-xl border border-[#E4E4DC]">
                 <div className="flex items-center gap-2 mb-2">
-                  <Check className="w-4 h-4 text-[#4A7C2F]" />
-                  <span className="text-sm font-medium text-[#2D5016]">
+                  <Check className="w-4 h-4 text-[#3A6B20]" />
+                  <span className="text-sm font-medium text-[#1C3D0A]">
                     Zone {data.zone}
                   </span>
                 </div>
-                <div className="text-sm text-[#6B6560] space-y-1">
+                <div className="text-sm text-[#6B6B5A] space-y-1">
                   {data.lastFrostDate && (
                     <p>Last frost: {formatFrostDate(data.lastFrostDate)}</p>
                   )}
@@ -305,7 +305,7 @@ export function WizardShell() {
               <Button
                 onClick={() => setStep(4)}
                 disabled={!step3Valid}
-                className="bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+                className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
               >
                 Continue →
               </Button>
@@ -316,10 +316,10 @@ export function WizardShell() {
         {/* Step 4 — First bed */}
         {step === 4 && (
           <div className="p-8">
-            <h2 className="font-display text-2xl font-semibold text-[#1C1C1A] mb-1">
+            <h2 className="font-display text-2xl font-semibold text-[#111109] mb-1">
               Add your first raised bed
             </h2>
-            <p className="text-[#6B6560] text-sm mb-6">
+            <p className="text-[#6B6B5A] text-sm mb-6">
               You can add more beds and adjust positions on the garden canvas.
             </p>
             <div className="space-y-4">
@@ -368,12 +368,12 @@ export function WizardShell() {
                       onClick={() => set("cellSizeIn", size)}
                       className={`p-3 rounded-lg border text-sm text-left transition-colors ${
                         data.cellSizeIn === size
-                          ? "border-[#2D5016] bg-[#F5F0E8] text-[#2D5016]"
-                          : "border-[#E8E2D9] text-[#6B6560] hover:border-[#6B8F47]"
+                          ? "border-[#1C3D0A] bg-[#F4F4EC] text-[#1C3D0A]"
+                          : "border-[#E4E4DC] text-[#6B6B5A] hover:border-[#7DA84E]"
                       }`}
                     >
                       <div className="font-medium">{size === "12" ? "1 ft squares" : "6 in squares"}</div>
-                      <div className="text-xs mt-0.5 text-[#9E9890]">
+                      <div className="text-xs mt-0.5 text-[#ADADAA]">
                         {size === "12"
                           ? "Standard (SFG method)"
                           : "More detail, smaller cells"}
@@ -393,14 +393,14 @@ export function WizardShell() {
                   type="button"
                   onClick={() => submit(true)}
                   disabled={isPending}
-                  className="text-sm text-[#6B6560] hover:text-[#1C1C1A] underline-offset-2 hover:underline"
+                  className="text-sm text-[#6B6B5A] hover:text-[#111109] underline-offset-2 hover:underline"
                 >
                   Skip for now
                 </button>
                 <Button
                   onClick={() => submit(false)}
                   disabled={isPending || !step4Valid}
-                  className="bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+                  className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
                 >
                   {isPending ? (
                     <>

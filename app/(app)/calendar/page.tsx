@@ -188,7 +188,7 @@ export default async function CalendarPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-6">Calendar</h1>
+      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-6">Calendar</h1>
 
       <div className="space-y-4 mb-8">
         {/* Frost alert */}
@@ -204,11 +204,11 @@ export default async function CalendarPage() {
             locationDisplay={weatherGarden.locationDisplay ?? weatherGarden.locationZip}
           />
         ) : (
-          <div className="bg-[#F5F0E8] rounded-xl border border-dashed border-[#E8E2D9] p-4 flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-[#9E9890] shrink-0" />
-            <p className="text-sm text-[#9E9890]">
+          <div className="bg-[#F4F4EC] rounded-xl border border-dashed border-[#E4E4DC] p-4 flex items-center gap-3">
+            <MapPin className="w-4 h-4 text-[#ADADAA] shrink-0" />
+            <p className="text-sm text-[#ADADAA]">
               Add your zip code in{" "}
-              <Link href="/settings" className="text-[#C4790A] hover:underline">
+              <Link href="/settings" className="text-[#D4820A] hover:underline">
                 garden settings
               </Link>{" "}
               to see weather and frost alerts.
@@ -219,7 +219,7 @@ export default async function CalendarPage() {
 
       {/* No frost date warning */}
       {hasNoFrostDate && gardens.length > 0 && (
-        <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6560]">
+        <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6B5A]">
           Some gardens are missing frost dates — planting calendar events may be incomplete.
         </div>
       )}
@@ -227,26 +227,26 @@ export default async function CalendarPage() {
       {/* Succession suggestions */}
       {successionSuggestions.length > 0 && (
         <div className="mb-8">
-          <h2 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 pb-2 border-b border-[#E8E2D9]">
+          <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 pb-2 border-b border-[#E4E4DC]">
             Succession opportunities
           </h2>
           <div className="space-y-2">
             {successionSuggestions.map((s, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 p-3 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9]"
+                className="flex items-start gap-3 p-3 bg-[#F4F4EC] rounded-xl border border-[#E4E4DC]"
               >
-                <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-[#E8E2D9]">
-                  <Sprout className="w-4 h-4 text-[#6B8F47]" />
+                <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-[#E4E4DC]">
+                  <Sprout className="w-4 h-4 text-[#7DA84E]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1C1C1A]">
+                  <p className="text-sm font-medium text-[#111109]">
                     Plant another round of{" "}
-                    <Link href={`/plants/${s.plantId}`} className="hover:text-[#2D5016] transition-colors">
+                    <Link href={`/plants/${s.plantId}`} className="hover:text-[#1C3D0A] transition-colors">
                       {s.plantName}
                     </Link>
                   </p>
-                  <p className="text-xs text-[#9E9890] mt-0.5">
+                  <p className="text-xs text-[#ADADAA] mt-0.5">
                     {s.gardenName} · {s.bedName} · {s.daysToMaturity} days ·{" "}
                     Plant by{" "}
                     {s.suggestedPlantDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}

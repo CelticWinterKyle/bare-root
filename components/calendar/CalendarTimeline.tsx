@@ -23,14 +23,14 @@ const EVENT_CONFIG = {
   TRANSPLANT: {
     label: "Transplant",
     Icon: ArrowUpFromLine,
-    dot: "#6B8F47",
+    dot: "#7DA84E",
     dotBg: "#EEF6E7",
     text: "#3E5F22",
   },
   HARVEST: {
     label: "Harvest",
     Icon: Apple,
-    dot: "#C4790A",
+    dot: "#D4820A",
     dotBg: "#FFF3E8",
     text: "#8A4F00",
   },
@@ -39,8 +39,8 @@ const EVENT_CONFIG = {
 export function CalendarTimeline({ events }: Props) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-16 text-[#9E9890]">
-        <Sprout className="w-10 h-10 mx-auto mb-3 text-[#E8E2D9]" />
+      <div className="text-center py-16 text-[#ADADAA]">
+        <Sprout className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
         <p className="text-sm">No upcoming planting events.</p>
         <p className="text-xs mt-1">
           Add plants to an active season bed to see your calendar.
@@ -73,11 +73,11 @@ export function CalendarTimeline({ events }: Props) {
           <div key={monthKey}>
             {/* Month header */}
             <div className="flex items-center gap-3 mb-4">
-              <h3 className="font-display text-base font-semibold text-[#1C1C1A]">
+              <h3 className="font-display text-base font-semibold text-[#111109]">
                 {monthLabel}
               </h3>
-              <div className="flex-1 h-px bg-[#E8E2D9]" />
-              <span className="text-xs font-medium text-[#9E9890] bg-[#F5F0E8] px-2 py-0.5 rounded-full">
+              <div className="flex-1 h-px bg-[#E4E4DC]" />
+              <span className="text-xs font-medium text-[#ADADAA] bg-[#F4F4EC] px-2 py-0.5 rounded-full">
                 {monthEvents.length} {monthEvents.length === 1 ? "event" : "events"}
               </span>
             </div>
@@ -85,7 +85,7 @@ export function CalendarTimeline({ events }: Props) {
             {/* Timeline items */}
             <div className="relative pl-10">
               {/* Vertical rail */}
-              <div className="absolute left-3.5 top-3 bottom-3 w-px bg-[#E8E2D9]" />
+              <div className="absolute left-3.5 top-3 bottom-3 w-px bg-[#E4E4DC]" />
 
               <div className="space-y-3">
                 {monthEvents.map((event, i) => {
@@ -118,19 +118,19 @@ export function CalendarTimeline({ events }: Props) {
                               >
                                 {cfg.label}
                               </span>
-                              <span className="text-xs text-[#9E9890]">
+                              <span className="text-xs text-[#ADADAA]">
                                 {dayName}
                               </span>
                             </div>
-                            <p className="text-sm font-semibold text-[#1C1C1A] truncate">
+                            <p className="text-sm font-semibold text-[#111109] truncate">
                               <Link
                                 href={`/plants/${event.plantId}`}
-                                className="hover:text-[#2D5016] transition-colors"
+                                className="hover:text-[#1C3D0A] transition-colors"
                               >
                                 {event.plantName}
                               </Link>
                             </p>
-                            <p className="text-xs text-[#9E9890] mt-0.5">
+                            <p className="text-xs text-[#ADADAA] mt-0.5">
                               {event.gardenName} · {event.bedName}
                             </p>
                           </div>

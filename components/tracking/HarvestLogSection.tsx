@@ -55,9 +55,9 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg font-semibold text-[#1C1C1A]">Harvest log</h2>
+        <h2 className="font-display text-lg font-semibold text-[#111109]">Harvest log</h2>
         {logs.length > 0 && (
-          <span className="text-sm text-[#C4790A] font-medium">{total} {unit0} total</span>
+          <span className="text-sm text-[#D4820A] font-medium">{total} {unit0} total</span>
         )}
       </div>
 
@@ -66,18 +66,18 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
           {logs.map((log) => (
             <div key={log.id} className="flex items-center justify-between p-3 bg-[#FFF3E8] border border-orange-100 rounded-xl">
               <div>
-                <span className="text-sm font-medium text-[#1C1C1A]">
+                <span className="text-sm font-medium text-[#111109]">
                   {log.quantity} {log.unit}
                 </span>
-                <span className="text-xs text-[#9E9890] ml-2">
+                <span className="text-xs text-[#ADADAA] ml-2">
                   {new Date(log.harvestedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
-                {log.notes && <p className="text-xs text-[#6B6560] mt-0.5">{log.notes}</p>}
+                {log.notes && <p className="text-xs text-[#6B6B5A] mt-0.5">{log.notes}</p>}
               </div>
               <button
                 onClick={() => handleDelete(log.id)}
                 disabled={deletingId === log.id}
-                className="text-[#9E9890] hover:text-[#B85C3A] transition-colors ml-3"
+                className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors ml-3"
               >
                 {deletingId === log.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -91,7 +91,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
       )}
 
       {open ? (
-        <form onSubmit={handleAdd} className="bg-white border border-[#E8E2D9] rounded-xl p-4 space-y-3">
+        <form onSubmit={handleAdd} className="bg-white border border-[#E4E4DC] rounded-xl p-4 space-y-3">
           <div className="flex gap-2">
             <Input
               type="number"
@@ -107,7 +107,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="border border-[#E8E2D9] rounded-md px-3 py-2 text-sm text-[#1C1C1A] bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016]"
+              className="border border-[#E4E4DC] rounded-md px-3 py-2 text-sm text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
             >
               {UNITS.map((u) => <option key={u}>{u}</option>)}
             </select>
@@ -123,7 +123,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
             onChange={(e) => setNotes(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button type="submit" disabled={isAdding} className="bg-[#C4790A] hover:bg-[#A0650A] text-white">
+            <Button type="submit" disabled={isAdding} className="bg-[#D4820A] hover:bg-[#A0650A] text-white">
               {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Log harvest"}
             </Button>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
@@ -132,7 +132,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 text-sm text-[#C4790A] hover:text-[#A0650A] font-medium transition-colors"
+          className="flex items-center gap-2 text-sm text-[#D4820A] hover:text-[#A0650A] font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Log harvest

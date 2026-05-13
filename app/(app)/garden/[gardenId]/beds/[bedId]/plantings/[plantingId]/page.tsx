@@ -41,7 +41,7 @@ export default async function PlantingDetailPage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link
         href={`/garden/${gardenId}/beds/${bedId}`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6560] hover:text-[#2D5016] mb-6 transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         {planting.cell.bed.name}
@@ -51,50 +51,50 @@ export default async function PlantingDetailPage({
       <header className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">
-              <Link href={`/plants/${planting.plant.id}`} className="hover:text-[#2D5016] transition-colors">
+            <h1 className="font-display text-3xl font-semibold text-[#111109]">
+              <Link href={`/plants/${planting.plant.id}`} className="hover:text-[#1C3D0A] transition-colors">
                 {planting.plant.name}
               </Link>
             </h1>
-            <p className="text-sm text-[#6B6560] mt-1">
+            <p className="text-sm text-[#6B6B5A] mt-1">
               {planting.season.name} · {planting.cell.bed.name}
             </p>
           </div>
-          <span className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-[#F5F0E8] text-[#6B6560] font-medium mt-1">
+          <span className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-[#F4F4EC] text-[#6B6B5A] font-medium mt-1">
             {statusLabel}
           </span>
         </div>
 
         {/* Quick stats */}
-        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[#E8E2D9]">
+        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[#E4E4DC]">
           {planting.plantedDate && (
             <div>
-              <p className="text-xs text-[#9E9890]">Planted</p>
-              <p className="text-sm font-medium text-[#1C1C1A]">
+              <p className="text-xs text-[#ADADAA]">Planted</p>
+              <p className="text-sm font-medium text-[#111109]">
                 {new Date(planting.plantedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
             </div>
           )}
           {planting.expectedHarvestDate && (
             <div>
-              <p className="text-xs text-[#9E9890]">Est. harvest</p>
-              <p className="text-sm font-medium text-[#4A7C2F]">
+              <p className="text-xs text-[#ADADAA]">Est. harvest</p>
+              <p className="text-sm font-medium text-[#3A6B20]">
                 {new Date(planting.expectedHarvestDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
             </div>
           )}
           {planting.harvestLogs.length > 0 && (
             <div>
-              <p className="text-xs text-[#9E9890]">Total harvested</p>
-              <p className="text-sm font-medium text-[#C4790A]">
+              <p className="text-xs text-[#ADADAA]">Total harvested</p>
+              <p className="text-sm font-medium text-[#D4820A]">
                 {totalHarvest} {harvestUnit}
               </p>
             </div>
           )}
           {planting.rating && (
             <div>
-              <p className="text-xs text-[#9E9890]">Rating</p>
-              <p className="text-sm font-medium text-[#1C1C1A]">{"★".repeat(planting.rating)}{"☆".repeat(5 - planting.rating)}</p>
+              <p className="text-xs text-[#ADADAA]">Rating</p>
+              <p className="text-sm font-medium text-[#111109]">{"★".repeat(planting.rating)}{"☆".repeat(5 - planting.rating)}</p>
             </div>
           )}
         </div>

@@ -10,9 +10,9 @@ const STATUSES: { value: PlantingStatus; label: string; color: string }[] = [
   { value: "PLANNED", label: "Planned", color: "bg-[#8FA86B] text-white" },
   { value: "SEEDS_STARTED", label: "Seeds started", color: "bg-[#D4A843] text-white" },
   { value: "TRANSPLANTED", label: "Transplanted", color: "bg-[#7AB648] text-white" },
-  { value: "ACTIVE", label: "Active", color: "bg-[#4A7C2F] text-white" },
-  { value: "HARVESTING", label: "Harvesting", color: "bg-[#C4790A] text-white" },
-  { value: "HARVESTED", label: "Harvested", color: "bg-[#9E9890] text-white" },
+  { value: "ACTIVE", label: "Active", color: "bg-[#3A6B20] text-white" },
+  { value: "HARVESTING", label: "Harvesting", color: "bg-[#D4820A] text-white" },
+  { value: "HARVESTED", label: "Harvested", color: "bg-[#ADADAA] text-white" },
   { value: "FAILED", label: "Failed", color: "bg-[#B85C3A] text-white" },
 ];
 
@@ -95,11 +95,11 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
         <div>
           <Link
             href={`/plants/${planting.plant.id}`}
-            className="font-display text-xl font-semibold text-[#1C1C1A] hover:text-[#2D5016] transition-colors"
+            className="font-display text-xl font-semibold text-[#111109] hover:text-[#1C3D0A] transition-colors"
           >
             {planting.plant.name}
           </Link>
-          <p className="text-sm text-[#9E9890] mt-0.5">
+          <p className="text-sm text-[#ADADAA] mt-0.5">
             Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
           </p>
         </div>
@@ -110,7 +110,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
 
       {/* Status buttons — 2-col grid for comfortable mobile tap targets */}
       <div>
-        <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Status</p>
+        <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">Status</p>
         <div className="grid grid-cols-2 gap-1.5">
           {STATUSES.map((s) => (
             <button
@@ -120,7 +120,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
               className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
                 status === s.value
                   ? `${s.color} ring-2 ring-inset ring-white/30`
-                  : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF]"
+                  : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE]"
               } disabled:opacity-50`}
             >
               {s.label}
@@ -131,34 +131,34 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
 
       {/* Dates */}
       <div>
-        <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">Dates</p>
+        <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">Dates</p>
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs text-[#6B6560] shrink-0">Planted</label>
+            <label className="text-xs text-[#6B6B5A] shrink-0">Planted</label>
             <input
               type="date"
               value={plantedDate}
               onChange={(e) => setPlantedDate(e.target.value)}
               onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
               disabled={isDating}
-              className="text-xs border border-[#E8E2D9] rounded-md px-2 py-1 text-[#1C1C1A] bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016] disabled:opacity-50"
+              className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
             />
           </div>
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs text-[#6B6560] shrink-0">Transplanted</label>
+            <label className="text-xs text-[#6B6B5A] shrink-0">Transplanted</label>
             <input
               type="date"
               value={transplantDate}
               onChange={(e) => setTransplantDate(e.target.value)}
               onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
               disabled={isDating}
-              className="text-xs border border-[#E8E2D9] rounded-md px-2 py-1 text-[#1C1C1A] bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016] disabled:opacity-50"
+              className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
             />
           </div>
           {expectedHarvest && (
             <div className="flex items-center justify-between gap-2">
-              <label className="text-xs text-[#6B6560] shrink-0">Est. harvest</label>
-              <span className="text-xs text-[#4A7C2F] font-medium">
+              <label className="text-xs text-[#6B6B5A] shrink-0">Est. harvest</label>
+              <span className="text-xs text-[#3A6B20] font-medium">
                 {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </span>
             </div>
@@ -169,7 +169,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
       {/* Companion warnings */}
       {(harmful.length > 0 || beneficial.length > 0) && (
         <div>
-          <p className="text-xs text-[#9E9890] font-medium uppercase tracking-wide mb-2">
+          <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">
             Companions in this bed
           </p>
           {harmful.length > 0 && (
@@ -183,10 +183,10 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
             </div>
           )}
           {beneficial.length > 0 && (
-            <div className="p-2.5 bg-[#F5F0E8] rounded-lg border border-[#E8E2D9]">
-              <p className="text-xs font-medium text-[#4A7C2F] mb-1">✓ Beneficial with</p>
+            <div className="p-2.5 bg-[#F4F4EC] rounded-lg border border-[#E4E4DC]">
+              <p className="text-xs font-medium text-[#3A6B20] mb-1">✓ Beneficial with</p>
               {beneficial.map((w) => (
-                <p key={w.plantName} className="text-xs text-[#6B6560]">
+                <p key={w.plantName} className="text-xs text-[#6B6B5A]">
                   {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
                 </p>
               ))}
@@ -198,7 +198,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
       {/* View full details */}
       <Link
         href={`/garden/${gardenId}/beds/${bedId}/plantings/${planting.id}`}
-        className="block text-center text-xs font-medium text-[#6B8F47] hover:text-[#2D5016] transition-colors py-1"
+        className="block text-center text-xs font-medium text-[#7DA84E] hover:text-[#1C3D0A] transition-colors py-1"
         onClick={onClose}
       >
         View harvest log &amp; photos →

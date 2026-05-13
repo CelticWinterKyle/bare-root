@@ -24,16 +24,16 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-2">Notifications</h1>
-      <p className="text-sm text-[#6B6560] mb-8">Choose what you get notified about and how.</p>
+      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Notifications</h1>
+      <p className="text-sm text-[#6B6B5A] mb-8">Choose what you get notified about and how.</p>
 
       <div className="space-y-3">
         {settings.map((s) => (
-          <div key={s.type} className="bg-white border border-[#E8E2D9] rounded-xl p-4">
+          <div key={s.type} className="bg-white border border-[#E4E4DC] rounded-xl p-4">
             <div className="flex items-center justify-between mb-1">
               <div>
-                <p className="text-sm font-medium text-[#1C1C1A]">{s.label}</p>
-                <p className="text-xs text-[#9E9890]">{s.description}</p>
+                <p className="text-sm font-medium text-[#111109]">{s.label}</p>
+                <p className="text-xs text-[#ADADAA]">{s.description}</p>
               </div>
               <Toggle
                 checked={s.enabled}
@@ -42,7 +42,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
             </div>
 
             {s.enabled && (
-              <div className="flex gap-3 mt-3 pt-3 border-t border-[#F5F0E8]">
+              <div className="flex gap-3 mt-3 pt-3 border-t border-[#F4F4EC]">
                 <ChannelToggle
                   icon={<Mail className="w-3.5 h-3.5" />}
                   label="Email"
@@ -71,7 +71,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-        checked ? "bg-[#2D5016]" : "bg-[#E8E2D9]"
+        checked ? "bg-[#1C3D0A]" : "bg-[#E4E4DC]"
       }`}
     >
       <span
@@ -99,8 +99,8 @@ function ChannelToggle({
       onClick={() => onChange(!checked)}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
         checked
-          ? "bg-[#F5F0E8] border-[#2D5016] text-[#2D5016]"
-          : "bg-white border-[#E8E2D9] text-[#9E9890]"
+          ? "bg-[#F4F4EC] border-[#1C3D0A] text-[#1C3D0A]"
+          : "bg-white border-[#E4E4DC] text-[#ADADAA]"
       }`}
     >
       {icon}

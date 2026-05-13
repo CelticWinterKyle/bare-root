@@ -19,7 +19,7 @@ export default function PlantsLoading() {
       {/* Plant grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[...Array(12)].map((_, i) => (
-          <div key={i} className="rounded-xl overflow-hidden border border-[#E8E2D9]">
+          <div key={i} className="rounded-xl overflow-hidden border border-[#E4E4DC]">
             <Skeleton className="aspect-[4/3] w-full" />
             <div className="p-3 space-y-2">
               <Skeleton className="h-4 w-3/4" />

@@ -56,7 +56,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-[#9E9890] border-[#E8E2D9] hover:bg-[#F5F0E8]"
+        className="text-[#ADADAA] border-[#E4E4DC] hover:bg-[#F4F4EC]"
       >
         End season
       </Button>
@@ -66,23 +66,23 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/20" onClick={() => !isArchiving && setOpen(false)} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md border border-[#E8E2D9] flex flex-col max-h-[80vh]">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md border border-[#E4E4DC] flex flex-col max-h-[80vh]">
         <div className="p-6 pb-0">
-          <h2 className="font-display text-xl font-semibold text-[#1C1C1A]">End {seasonName}</h2>
-          <p className="text-sm text-[#9E9890] mt-1">Rate your plantings before archiving.</p>
+          <h2 className="font-display text-xl font-semibold text-[#111109]">End {seasonName}</h2>
+          <p className="text-sm text-[#ADADAA] mt-1">Rate your plantings before archiving.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {plantings.length === 0 && (
-            <p className="text-sm text-[#9E9890] text-center py-4">No plantings this season.</p>
+            <p className="text-sm text-[#ADADAA] text-center py-4">No plantings this season.</p>
           )}
           {plantings.map((p) => {
             const r = ratings[p.id];
             return (
-              <div key={p.id} className="border border-[#E8E2D9] rounded-xl p-3">
+              <div key={p.id} className="border border-[#E4E4DC] rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-sm text-[#1C1C1A]">{p.plantName}</span>
-                  <span className="text-xs text-[#9E9890]">{p.status.replace(/_/g, " ").toLowerCase()}</span>
+                  <span className="font-medium text-sm text-[#111109]">{p.plantName}</span>
+                  <span className="text-xs text-[#ADADAA]">{p.status.replace(/_/g, " ").toLowerCase()}</span>
                 </div>
                 {/* Star rating */}
                 <div className="flex items-center gap-1 mb-2">
@@ -91,8 +91,8 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
                       <Star
                         className={`w-5 h-5 transition-colors ${
                           r.rating !== null && star <= r.rating
-                            ? "fill-[#C4790A] text-[#C4790A]"
-                            : "text-[#E8E2D9]"
+                            ? "fill-[#D4820A] text-[#D4820A]"
+                            : "text-[#E4E4DC]"
                         }`}
                       />
                     </button>
@@ -100,7 +100,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
                   {r.rating && (
                     <button
                       onClick={() => setRatings((prev) => ({ ...prev, [p.id]: { ...prev[p.id], rating: null } }))}
-                      className="ml-1 text-[11px] text-[#9E9890] hover:text-[#1C1C1A]"
+                      className="ml-1 text-[11px] text-[#ADADAA] hover:text-[#111109]"
                     >
                       clear
                     </button>
@@ -111,20 +111,20 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
                     type="checkbox"
                     checked={r.growAgain}
                     onChange={() => toggleGrowAgain(p.id)}
-                    className="w-3.5 h-3.5 accent-[#2D5016]"
+                    className="w-3.5 h-3.5 accent-[#1C3D0A]"
                   />
-                  <span className="text-xs text-[#6B6560]">Grow again next season</span>
+                  <span className="text-xs text-[#6B6B5A]">Grow again next season</span>
                 </label>
               </div>
             );
           })}
         </div>
 
-        <div className="p-6 pt-3 border-t border-[#E8E2D9] flex gap-2">
+        <div className="p-6 pt-3 border-t border-[#E4E4DC] flex gap-2">
           <Button
             onClick={handleSubmit}
             disabled={isArchiving}
-            className="flex-1 bg-[#2D5016] hover:bg-[#4A7C2F] text-white"
+            className="flex-1 bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
           >
             {isArchiving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Archive season"}
           </Button>

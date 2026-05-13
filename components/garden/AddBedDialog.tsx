@@ -55,7 +55,7 @@ export function AddBedDialog({ gardenId }: { gardenId: string }) {
           <Button
             size="sm"
             variant="outline"
-            className="border-[#E8E2D9] text-[#2D5016] hover:bg-[#F5F0E8]"
+            className="border-[#E4E4DC] text-[#1C3D0A] hover:bg-[#F4F4EC]"
           />
         }
       >
@@ -108,8 +108,8 @@ export function AddBedDialog({ gardenId }: { gardenId: string }) {
                   onClick={() => set("cellSizeIn", size)}
                   className={`p-2.5 rounded-lg border text-sm text-left transition-colors ${
                     form.cellSizeIn === size
-                      ? "border-[#2D5016] bg-[#F5F0E8] text-[#2D5016]"
-                      : "border-[#E8E2D9] text-[#6B6560] hover:border-[#6B8F47]"
+                      ? "border-[#1C3D0A] bg-[#F4F4EC] text-[#1C3D0A]"
+                      : "border-[#E4E4DC] text-[#6B6B5A] hover:border-[#7DA84E]"
                   }`}
                 >
                   {size === "12" ? "1 ft squares" : "6 in squares"}
@@ -120,7 +120,7 @@ export function AddBedDialog({ gardenId }: { gardenId: string }) {
           <Button
             onClick={handleSubmit}
             disabled={!valid || isPending}
-            className="w-full bg-[#2D5016] hover:bg-[#3d6b1e] text-white"
+            className="w-full bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
           >
             {isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />

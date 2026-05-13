@@ -190,13 +190,14 @@ export default async function BedPage({
         <div className="flex items-center gap-2 min-h-[44px]">
           <Link
             href={`/garden/${gardenId}`}
-            className="flex items-center gap-1 text-sm text-[#9E9890] hover:text-[#2D5016] transition-colors group shrink-0"
+            className="flex items-center gap-1 text-sm transition-colors group shrink-0"
+            style={{ color: "#ADADAA" }}
           >
             <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <span className="font-medium">{bed.garden.name}</span>
           </Link>
-          <span className="text-[#D8D3CB] select-none">/</span>
-          <h1 className="font-display text-xl font-semibold text-[#1C1C1A]">{bed.name}</h1>
+          <span className="select-none" style={{ color: "#E4E4DC" }}>/</span>
+          <h1 className="font-display text-xl font-semibold" style={{ color: "#111109", fontVariationSettings: "'opsz' 22" }}>{bed.name}</h1>
           {allSeasons.length > 1 && (
             <div className="ml-auto">
               <Suspense>
@@ -209,37 +210,37 @@ export default async function BedPage({
             </div>
           )}
         </div>
-        {/* Row 2: chips — always-visible + secondary hidden on mobile */}
+        {/* Row 2: chips */}
         <div className="flex items-center gap-1.5 flex-wrap mt-1">
-          <span className="inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+          <span className="inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#F4F4EC", color: "#6B6B5A", border: "1px solid #E4E4DC" }}>
             {bed.widthFt} × {bed.heightFt} ft
           </span>
-          <span className="hidden sm:inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+          <span className="hidden sm:inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#F4F4EC", color: "#6B6B5A", border: "1px solid #E4E4DC" }}>
             {bed.gridCols} × {bed.gridRows} grid
           </span>
-          <span className="hidden sm:inline-flex items-center text-xs font-medium bg-[#F5F0E8] text-[#6B6560] px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+          <span className="hidden sm:inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#F4F4EC", color: "#6B6B5A", border: "1px solid #E4E4DC" }}>
             {bed.cellSizeIn}&quot; cells
             {bed.cellSizeIn < 12 && (
-              <span className="ml-1 text-[#9E9890]">({Math.round((12 / bed.cellSizeIn) ** 2)}/sq ft)</span>
+              <span className="ml-1" style={{ color: "#ADADAA" }}>({Math.round((12 / bed.cellSizeIn) ** 2)}/sq ft)</span>
             )}
           </span>
           {bed.garden.usdaZone && (
-            <span className="inline-flex items-center text-xs font-medium bg-[#EEF6E7] text-[#4A7C2F] px-2 py-0.5 rounded-full border border-[#D4E8C4]">
+            <span className="inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#E4F0D4", color: "#3A6B20", border: "1px solid #D4E8BE" }}>
               Zone {bed.garden.usdaZone}
             </span>
           )}
         </div>
 
-        {/* Crop rotation warnings — compact inline strip */}
+        {/* Crop rotation warnings */}
         {rotationWarnings.length > 0 && (
           <div className="mt-2 space-y-1.5">
             {rotationWarnings.map((w, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[#FEF3E2] border border-[#F5D08A] rounded-lg text-xs">
-                <RotateCcw className="w-3.5 h-3.5 text-[#C4790A] shrink-0" />
-                <span className="text-[#7C4A0A]">
+              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#FDF2E0", border: "1px solid rgba(212,130,10,0.25)" }}>
+                <RotateCcw className="w-3.5 h-3.5 shrink-0" style={{ color: "#D4820A" }} />
+                <span style={{ color: "#7A4A0A" }}>
                   <span className="font-semibold">Crop rotation: </span>
                   {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.{" "}
-                  <span className="text-[#A0621A]">Consider a different plant family to prevent disease buildup.</span>
+                  <span style={{ color: "#A06010" }}>Consider a different plant family to prevent disease buildup.</span>
                 </span>
               </div>
             ))}

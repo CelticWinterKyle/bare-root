@@ -34,7 +34,7 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-[#2D5016] border-[#2D5016] hover:bg-[#F5F0E8]"
+        className="flex items-center gap-1.5 text-[#1C3D0A] border-[#1C3D0A] hover:bg-[#F4F4EC]"
       >
         <Plus className="w-4 h-4" />
         New season
@@ -45,11 +45,11 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/20" onClick={() => setOpen(false)} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border border-[#E8E2D9]">
-        <h2 className="font-display text-xl font-semibold text-[#1C1C1A] mb-4">New season</h2>
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 border border-[#E4E4DC]">
+        <h2 className="font-display text-xl font-semibold text-[#111109] mb-4">New season</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-[#6B6560] block mb-1">Name</label>
+            <label className="text-xs font-medium text-[#6B6B5A] block mb-1">Name</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -59,7 +59,7 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#6B6560] block mb-1">Start date</label>
+            <label className="text-xs font-medium text-[#6B6B5A] block mb-1">Start date</label>
             <Input
               type="date"
               value={startDate}
@@ -72,12 +72,12 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
               type="checkbox"
               checked={setActive}
               onChange={(e) => setSetActive(e.target.checked)}
-              className="w-4 h-4 accent-[#2D5016]"
+              className="w-4 h-4 accent-[#1C3D0A]"
             />
-            <span className="text-sm text-[#1C1C1A]">Set as active season</span>
+            <span className="text-sm text-[#111109]">Set as active season</span>
           </label>
           <div className="flex gap-2 pt-1">
-            <Button type="submit" disabled={isPending} className="flex-1 bg-[#2D5016] hover:bg-[#4A7C2F] text-white">
+            <Button type="submit" disabled={isPending} className="flex-1 bg-[#1C3D0A] hover:bg-[#3A6B20] text-white">
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create season"}
             </Button>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

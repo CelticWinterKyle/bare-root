@@ -9,7 +9,7 @@ export default function DashboardLoading() {
       </div>
       <div className="space-y-3">
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="rounded-2xl overflow-hidden border border-[#E8E2D9]">
+          <div key={i} className="rounded-2xl overflow-hidden border border-[#E4E4DC]">
             <Skeleton className="h-24 w-full" />
             <div className="px-5 py-4 bg-white flex items-center justify-between">
               <div className="space-y-1.5">

@@ -100,41 +100,44 @@ export default async function GardenPage({
       <div className="max-w-3xl mx-auto px-4 pt-8 pb-6">
       {/* Header */}
       <header className="mb-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">
+            <p className="font-mono uppercase mb-1" style={{ fontSize: "9px", color: "#7DA84E", letterSpacing: "0.18em" }}>
+              Garden
+            </p>
+            <h1
+              className="font-display font-bold leading-none"
+              style={{ fontSize: "2rem", color: "#111109", letterSpacing: "-0.03em", fontVariationSettings: "'opsz' 36" }}
+            >
               {garden.name}
             </h1>
-            <div className="flex items-center gap-3 mt-1 text-sm text-[#6B6560]">
+            <div className="flex items-center gap-3 mt-1.5 font-mono" style={{ fontSize: "11px", color: "#6B6B5A" }}>
               {garden.usdaZone && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
+                  <MapPin className="w-3 h-3" style={{ color: "#ADADAA" }} />
                   Zone {garden.usdaZone}
                 </span>
               )}
               {garden.lastFrostDate && (
                 <span>Last frost {formatFrostDate(garden.lastFrostDate)}</span>
               )}
-              <span>
-                {garden.widthFt} × {garden.heightFt} ft
-              </span>
+              <span>{garden.widthFt} × {garden.heightFt} ft</span>
             </div>
-            {activeSeason && (
-              <p className="text-xs text-[#9E9890] mt-1">{activeSeason.name}</p>
-            )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 mt-1">
             <Link
               href={`/garden/${gardenId}/seasons`}
-              className="flex items-center gap-1.5 text-sm text-[#6B6560] hover:text-[#2D5016] transition-colors"
+              className="flex items-center gap-1.5 font-mono transition-colors"
+              style={{ fontSize: "11px", color: "#6B6B5A", letterSpacing: "0.04em" }}
             >
-              <CalendarDays className="w-4 h-4" />
+              <CalendarDays className="w-3.5 h-3.5" />
               {activeSeason ? activeSeason.name : "Seasons"}
             </Link>
             {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
             <Link
               href={`/garden/${gardenId}/settings`}
-              className="text-[#9E9890] hover:text-[#2D5016] transition-colors"
+              className="transition-colors"
+              style={{ color: "#ADADAA" }}
               aria-label="Garden settings"
             >
               <Settings className="w-4 h-4" />
@@ -143,33 +146,36 @@ export default async function GardenPage({
         </div>
       </header>
 
-      {/* Compact weather strip */}
+      {/* Weather strip */}
       {weatherCurrent ? (
         <div
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
-            frostRisk
-              ? "bg-blue-50 border-blue-200"
-              : "bg-[#F5F0E8] border-[#E8E2D9]"
-          }`}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 relative overflow-hidden"
+          style={{
+            background: frostRisk ? "#1A3055" : "#1C3D0A",
+            border: `1px solid ${frostRisk ? "#2A4875" : "#2A5010"}`,
+          }}
         >
           <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-              frostRisk ? "bg-blue-100" : "bg-white/60"
-            }`}
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+            style={{ width: 80, height: 80, background: frostRisk ? "rgba(100,160,255,0.08)" : "rgba(125,168,78,0.12)" }}
+          />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: frostRisk ? "rgba(100,160,255,0.15)" : "rgba(125,168,78,0.15)" }}
           >
             {frostRisk ? (
-              <Snowflake className="w-4 h-4 text-blue-500" />
+              <Snowflake className="w-4 h-4" style={{ color: "#7EB8F5" }} />
             ) : (
-              <Thermometer className="w-4 h-4 text-[#9E9890]" />
+              <Thermometer className="w-4 h-4" style={{ color: "#A8D870" }} />
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold ${frostRisk ? "text-blue-900" : "text-[#1C1C1A]"}`}>
+          <div className="flex-1 min-w-0 relative">
+            <p className="text-sm font-semibold" style={{ color: "#FDFDF8" }}>
               {weatherCurrent.temp}°F · <span className="capitalize">{weatherCurrent.description}</span>
             </p>
             {frostRisk && (
-              <p className="text-xs text-blue-700 mt-0.5 font-medium">
-                Frost risk in the next 72 hours
+              <p className="text-xs mt-0.5 font-medium" style={{ color: "rgba(126,184,245,0.85)" }}>
+                Frost risk in the next 72 hours — protect tender plants
               </p>
             )}
           </div>
@@ -180,21 +186,24 @@ export default async function GardenPage({
               alt={weatherCurrent.description}
               width={40}
               height={40}
-              className="shrink-0 -my-1"
+              className="shrink-0 -my-1 relative"
             />
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border bg-[#F5F0E8] border-[#E8E2D9]">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/60">
-            <Thermometer className="w-4 h-4 text-[#D8D3CB]" />
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
+          style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#EAEADE" }}>
+            <Thermometer className="w-4 h-4" style={{ color: "#ADADAA" }} />
           </div>
-          <p className="text-sm text-[#9E9890]">
+          <p className="text-sm" style={{ color: "#6B6B5A" }}>
             {garden.locationZip
               ? "Weather data temporarily unavailable."
               : <>
                   Add a zip code in{" "}
-                  <Link href={`/garden/${gardenId}/settings`} className="text-[#6B8F47] hover:text-[#2D5016] underline transition-colors">
+                  <Link href={`/garden/${gardenId}/settings`} style={{ color: "#7DA84E" }} className="underline transition-colors">
                     garden settings
                   </Link>
                   {" "}for local weather and frost alerts.
@@ -206,13 +215,18 @@ export default async function GardenPage({
 
       </div>
 
-      {/* Canvas — full available width */}
+      {/* Canvas */}
       {garden.beds.length === 0 ? (
         <div className="max-w-3xl mx-auto px-4">
-          <div className="bg-[#F5F0E8] rounded-xl p-12 text-center border border-[#E8E2D9]">
-            <Sprout className="w-10 h-10 text-[#6B8F47] mx-auto mb-3" />
-            <p className="font-display text-lg text-[#2D5016] mb-1">No beds yet</p>
-            <p className="text-sm text-[#6B6560] mb-4">
+          <div
+            className="rounded-xl p-12 text-center"
+            style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+          >
+            <Sprout className="w-10 h-10 mx-auto mb-3" style={{ color: "#7DA84E" }} />
+            <p className="font-display text-lg font-semibold mb-1" style={{ color: "#1C3D0A", fontVariationSettings: "'opsz' 22" }}>
+              No beds yet
+            </p>
+            <p className="text-sm mb-4" style={{ color: "#6B6B5A" }}>
               Add your first raised bed to start planning.
             </p>
             <AddBedDialog gardenId={garden.id} />
@@ -229,17 +243,20 @@ export default async function GardenPage({
 
       <div className="max-w-3xl mx-auto px-4 pb-8">
         {!activeSeason && garden.beds.length > 0 && (
-          <div className="mt-4 bg-[#F5F0E8] rounded-xl border border-[#E8E2D9] p-4 flex items-center justify-between">
-            <p className="text-sm text-[#6B6560]">No active season — create one to start assigning plants.</p>
+          <div
+            className="mt-4 rounded-xl p-4 flex items-center justify-between gap-4"
+            style={{ background: "#F4F4EC", border: "1px solid #E4E4DC" }}
+          >
+            <p className="text-sm" style={{ color: "#6B6B5A" }}>No active season — create one to start assigning plants.</p>
             <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
           </div>
         )}
 
         {atBedLimit && (
-          <div className="mt-4 rounded-xl border border-dashed border-[#E8E2D9] p-4 text-center">
-            <p className="text-sm text-[#9E9890]">
+          <div className="mt-4 rounded-xl p-4 text-center" style={{ border: "1px dashed #D4E8BE" }}>
+            <p className="text-sm" style={{ color: "#ADADAA" }}>
               3 beds used on Free plan.{" "}
-              <Link href="/settings/billing" className="text-[#C4790A] hover:underline">
+              <Link href="/settings/billing" style={{ color: "#D4820A" }} className="hover:underline">
                 Upgrade to Pro
               </Link>{" "}
               for unlimited beds.

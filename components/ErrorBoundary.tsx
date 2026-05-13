@@ -20,9 +20,9 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback ?? (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <p className="text-[#1C1C1A] font-medium mb-2">Something went wrong</p>
-          <p className="text-sm text-[#6B6560] mb-4">Try refreshing the page.</p>
-          <Link href="/dashboard" className="text-sm text-[#2D5016] underline">
+          <p className="text-[#111109] font-medium mb-2">Something went wrong</p>
+          <p className="text-sm text-[#6B6B5A] mb-4">Try refreshing the page.</p>
+          <Link href="/dashboard" className="text-sm text-[#1C3D0A] underline">
             Back to dashboard
           </Link>
         </div>

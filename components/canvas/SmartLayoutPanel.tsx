@@ -93,11 +93,11 @@ export function SmartLayoutPanel({
   if (step === "generating") {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
-        <div className="w-10 h-10 rounded-full bg-[#F5F0E8] flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-[#6B8F47] animate-pulse" />
+        <div className="w-10 h-10 rounded-full bg-[#F4F4EC] flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-[#7DA84E] animate-pulse" />
         </div>
-        <p className="text-sm font-medium text-[#1C1C1A]">Planning your bed…</p>
-        <p className="text-xs text-[#9E9890]">Optimizing for sun, spacing & companions</p>
+        <p className="text-sm font-medium text-[#111109]">Planning your bed…</p>
+        <p className="text-xs text-[#ADADAA]">Optimizing for sun, spacing & companions</p>
       </div>
     );
   }
@@ -106,8 +106,8 @@ export function SmartLayoutPanel({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#6B8F47]" />
-          <span className="font-display text-sm font-semibold text-[#1C1C1A]">
+          <Sparkles className="w-4 h-4 text-[#7DA84E]" />
+          <span className="font-display text-sm font-semibold text-[#111109]">
             {assignments.length} plant{assignments.length !== 1 ? "s" : ""} placed
           </span>
         </div>
@@ -116,17 +116,17 @@ export function SmartLayoutPanel({
           {assignments.map((a, i) => (
             <div
               key={i}
-              className="p-2.5 bg-[#F5F0E8] rounded-lg border border-[#E8E2D9] cursor-default"
+              className="p-2.5 bg-[#F4F4EC] rounded-lg border border-[#E4E4DC] cursor-default"
               onMouseEnter={() => onHoverAssignment?.({ row: a.row, col: a.col })}
               onMouseLeave={() => onHoverAssignment?.(null)}
             >
               <div className="flex items-center justify-between mb-0.5">
-                <span className="text-sm font-medium text-[#1C1C1A]">{a.plantName}</span>
-                <span className="text-xs text-[#9E9890]">
+                <span className="text-sm font-medium text-[#111109]">{a.plantName}</span>
+                <span className="text-xs text-[#ADADAA]">
                   Row {a.row + 1}, Col {a.col + 1}
                 </span>
               </div>
-              <p className="text-xs text-[#6B6560]">{a.reasoning}</p>
+              <p className="text-xs text-[#6B6B5A]">{a.reasoning}</p>
             </div>
           ))}
         </div>
@@ -135,12 +135,12 @@ export function SmartLayoutPanel({
           <Button
             onClick={handleAccept}
             disabled={isAccepting}
-            className="w-full bg-[#2D5016] hover:bg-[#4A7C2F] text-white"
+            className="w-full bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
           >
             {isAccepting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
             Accept layout
           </Button>
-          <Button variant="ghost" onClick={handleRegenerate} className="w-full text-[#6B6560]">
+          <Button variant="ghost" onClick={handleRegenerate} className="w-full text-[#6B6B5A]">
             <RotateCcw className="w-4 h-4 mr-2" />
             Try again
           </Button>
@@ -166,7 +166,7 @@ export function SmartLayoutPanel({
           {wishlist.map((p) => (
             <span
               key={p.id}
-              className="flex items-center gap-1 text-xs bg-[#2D5016] text-white px-2 py-1 rounded-full"
+              className="flex items-center gap-1 text-xs bg-[#1C3D0A] text-white px-2 py-1 rounded-full"
             >
               {p.name}
               <button onClick={() => toggleWishlist(p)}>
@@ -179,7 +179,7 @@ export function SmartLayoutPanel({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9E9890]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
         <Input
           autoFocus
           placeholder="Add plants to wishlist…"
@@ -188,7 +188,7 @@ export function SmartLayoutPanel({
           className="pl-9"
         />
         {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#9E9890]" />
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
         )}
       </div>
 
@@ -200,20 +200,20 @@ export function SmartLayoutPanel({
               key={plant.id}
               onClick={() => toggleWishlist(plant)}
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-colors text-left ${
-                selected ? "bg-[#2D5016]/10 border border-[#2D5016]/20" : "hover:bg-[#F5F0E8]"
+                selected ? "bg-[#1C3D0A]/10 border border-[#1C3D0A]/20" : "hover:bg-[#F4F4EC]"
               }`}
             >
               {plant.imageUrl ? (
-                <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#F5F0E8] shrink-0 relative">
+                <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#F4F4EC] shrink-0 relative">
                   <Image src={plant.imageUrl} alt={plant.name} fill className="object-cover" sizes="32px" />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-[#F5F0E8] flex items-center justify-center shrink-0 text-[#9E9890] text-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#F4F4EC] flex items-center justify-center shrink-0 text-[#ADADAA] text-xs">
                   {plant.name[0]}
                 </div>
               )}
-              <span className="text-sm text-[#1C1C1A] truncate flex-1">{plant.name}</span>
-              {selected && <Check className="w-4 h-4 text-[#2D5016] shrink-0" />}
+              <span className="text-sm text-[#111109] truncate flex-1">{plant.name}</span>
+              {selected && <Check className="w-4 h-4 text-[#1C3D0A] shrink-0" />}
             </button>
           );
         })}
@@ -222,7 +222,7 @@ export function SmartLayoutPanel({
       <Button
         onClick={handleGenerate}
         disabled={wishlist.length === 0}
-        className="w-full bg-[#2D5016] hover:bg-[#4A7C2F] text-white disabled:opacity-40"
+        className="w-full bg-[#1C3D0A] hover:bg-[#3A6B20] text-white disabled:opacity-40"
       >
         <Sparkles className="w-4 h-4 mr-2" />
         Plan bed ({wishlist.length} plant{wishlist.length !== 1 ? "s" : ""})

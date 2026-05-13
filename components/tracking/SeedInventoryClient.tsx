@@ -70,12 +70,12 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">Inventory</h1>
+        <h1 className="font-display text-3xl font-semibold text-[#111109]">Inventory</h1>
         {tab === "inventory" && (
           <Button
             size="sm"
             onClick={() => setAddOpen(true)}
-            className="bg-[#2D5016] hover:bg-[#4A7C2F] text-white"
+            className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add seeds
@@ -84,15 +84,15 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#F5F0E8] rounded-xl p-1">
+      <div className="flex gap-1 mb-6 bg-[#F4F4EC] rounded-xl p-1">
         {(["inventory", "shopping"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
               tab === t
-                ? "bg-white text-[#1C1C1A] shadow-sm"
-                : "text-[#6B6560] hover:text-[#1C1C1A]"
+                ? "bg-white text-[#111109] shadow-sm"
+                : "text-[#6B6B5A] hover:text-[#111109]"
             }`}
           >
             {t === "inventory" ? (
@@ -114,8 +114,8 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
       {tab === "inventory" && (
         <>
           {addOpen && (
-            <form onSubmit={handleAdd} className="bg-white border border-[#E8E2D9] rounded-xl p-4 space-y-3 mb-4">
-              <p className="text-sm font-medium text-[#1C1C1A]">Add seeds</p>
+            <form onSubmit={handleAdd} className="bg-white border border-[#E4E4DC] rounded-xl p-4 space-y-3 mb-4">
+              <p className="text-sm font-medium text-[#111109]">Add seeds</p>
               <Input
                 placeholder="Plant name"
                 value={form.plantName}
@@ -141,13 +141,13 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                 <select
                   value={form.unit}
                   onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
-                  className="border border-[#E8E2D9] rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#2D5016]"
+                  className="border border-[#E4E4DC] rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
                 >
                   {UNITS.map((u) => <option key={u}>{u}</option>)}
                 </select>
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={isAdding} className="bg-[#2D5016] hover:bg-[#4A7C2F] text-white">
+                <Button type="submit" disabled={isAdding} className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white">
                   {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
@@ -156,20 +156,20 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
           )}
 
           {inventory.length === 0 && !addOpen ? (
-            <div className="text-center py-12 text-[#9E9890]">
-              <Package className="w-10 h-10 mx-auto mb-3 text-[#E8E2D9]" />
+            <div className="text-center py-12 text-[#ADADAA]">
+              <Package className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
               <p className="text-sm">No seeds tracked yet.</p>
               <p className="text-xs mt-1">Add what you have on hand.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {inventory.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-white border border-[#E8E2D9] rounded-xl">
+                <div key={item.id} className="flex items-center justify-between p-3 bg-white border border-[#E4E4DC] rounded-xl">
                   <div>
-                    <p className="text-sm font-medium text-[#1C1C1A]">
+                    <p className="text-sm font-medium text-[#111109]">
                       {item.plantName}{item.variety ? ` — ${item.variety}` : ""}
                     </p>
-                    <p className="text-xs text-[#9E9890]">
+                    <p className="text-xs text-[#ADADAA]">
                       {item.quantity} {item.unit}
                       {item.notes && ` · ${item.notes}`}
                     </p>
@@ -177,7 +177,7 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    className="text-[#9E9890] hover:text-[#B85C3A] transition-colors"
+                    className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors"
                   >
                     {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>
@@ -192,8 +192,8 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
       {tab === "shopping" && (
         <>
           {shoppingList.length === 0 ? (
-            <div className="text-center py-12 text-[#9E9890]">
-              <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-[#E8E2D9]" />
+            <div className="text-center py-12 text-[#ADADAA]">
+              <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
               <p className="text-sm">No active plantings found.</p>
               <p className="text-xs mt-1">Plan your beds to generate a shopping list.</p>
             </div>
@@ -205,10 +205,10 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                     key={item.plantId}
                     className={`flex items-center gap-3 p-3 rounded-xl border ${
                       item.inInventory
-                        ? "bg-[#F5F0E8] border-[#E8E2D9] opacity-60"
+                        ? "bg-[#F4F4EC] border-[#E4E4DC] opacity-60"
                         : checked.has(item.plantId)
-                        ? "bg-[#F5F0E8] border-[#E8E2D9]"
-                        : "bg-white border-[#E8E2D9]"
+                        ? "bg-[#F4F4EC] border-[#E4E4DC]"
+                        : "bg-white border-[#E4E4DC]"
                     }`}
                   >
                     <button
@@ -221,8 +221,8 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                       }
                       className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${
                         item.inInventory || checked.has(item.plantId)
-                          ? "bg-[#4A7C2F] border-[#4A7C2F]"
-                          : "border-[#E8E2D9]"
+                          ? "bg-[#3A6B20] border-[#3A6B20]"
+                          : "border-[#E4E4DC]"
                       }`}
                     >
                       {(item.inInventory || checked.has(item.plantId)) && (
@@ -230,11 +230,11 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                       )}
                     </button>
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${item.inInventory || checked.has(item.plantId) ? "line-through text-[#9E9890]" : "text-[#1C1C1A]"}`}>
+                      <p className={`text-sm font-medium ${item.inInventory || checked.has(item.plantId) ? "line-through text-[#ADADAA]" : "text-[#111109]"}`}>
                         {item.plantName}
                       </p>
                       {item.inInventory && item.inventoryQty !== null && (
-                        <p className="text-xs text-[#6B8F47]">{item.inventoryQty} in stock</p>
+                        <p className="text-xs text-[#7DA84E]">{item.inventoryQty} in stock</p>
                       )}
                     </div>
                   </div>
@@ -245,7 +245,7 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                 <Button
                   onClick={handleShareShopping}
                   variant="outline"
-                  className="w-full border-[#2D5016] text-[#2D5016] hover:bg-[#F5F0E8]"
+                  className="w-full border-[#1C3D0A] text-[#1C3D0A] hover:bg-[#F4F4EC]"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Share list ({needToBuy.filter((s) => !checked.has(s.plantId)).length} items)

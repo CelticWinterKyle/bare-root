@@ -7,14 +7,14 @@ import Link from "next/link";
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
   START_SEEDS:       { icon: <Sprout className="w-4 h-4" />,          accent: "#D4A843", bg: "#FFF8E7" },
-  TRANSPLANT:        { icon: <ArrowUpFromLine className="w-4 h-4" />, accent: "#6B8F47", bg: "#EEF6E7" },
-  HARVEST:           { icon: <Scissors className="w-4 h-4" />,        accent: "#C4790A", bg: "#FFF3E8" },
+  TRANSPLANT:        { icon: <ArrowUpFromLine className="w-4 h-4" />, accent: "#7DA84E", bg: "#EEF6E7" },
+  HARVEST:           { icon: <Scissors className="w-4 h-4" />,        accent: "#D4820A", bg: "#FFF3E8" },
   FROST_ALERT:       { icon: <Snowflake className="w-4 h-4" />,       accent: "#4B9EBF", bg: "#EFF6FB" },
   WATER:             { icon: <Leaf className="w-4 h-4" />,            accent: "#4B9EBF", bg: "#EFF6FB" },
-  FERTILIZE:         { icon: <Leaf className="w-4 h-4" />,            accent: "#6B8F47", bg: "#EEF6E7" },
-  CUSTOM:            { icon: <Bell className="w-4 h-4" />,            accent: "#9E9890", bg: "#F5F0E8" },
-  SUCCESSION_PLANTING: { icon: <Sprout className="w-4 h-4" />,        accent: "#6B8F47", bg: "#EEF6E7" },
-  CROP_ROTATION:     { icon: <Sprout className="w-4 h-4" />,          accent: "#C4790A", bg: "#FFF3E8" },
+  FERTILIZE:         { icon: <Leaf className="w-4 h-4" />,            accent: "#7DA84E", bg: "#EEF6E7" },
+  CUSTOM:            { icon: <Bell className="w-4 h-4" />,            accent: "#ADADAA", bg: "#F4F4EC" },
+  SUCCESSION_PLANTING: { icon: <Sprout className="w-4 h-4" />,        accent: "#7DA84E", bg: "#EEF6E7" },
+  CROP_ROTATION:     { icon: <Sprout className="w-4 h-4" />,          accent: "#D4820A", bg: "#FFF3E8" },
 };
 
 type ReminderItem = {
@@ -63,7 +63,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
 
     return (
       <div
-        className="flex items-start gap-0 bg-white rounded-xl border border-[#E8E2D9] overflow-hidden hover:shadow-sm transition-shadow"
+        className="flex items-start gap-0 bg-white rounded-xl border border-[#E4E4DC] overflow-hidden hover:shadow-sm transition-shadow"
       >
         {/* Color left strip */}
         <div
@@ -84,15 +84,15 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
           {href ? (
             <Link
               href={href}
-              className="text-sm font-semibold text-[#1C1C1A] hover:text-[#2D5016] transition-colors leading-tight block"
+              className="text-sm font-semibold text-[#111109] hover:text-[#1C3D0A] transition-colors leading-tight block"
             >
               {r.title}
             </Link>
           ) : (
-            <p className="text-sm font-semibold text-[#1C1C1A] leading-tight">{r.title}</p>
+            <p className="text-sm font-semibold text-[#111109] leading-tight">{r.title}</p>
           )}
           {r.body && (
-            <p className="text-xs text-[#6B6560] mt-0.5 line-clamp-2">{r.body}</p>
+            <p className="text-xs text-[#6B6B5A] mt-0.5 line-clamp-2">{r.body}</p>
           )}
           <div className="flex items-center gap-2 mt-1.5">
             <span
@@ -102,7 +102,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
               {formatRelativeDate(r.scheduledAt)}
             </span>
             {r.plantName && (
-              <span className="text-xs text-[#9E9890] truncate">{r.plantName}</span>
+              <span className="text-xs text-[#ADADAA] truncate">{r.plantName}</span>
             )}
           </div>
         </div>
@@ -110,7 +110,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
         {/* Dismiss */}
         <button
           onClick={() => handleDismiss(r.id)}
-          className="shrink-0 p-3.5 text-[#9E9890] hover:text-[#1C1C1A] transition-colors"
+          className="shrink-0 p-3.5 text-[#ADADAA] hover:text-[#111109] transition-colors"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />
@@ -122,9 +122,9 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
   if (reminders.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-8">Reminders</h1>
-        <div className="text-center py-16 text-[#9E9890]">
-          <Bell className="w-10 h-10 mx-auto mb-3 text-[#E8E2D9]" />
+        <h1 className="font-display text-3xl font-semibold text-[#111109] mb-8">Reminders</h1>
+        <div className="text-center py-16 text-[#ADADAA]">
+          <Bell className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
           <p className="text-sm">No reminders right now.</p>
           <p className="text-xs mt-1">You're all caught up.</p>
         </div>
@@ -134,11 +134,11 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-8">Reminders</h1>
+      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-8">Reminders</h1>
 
       {pending.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs text-[#9E9890] font-semibold uppercase tracking-wider mb-3">
+          <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
             Upcoming
           </p>
           <div className="space-y-2">
@@ -151,7 +151,7 @@ export function RemindersClient({ reminders }: { reminders: ReminderItem[] }) {
 
       {sent.length > 0 && (
         <div>
-          <p className="text-xs text-[#9E9890] font-semibold uppercase tracking-wider mb-3">
+          <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
             Sent
           </p>
           <div className="space-y-2 opacity-75">

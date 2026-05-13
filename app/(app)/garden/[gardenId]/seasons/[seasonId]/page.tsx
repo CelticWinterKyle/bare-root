@@ -80,35 +80,35 @@ export default async function SeasonSummaryPage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link
         href={`/garden/${gardenId}/seasons`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6560] hover:text-[#2D5016] mb-6 transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         {season.garden.name} · Seasons
       </Link>
 
       <header className="mb-8">
-        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A]">{season.name}</h1>
-        <p className="text-sm text-[#6B6560] mt-1">
+        <h1 className="font-display text-3xl font-semibold text-[#111109]">{season.name}</h1>
+        <p className="text-sm text-[#6B6B5A] mt-1">
           {season.startDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
           {season.endDate && ` — ${season.endDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
         </p>
 
         {/* Season stats */}
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-[#E8E2D9]">
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-[#E4E4DC]">
           <div>
-            <p className="text-xs text-[#9E9890]">Plantings</p>
-            <p className="text-xl font-semibold text-[#1C1C1A]">{totalPlantings}</p>
+            <p className="text-xs text-[#ADADAA]">Plantings</p>
+            <p className="text-xl font-semibold text-[#111109]">{totalPlantings}</p>
           </div>
           {avgRating && (
             <div>
-              <p className="text-xs text-[#9E9890]">Avg rating</p>
-              <p className="text-xl font-semibold text-[#1C1C1A]">{avgRating.toFixed(1)} / 5</p>
+              <p className="text-xs text-[#ADADAA]">Avg rating</p>
+              <p className="text-xl font-semibold text-[#111109]">{avgRating.toFixed(1)} / 5</p>
             </div>
           )}
           {growAgainList.length > 0 && (
             <div>
-              <p className="text-xs text-[#9E9890]">Grow again</p>
-              <p className="text-xl font-semibold text-[#4A7C2F]">{growAgainList.length}</p>
+              <p className="text-xs text-[#ADADAA]">Grow again</p>
+              <p className="text-xl font-semibold text-[#3A6B20]">{growAgainList.length}</p>
             </div>
           )}
         </div>
@@ -117,8 +117,8 @@ export default async function SeasonSummaryPage({
       {/* Harvest by plant */}
       {summaries.some((s) => s.logCount > 0) && (
         <section className="mb-8">
-          <h2 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#C4790A]" />
+          <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[#D4820A]" />
             Harvest summary
           </h2>
           <div className="space-y-2">
@@ -127,12 +127,12 @@ export default async function SeasonSummaryPage({
               .map((s) => (
                 <div key={s.plantId} className="flex items-center justify-between p-3 bg-[#FFF3E8] border border-orange-100 rounded-xl">
                   <div>
-                    <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#1C1C1A] hover:text-[#2D5016]">
+                    <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#111109] hover:text-[#1C3D0A]">
                       {s.plantName}
                     </Link>
-                    <p className="text-xs text-[#9E9890]">{s.beds.join(", ")}</p>
+                    <p className="text-xs text-[#ADADAA]">{s.beds.join(", ")}</p>
                   </div>
-                  <span className="text-sm font-semibold text-[#C4790A]">
+                  <span className="text-sm font-semibold text-[#D4820A]">
                     {s.totalHarvest} {s.unit}
                   </span>
                 </div>
@@ -143,29 +143,29 @@ export default async function SeasonSummaryPage({
 
       {/* All plantings */}
       <section className="mb-8">
-        <h2 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 flex items-center gap-2">
-          <Leaf className="w-5 h-5 text-[#6B8F47]" />
+        <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 flex items-center gap-2">
+          <Leaf className="w-5 h-5 text-[#7DA84E]" />
           All plantings
         </h2>
         <div className="space-y-2">
           {summaries.map((s) => (
-            <div key={s.plantId} className="flex items-center justify-between p-3 bg-white border border-[#E8E2D9] rounded-xl">
+            <div key={s.plantId} className="flex items-center justify-between p-3 bg-white border border-[#E4E4DC] rounded-xl">
               <div>
-                <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#1C1C1A] hover:text-[#2D5016]">
+                <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#111109] hover:text-[#1C3D0A]">
                   {s.plantName}
                 </Link>
-                <p className="text-xs text-[#9E9890]">
+                <p className="text-xs text-[#ADADAA]">
                   {s.status.replace(/_/g, " ").toLowerCase()} · {s.beds.join(", ")}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {s.rating && (
-                  <span className="text-xs text-[#C4790A]">
+                  <span className="text-xs text-[#D4820A]">
                     {"★".repeat(s.rating)}
                   </span>
                 )}
                 {s.growAgain && (
-                  <span className="text-[10px] bg-[#F5F0E8] text-[#4A7C2F] font-medium px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-[#F4F4EC] text-[#3A6B20] font-medium px-2 py-0.5 rounded-full">
                     Grow again
                   </span>
                 )}
@@ -178,7 +178,7 @@ export default async function SeasonSummaryPage({
       {/* Grow again list */}
       {growAgainList.length > 0 && (
         <section>
-          <h2 className="font-display text-lg font-semibold text-[#1C1C1A] mb-3 flex items-center gap-2">
+          <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 flex items-center gap-2">
             <Star className="w-5 h-5 text-[#D4A843]" />
             Plant again next season
           </h2>
@@ -187,7 +187,7 @@ export default async function SeasonSummaryPage({
               <Link
                 key={s.plantId}
                 href={`/plants/${s.plantId}`}
-                className="text-sm bg-[#F5F0E8] border border-[#E8E2D9] text-[#2D5016] px-3 py-1.5 rounded-full hover:bg-[#E8E2D9] transition-colors font-medium"
+                className="text-sm bg-[#F4F4EC] border border-[#E4E4DC] text-[#1C3D0A] px-3 py-1.5 rounded-full hover:bg-[#E4E4DC] transition-colors font-medium"
               >
                 {s.plantName}
               </Link>
@@ -197,7 +197,7 @@ export default async function SeasonSummaryPage({
       )}
 
       {totalPlantings === 0 && (
-        <div className="text-center py-12 text-[#9E9890]">
+        <div className="text-center py-12 text-[#ADADAA]">
           <p className="text-sm">No plantings recorded for this season.</p>
         </div>
       )}

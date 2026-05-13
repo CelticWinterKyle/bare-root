@@ -48,8 +48,8 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg font-semibold text-[#1C1C1A]">Photos</h2>
-        <span className="text-xs text-[#9E9890]">
+        <h2 className="font-display text-lg font-semibold text-[#111109]">Photos</h2>
+        <span className="text-xs text-[#ADADAA]">
           {photos.length}{!isPro ? `/${FREE_LIMIT}` : ""} photo{photos.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -57,7 +57,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
       {photos.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-3">
           {photos.map((photo) => (
-            <div key={photo.id} className="relative group aspect-square rounded-xl overflow-hidden bg-[#F5F0E8]">
+            <div key={photo.id} className="relative group aspect-square rounded-xl overflow-hidden bg-[#F4F4EC]">
               <Image
                 src={photo.url}
                 alt={photo.caption ?? "Garden photo"}
@@ -90,11 +90,11 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
       )}
 
       {!isPro && photos.length >= FREE_LIMIT ? (
-        <div className="flex items-center gap-2 text-sm text-[#9E9890]">
+        <div className="flex items-center gap-2 text-sm text-[#ADADAA]">
           <Lock className="w-4 h-4" />
           <span>
             Photo limit reached.{" "}
-            <Link href="/settings/billing" className="text-[#C4790A] hover:underline">
+            <Link href="/settings/billing" className="text-[#D4820A] hover:underline">
               Upgrade to Pro
             </Link>{" "}
             for unlimited photos.
@@ -102,7 +102,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
         </div>
       ) : (
         <label className={`flex items-center gap-2 text-sm font-medium cursor-pointer transition-colors ${
-          isUploading ? "text-[#9E9890]" : "text-[#6B8F47] hover:text-[#2D5016]"
+          isUploading ? "text-[#ADADAA]" : "text-[#7DA84E] hover:text-[#1C3D0A]"
         }`}>
           {isUploading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

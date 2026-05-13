@@ -13,9 +13,9 @@ const STATUS_STYLES: Record<string, { from: string; to: string; label: string }>
   PLANNED:      { from: "#8FA86B", to: "#7A9559", label: "Planned" },
   SEEDS_STARTED:{ from: "#D4A843", to: "#BA8F2E", label: "Seeds started" },
   TRANSPLANTED: { from: "#7AB648", to: "#609834", label: "Transplanted" },
-  ACTIVE:       { from: "#4A7C2F", to: "#325A1F", label: "Active" },
-  HARVESTING:   { from: "#C4790A", to: "#A36207", label: "Harvesting" },
-  HARVESTED:    { from: "#9E9890", to: "#837E78", label: "Harvested" },
+  ACTIVE:       { from: "#3A6B20", to: "#325A1F", label: "Active" },
+  HARVESTING:   { from: "#D4820A", to: "#A36207", label: "Harvesting" },
+  HARVESTED:    { from: "#ADADAA", to: "#837E78", label: "Harvested" },
   FAILED:       { from: "#B85C3A", to: "#954928", label: "Failed" },
 };
 
@@ -173,7 +173,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const hasAnyWarnings = cells.some((c) => c.warnings.length > 0);
   const [hoveredAssignment, setHoveredAssignment] = useState<{ row: number; col: number } | null>(null);
 
-  const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]";
+  const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE] hover:text-[#111109]";
 
   return (
     <div className="flex flex-col gap-6">
@@ -183,17 +183,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
         {/* Sun mapping */}
         <button
           onClick={() => { setSunMode((v) => !v); if (showPanel) setPanel({ type: "none" }); }}
+          style={sunMode ? { background: "#D4820A" } : undefined}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             sunMode
-              ? "bg-amber-400 text-white shadow-sm shadow-amber-200"
-              : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"
+              ? "text-white shadow-sm"
+              : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE] hover:text-[#111109]"
           }`}
         >
           <Sun className="w-4 h-4" />
           {sunMode ? "Tap cells to change sun" : "Map sun"}
         </button>
         {sunMode && (
-          <button onClick={() => setSunMode(false)} className="text-sm text-[#9E9890] hover:text-[#1C1C1A] transition-colors">
+          <button onClick={() => setSunMode(false)} className="text-sm text-[#ADADAA] hover:text-[#111109] transition-colors">
             Done
           </button>
         )}
@@ -211,7 +212,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
               </button>
             )}
 
-            <div className="w-px h-5 bg-[#E8E2D9]" />
+            <div className="w-px h-5 bg-[#E4E4DC]" />
 
             {/* Zoom controls */}
             <button onClick={() => setZoom((z) => Math.min(4, z * 1.35))} title="Zoom in (+)" className={btnBase}>
@@ -229,16 +230,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             {/* Plan bed — pushed to right edge of constrained toolbar */}
             <button
               onClick={() => setPanel(panel.type === "smart-layout" ? { type: "none" } : { type: "smart-layout" })}
+              style={panel.type === "smart-layout" ? { background: "#1C3D0A" } : undefined}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ml-auto ${
                 panel.type === "smart-layout"
-                  ? "bg-[#2D5016] text-white shadow-sm"
-                  : "bg-[#F5F0E8] text-[#6B6560] hover:bg-[#EDE8DF] hover:text-[#1C1C1A]"
+                  ? "text-white shadow-sm"
+                  : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE] hover:text-[#111109]"
               }`}
             >
               <Sparkles className="w-4 h-4" />
               Plan bed
               {!isPro && panel.type !== "smart-layout" && (
-                <span className="text-[9px] font-semibold bg-[#C4790A] text-white px-1.5 py-0.5 rounded-full ml-0.5 leading-none">
+                <span className="text-[9px] font-semibold text-white px-1.5 py-0.5 rounded-full ml-0.5 leading-none" style={{ background: "#D4820A" }}>
                   PRO
                 </span>
               )}
@@ -260,9 +262,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
             {/* Empty bed hint — shown until the first plant is added */}
             {isEmpty && !sunMode && panel.type === "none" && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl px-4 py-3 shadow-md border border-[#E8E2D9] text-center">
-                  <p className="text-sm font-semibold text-[#1C1C1A]">Tap any cell</p>
-                  <p className="text-xs text-[#9E9890] mt-0.5">to assign a plant</p>
+                <div className="backdrop-blur-sm rounded-xl px-4 py-3 shadow-md text-center" style={{ background: "rgba(253,253,248,0.92)", border: "1px solid #E4E4DC" }}>
+                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>Tap any cell</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#ADADAA" }}>to assign a plant</p>
                 </div>
               </div>
             )}
@@ -318,9 +320,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                               ? "rgba(107, 143, 71, 0.25)"
                               : "rgba(58, 38, 22, 0.6)",
                             boxShadow: isHoveredByPlanner
-                              ? "inset 0 0 0 3px #C4790A, 0 2px 8px rgba(196,121,10,0.4)"
+                              ? "inset 0 0 0 3px #D4820A, 0 2px 8px rgba(196,121,10,0.4)"
                               : isSelected
-                              ? "inset 0 0 0 2.5px #2D5016, 0 2px 8px rgba(45,80,22,0.3)"
+                              ? "inset 0 0 0 2.5px #1C3D0A, 0 2px 8px rgba(45,80,22,0.3)"
                               : planting
                               ? "inset 0 -2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)"
                               : "inset 0 1px 3px rgba(0,0,0,0.08)",
@@ -364,7 +366,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                             <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5"
                               style={{ background: "linear-gradient(to top, rgba(45,80,22,0.35) 0%, transparent 100%)" }}
                             >
-                              <span className="text-[#2D5016] font-medium text-center block leading-tight italic" style={{ fontSize: Math.max(8, labelSize - 1) }}>
+                              <span className="text-[#1C3D0A] font-medium text-center block leading-tight italic" style={{ fontSize: Math.max(8, labelSize - 1) }}>
                                 {preview.plantName.split(" ")[0]}
                               </span>
                             </div>
@@ -377,7 +379,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                               style={{
                                 width: badgePx,
                                 height: badgePx,
-                                background: hasHarmful ? "#B85C3A" : "#4A7C2F",
+                                background: hasHarmful ? "#B85C3A" : "#3A6B20",
                               }}
                             />
                           )}
@@ -401,7 +403,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
           {!sunMode && (
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
               {presentStatuses.size === 0 && !hasAnyWarnings ? (
-                <span className="text-xs text-[#9E9890]">Tap any cell to add a plant</span>
+                <span className="text-xs text-[#ADADAA]">Tap any cell to add a plant</span>
               ) : (
                 <>
                   {Object.entries(STATUS_STYLES)
@@ -409,18 +411,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                     .map(([key, s]) => (
                       <div key={key} className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm shadow-sm" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }} />
-                        <span className="text-xs text-[#9E9890]">{s.label}</span>
+                        <span className="text-xs text-[#ADADAA]">{s.label}</span>
                       </div>
                     ))}
                   {hasAnyWarnings && (
                     <>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#B85C3A" }} />
-                        <span className="text-xs text-[#9E9890]">Conflict</span>
+                        <span className="text-xs text-[#ADADAA]">Conflict</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#4A7C2F" }} />
-                        <span className="text-xs text-[#9E9890]">Beneficial</span>
+                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#3A6B20" }} />
+                        <span className="text-xs text-[#ADADAA]">Beneficial</span>
                       </div>
                     </>
                   )}
@@ -436,10 +438,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
           style={{ width: showPanel ? 272 : 0, opacity: showPanel ? 1 : 0 }}
         >
           <div className="w-68" style={{ width: 272 }}>
-            <div className="bg-white rounded-xl border border-[#E8E2D9] shadow-md overflow-hidden">
+            <div className="rounded-xl border shadow-md overflow-hidden" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
               {/* Panel header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#F5F0E8]">
-                <p className="text-sm font-semibold text-[#1C1C1A]">
+              <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "#F4F4EC" }}>
+                <p className="text-sm font-semibold text-[#111109]">
                   {panel.type === "picker"
                     ? "Add a plant"
                     : panel.type === "smart-layout"
@@ -448,7 +450,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                 </p>
                 <button
                   onClick={() => setPanel({ type: "none" })}
-                  className="w-6 h-6 flex items-center justify-center rounded-full text-[#9E9890] hover:text-[#1C1C1A] hover:bg-[#F5F0E8] transition-colors"
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-[#ADADAA] hover:text-[#111109] hover:bg-[#F4F4EC] transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -487,14 +489,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                     />
                   ) : (
                     <div className="text-center py-8 space-y-3">
-                      <div className="w-12 h-12 rounded-xl bg-[#F5F0E8] flex items-center justify-center mx-auto">
-                        <Sparkles className="w-6 h-6 text-[#9E9890]" />
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: "#F4F4EC" }}>
+                        <Sparkles className="w-6 h-6" style={{ color: "#ADADAA" }} />
                       </div>
-                      <p className="text-sm font-semibold text-[#1C1C1A]">AI layout planner</p>
-                      <p className="text-xs text-[#6B6560] leading-relaxed">
+                      <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
+                      <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
                         Build an optimized bed from your plant wishlist. Respects spacing, sun requirements, and companion relations.
                       </p>
-                      <a href="/settings/billing" className="inline-block text-sm font-medium text-[#C4790A] hover:underline">
+                      <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
                         Upgrade to Pro →
                       </a>
                     </div>

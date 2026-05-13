@@ -33,7 +33,7 @@ export function SeasonSelector({ seasons, selectedId, isPro }: Props) {
 
   if (visible.length <= 1) {
     return (
-      <span className="text-sm text-[#6B6560]">
+      <span className="text-sm text-[#6B6B5A]">
         {selected?.name ?? "No season"}
       </span>
     );
@@ -43,7 +43,7 @@ export function SeasonSelector({ seasons, selectedId, isPro }: Props) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-sm font-medium text-[#2D5016] hover:text-[#1C1C1A] transition-colors"
+        className="flex items-center gap-1.5 text-sm font-medium text-[#1C3D0A] hover:text-[#111109] transition-colors"
       >
         {selected?.name ?? "Select season"}
         <ChevronDown className="w-3.5 h-3.5" />
@@ -52,30 +52,30 @@ export function SeasonSelector({ seasons, selectedId, isPro }: Props) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-[#E8E2D9] rounded-xl shadow-md min-w-[160px] py-1 overflow-hidden">
+          <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-[#E4E4DC] rounded-xl shadow-md min-w-[160px] py-1 overflow-hidden">
             {visible.map((s) => (
               <button
                 key={s.id}
                 onClick={() => selectSeason(s.id)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[#1C1C1A] hover:bg-[#F5F0E8] transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[#111109] hover:bg-[#F4F4EC] transition-colors"
               >
                 <span>{s.name}</span>
                 <span className="flex items-center gap-1.5 ml-4">
                   {s.isActive && (
-                    <span className="text-[10px] text-[#4A7C2F] font-medium bg-[#F5F0E8] px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] text-[#3A6B20] font-medium bg-[#F4F4EC] px-1.5 py-0.5 rounded-full">
                       Active
                     </span>
                   )}
                   {s.id === selectedId && (
-                    <Check className="w-3.5 h-3.5 text-[#2D5016]" />
+                    <Check className="w-3.5 h-3.5 text-[#1C3D0A]" />
                   )}
                 </span>
               </button>
             ))}
             {!isPro && seasons.length > 1 && (
-              <div className="border-t border-[#E8E2D9] mt-1 pt-1 px-3 pb-2">
-                <p className="text-[10px] text-[#9E9890]">
-                  <a href="/settings/billing" className="text-[#C4790A] hover:underline">Upgrade to Pro</a> to view past seasons
+              <div className="border-t border-[#E4E4DC] mt-1 pt-1 px-3 pb-2">
+                <p className="text-[10px] text-[#ADADAA]">
+                  <a href="/settings/billing" className="text-[#D4820A] hover:underline">Upgrade to Pro</a> to view past seasons
                 </p>
               </div>
             )}

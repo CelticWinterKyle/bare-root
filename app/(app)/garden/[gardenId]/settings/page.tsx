@@ -36,25 +36,25 @@ export default async function GardenSettingsPage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link
         href={`/garden/${gardenId}`}
-        className="inline-flex items-center gap-1 text-sm text-[#6B6560] hover:text-[#2D5016] mb-6 transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-[#6B6B5A] hover:text-[#1C3D0A] mb-6 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         {garden.name}
       </Link>
 
-      <h1 className="font-display text-2xl font-semibold text-[#1C1C1A] mb-8">Garden settings</h1>
+      <h1 className="font-display text-2xl font-semibold text-[#111109] mb-8">Garden settings</h1>
 
       {/* Collaborators */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-medium text-[#1C1C1A]">Collaborators</h2>
-            <p className="text-xs text-[#9E9890] mt-0.5">Share this garden with others</p>
+            <h2 className="font-medium text-[#111109]">Collaborators</h2>
+            <p className="text-xs text-[#ADADAA] mt-0.5">Share this garden with others</p>
           </div>
           {!isPro && (
             <Link
               href="/settings/billing"
-              className="flex items-center gap-1 text-xs text-[#C4790A] font-medium hover:underline"
+              className="flex items-center gap-1 text-xs text-[#D4820A] font-medium hover:underline"
             >
               <Lock className="w-3 h-3" />
               Pro feature
@@ -63,13 +63,13 @@ export default async function GardenSettingsPage({
         </div>
 
         {!isPro ? (
-          <div className="bg-[#F5F0E8] rounded-xl border border-dashed border-[#E8E2D9] p-6 text-center">
-            <Lock className="w-6 h-6 text-[#9E9890] mx-auto mb-2" />
-            <p className="text-sm font-medium text-[#1C1C1A] mb-1">Collaborators are a Pro feature</p>
-            <p className="text-xs text-[#9E9890] mb-3">Invite up to 5 people to plan together.</p>
+          <div className="bg-[#F4F4EC] rounded-xl border border-dashed border-[#E4E4DC] p-6 text-center">
+            <Lock className="w-6 h-6 text-[#ADADAA] mx-auto mb-2" />
+            <p className="text-sm font-medium text-[#111109] mb-1">Collaborators are a Pro feature</p>
+            <p className="text-xs text-[#ADADAA] mb-3">Invite up to 5 people to plan together.</p>
             <Link
               href="/settings/billing"
-              className="text-sm font-medium text-[#C4790A] hover:underline"
+              className="text-sm font-medium text-[#D4820A] hover:underline"
             >
               Upgrade to Pro
             </Link>

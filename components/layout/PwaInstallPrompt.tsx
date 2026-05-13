@@ -35,23 +35,23 @@ export function PwaInstallPrompt() {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 bg-white border border-[#E8E2D9] rounded-2xl shadow-lg p-4 flex items-start gap-3 max-w-sm mx-auto">
-      <div className="w-8 h-8 bg-[#F5F0E8] rounded-lg flex items-center justify-center shrink-0">
-        <Smartphone className="w-4 h-4 text-[#2D5016]" />
+    <div className="fixed bottom-20 left-4 right-4 z-50 bg-white border border-[#E4E4DC] rounded-2xl shadow-lg p-4 flex items-start gap-3 max-w-sm mx-auto">
+      <div className="w-8 h-8 bg-[#F4F4EC] rounded-lg flex items-center justify-center shrink-0">
+        <Smartphone className="w-4 h-4 text-[#1C3D0A]" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[#1C1C1A]">Install Bare Root</p>
+        <p className="text-sm font-medium text-[#111109]">Install Bare Root</p>
         {isIos ? (
-          <p className="text-xs text-[#6B6560] mt-0.5">
+          <p className="text-xs text-[#6B6B5A] mt-0.5">
             Tap the Share button <span className="font-medium">↑</span> then &quot;Add to Home Screen&quot;
           </p>
         ) : (
-          <p className="text-xs text-[#6B6560] mt-0.5">
+          <p className="text-xs text-[#6B6B5A] mt-0.5">
             Add to your home screen for a faster, app-like experience.
           </p>
         )}
       </div>
-      <button onClick={dismiss} className="shrink-0 text-[#9E9890] hover:text-[#1C1C1A]" aria-label="Dismiss">
+      <button onClick={dismiss} className="shrink-0 text-[#ADADAA] hover:text-[#111109]" aria-label="Dismiss">
         <X className="w-4 h-4" />
       </button>
     </div>

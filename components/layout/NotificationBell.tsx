@@ -7,11 +7,11 @@ import { dismissReminder } from "@/app/actions/reminders";
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   START_SEEDS: <Sprout className="w-3.5 h-3.5 text-[#D4A843]" />,
-  TRANSPLANT: <ArrowUpFromLine className="w-3.5 h-3.5 text-[#6B8F47]" />,
-  HARVEST: <Scissors className="w-3.5 h-3.5 text-[#C4790A]" />,
+  TRANSPLANT: <ArrowUpFromLine className="w-3.5 h-3.5 text-[#7DA84E]" />,
+  HARVEST: <Scissors className="w-3.5 h-3.5 text-[#D4820A]" />,
   FROST_ALERT: <Snowflake className="w-3.5 h-3.5 text-blue-400" />,
   WATER: <Leaf className="w-3.5 h-3.5 text-blue-400" />,
-  FERTILIZE: <Leaf className="w-3.5 h-3.5 text-[#6B8F47]" />,
+  FERTILIZE: <Leaf className="w-3.5 h-3.5 text-[#7DA84E]" />,
 };
 
 type BellReminder = {

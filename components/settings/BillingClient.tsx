@@ -79,12 +79,12 @@ export function BillingClient({
   if (justUpgraded) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 bg-[#F5F0E8] rounded-full flex items-center justify-center mx-auto mb-4">
-          <Star className="w-8 h-8 text-[#C4790A] fill-[#C4790A]" />
+        <div className="w-16 h-16 bg-[#F4F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
+          <Star className="w-8 h-8 text-[#D4820A] fill-[#D4820A]" />
         </div>
-        <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-2">Welcome to Pro!</h1>
-        <p className="text-[#6B6560] mb-8">All Pro features are now unlocked. Happy growing.</p>
-        <Link href="/dashboard" className="inline-flex bg-[#2D5016] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#4A7C2F] transition-colors">
+        <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Welcome to Pro!</h1>
+        <p className="text-[#6B6B5A] mb-8">All Pro features are now unlocked. Happy growing.</p>
+        <Link href="/dashboard" className="inline-flex bg-[#1C3D0A] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#3A6B20] transition-colors">
           Go to your garden →
         </Link>
       </div>
@@ -93,30 +93,30 @@ export function BillingClient({
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-semibold text-[#1C1C1A] mb-2">Billing</h1>
+      <h1 className="font-display text-3xl font-semibold text-[#111109] mb-2">Billing</h1>
 
       {isPro && trialDaysLeft !== null && trialDaysLeft > 0 && (
         <div className="mb-6 bg-[#FFF3E8] border border-orange-200 rounded-xl px-4 py-3">
-          <p className="text-sm font-medium text-[#C4790A]">
+          <p className="text-sm font-medium text-[#D4820A]">
             Trial ends in {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}
           </p>
-          <p className="text-xs text-[#6B6560] mt-0.5">Your card will be charged when the trial ends.</p>
+          <p className="text-xs text-[#6B6B5A] mt-0.5">Your card will be charged when the trial ends.</p>
         </div>
       )}
 
       {isPro ? (
         <div className="space-y-4">
-          <div className="bg-[#F5F0E8] border border-[#E8E2D9] rounded-xl p-4 flex items-center gap-3">
-            <Sprout className="w-5 h-5 text-[#2D5016]" />
+          <div className="bg-[#F4F4EC] border border-[#E4E4DC] rounded-xl p-4 flex items-center gap-3">
+            <Sprout className="w-5 h-5 text-[#1C3D0A]" />
             <div>
-              <p className="text-sm font-semibold text-[#1C1C1A]">Bare Root Pro</p>
-              <p className="text-xs text-[#6B6560]">All features unlocked</p>
+              <p className="text-sm font-semibold text-[#111109]">Bare Root Pro</p>
+              <p className="text-xs text-[#6B6B5A]">All features unlocked</p>
             </div>
           </div>
           <Button
             onClick={handlePortal}
             variant="outline"
-            className="w-full border-[#E8E2D9] text-[#6B6560]"
+            className="w-full border-[#E4E4DC] text-[#6B6B5A]"
             disabled={!!loading}
           >
             {loading === "portal" ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -125,18 +125,18 @@ export function BillingClient({
         </div>
       ) : (
         <>
-          <p className="text-[#6B6560] mb-8">
+          <p className="text-[#6B6B5A] mb-8">
             {hadTrial ? "Upgrade to unlock all Pro features." : "Start a 7-day free trial — no charge until it ends."}
           </p>
 
           {/* Billing toggle */}
-          <div className="flex gap-1 mb-6 bg-[#F5F0E8] rounded-xl p-1 w-fit">
+          <div className="flex gap-1 mb-6 bg-[#F4F4EC] rounded-xl p-1 w-fit">
             {(["monthly", "annual"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setBilling(t)}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  billing === t ? "bg-white text-[#1C1C1A] shadow-sm" : "text-[#6B6560]"
+                  billing === t ? "bg-white text-[#111109] shadow-sm" : "text-[#6B6B5A]"
                 }`}
               >
                 {t === "monthly" ? "Monthly" : "Annual (save 35%)"}
@@ -147,23 +147,23 @@ export function BillingClient({
           {/* Plan cards */}
           <div className="grid gap-4 sm:grid-cols-2 mb-8">
             {/* Free */}
-            <div className="bg-white border border-[#E8E2D9] rounded-xl p-5">
-              <p className="font-semibold text-[#1C1C1A] mb-0.5">Free</p>
-              <p className="text-2xl font-bold text-[#1C1C1A] mb-4">$0</p>
+            <div className="bg-white border border-[#E4E4DC] rounded-xl p-5">
+              <p className="font-semibold text-[#111109] mb-0.5">Free</p>
+              <p className="text-2xl font-bold text-[#111109] mb-4">$0</p>
               <ul className="space-y-2 mb-6">
                 {FREE_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-[#6B6560]">
-                    <Check className="w-4 h-4 text-[#6B8F47] shrink-0" />
+                  <li key={f} className="flex items-center gap-2 text-sm text-[#6B6B5A]">
+                    <Check className="w-4 h-4 text-[#7DA84E] shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-center text-[#9E9890]">Your current plan</p>
+              <p className="text-xs text-center text-[#ADADAA]">Your current plan</p>
             </div>
 
             {/* Pro */}
-            <div className="bg-[#2D5016] rounded-xl p-5 text-white relative overflow-hidden">
-              <div className="absolute top-3 right-3 text-[11px] bg-[#C4790A] text-white px-2 py-0.5 rounded-full font-medium">
+            <div className="bg-[#1C3D0A] rounded-xl p-5 text-white relative overflow-hidden">
+              <div className="absolute top-3 right-3 text-[11px] bg-[#D4820A] text-white px-2 py-0.5 rounded-full font-medium">
                 {hadTrial ? "Best value" : "7-day trial"}
               </div>
               <p className="font-semibold mb-0.5">Pro</p>
@@ -182,7 +182,7 @@ export function BillingClient({
               <Button
                 onClick={() => handleCheckout(billing === "monthly" ? monthlyPriceId : annualPriceId)}
                 disabled={!!loading}
-                className="w-full bg-white text-[#2D5016] hover:bg-white/90 font-semibold"
+                className="w-full bg-white text-[#1C3D0A] hover:bg-white/90 font-semibold"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {hadTrial ? "Upgrade to Pro" : "Start free trial"}
