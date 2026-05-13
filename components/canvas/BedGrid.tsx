@@ -102,10 +102,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   const [zoom, setZoom] = useState(1);
 
   // Measure the scrollable viewport width for horizontal cell fitting.
-  // Start at 0 so cells render at minimum size before ResizeObserver fires — avoids
-  // a large initial render that triggers a cascade of ResizeObserver callbacks.
+  // Start at 360 (conservative mobile estimate) so the first render is close to
+  // the real size and ResizeObserver only makes one small correction.
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [vpW, setVpW] = useState(0);
+  const [vpW, setVpW] = useState(360);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -267,7 +267,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-start" style={{ marginTop: "20px" }}>
+      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-start" style={{ marginTop: "20px" }}>
         {/* Bed column */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Viewport: desktop caps height + scrolls; mobile flows naturally so page scrolls */}
