@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { HarvestLogSection } from "@/components/tracking/HarvestLogSection";
 import { PhotoGallery } from "@/components/tracking/PhotoGallery";
 import { GrowthNotes } from "@/components/tracking/GrowthNotes";
+import { RatingSection } from "@/components/tracking/RatingSection";
 
 export default async function PlantingDetailPage({
   params,
@@ -62,26 +63,8 @@ export default async function PlantingDetailPage({
       </div>
       <div className="px-[22px] md:px-8 py-5">
 
-      {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-semibold text-[#111109]">
-              <Link href={`/plants/${planting.plant.id}`} className="hover:text-[#1C3D0A] transition-colors">
-                {planting.plant.name}
-              </Link>
-            </h1>
-            <p className="text-sm text-[#6B6B5A] mt-1">
-              {planting.season.name} · {planting.cell.bed.name}
-            </p>
-          </div>
-          <span className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-[#F4F4EC] text-[#6B6B5A] font-medium mt-1">
-            {statusLabel}
-          </span>
-        </div>
-
-        {/* Quick stats */}
-        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[#E4E4DC]">
+      {/* Quick stats */}
+      <div className="flex flex-wrap gap-4 mb-8 pb-5 border-b border-[#E4E4DC]">
           {planting.plantedDate && (
             <div>
               <p className="text-xs text-[#ADADAA]">Planted</p>
@@ -113,9 +96,15 @@ export default async function PlantingDetailPage({
             </div>
           )}
         </div>
-      </header>
 
       <div className="space-y-8">
+        {/* Season rating */}
+        <RatingSection
+          plantingId={plantingId}
+          rating={planting.rating}
+          growAgain={planting.growAgain}
+        />
+
         {/* Harvest logs */}
         <HarvestLogSection
           plantingId={plantingId}

@@ -71,3 +71,68 @@ export async function deleteBed(bedId: string): Promise<void> {
   await db.bed.delete({ where: { id: bedId } });
   revalidatePath(`/garden/${bed.gardenId}`);
 }
+
+type UpdateBedInput = {
+  name?: string;
+  widthFt?: number;
+  heightFt?: number;
+  cellSizeIn?: 12 | 6;
+};
+
+export async function updateBed(bedId: string, input: UpdateBedInput): Promise<void> {
+  const user = await requireUser();
+
+  const bed = await db.bed.findFirst({
+    where: { id: bedId, garden: { userId: user.id } },
+  });
+  if (!bed) throw new Error("Bed not found");
+
+  const nextWidthFt = input.widthFt ?? bed.widthFt;
+  const nextHeightFt = input.heightFt ?? bed.heightFt;
+  const nextCellSizeIn = input.cellSizeIn ?? bed.cellSizeIn;
+
+  if (nextWidthFt <= 0 || nextHeightFt <= 0) {
+    throw new Error("Dimensions must be greater than 0");
+  }
+
+  const nextGridCols = Math.max(1, Math.floor(nextWidthFt * (12 / nextCellSizeIn)));
+  const nextGridRows = Math.max(1, Math.floor(nextHeightFt * (12 / nextCellSizeIn)));
+
+  const dimensionsChanged =
+    nextGridCols !== bed.gridCols || nextGridRows !== bed.gridRows;
+
+  await db.$transaction(async (tx) => {
+    if (dimensionsChanged) {
+      // Cell layout is changing — wipe existing cells (cascades to plantings)
+      // and rebuild the grid from scratch. This is destructive but
+      // deterministic and avoids edge cases around mismatched cell-size
+      // resampling (e.g. 12" → 6" doubles density and old row/col coords
+      // no longer line up).
+      await tx.cell.deleteMany({ where: { bedId } });
+      const cells: { bedId: string; row: number; col: number }[] = [];
+      for (let row = 0; row < nextGridRows; row++) {
+        for (let col = 0; col < nextGridCols; col++) {
+          cells.push({ bedId, row, col });
+        }
+      }
+      if (cells.length > 0) {
+        await tx.cell.createMany({ data: cells });
+      }
+    }
+
+    await tx.bed.update({
+      where: { id: bedId },
+      data: {
+        name: input.name?.trim() || bed.name,
+        widthFt: nextWidthFt,
+        heightFt: nextHeightFt,
+        cellSizeIn: nextCellSizeIn,
+        gridCols: nextGridCols,
+        gridRows: nextGridRows,
+      },
+    });
+  });
+
+  revalidatePath(`/garden/${bed.gardenId}`);
+  revalidatePath(`/garden/${bed.gardenId}/beds/${bedId}`);
+}

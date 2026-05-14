@@ -7,6 +7,7 @@ import Link from "next/link";
 import { RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
+import { EditBedDialog } from "@/components/garden/EditBedDialog";
 import { getCropRotationWarnings } from "@/lib/services/crop-rotation";
 
 export async function generateMetadata({
@@ -171,6 +172,8 @@ export default async function BedPage({
             plantedDate: rawPlanting.plantedDate,
             transplantDate: rawPlanting.transplantDate,
             expectedHarvestDate: rawPlanting.expectedHarvestDate,
+            variety: rawPlanting.variety,
+            notes: rawPlanting.notes,
           }
         : null,
       warnings,
@@ -213,15 +216,28 @@ export default async function BedPage({
             </div>
           )}
         </div>
-        {/* Bed title */}
-        <h1 style={{
-          fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800,
-          color: "#111109", letterSpacing: "-0.025em", lineHeight: 1,
-          fontVariationSettings: "'opsz' 28",
-        }}>
-          <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{bedNameFirst}</em>
-          {bedNameRest ? ` ${bedNameRest}` : null}
-        </h1>
+        {/* Bed title + edit */}
+        <div className="flex items-center gap-3">
+          <h1 style={{
+            fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800,
+            color: "#111109", letterSpacing: "-0.025em", lineHeight: 1,
+            fontVariationSettings: "'opsz' 28",
+          }}>
+            <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{bedNameFirst}</em>
+            {bedNameRest ? ` ${bedNameRest}` : null}
+          </h1>
+          <EditBedDialog
+            bedId={bed.id}
+            gardenId={gardenId}
+            initial={{
+              name: bed.name,
+              widthFt: bed.widthFt,
+              heightFt: bed.heightFt,
+              cellSizeIn: bed.cellSizeIn,
+              plantingCount: bed.cells.reduce((sum, c) => sum + c.plantings.length, 0),
+            }}
+          />
+        </div>
         {/* Sub — mono meta */}
         <p style={{
           fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em",

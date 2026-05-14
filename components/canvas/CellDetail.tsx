@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
-import { removePlanting, updatePlantingStatus, updatePlantingDates } from "@/app/actions/planting";
+import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { Loader2, Trash2, X } from "lucide-react";
 import type { PlantingStatus } from "@/lib/generated/prisma/enums";
 import Link from "next/link";
@@ -30,6 +30,8 @@ type Props = {
     plantedDate: Date | null;
     transplantDate: Date | null;
     expectedHarvestDate: Date | null;
+    variety: string | null;
+    notes: string | null;
   };
   warnings: CompanionWarning[];
   gardenId: string;
@@ -47,11 +49,22 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
   const [expectedHarvest, setExpectedHarvest] = useState(toInputDate(planting.expectedHarvestDate));
+  const [variety, setVariety] = useState(planting.variety ?? "");
+  const [notes, setNotes] = useState(planting.notes ?? "");
   const [isUpdating, startUpdate] = useTransition();
   const [isDating, startDate] = useTransition();
+  const [, startMeta] = useTransition();
   const [isRemoving, startRemove] = useTransition();
   const [removeConfirm, setRemoveConfirm] = useState(false);
   const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleMetaBlur(field: "variety" | "notes", value: string) {
+    const current = field === "variety" ? planting.variety ?? "" : planting.notes ?? "";
+    if (value === current) return;
+    startMeta(async () => {
+      await updatePlantingMeta(planting.id, { [field]: value });
+    });
+  }
 
   useEffect(() => () => { if (removeTimerRef.current) clearTimeout(removeTimerRef.current); }, []);
 
@@ -167,6 +180,29 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
                 {s.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Variety + Notes */}
+        <div>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Details</p>
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Variety (e.g. Sungold, Roma)"
+              value={variety}
+              onChange={(e) => setVariety(e.target.value)}
+              onBlur={(e) => handleMetaBlur("variety", e.target.value)}
+              className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+            />
+            <textarea
+              placeholder="Notes (optional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              onBlur={(e) => handleMetaBlur("notes", e.target.value)}
+              rows={2}
+              className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA] resize-none"
+            />
           </div>
         </div>
 

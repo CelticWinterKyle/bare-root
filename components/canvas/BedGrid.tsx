@@ -58,6 +58,8 @@ type Planting = {
   plantedDate: Date | null;
   transplantDate: Date | null;
   expectedHarvestDate: Date | null;
+  variety: string | null;
+  notes: string | null;
 };
 type CellData = {
   id: string;

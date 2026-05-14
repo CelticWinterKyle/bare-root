@@ -113,6 +113,53 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
 }
 
+export async function updatePlantingMeta(
+  plantingId: string,
+  data: { notes?: string | null; variety?: string | null }
+) {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    include: { cell: { include: { bed: true } } },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  const update: { notes?: string | null; variety?: string | null } = {};
+  if (data.notes !== undefined) update.notes = data.notes?.trim() || null;
+  if (data.variety !== undefined) update.variety = data.variety?.trim() || null;
+
+  await db.planting.update({ where: { id: plantingId }, data: update });
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}/plantings/${plantingId}`);
+}
+
+export async function updatePlantingRating(
+  plantingId: string,
+  data: { rating?: number | null; growAgain?: boolean | null }
+) {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    include: { cell: { include: { bed: true } } },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  const update: { rating?: number | null; growAgain?: boolean | null } = {};
+  if (data.rating !== undefined) {
+    if (data.rating !== null && (data.rating < 1 || data.rating > 5)) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+    update.rating = data.rating;
+  }
+  if (data.growAgain !== undefined) update.growAgain = data.growAgain;
+
+  await db.planting.update({ where: { id: plantingId }, data: update });
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}/plantings/${plantingId}`);
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/seasons`);
+}
+
 export async function updatePlantingDates(
   plantingId: string,
   data: { plantedDate?: string | null; transplantDate?: string | null }

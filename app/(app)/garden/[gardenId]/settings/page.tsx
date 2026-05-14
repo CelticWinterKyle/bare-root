@@ -2,8 +2,9 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { CollaboratorsClient } from "@/components/collaborators/CollaboratorsClient";
+import { GardenSettingsForm } from "@/components/garden/GardenSettingsForm";
 
 export default async function GardenSettingsPage({
   params,
@@ -48,7 +49,22 @@ export default async function GardenSettingsPage({
           Garden <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Settings</em>
         </h1>
       </div>
-      <div className="px-[22px] md:px-8 py-5">
+      <div className="px-[22px] md:px-8 py-5 space-y-8">
+
+      {/* General + Location + Danger */}
+      <GardenSettingsForm
+        gardenId={gardenId}
+        initial={{
+          name: garden.name,
+          description: garden.description,
+          widthFt: garden.widthFt,
+          heightFt: garden.heightFt,
+          locationZip: garden.locationZip,
+          usdaZone: garden.usdaZone,
+          lastFrostDate: garden.lastFrostDate,
+          firstFrostDate: garden.firstFrostDate,
+        }}
+      />
 
       {/* Collaborators */}
       <section>

@@ -27,15 +27,29 @@ export async function addHarvestLog(
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
+  const harvestedAt = data.harvestedAt ? new Date(data.harvestedAt) : new Date();
+
   await db.harvestLog.create({
     data: {
       plantingId,
       quantity: data.quantity,
       unit: data.unit,
       notes: data.notes || null,
-      harvestedAt: data.harvestedAt ? new Date(data.harvestedAt) : new Date(),
+      harvestedAt,
     },
   });
+
+  // Set actualHarvestDate to the earliest harvest date logged.
+  const existing = await db.planting.findUnique({
+    where: { id: plantingId },
+    select: { actualHarvestDate: true },
+  });
+  if (!existing?.actualHarvestDate || harvestedAt < existing.actualHarvestDate) {
+    await db.planting.update({
+      where: { id: plantingId },
+      data: { actualHarvestDate: harvestedAt },
+    });
+  }
 
   revalidatePlanting(planting);
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/seasons`);
