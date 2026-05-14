@@ -1,7 +1,7 @@
 "use client";
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { uploadPhoto, deletePhoto } from "@/app/actions/tracking";
-import { Camera, Trash2, Loader2, Lock } from "lucide-react";
+import { Camera, Trash2, Loader2, Lock, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -25,15 +25,42 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [pendingCaption, setPendingCaption] = useState("");
+
+  // Object URLs leak memory if not revoked when the preview is dismissed.
+  useEffect(() => {
+    return () => {
+      if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    };
+  }, [pendingPreview]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+    setPendingCaption("");
+  }
+
+  function cancelPending() {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview(null);
+    setPendingCaption("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function handleUpload() {
+    if (!pendingFile) return;
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", pendingFile);
+    if (pendingCaption.trim()) formData.append("caption", pendingCaption.trim());
     startUpload(async () => {
       await uploadPhoto(plantingId, formData);
-      if (fileRef.current) fileRef.current.value = "";
+      cancelPending();
     });
   }
 
@@ -89,6 +116,49 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
         </div>
       )}
 
+      {/* Pending upload — caption entry */}
+      {pendingFile && pendingPreview && (
+        <div className="mb-3 p-3 rounded-xl border border-[#E4E4DC] bg-white flex gap-3">
+          <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F4F4EC] shrink-0">
+            {/* Plain img — pendingPreview is a transient object URL, not
+                a permanent asset Next's image optimizer can use. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={pendingPreview} alt="Pending upload" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Caption (optional)"
+              value={pendingCaption}
+              onChange={(e) => setPendingCaption(e.target.value)}
+              maxLength={120}
+              autoFocus
+              className="w-full text-sm border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#1C3D0A] text-white hover:bg-[#3d6b1e] disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                {isUploading ? "Uploading…" : "Upload"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelPending}
+                disabled={isUploading}
+                className="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4E4DC] text-[#6B6B5A] hover:text-[#111109] hover:bg-[#F4F4EC] disabled:opacity-50 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isPro && photos.length >= FREE_LIMIT ? (
         <div className="flex items-center gap-2 text-sm text-[#ADADAA]">
           <Lock className="w-4 h-4" />
@@ -100,16 +170,12 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
             for unlimited photos.
           </span>
         </div>
-      ) : (
+      ) : !pendingFile ? (
         <label className={`flex items-center gap-2 text-sm font-medium cursor-pointer transition-colors ${
           isUploading ? "text-[#ADADAA]" : "text-[#7DA84E] hover:text-[#1C3D0A]"
         }`}>
-          {isUploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Camera className="w-4 h-4" />
-          )}
-          {isUploading ? "Uploading…" : "Add photo"}
+          <Camera className="w-4 h-4" />
+          Add photo
           <input
             ref={fileRef}
             type="file"
@@ -119,7 +185,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
             disabled={isUploading}
           />
         </label>
-      )}
+      ) : null}
     </section>
   );
 }

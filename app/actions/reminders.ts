@@ -2,7 +2,54 @@
 
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { ReminderType } from "@/lib/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
+
+export async function createCustomReminder(data: {
+  title: string;
+  body?: string;
+  scheduledAt: string; // ISO datetime
+  gardenId?: string;
+}) {
+  const user = await requireUser();
+
+  const title = data.title.trim();
+  if (!title) throw new Error("Title is required");
+
+  const when = new Date(data.scheduledAt);
+  if (Number.isNaN(when.getTime())) {
+    throw new Error("Invalid date");
+  }
+
+  // If a gardenId is provided, confirm the user can at least view it so
+  // the deep-link in the notification doesn't dump them onto a 404.
+  if (data.gardenId) {
+    const garden = await db.garden.findFirst({
+      where: {
+        id: data.gardenId,
+        OR: [
+          { userId: user.id },
+          { collaborators: { some: { userId: user.id, acceptedAt: { not: null } } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!garden) throw new Error("Garden not found");
+  }
+
+  await db.reminder.create({
+    data: {
+      userId: user.id,
+      gardenId: data.gardenId ?? null,
+      type: ReminderType.CUSTOM,
+      title,
+      body: data.body?.trim() || null,
+      scheduledAt: when,
+    },
+  });
+
+  revalidatePath("/reminders");
+}
 
 export async function dismissReminder(reminderId: string) {
   const user = await requireUser();
