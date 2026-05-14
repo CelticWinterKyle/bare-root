@@ -38,6 +38,9 @@
 }
 
 :root {
+  /* Font aliases — used by inline styles throughout the app */
+  --font-body: var(--font-dm-sans);
+
   /* Glasshouse palette */
   --white:       #FDFDF8;
   --surface:     #F4F4EC;

@@ -240,9 +240,13 @@ export default async function GardenPage({
                   style={{ height: "28px", background: "rgba(253,253,248,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "0 10px", borderBottom: "1px solid rgba(228,228,220,0.8)" }}
                 >
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#6B6B5A" }}>Garden Canvas</span>
-                  <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#ADADAA", textDecoration: "none" }}>
-                    {garden.name}
-                  </Link>
+                  <div style={{ display: "flex", gap: "3px" }}>
+                    {(["⊕", "⊖", "⟳"] as const).map((icon) => (
+                      <div key={icon} style={{ width: "20px", height: "20px", borderRadius: "4px", background: "rgba(244,244,236,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#6B6B5A" }}>
+                        {icon}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 {/* Dark pill — desktop only */}
                 <div

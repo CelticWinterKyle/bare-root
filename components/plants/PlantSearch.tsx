@@ -31,15 +31,6 @@ const CATEGORY_STYLE: Record<string, { accent: string; border: string; bg: strin
   OTHER:     { accent: "#3A3A30", border: "#D4D4C8", bg: "#EAEAE0", label: "Other" },
 };
 
-const CATEGORY_GRADIENT: Record<string, string> = {
-  VEGETABLE: "linear-gradient(135deg, #1B4A0A 0%, #3A6B20 100%)",
-  FRUIT:     "linear-gradient(135deg, #3A1A08 0%, #7A2A18 100%)",
-  HERB:      "linear-gradient(135deg, #283010 0%, #4A5A20 100%)",
-  FLOWER:    "linear-gradient(135deg, #2A2A30 0%, #5A4A6A 100%)",
-  TREE:      "linear-gradient(135deg, #1C2A10 0%, #2D4A1A 100%)",
-  SHRUB:     "linear-gradient(135deg, #1A2A15 0%, #3A5A20 100%)",
-  OTHER:     "linear-gradient(135deg, #2A2A20 0%, #4A4A38 100%)",
-};
 
 const SUN_LABEL: Record<string, string> = {
   FULL_SUN:      "Full sun",
@@ -203,10 +194,10 @@ export function PlantSearch({
                   boxShadow: "0 1px 4px rgba(28,61,10,0.04)",
                 }}
               >
-                {/* Card image area — always gradient bg, image overlays on top */}
+                {/* Card image area */}
                 <div
                   className="relative overflow-hidden flex items-center justify-center"
-                  style={{ height: "88px", background: CATEGORY_GRADIENT[plant.category] ?? CATEGORY_GRADIENT.OTHER, borderRadius: "10px 10px 0 0" }}
+                  style={{ height: "88px", background: "#F4F4EC", borderRadius: "10px 10px 0 0" }}
                 >
                   {plant.imageUrl && !failedImages.has(plant.id) ? (
                     <Image
@@ -225,8 +216,8 @@ export function PlantSearch({
                         fontFamily: "var(--font-display)",
                         fontStyle: "italic",
                         fontWeight: 800,
-                        color: "white",
-                        opacity: 0.1,
+                        color: "#111109",
+                        opacity: 0.07,
                         fontSize: "48px",
                         fontVariationSettings: "'opsz' 72",
                       }}
@@ -285,7 +276,7 @@ export function PlantSearch({
 
                   {plant.scientificName && (
                     <p
-                      style={{ fontStyle: "italic", color: "#6B6B5A", fontSize: "10px", marginTop: "2px", lineHeight: 1.3 }}
+                      style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#6B6B5A", fontSize: "10px", marginTop: "2px", lineHeight: 1.3 }}
                     >
                       {plant.scientificName}
                     </p>
