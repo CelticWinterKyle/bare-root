@@ -143,10 +143,12 @@ export default function PricingPage() {
       </section>
 
       <footer className="border-t border-[#E4E4DC] py-8 text-center text-sm text-[#ADADAA]">
-        <div className="flex items-center justify-center gap-6 mb-3">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
           <Link href="/" className="hover:text-[#111109]">Home</Link>
           <Link href="/pricing" className="hover:text-[#111109]">Pricing</Link>
           <Link href="/sign-in" className="hover:text-[#111109]">Sign in</Link>
+          <Link href="/privacy" className="hover:text-[#111109]">Privacy</Link>
+          <Link href="/terms" className="hover:text-[#111109]">Terms</Link>
         </div>
         <p>Companion planting data from <a href="https://openfarm.cc" target="_blank" rel="noopener noreferrer" className="underline">OpenFarm</a> (CC BY 4.0)</p>
       </footer>

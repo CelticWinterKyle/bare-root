@@ -248,10 +248,12 @@ export default async function LandingPage() {
       </section>
 
       <footer className="border-t border-[#E4E4DC] py-8 text-center text-sm text-[#ADADAA]">
-        <div className="flex items-center justify-center gap-6 mb-3">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
           <Link href="/pricing" className="hover:text-[#111109]">Pricing</Link>
           <Link href="/sign-in" className="hover:text-[#111109]">Sign in</Link>
           <Link href="/sign-up" className="hover:text-[#111109]">Sign up</Link>
+          <Link href="/privacy" className="hover:text-[#111109]">Privacy</Link>
+          <Link href="/terms" className="hover:text-[#111109]">Terms</Link>
         </div>
         <p>
           Companion planting data from{" "}
