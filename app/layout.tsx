@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -52,6 +53,7 @@ export default function RootLayout({
         <body className="min-h-full flex flex-col bg-[#FDFDF8] text-[#111109]">
           {children}
           <Toaster position="bottom-center" />
+          <ServiceWorkerRegistration />
         </body>
       </html>
     </ClerkProvider>

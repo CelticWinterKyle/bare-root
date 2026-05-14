@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { updateNotificationPreference } from "@/app/actions/reminders";
-import { Bell, Mail, Smartphone } from "lucide-react";
+import { subscribeToPush, checkPushSupport } from "@/lib/push-client";
+import { toast } from "sonner";
+import { Mail, Smartphone, Loader2 } from "lucide-react";
 
 type Setting = {
   type: string;
@@ -16,10 +18,52 @@ type Setting = {
 export function NotificationsClient({ settings: initial }: { settings: Setting[] }) {
   const [settings, setSettings] = useState(initial);
   const [, startTransition] = useTransition();
+  const [pushSubscribing, setPushSubscribing] = useState(false);
+  const [pushUnsupported, setPushUnsupported] = useState(false);
+
+  // Surface a single, contextual hint at the top of the page if the
+  // current browser/device just can't do push (private mode, old browser,
+  // VAPID misconfigured, etc.). Permission-denied is recoverable so we
+  // don't treat that as "unsupported."
+  useEffect(() => {
+    const support = checkPushSupport();
+    if (
+      support.kind === "missing-sw" ||
+      support.kind === "missing-push" ||
+      support.kind === "missing-vapid"
+    ) {
+      setPushUnsupported(true);
+    }
+  }, []);
 
   function update(type: string, patch: Partial<Setting>) {
     setSettings((prev) => prev.map((s) => (s.type === type ? { ...s, ...patch } : s)));
     startTransition(() => updateNotificationPreference(type, patch));
+  }
+
+  async function handlePushToggle(type: string, current: boolean) {
+    const next = !current;
+
+    // Disabling never needs browser interaction — just persist.
+    if (!next) {
+      update(type, { channelPush: false });
+      return;
+    }
+
+    // Enabling: try to subscribe before flipping the toggle so the
+    // user gets feedback if it fails. The subscription is shared
+    // across all notification types — subscribing once is enough.
+    setPushSubscribing(true);
+    try {
+      await subscribeToPush();
+      update(type, { channelPush: true });
+      toast.success("Push notifications enabled on this device");
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Couldn't enable push notifications");
+    } finally {
+      setPushSubscribing(false);
+    }
   }
 
   return (
@@ -35,6 +79,15 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
         <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "14px" }}>Choose what you get notified about and how.</p>
       </div>
       <div className="px-[22px] md:px-8 py-5">
+
+      {pushUnsupported && (
+        <div className="mb-4 p-3 rounded-xl border border-[#E4E4DC] bg-[#FFF8E7] text-xs text-[#7A4A0A]">
+          <p className="font-medium">Push notifications aren't available in this browser.</p>
+          <p className="mt-0.5 text-[#A06010]">
+            Install Bare Root as an app (Add to Home Screen) or open it in a modern browser to enable push. Email notifications still work.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-3">
         {settings.map((s) => (
@@ -59,10 +112,11 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
                   onChange={(v) => update(s.type, { channelEmail: v })}
                 />
                 <ChannelToggle
-                  icon={<Smartphone className="w-3.5 h-3.5" />}
+                  icon={pushSubscribing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Smartphone className="w-3.5 h-3.5" />}
                   label="Push"
                   checked={s.channelPush}
-                  onChange={(v) => update(s.type, { channelPush: v })}
+                  disabled={pushUnsupported || pushSubscribing}
+                  onChange={() => handlePushToggle(s.type, s.channelPush)}
                 />
               </div>
             )}
@@ -97,17 +151,20 @@ function ChannelToggle({
   icon,
   label,
   checked,
+  disabled,
   onChange,
 }: {
   icon: React.ReactNode;
   label: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+      disabled={disabled}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         checked
           ? "bg-[#F4F4EC] border-[#1C3D0A] text-[#1C3D0A]"
           : "bg-white border-[#E4E4DC] text-[#ADADAA]"
