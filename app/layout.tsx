@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import "./globals.css";
@@ -54,6 +56,8 @@ export default function RootLayout({
           {children}
           <Toaster position="bottom-center" />
           <ServiceWorkerRegistration />
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
