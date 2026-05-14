@@ -62,7 +62,16 @@ export async function subscribeToPush(): Promise<void> {
   }
 
   const registration = await getOrRegisterWorker();
-  await navigator.serviceWorker.ready;
+
+  // serviceWorker.ready can hang indefinitely if the SW is stuck in
+  // `installing` (parse error, redundant worker, etc). Cap it so the
+  // caller can surface a real error instead of a permanent spinner.
+  await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Service worker didn't activate. Try refreshing the page.")), 10_000)
+    ),
+  ]);
 
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {

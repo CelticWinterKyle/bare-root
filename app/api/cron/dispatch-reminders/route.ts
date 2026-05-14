@@ -24,6 +24,14 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // Absolute URL required for email <a href> links and SW push payloads.
+  // Fail fast rather than send reminders with broken relative URLs.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not set — refusing to dispatch reminders");
+    return Response.json({ ok: false, error: "missing_app_url" }, { status: 500 });
+  }
+
   const now = new Date();
 
   const reminders = await db.reminder.findMany({
@@ -78,7 +86,6 @@ export async function GET(req: Request) {
         continue;
       }
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
       const url = reminder.planting
         ? `${appUrl}/garden/${reminder.planting.cell.bed.gardenId}/beds/${reminder.planting.cell.bed.id}/plantings/${reminder.planting.id}`
         : reminder.gardenId
