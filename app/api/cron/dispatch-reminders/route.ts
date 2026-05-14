@@ -17,8 +17,10 @@ function isLocalMorning(utcNow: Date, timezone: string): boolean {
 }
 
 export async function GET(req: Request) {
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const hasBearer = authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  if (!isVercelCron && !hasBearer) {
     return new Response("Unauthorized", { status: 401 });
   }
 

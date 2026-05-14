@@ -57,6 +57,7 @@ export default async function InventoryPage() {
 
   return (
     <SeedInventoryClient
+      userId={user.id}
       inventory={inventory.map((i) => ({
         id: i.id,
         plantId: i.plantId,

@@ -2,8 +2,10 @@ import { db } from "@/lib/db";
 import { fetchCurrentWeather, fetchForecast } from "@/lib/api/weather";
 
 export async function GET(req: Request) {
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const hasBearer = authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  if (!isVercelCron && !hasBearer) {
     return new Response("Unauthorized", { status: 401 });
   }
 

@@ -73,7 +73,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
               <button
                 onClick={() => handleDelete(photo.id)}
                 disabled={deletingId === photo.id}
-                className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
               >
                 {deletingId === photo.id ? (
                   <Loader2 className="w-3 h-3 text-white animate-spin" />
@@ -81,7 +81,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
                   <Trash2 className="w-3 h-3 text-white" />
                 )}
               </button>
-              <p className="absolute bottom-0 left-0 text-[9px] text-white/70 px-1.5 py-0.5 opacity-0 group-hover:opacity-100">
+              <p className="absolute bottom-0 left-0 text-[9px] text-white/70 px-1.5 py-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100">
                 {new Date(photo.takenAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
             </div>

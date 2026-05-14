@@ -183,8 +183,14 @@ export default async function CalendarPage() {
 
   const hasFrost = forecast ? hasFrostRisk(forecast) : false;
 
-  const hasNoLocation = !weatherGarden;
   const hasNoFrostDate = gardens.some((g) => !g.lastFrostDate);
+  const settingsLinkGarden =
+    gardens.find((g) => !g.locationZip) ??
+    gardens.find((g) => !g.lastFrostDate) ??
+    gardens[0];
+  const settingsHref = settingsLinkGarden
+    ? `/garden/${settingsLinkGarden.id}/settings`
+    : "/garden";
 
   return (
     <div>
@@ -218,7 +224,7 @@ export default async function CalendarPage() {
             <MapPin className="w-4 h-4 text-[#ADADAA] shrink-0" />
             <p className="text-sm text-[#ADADAA]">
               Add your zip code in{" "}
-              <Link href="/settings" className="text-[#D4820A] hover:underline">
+              <Link href={settingsHref} className="text-[#D4820A] hover:underline">
                 garden settings
               </Link>{" "}
               to see weather and frost alerts.
@@ -230,7 +236,10 @@ export default async function CalendarPage() {
       {/* No frost date warning */}
       {hasNoFrostDate && gardens.length > 0 && (
         <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6B5A]">
-          Some gardens are missing frost dates — planting calendar events may be incomplete.
+          Some gardens are missing frost dates — planting calendar events may be incomplete.{" "}
+          <Link href={settingsHref} className="text-[#D4820A] hover:underline">
+            Update garden settings →
+          </Link>
         </div>
       )}
 

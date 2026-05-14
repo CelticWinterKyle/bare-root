@@ -1,7 +1,9 @@
 "use client";
 import { useState, useTransition } from "react";
 import { upsertSeedInventory, deleteSeedInventory } from "@/app/actions/tracking";
-import { Plus, Trash2, Loader2, ShoppingCart, Check, Package } from "lucide-react";
+import { searchPlantsAction } from "@/app/actions/plants";
+import { toast } from "sonner";
+import { Plus, Trash2, Loader2, ShoppingCart, Check, Package, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,26 +26,74 @@ type ShoppingItem = {
   inventoryQty: number | null;
 };
 
+type PlantResult = { id: string; name: string };
+
 type Props = {
+  userId: string;
   inventory: InventoryItem[];
   shoppingList: ShoppingItem[];
 };
 
-export function SeedInventoryClient({ inventory, shoppingList }: Props) {
+export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) {
   const [tab, setTab] = useState<"inventory" | "shopping">("inventory");
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ plantName: "", variety: "", quantity: "1", unit: "packets", notes: "" });
+  const [form, setForm] = useState({ variety: "", quantity: "1", unit: "packets", notes: "" });
+  const [plantQuery, setPlantQuery] = useState("");
+  const [plantResults, setPlantResults] = useState<PlantResult[]>([]);
+  const [selectedPlant, setSelectedPlant] = useState<PlantResult | null>(null);
+  const [isSearching, startSearch] = useTransition();
   const [isAdding, startAdd] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
   const [checked, setChecked] = useState<Set<string>>(new Set());
 
+  function handlePlantSearch(q: string) {
+    setPlantQuery(q);
+    setSelectedPlant(null);
+    if (q.trim().length < 2) {
+      setPlantResults([]);
+      return;
+    }
+    startSearch(async () => {
+      const results = await searchPlantsAction(q, null, userId);
+      setPlantResults(results.slice(0, 8).map((p) => ({ id: p.id, name: p.name })));
+    });
+  }
+
+  function resetForm() {
+    setForm({ variety: "", quantity: "1", unit: "packets", notes: "" });
+    setPlantQuery("");
+    setPlantResults([]);
+    setSelectedPlant(null);
+  }
+
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedPlant) {
+      toast.error("Please select a plant from the search results");
+      return;
+    }
+    const qty = parseFloat(form.quantity);
+    if (!Number.isFinite(qty) || qty < 0) {
+      toast.error("Enter a valid quantity");
+      return;
+    }
     startAdd(async () => {
-      // We need a plantId — for now we'll search, but let's keep it simple with a note
-      // This is a simplified path: real flow would use plant search
-      setAddOpen(false);
+      try {
+        await upsertSeedInventory({
+          plantId: selectedPlant.id,
+          variety: form.variety.trim(),
+          quantity: qty,
+          unit: form.unit,
+          notes: form.notes.trim() || undefined,
+        });
+        toast.success(`${selectedPlant.name} added to inventory`);
+        resetForm();
+        setAddOpen(false);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to save. Please try again.");
+      }
     });
   }
 
@@ -128,12 +178,53 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
           {addOpen && (
             <form onSubmit={handleAdd} className="bg-white border border-[#E4E4DC] rounded-xl p-4 space-y-3 mb-4">
               <p className="text-sm font-medium text-[#111109]">Add seeds</p>
-              <Input
-                placeholder="Plant name"
-                value={form.plantName}
-                onChange={(e) => setForm((f) => ({ ...f, plantName: e.target.value }))}
-                required
-              />
+
+              {/* Plant search */}
+              {selectedPlant ? (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-[#E4F0D4] border border-[#D4E8BE]">
+                  <span className="text-sm font-medium text-[#1C3D0A]">{selectedPlant.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPlant(null); setPlantQuery(""); }}
+                    className="text-[#3A6B20] hover:text-[#1C3D0A]"
+                    aria-label="Clear selection"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
+                  <Input
+                    placeholder="Search plants…"
+                    value={plantQuery}
+                    onChange={(e) => handlePlantSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                  {isSearching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
+                  )}
+                  {plantResults.length > 0 && (
+                    <ul className="mt-1 max-h-48 overflow-y-auto border border-[#E4E4DC] rounded-md bg-white shadow-sm">
+                      {plantResults.map((p) => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedPlant(p); setPlantQuery(p.name); setPlantResults([]); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-[#F4F4EC] text-[#111109]"
+                          >
+                            {p.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {plantQuery.length >= 2 && !isSearching && plantResults.length === 0 && (
+                    <p className="text-xs text-[#ADADAA] mt-1">No plants found — try a different search.</p>
+                  )}
+                </div>
+              )}
+
               <Input
                 placeholder="Variety (optional)"
                 value={form.variety}
@@ -158,11 +249,22 @@ export function SeedInventoryClient({ inventory, shoppingList }: Props) {
                   {UNITS.map((u) => <option key={u}>{u}</option>)}
                 </select>
               </div>
+              <Input
+                placeholder="Notes (optional)"
+                value={form.notes}
+                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              />
               <div className="flex gap-2">
-                <Button type="submit" disabled={isAdding} className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white">
+                <Button
+                  type="submit"
+                  disabled={isAdding || !selectedPlant}
+                  className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
+                >
                   {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                 </Button>
-                <Button type="button" variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+                <Button type="button" variant="ghost" onClick={() => { resetForm(); setAddOpen(false); }}>
+                  Cancel
+                </Button>
               </div>
             </form>
           )}
