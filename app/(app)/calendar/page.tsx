@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { CalendarTimeline, type CalendarEvent } from "@/components/calendar/CalendarTimeline";
 import { WeatherWidget } from "@/components/calendar/WeatherWidget";
 import { FrostAlert } from "@/components/calendar/FrostAlert";
@@ -20,7 +21,7 @@ export default async function CalendarPage() {
 
   // Fetch all gardens with active seasons and their plantings
   const gardens = await db.garden.findMany({
-    where: { userId: user.id },
+    where: gardenAccessFilter(user.id),
     include: {
       beds: {
         include: {

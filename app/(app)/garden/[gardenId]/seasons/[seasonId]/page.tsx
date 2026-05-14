@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Star, Leaf, TrendingUp } from "lucide-react";
@@ -13,7 +14,7 @@ export default async function SeasonSummaryPage({
   const user = await requireUser();
 
   const season = await db.season.findFirst({
-    where: { id: seasonId, gardenId, garden: { userId: user.id } },
+    where: { id: seasonId, gardenId, garden: gardenAccessFilter(user.id) },
     include: {
       garden: { select: { name: true } },
       plantings: {

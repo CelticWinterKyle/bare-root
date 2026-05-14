@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -19,7 +20,7 @@ export default async function PlantingDetailPage({
   const planting = await db.planting.findFirst({
     where: {
       id: plantingId,
-      cell: { bedId, bed: { gardenId, garden: { userId: user.id } } },
+      cell: { bedId, bed: { gardenId, garden: gardenAccessFilter(user.id) } },
     },
     include: {
       plant: { select: { id: true, name: true, daysToMaturity: true, category: true } },

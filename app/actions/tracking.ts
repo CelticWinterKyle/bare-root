@@ -2,12 +2,13 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenEditFilter } from "@/lib/permissions";
 import { put } from "@vercel/blob";
 import { checkCanUploadPhoto } from "@/lib/tier";
 
 async function resolvePlanting(plantingId: string, userId: string) {
   const p = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(userId) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!p) throw new Error("Planting not found");
@@ -58,7 +59,7 @@ export async function addHarvestLog(
 export async function deleteHarvestLog(logId: string) {
   const user = await requireUser();
   const log = await db.harvestLog.findFirst({
-    where: { id: logId, planting: { cell: { bed: { garden: { userId: user.id } } } } },
+    where: { id: logId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
   if (!log) throw new Error("Log not found");
@@ -94,7 +95,7 @@ export async function uploadPhoto(plantingId: string, formData: FormData) {
 export async function deletePhoto(photoId: string) {
   const user = await requireUser();
   const photo = await db.plantingPhoto.findFirst({
-    where: { id: photoId, planting: { cell: { bed: { garden: { userId: user.id } } } } },
+    where: { id: photoId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
   if (!photo) throw new Error("Photo not found");
@@ -118,7 +119,7 @@ export async function addGrowthNote(plantingId: string, body: string) {
 export async function deleteGrowthNote(noteId: string) {
   const user = await requireUser();
   const note = await db.growthNote.findFirst({
-    where: { id: noteId, planting: { cell: { bed: { garden: { userId: user.id } } } } },
+    where: { id: noteId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
   if (!note) throw new Error("Note not found");

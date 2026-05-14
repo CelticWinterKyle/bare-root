@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Sprout, Plus, MapPin } from "lucide-react";
@@ -9,7 +10,7 @@ export default async function DashboardPage() {
   if (!user.onboardingComplete) redirect("/onboarding");
 
   const gardens = await db.garden.findMany({
-    where: { userId: user.id },
+    where: gardenAccessFilter(user.id),
     include: {
       _count: { select: { beds: true } },
       seasons: { where: { isActive: true }, take: 1 },

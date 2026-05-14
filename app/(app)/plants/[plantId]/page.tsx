@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
+import { gardenEditFilter } from "@/lib/permissions";
 
 const SUN_LABELS: Record<string, string> = {
   FULL_SUN: "☀️ Full sun (6+ hours)",
@@ -56,10 +57,12 @@ export default async function PlantDetailPage({
   const beneficial = plant.companions ?? [];
   const harmful = plant.antagonists ?? [];
 
-  // Gardens for the "Add to a bed" picker. Includes bed sizes + empty cell
-  // counts so the picker can show "All cells planted" inline.
+  // Gardens for the "Add to a bed" picker. Only includes gardens the user
+  // can write to (owner or EDITOR collaborator) — viewers can't plant.
+  // Includes bed sizes + empty cell counts so the picker can show
+  // "All cells planted" inline.
   const userGardens = await db.garden.findMany({
-    where: { userId: user.id },
+    where: gardenEditFilter(user.id),
     select: {
       id: true,
       name: true,

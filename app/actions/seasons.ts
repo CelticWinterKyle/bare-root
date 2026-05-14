@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenEditFilter } from "@/lib/permissions";
 
 export async function createSeason(
   gardenId: string,
@@ -9,7 +10,9 @@ export async function createSeason(
 ) {
   const user = await requireUser();
 
-  const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
+  const garden = await db.garden.findFirst({
+    where: { id: gardenId, ...gardenEditFilter(user.id) },
+  });
   if (!garden) throw new Error("Garden not found");
 
   await db.$transaction(async (tx) => {
@@ -35,7 +38,7 @@ export async function setActiveSeason(seasonId: string) {
   const user = await requireUser();
 
   const season = await db.season.findFirst({
-    where: { id: seasonId, garden: { userId: user.id } },
+    where: { id: seasonId, garden: gardenEditFilter(user.id) },
   });
   if (!season) throw new Error("Season not found");
 
@@ -52,7 +55,7 @@ export async function archiveSeason(seasonId: string) {
   const user = await requireUser();
 
   const season = await db.season.findFirst({
-    where: { id: seasonId, garden: { userId: user.id } },
+    where: { id: seasonId, garden: gardenEditFilter(user.id) },
   });
   if (!season) throw new Error("Season not found");
 
@@ -69,7 +72,7 @@ export async function ratePlanting(
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!planting) throw new Error("Planting not found");

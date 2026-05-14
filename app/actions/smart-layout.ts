@@ -1,6 +1,7 @@
 "use server";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenEditFilter } from "@/lib/permissions";
 import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-layout";
 
 export async function generateLayoutAction(
@@ -14,7 +15,7 @@ export async function generateLayoutAction(
   }
 
   const bed = await db.bed.findFirst({
-    where: { id: bedId, garden: { userId: user.id } },
+    where: { id: bedId, garden: gardenEditFilter(user.id) },
     include: {
       garden: { select: { usdaZone: true, lastFrostDate: true } },
       cells: {
@@ -97,7 +98,7 @@ export async function acceptLayoutAssignments(
   const user = await requireUser();
 
   const bed = await db.bed.findFirst({
-    where: { id: bedId, garden: { userId: user.id } },
+    where: { id: bedId, garden: gardenEditFilter(user.id) },
     include: {
       cells: {
         include: {

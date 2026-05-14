@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenEditFilter } from "@/lib/permissions";
 import { getLocationData } from "@/lib/data/location";
 
 export async function updateBedPosition(bedId: string, xPosition: number, yPosition: number) {
   const user = await requireUser();
 
   const bed = await db.bed.findFirst({
-    where: { id: bedId, garden: { userId: user.id } },
+    where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
   if (!bed) throw new Error("Bed not found");
 
@@ -31,7 +32,7 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
   const user = await requireUser();
 
   const garden = await db.garden.findFirst({
-    where: { id: gardenId, userId: user.id },
+    where: { id: gardenId, ...gardenEditFilter(user.id) },
   });
   if (!garden) throw new Error("Garden not found");
 

@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { SeedInventoryClient } from "@/components/tracking/SeedInventoryClient";
 
 export default async function InventoryPage() {
@@ -12,7 +13,7 @@ export default async function InventoryPage() {
       orderBy: [{ plant: { name: "asc" } }, { variety: "asc" }],
     }),
     db.garden.findMany({
-      where: { userId: user.id },
+      where: gardenAccessFilter(user.id),
       include: {
         seasons: { where: { isActive: true }, take: 1 },
         beds: {

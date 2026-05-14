@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Sprout } from "lucide-react";
@@ -29,7 +30,7 @@ export default async function GardenPage({
   const user = await requireUser();
 
   const garden = await db.garden.findFirst({
-    where: { id: gardenId, userId: user.id },
+    where: { id: gardenId, ...gardenAccessFilter(user.id) },
     include: {
       beds: {
         include: {
@@ -52,7 +53,18 @@ export default async function GardenPage({
 
   const activeSeason = garden.seasons[0];
   const bedCount = garden.beds.length;
-  const atBedLimit = user.subscriptionTier === "FREE" && bedCount >= 3;
+
+  // Bed limit follows the OWNER's tier, not the viewer's. Otherwise a
+  // free-plan collaborator viewing a Pro owner's 5-bed garden would
+  // mistakenly hit the 3-bed limit.
+  const isOwner = garden.userId === user.id;
+  const ownerTier = isOwner
+    ? user.subscriptionTier
+    : (await db.user.findUnique({
+        where: { id: garden.userId },
+        select: { subscriptionTier: true },
+      }))?.subscriptionTier ?? "FREE";
+  const atBedLimit = ownerTier === "FREE" && bedCount >= 3;
 
   let weatherCurrent: CurrentWeather | null = null;
   let weatherForecast: ForecastDay[] | null = null;

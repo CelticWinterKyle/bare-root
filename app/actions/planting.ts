@@ -2,13 +2,14 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenEditFilter } from "@/lib/permissions";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
 import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
 
 async function resolveCell(cellId: string, userId: string) {
   const cell = await db.cell.findFirst({
-    where: { id: cellId, bed: { garden: { userId } } },
+    where: { id: cellId, bed: { garden: gardenEditFilter(userId) } },
     include: { bed: true },
   });
   if (!cell) throw new Error("Cell not found");
@@ -83,7 +84,7 @@ export async function removePlanting(plantingId: string) {
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!planting) throw new Error("Planting not found");
@@ -104,7 +105,7 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!planting) throw new Error("Planting not found");
@@ -120,7 +121,7 @@ export async function updatePlantingMeta(
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!planting) throw new Error("Planting not found");
@@ -141,7 +142,7 @@ export async function updatePlantingRating(
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
   if (!planting) throw new Error("Planting not found");
@@ -167,7 +168,7 @@ export async function updatePlantingDates(
   const user = await requireUser();
 
   const planting = await db.planting.findFirst({
-    where: { id: plantingId, cell: { bed: { garden: { userId: user.id } } } },
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: {
       plant: { select: { name: true, daysToMaturity: true } },
       cell: { include: { bed: true } },

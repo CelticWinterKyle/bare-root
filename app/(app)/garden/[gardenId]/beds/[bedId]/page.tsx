@@ -9,6 +9,7 @@ import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { EditBedDialog } from "@/components/garden/EditBedDialog";
 import { getCropRotationWarnings } from "@/lib/services/crop-rotation";
+import { gardenAccessFilter } from "@/lib/permissions";
 
 export async function generateMetadata({
   params,
@@ -61,7 +62,7 @@ export default async function BedPage({
     null;
 
   const bed = await db.bed.findFirst({
-    where: { id: bedId, gardenId, garden: { userId: user.id } },
+    where: { id: bedId, gardenId, garden: gardenAccessFilter(user.id) },
     include: {
       garden: {
         select: {
