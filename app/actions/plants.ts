@@ -5,6 +5,27 @@ import { db } from "@/lib/db";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
 import type { PlantCategory, SunLevel, WaterNeed } from "@/lib/generated/prisma/enums";
 
+function validImage(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.includes("upgrade_access")) return null;
+  return url;
+}
+
+async function fetchWikipediaImage(name: string): Promise<string | null> {
+  try {
+    const slug = encodeURIComponent(name.replace(/\s+/g, "_"));
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`,
+      { headers: { "User-Agent": "BareRoot/1.0 (bareroot.app)" }, next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.thumbnail?.source as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function mapSunlight(sunlight: string[]): SunLevel | null {
   const s = (sunlight[0] ?? "").toLowerCase();
   if (s.includes("full sun")) return "FULL_SUN";
@@ -92,7 +113,7 @@ export async function searchPlantsAction(
               category: inferCategoryFromName(item.common_name),
               sunRequirement: mapSunlight(item.sunlight ?? []),
               waterRequirement: mapWatering(item.watering),
-              imageUrl: item.default_image?.medium_url ?? null,
+              imageUrl: validImage(item.default_image?.medium_url),
             },
           });
         } catch {
@@ -127,15 +148,18 @@ export async function getPlantAction(plantId: string) {
 
   // Enrich missing data in the background — doesn't block this response.
   // On first visit the page renders with seed data; second visit gets full details.
-  const needsSearch = !plant.externalId && !plant.imageUrl && plant.source === "seed";
+  const badImageUrl = plant.imageUrl?.includes("upgrade_access") ?? false;
+  const needsSearch = !plant.externalId && plant.source === "seed";
   const needsDetails = !!plant.externalId && !plant.description;
+  const needsImageFix = !needsSearch && !needsDetails && (!plant.imageUrl || badImageUrl);
 
   if (needsSearch) {
     after(async () => {
       const result = await searchPerenual(plant.name);
       const match = result?.data?.[0];
       if (!match) return;
-      const imageUrl = match.default_image?.medium_url ?? null;
+      const perenualImg = validImage(match.default_image?.medium_url);
+      const imageUrl = perenualImg ?? await fetchWikipediaImage(plant.name);
       await db.plantLibrary.update({
         where: { id: plantId },
         data: { externalId: String(match.id), imageUrl: imageUrl ?? undefined },
@@ -143,6 +167,7 @@ export async function getPlantAction(plantId: string) {
       // Also fetch full details while we have the ID
       const full = await getPerenualPlant(match.id);
       if (full) {
+        const fullImg = validImage(full.default_image?.medium_url) ?? imageUrl ?? undefined;
         await db.plantLibrary.update({
           where: { id: plantId },
           data: {
@@ -152,7 +177,7 @@ export async function getPlantAction(plantId: string) {
             sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
             waterRequirement: mapWatering(full.watering) ?? undefined,
             spacingInches: full.spacing ?? undefined,
-            imageUrl: full.default_image?.medium_url ?? imageUrl ?? undefined,
+            imageUrl: fullImg,
             harvestMonths: full.harvest_season ? [full.harvest_season] : [],
           },
         });
@@ -162,6 +187,8 @@ export async function getPlantAction(plantId: string) {
     after(async () => {
       const full = await getPerenualPlant(Number(plant.externalId));
       if (!full) return;
+      const perenualImg = validImage(full.default_image?.medium_url);
+      const imageUrl = perenualImg ?? (!plant.imageUrl || badImageUrl ? await fetchWikipediaImage(plant.name) : plant.imageUrl);
       await db.plantLibrary.update({
         where: { id: plantId },
         data: {
@@ -171,10 +198,17 @@ export async function getPlantAction(plantId: string) {
           sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
           waterRequirement: mapWatering(full.watering) ?? undefined,
           spacingInches: full.spacing ?? undefined,
-          imageUrl: full.default_image?.medium_url ?? undefined,
+          imageUrl: imageUrl ?? undefined,
           harvestMonths: full.harvest_season ? [full.harvest_season] : [],
         },
       });
+    });
+  } else if (needsImageFix) {
+    after(async () => {
+      const imageUrl = await fetchWikipediaImage(plant.name);
+      if (imageUrl) {
+        await db.plantLibrary.update({ where: { id: plantId }, data: { imageUrl } });
+      }
     });
   }
 
