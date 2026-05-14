@@ -41,6 +41,11 @@ export async function GET(req: Request) {
           pushSubscriptions: true,
         },
       },
+      planting: {
+        include: {
+          cell: { include: { bed: { select: { id: true, gardenId: true } } } },
+        },
+      },
     },
   });
 
@@ -74,8 +79,10 @@ export async function GET(req: Request) {
       }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-      const url = reminder.plantingId
-        ? `${appUrl}/reminders`
+      const url = reminder.planting
+        ? `${appUrl}/garden/${reminder.planting.cell.bed.gardenId}/beds/${reminder.planting.cell.bed.id}/plantings/${reminder.planting.id}`
+        : reminder.gardenId
+        ? `${appUrl}/garden/${reminder.gardenId}`
         : `${appUrl}/reminders`;
 
       if (sendEmail) {

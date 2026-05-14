@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Loader2, Sprout, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import Link from "next/link";
 
 const FREE_FEATURES = [
@@ -39,6 +40,7 @@ export function BillingClient({
   isPro,
   hadTrial,
   trialEndsAt,
+  hasStripeCustomer,
   justUpgraded,
   monthlyPriceId,
   annualPriceId,
@@ -58,9 +60,13 @@ export function BillingClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId }),
       });
+      if (!res.ok) throw new Error("Checkout failed");
       const { url } = await res.json() as { url: string };
+      if (!url) throw new Error("No checkout URL returned");
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      toast.error("Couldn't start checkout. Please try again.");
       setLoading(null);
     }
   }
@@ -69,9 +75,13 @@ export function BillingClient({
     setLoading("portal");
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
+      if (!res.ok) throw new Error("Portal failed");
       const { url } = await res.json() as { url: string };
+      if (!url) throw new Error("No portal URL returned");
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      console.error("Stripe portal error:", err);
+      toast.error("Couldn't open billing portal. Please try again.");
       setLoading(null);
     }
   }
@@ -124,15 +134,21 @@ export function BillingClient({
               <p className="text-xs text-[#6B6B5A]">All features unlocked</p>
             </div>
           </div>
-          <Button
-            onClick={handlePortal}
-            variant="outline"
-            className="w-full border-[#E4E4DC] text-[#6B6B5A]"
-            disabled={!!loading}
-          >
-            {loading === "portal" ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Manage subscription →
-          </Button>
+          {hasStripeCustomer ? (
+            <Button
+              onClick={handlePortal}
+              variant="outline"
+              className="w-full border-[#E4E4DC] text-[#6B6B5A]"
+              disabled={!!loading}
+            >
+              {loading === "portal" ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Manage subscription →
+            </Button>
+          ) : (
+            <p className="text-xs text-[#6B6B5A] text-center">
+              Subscription is being set up. Refresh in a moment to manage billing.
+            </p>
+          )}
         </div>
       ) : (
         <>

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET(req: Request) {
-  const secret = new URL(req.url).searchParams.get("secret");
-  if (secret !== process.env.CRON_SECRET) {
+export async function POST(req: Request) {
+  const secret = req.headers.get("x-admin-secret");
+  if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

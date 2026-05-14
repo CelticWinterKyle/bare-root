@@ -24,6 +24,27 @@ export async function POST(req: Request) {
   }
 
   switch (event.type) {
+    case "checkout.session.completed": {
+      // Link the Stripe customer back to the user record. When checkout
+      // was started for a user without a stripeCustomerId, Stripe created
+      // a new customer keyed only by email — we need to persist that ID
+      // so subsequent customer.subscription.* events match the user.
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.metadata?.userId;
+      const customerId =
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id ?? null;
+
+      if (userId && customerId) {
+        await db.user.update({
+          where: { id: userId },
+          data: { stripeCustomerId: customerId },
+        });
+      }
+      break;
+    }
+
     case "customer.subscription.created":
     case "customer.subscription.updated": {
       const subscription = event.data.object as Stripe.Subscription;

@@ -2,7 +2,9 @@ import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM = "Bare Root <hello@celticwinter.com>";
+// Resend requires the domain to be verified before sending. Set
+// EMAIL_FROM in env to override (e.g. once bareroot.app is verified).
+const FROM = process.env.EMAIL_FROM ?? "Bare Root <hello@bareroot.app>";
 
 export async function sendReminderEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!resend) return false;
