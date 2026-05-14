@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-async function fetchWikipediaImage(name: string): Promise<string | null> {
+function toTitleCase(s: string) {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+async function wikiSummary(slug: string): Promise<string | null> {
   try {
-    const slug = encodeURIComponent(name.replace(/\s+/g, "_"));
     const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`,
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`,
       { headers: { "User-Agent": "BareRoot/1.0 (bareroot.app)" } }
     );
     if (!res.ok) return null;
@@ -14,6 +17,23 @@ async function fetchWikipediaImage(name: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+async function fetchWikipediaImage(name: string): Promise<string | null> {
+  const variants = [
+    name,
+    toTitleCase(name),
+    name.charAt(0).toUpperCase() + name.slice(1),
+    name.replace(/\s+/g, "_"),
+    toTitleCase(name).replace(/\s+/g, "_"),
+  ].filter((v, i, a) => a.indexOf(v) === i);
+
+  for (const variant of variants) {
+    const url = await wikiSummary(variant.replace(/\s+/g, "_"));
+    if (url) return url;
+    await new Promise((r) => setTimeout(r, 80));
+  }
+  return null;
 }
 
 export async function GET(req: Request) {
@@ -30,22 +50,20 @@ export async function GET(req: Request) {
       ],
     },
     select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
 
   const results: { name: string; url: string | null }[] = [];
+  let fixed = 0;
 
   for (const plant of plants) {
     const url = await fetchWikipediaImage(plant.name);
     if (url) {
-      await db.plantLibrary.update({
-        where: { id: plant.id },
-        data: { imageUrl: url },
-      });
+      await db.plantLibrary.update({ where: { id: plant.id }, data: { imageUrl: url } });
+      fixed++;
     }
     results.push({ name: plant.name, url });
-    // Avoid hammering Wikipedia
-    await new Promise((r) => setTimeout(r, 150));
   }
 
-  return NextResponse.json({ fixed: results.length, results });
+  return NextResponse.json({ fixed, remaining: results.length - fixed, results });
 }
