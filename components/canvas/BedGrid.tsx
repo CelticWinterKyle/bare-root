@@ -47,9 +47,8 @@ const SUN_BG: Record<string, string> = {
   FULL_SUN: "#FEF9C3", PARTIAL_SUN: "#FEF3C7", PARTIAL_SHADE: "#E0F2FE", FULL_SHADE: "#F1F5F9",
 };
 
-// Vertical space to subtract from cell sizing:
-// graph-paper wrapper padding 14px*2 + centering py-3 (24) ≈ 28px
-const FRAME_PAD = 28;
+// Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
+const FRAME_PAD = 52;
 
 type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null };
 type Planting = {
@@ -163,9 +162,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
   //   (16px left + 16px right = 32px) + gaps ((cols-1) × 4px). No height cap — page scrolls.
   // Desktop: balance width vs height, cap cells so the bed fits without vertical scroll.
   const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
-  const fitByH = Math.floor((maxViewportH - FRAME_PAD) / displayRows);
-  const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD) / displayRows));
-  const mobileFitByW = Math.floor((vpW - 32 - (displayCols - 1) * 4) / displayCols);
+  const rowGaps = (displayRows - 1) * 4;
+  const colGaps = (displayCols - 1) * 4;
+  const fitByH = Math.floor((maxViewportH - FRAME_PAD - rowGaps) / displayRows);
+  const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD - rowGaps) / displayRows));
+  const mobileFitByW = Math.floor((vpW - 32 - colGaps) / displayCols);
   // 52 = grid padding 28px (14px top + 14px bottom) + flex centering py-3 (24px)
   const mobileFitByH = Math.floor((mobileViewportH - 52 - (displayRows - 1) * 4) / displayRows);
   const baseCellPx = isMobile
