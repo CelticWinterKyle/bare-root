@@ -10,16 +10,8 @@ export async function GET(req: Request) {
   const plants = await db.plantLibrary.findMany({
     where: { imageUrl: { contains: "upload.wikimedia.org" } },
     select: { id: true, name: true, imageUrl: true },
+    take: 5,
   });
 
-  let updated = 0;
-  for (const plant of plants) {
-    const newUrl = plant.imageUrl!.replace(/\/\d+px-/, "/800px-");
-    if (newUrl !== plant.imageUrl) {
-      await db.plantLibrary.update({ where: { id: plant.id }, data: { imageUrl: newUrl } });
-      updated++;
-    }
-  }
-
-  return NextResponse.json({ total: plants.length, updated });
+  return NextResponse.json({ sample: plants.map((p) => ({ name: p.name, url: p.imageUrl })) });
 }
