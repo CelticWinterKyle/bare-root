@@ -359,7 +359,10 @@ export function WizardShell() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Grid resolution</Label>
+                <Label>Cell size</Label>
+                <p className="text-xs text-[#6B6B5A] -mt-1">
+                  Each cell holds one plant. You can change this per bed later.
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["12", "6"] as const).map((size) => (
                     <button
@@ -375,8 +378,8 @@ export function WizardShell() {
                       <div className="font-medium">{size === "12" ? "1 ft squares" : "6 in squares"}</div>
                       <div className="text-xs mt-0.5 text-[#ADADAA]">
                         {size === "12"
-                          ? "Standard (SFG method)"
-                          : "More detail, smaller cells"}
+                          ? "Most beds — one plant per square foot"
+                          : "For dense planting — greens, herbs, carrots"}
                       </div>
                     </button>
                   ))}

@@ -281,7 +281,7 @@ export default async function CalendarPage() {
       )}
 
       {/* Timeline */}
-      <CalendarTimeline events={events} />
+      <CalendarTimeline events={events} activePlantingCount={activePlantingCount} />
       </div>
     </div>
   );

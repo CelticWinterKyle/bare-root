@@ -5,14 +5,14 @@ import { Loader2, Trash2, X } from "lucide-react";
 import type { PlantingStatus } from "@/lib/generated/prisma/enums";
 import Link from "next/link";
 
-const STATUSES: { value: PlantingStatus; label: string; color: string }[] = [
-  { value: "PLANNED", label: "Planned", color: "bg-[#8FA86B] text-white" },
-  { value: "SEEDS_STARTED", label: "Seeds started", color: "bg-[#D4A843] text-white" },
-  { value: "TRANSPLANTED", label: "Transplanted", color: "bg-[#7AB648] text-white" },
-  { value: "ACTIVE", label: "Active", color: "bg-[#3A6B20] text-white" },
-  { value: "HARVESTING", label: "Harvesting", color: "bg-[#D4820A] text-white" },
-  { value: "HARVESTED", label: "Harvested", color: "bg-[#ADADAA] text-white" },
-  { value: "FAILED", label: "Failed", color: "bg-[#B85C3A] text-white" },
+const STATUSES: { value: PlantingStatus; label: string; color: string; hint: string }[] = [
+  { value: "PLANNED",       label: "Planned",       color: "bg-[#8FA86B] text-white", hint: "On your plan but not yet started" },
+  { value: "SEEDS_STARTED", label: "Seeds started", color: "bg-[#D4A843] text-white", hint: "Sown indoors or in seed trays" },
+  { value: "TRANSPLANTED",  label: "Transplanted",  color: "bg-[#7AB648] text-white", hint: "Moved out to this bed" },
+  { value: "ACTIVE",        label: "Active",        color: "bg-[#3A6B20] text-white", hint: "Growing in the bed right now" },
+  { value: "HARVESTING",    label: "Harvesting",    color: "bg-[#D4820A] text-white", hint: "Ready to pick — log harvests below" },
+  { value: "HARVESTED",     label: "Harvested",     color: "bg-[#ADADAA] text-white", hint: "Done — kept for season records" },
+  { value: "FAILED",        label: "Failed",        color: "bg-[#B85C3A] text-white", hint: "Didn't make it (pests, weather, etc.)" },
 ];
 
 type CompanionWarning = {
@@ -171,6 +171,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
                 key={s.value}
                 onClick={() => handleStatusChange(s.value)}
                 disabled={isUpdating}
+                title={s.hint}
                 className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
                   status === s.value
                     ? `${s.color} ring-2 ring-inset ring-white/30`
@@ -181,6 +182,14 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
               </button>
             ))}
           </div>
+          {/* Hint for the currently-selected status — visible on mobile where
+              title= tooltips don't fire. */}
+          {statusInfo && (
+            <p className="mt-2 text-xs text-[#6B6B5A] leading-snug">
+              <span className="font-medium text-[#3A3A30]">{statusInfo.label}:</span>{" "}
+              {STATUSES.find((s) => s.value === status)?.hint}
+            </p>
+          )}
         </div>
 
         {/* Variety + Notes */}

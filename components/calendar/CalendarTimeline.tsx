@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sprout, ArrowUpFromLine, Apple } from "lucide-react";
+import { Sprout, ArrowUpFromLine, Apple, CalendarClock } from "lucide-react";
 
 export type CalendarEvent = {
   date: Date;
@@ -10,7 +10,12 @@ export type CalendarEvent = {
   gardenName: string;
 };
 
-type Props = { events: CalendarEvent[] };
+type Props = {
+  events: CalendarEvent[];
+  /** Plantings in active seasons across all the user's gardens, so we can
+   *  show a smarter empty state when the user has plants but no events. */
+  activePlantingCount?: number;
+};
 
 const EVENT_CONFIG = {
   START_SEEDS: {
@@ -36,14 +41,34 @@ const EVENT_CONFIG = {
   },
 } as const;
 
-export function CalendarTimeline({ events }: Props) {
+export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
   if (events.length === 0) {
+    // Two flavors of "empty":
+    //  - No plantings at all → guide them to plant something
+    //  - Plantings exist but no events → the plants are missing grow-cycle
+    //    data (indoorStartWeeks / transplantWeeks / expectedHarvestDate),
+    //    so the calendar can't build entries. Setting planted dates in the
+    //    bed view computes expectedHarvestDate and fills the calendar in.
+    if (activePlantingCount === 0) {
+      return (
+        <div className="text-center py-16 text-[#ADADAA]">
+          <Sprout className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
+          <p className="text-sm">No upcoming planting events.</p>
+          <p className="text-xs mt-1">
+            Add plants to an active season bed to see your calendar.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="text-center py-16 text-[#ADADAA]">
-        <Sprout className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
-        <p className="text-sm">No upcoming planting events.</p>
-        <p className="text-xs mt-1">
-          Add plants to an active season bed to see your calendar.
+        <CalendarClock className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
+        <p className="text-sm text-[#6B6B5A]">
+          You have {activePlantingCount} planting{activePlantingCount === 1 ? "" : "s"}, but no calendar events yet.
+        </p>
+        <p className="text-xs mt-2 max-w-sm mx-auto leading-relaxed">
+          Set a planted date on each planting (from the bed view) to fill in
+          start-seed, transplant, and estimated harvest dates here.
         </p>
       </div>
     );
