@@ -30,11 +30,24 @@ export default async function BedPage({
   searchParams,
 }: {
   params: Promise<{ gardenId: string; bedId: string }>;
-  searchParams: Promise<{ season?: string }>;
+  searchParams: Promise<{ season?: string; plant?: string }>;
 }) {
   const { gardenId, bedId } = await params;
-  const { season: seasonParam } = await searchParams;
+  const { season: seasonParam, plant: plantParam } = await searchParams;
   const user = await requireUser();
+
+  // If we arrived from the plant detail page with ?plant=ID, pre-load the
+  // plant so the bed grid can show a "Tap an empty cell to plant X" banner
+  // and skip the picker search step.
+  const prefillPlant = plantParam
+    ? await db.plantLibrary.findFirst({
+        where: {
+          id: plantParam,
+          OR: [{ customForUserId: null }, { customForUserId: user.id }],
+        },
+        select: { id: true, name: true, category: true, imageUrl: true, daysToMaturity: true },
+      })
+    : null;
 
   // Fetch all seasons so we can offer the selector
   const allSeasons = await db.season.findMany({
@@ -276,6 +289,7 @@ export default async function BedPage({
           isPro={isPro}
           userId={user.id}
           recentPlants={recentPlants}
+          prefillPlant={prefillPlant}
         />
       </div>
     </div>

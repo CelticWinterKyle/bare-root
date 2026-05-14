@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -64,7 +66,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               style={{ width: 5, height: 5, background: "#7DA84E", flexShrink: 0, marginBottom: 2 }}
             />
           </div>
-          <NotificationBell reminders={bellReminders} unreadCount={unreadCount} />
+          <div className="flex items-center gap-2">
+            <NotificationBell reminders={bellReminders} unreadCount={unreadCount} />
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F4F4EC] transition-colors"
+            >
+              <Settings className="w-[18px] h-[18px] text-[#3A3A30]" strokeWidth={1.8} />
+            </Link>
+          </div>
         </div>
         {/* Green gradient accent line */}
         <div style={{

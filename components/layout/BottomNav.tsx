@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LayoutGrid, BookOpen, CalendarDays, Settings } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, BookOpen, CalendarDays, Bell } from "lucide-react";
 
 const tabs = [
   { href: "/dashboard", label: "Home",     icon: LayoutDashboard },
   { href: "/garden",    label: "Garden",   icon: LayoutGrid },
   { href: "/plants",    label: "Plants",   icon: BookOpen },
   { href: "/calendar",  label: "Calendar", icon: CalendarDays },
-  { href: "/settings",  label: "Settings", icon: Settings },
+  { href: "/reminders", label: "Alerts",   icon: Bell },
 ];
 
 export function BottomNav() {

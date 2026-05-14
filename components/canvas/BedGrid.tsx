@@ -3,7 +3,10 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { PlantPicker } from "./PlantPicker";
 import { CellDetail } from "./CellDetail";
 import { SmartLayoutPanel } from "./SmartLayoutPanel";
-import { updateCellSun } from "@/app/actions/planting";
+import { updateCellSun, assignPlant } from "@/app/actions/planting";
+import { useRouter, usePathname } from "next/navigation";
+import { toast } from "sonner";
+import { Sprout, X as CloseIcon } from "lucide-react";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -80,6 +83,7 @@ type Props = {
   userId: string;
   recentPlants: Plant[];
   isPro?: boolean;
+  prefillPlant?: Plant | null;
 };
 type PanelState =
   | { type: "none" }
@@ -87,14 +91,23 @@ type PanelState =
   | { type: "detail"; planting: Planting; cell: CellData }
   | { type: "smart-layout" };
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro, prefillPlant }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
   const [activeTab, setActiveTab] = useState<"plant" | "sun" | "companions" | "smart">("plant");
   const sunMode = activeTab === "sun";
   const [, startSunUpdate] = useTransition();
+  const [, startPrefillAssign] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
   const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
   const [justPlanted, setJustPlanted] = useState<Set<string>>(new Set());
+  const [pendingPlant, setPendingPlant] = useState<Plant | null>(prefillPlant ?? null);
+
+  function clearPrefill() {
+    setPendingPlant(null);
+    router.replace(pathname, { scroll: false });
+  }
 
   // Portrait beds (more rows than cols) auto-rotate on desktop only.
   // On mobile, rotation creates unscrollable horizontal overflow, so we start un-rotated
@@ -189,9 +202,34 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     }
     if (cell.planting) {
       setPanel({ type: "detail", planting: cell.planting, cell });
-    } else {
-      setPanel({ type: "picker", cellId: cell.id });
+      return;
     }
+    // Guard: planting requires an active season. Without one, the picker
+    // would silently fail server-side or save a planting with no season.
+    if (!seasonId) {
+      toast.error("Create an active season first", {
+        description: "Plantings are tracked by season — head to Seasons to start one.",
+      });
+      return;
+    }
+    // Prefill flow: user arrived from a plant detail page with ?plant=ID
+    // and we already know what they want to plant. Skip the picker.
+    if (pendingPlant) {
+      const plant = pendingPlant;
+      startPrefillAssign(async () => {
+        try {
+          await assignPlant(cell.id, plant.id, seasonId);
+          handlePlanted(cell.id);
+          toast.success(`Planted ${plant.name}`);
+          clearPrefill();
+        } catch (err) {
+          console.error(err);
+          toast.error("Couldn't plant — please try again");
+        }
+      });
+      return;
+    }
+    setPanel({ type: "picker", cellId: cell.id });
   }
 
   function handlePlanted(cellId: string) {
@@ -218,6 +256,37 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
   return (
     <div className="flex flex-col">
+      {/* Prefill banner — shown when user arrived from plant detail page */}
+      {pendingPlant && (
+        <div
+          className="flex items-center gap-3 px-[22px] md:px-8 py-3"
+          style={{
+            background: "#E4F0D4",
+            borderBottom: "1px solid #D4E8BE",
+          }}
+        >
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-[#D4E8BE] shrink-0">
+            <Sprout className="w-4 h-4 text-[#1C3D0A]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-[#1C3D0A]">
+              Tap any empty cell to plant <span className="italic">{pendingPlant.name}</span>
+            </p>
+            <p className="text-xs text-[#3A6B20] mt-0.5">
+              We'll add it to that cell for the current season.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={clearPrefill}
+            className="w-7 h-7 rounded-md hover:bg-white/60 flex items-center justify-center text-[#3A6B20]"
+            aria-label="Cancel"
+          >
+            <CloseIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Tab row */}
       <div style={{ borderBottom: "1px solid #E4E4DC", background: "#FDFDF8" }}>
         <div className="max-w-3xl mx-auto" style={{ display: "flex", alignItems: "stretch", overflow: "hidden" }}>

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getPlantAction } from "@/app/actions/plants";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
+import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
 
 const SUN_LABELS: Record<string, string> = {
   FULL_SUN: "☀️ Full sun (6+ hours)",
@@ -46,13 +48,57 @@ export default async function PlantDetailPage({
   params: Promise<{ plantId: string }>;
 }) {
   const { plantId } = await params;
-  await requireUser();
+  const user = await requireUser();
 
   const plant = await getPlantAction(plantId);
   if (!plant) notFound();
 
   const beneficial = plant.companions ?? [];
   const harmful = plant.antagonists ?? [];
+
+  // Gardens for the "Add to a bed" picker. Includes bed sizes + empty cell
+  // counts so the picker can show "All cells planted" inline.
+  const userGardens = await db.garden.findMany({
+    where: { userId: user.id },
+    select: {
+      id: true,
+      name: true,
+      seasons: { where: { isActive: true }, select: { id: true } },
+      beds: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          name: true,
+          widthFt: true,
+          heightFt: true,
+          cells: {
+            select: {
+              id: true,
+              plantings: {
+                where: { season: { isActive: true } },
+                select: { id: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const gardensForPicker = userGardens.map((g) => ({
+    id: g.id,
+    name: g.name,
+    hasActiveSeason: g.seasons.length > 0,
+    beds: g.beds.map((b) => ({
+      id: b.id,
+      name: b.name,
+      widthFt: b.widthFt,
+      heightFt: b.heightFt,
+      emptyCellCount: b.cells.filter((c) => c.plantings.length === 0).length,
+    })),
+  }));
 
   return (
     <div>
@@ -94,6 +140,14 @@ export default async function PlantDetailPage({
               {plant.description}
             </p>
           )}
+
+          <div className="mt-5">
+            <AddToBedDialog
+              plantId={plant.id}
+              plantName={plant.name}
+              gardens={gardensForPicker}
+            />
+          </div>
         </div>
       </div>
 

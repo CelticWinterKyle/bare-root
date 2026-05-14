@@ -168,6 +168,46 @@ export default async function GardenPage({
             {!atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
           </div>
         </div>
+
+        {/* Mobile-only secondary action row */}
+        <div className="md:hidden flex gap-2 px-[22px] pb-4" style={{ marginTop: "-4px" }}>
+          <Link
+            href={`/garden/${gardenId}/settings`}
+            className="flex-1 flex items-center justify-center gap-1.5"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#3A3A30",
+              padding: "7px 10px",
+              borderRadius: "8px",
+              border: "1px solid #E4E4DC",
+              background: "#FDFDF8",
+              textDecoration: "none",
+            }}
+          >
+            ⚙ Settings
+          </Link>
+          <Link
+            href={`/garden/${gardenId}/seasons`}
+            className="flex-1 flex items-center justify-center"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#3A3A30",
+              padding: "7px 10px",
+              borderRadius: "8px",
+              border: "1px solid #E4E4DC",
+              background: "#FDFDF8",
+              textDecoration: "none",
+            }}
+          >
+            Seasons
+          </Link>
+        </div>
       </div>
 
       {/* ── Weather card — mobile only ───────────────────────────────────── */}
@@ -355,8 +395,13 @@ export default async function GardenPage({
       {/* ── Footer notices ───────────────────────────────────────────────── */}
       <div className="px-[22px] md:px-8 pb-8">
         {!activeSeason && garden.beds.length > 0 && (
-          <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "#F4F4EC", border: "1px solid #E4E4DC" }}>
-            <p style={{ fontSize: "14px", color: "#6B6B5A" }}>No active season — create one to start assigning plants.</p>
+          <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "#F4F4EC", border: "1px solid #E4E4DC", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: "14px", color: "#111109", fontWeight: 500 }}>No active season</p>
+              <p style={{ fontSize: "13px", color: "#6B6B5A", marginTop: "2px" }}>
+                Seasons track your plantings across a growing period (e.g. Spring 2026). Create one to start assigning plants to your beds.
+              </p>
+            </div>
             <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
           </div>
         )}
