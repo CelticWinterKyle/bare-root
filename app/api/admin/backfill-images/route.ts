@@ -9,7 +9,7 @@ async function wikiSummary(slug: string): Promise<string | null> {
   try {
     const res = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`,
-      { headers: { "User-Agent": "BareRoot/1.0 (bareroot.app)" } }
+      { headers: { "User-Agent": "BareRoot/1.0 (bareroot.garden)" } }
     );
     if (!res.ok) return null;
     const data = await res.json();

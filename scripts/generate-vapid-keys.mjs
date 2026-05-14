@@ -15,6 +15,6 @@ const { publicKey, privateKey } = webpush.generateVAPIDKeys();
 console.log("# Add the following to your .env.local and Vercel env:\n");
 console.log(`NEXT_PUBLIC_VAPID_PUBLIC_KEY=${publicKey}`);
 console.log(`VAPID_PRIVATE_KEY=${privateKey}`);
-console.log(`VAPID_CONTACT_EMAIL=hello@bareroot.app`);
+console.log(`VAPID_CONTACT_EMAIL=hello@bareroot.garden`);
 console.log("\n# Important: the NEXT_PUBLIC_ prefix on the public key is required so");
 console.log("# the browser can read it via process.env in lib/push-client.ts.");
