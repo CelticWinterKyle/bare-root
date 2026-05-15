@@ -203,6 +203,55 @@ export async function assignPlant(
 }
 
 /**
+ * Bulk variant of assignPlant for the multi-select flow. Loops over
+ * cellIds and tries to plant the same plant in each, with full footprint
+ * logic per anchor.
+ *
+ * Side effects: each successful placement creates a Planting + its
+ * PlantingCell rows and schedules reminders. If a later cell's footprint
+ * overlaps an earlier one, the later one still plants — just with a
+ * reduced footprint (cells already taken get skipped, footprintReduced
+ * fires). That matches the user's expectation when they bulk-select a
+ * dense area: "fill what you can."
+ *
+ * Returns a summary the UI can use to surface one consolidated toast
+ * instead of N separate ones.
+ */
+export async function bulkAssignPlant(
+  cellIds: string[],
+  plantId: string,
+  seasonId: string
+): Promise<{
+  planted: number;
+  skipped: number;
+  reduced: number;
+}> {
+  if (cellIds.length === 0) return { planted: 0, skipped: 0, reduced: 0 };
+
+  let planted = 0;
+  let skipped = 0;
+  let reduced = 0;
+
+  // Serial loop — multi-cell footprints depend on earlier placements
+  // having landed (so the next iteration can see them as occupied).
+  // Parallelizing would race on overlapping-footprint pairs.
+  for (const cellId of cellIds) {
+    try {
+      const result = await assignPlant(cellId, plantId, seasonId);
+      planted++;
+      if (result.footprintWarning) reduced++;
+    } catch (err) {
+      // "This cell is already occupied" — expected if a prior anchor's
+      // footprint covered this one. Surface as skipped, not failure.
+      skipped++;
+      console.warn(`bulkAssignPlant: cell ${cellId} skipped:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  return { planted, skipped, reduced };
+}
+
+/**
  * Read-only footprint preview used by the picker UI to highlight which
  * cells a plant would occupy before the user commits. Mirrors the logic
  * in assignPlant's resolveFootprint but never writes.

@@ -3,10 +3,10 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { PlantPicker } from "./PlantPicker";
 import { CellDetail } from "./CellDetail";
 import { SmartLayoutPanel } from "./SmartLayoutPanel";
-import { updateCellSun, assignPlant } from "@/app/actions/planting";
+import { updateCellSun, assignPlant, bulkAssignPlant } from "@/app/actions/planting";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sprout, X as CloseIcon } from "lucide-react";
+import { Sprout, X as CloseIcon, Check, CheckSquare } from "lucide-react";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -93,6 +93,7 @@ type Props = {
 type PanelState =
   | { type: "none" }
   | { type: "picker"; cellId: string }
+  | { type: "bulk-picker"; cellIds: string[] }
   | { type: "detail"; planting: Planting; cell: CellData }
   | { type: "smart-layout" };
 
@@ -100,17 +101,24 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
-  const [activeTab, setActiveTab] = useState<"plant" | "sun" | "companions" | "smart">("plant");
+  const [activeTab, setActiveTab] = useState<"plant" | "sun" | "companions" | "smart" | "select">("plant");
   const sunMode = activeTab === "sun";
+  const selectMode = activeTab === "select";
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [, startSunUpdate] = useTransition();
   const [, startPrefillAssign] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
   const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
   const [justPlanted, setJustPlanted] = useState<Set<string>>(new Set());
   const [pendingPlant, setPendingPlant] = useState<Plant | null>(prefillPlant ?? null);
+  // How many plantings have been placed during this prefill session.
+  // Drives the "3 Cherry Tomatoes planted" banner subtitle and resets
+  // whenever a new prefill starts (via plant change) or is dismissed.
+  const [prefillPlacedCount, setPrefillPlacedCount] = useState(0);
 
   function clearPrefill() {
     setPendingPlant(null);
+    setPrefillPlacedCount(0);
     router.replace(pathname, { scroll: false });
   }
 
@@ -198,6 +206,22 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const dense = cellPx < 36;
 
   function handleCellClick(cell: CellData) {
+    if (selectMode) {
+      // Bulk-select mode: tapping toggles cell selection. Only empty cells
+      // are selectable — already-planted or footprint cells get a no-op
+      // (we don't bulk-replace plantings; that needs a more deliberate UX).
+      if (cell.planting || cell.footprint) {
+        toast.info("Cell is already occupied", { duration: 1500 });
+        return;
+      }
+      setSelectedCells((prev) => {
+        const next = new Set(prev);
+        if (next.has(cell.id)) next.delete(cell.id);
+        else next.add(cell.id);
+        return next;
+      });
+      return;
+    }
     if (sunMode) {
       const current = pendingSun[cell.id] ?? cell.sunLevel;
       const next = SUN_CYCLE[(SUN_CYCLE.indexOf(current) + 1) % SUN_CYCLE.length];
@@ -227,15 +251,22 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       return;
     }
     // Prefill flow: user arrived from a plant detail page with ?plant=ID
-    // and we already know what they want to plant. Skip the picker.
+    // and we already know what they want to plant. Skip the picker. The
+    // prefill stays active after each successful placement so the user
+    // can plant the same plant in multiple cells without re-picking. The
+    // banner X button is the only way out.
     if (pendingPlant) {
       const plant = pendingPlant;
       startPrefillAssign(async () => {
         try {
-          await assignPlant(cell.id, plant.id, seasonId);
+          const result = await assignPlant(cell.id, plant.id, seasonId);
           handlePlanted(cell.id);
-          toast.success(`Planted ${plant.name}`);
-          clearPrefill();
+          setPrefillPlacedCount((c) => c + 1);
+          if (result.footprintWarning) {
+            toast.warning(result.footprintWarning, { duration: 5000 });
+          } else {
+            toast.success(`Planted ${plant.name}`);
+          }
         } catch (err) {
           console.error(err);
           toast.error("Couldn't plant — please try again");
@@ -255,7 +286,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     return pendingSun[cell.id] ?? cell.sunLevel;
   }
 
-  const showPanel = (activeTab === "plant" && panel.type !== "none") || activeTab === "smart" || activeTab === "companions";
+  const showPanel =
+    (activeTab === "plant" && panel.type !== "none") ||
+    activeTab === "smart" ||
+    activeTab === "companions" ||
+    (activeTab === "select" && panel.type === "bulk-picker");
   const canRotate = gridRows !== gridCols;
   const isEmpty = cells.every((c) => !c.planting);
 
@@ -284,17 +319,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[#1C3D0A]">
-              Tap any empty cell to plant <span className="italic">{pendingPlant.name}</span>
+              {prefillPlacedCount === 0
+                ? <>Tap any empty cell to plant <span className="italic">{pendingPlant.name}</span></>
+                : <>Keep tapping to plant more <span className="italic">{pendingPlant.name}</span></>}
             </p>
             <p className="text-xs text-[#3A6B20] mt-0.5">
-              We'll add it to that cell for the current season.
+              {prefillPlacedCount === 0
+                ? "We'll add it to each cell you tap. Tap × to stop."
+                : `${prefillPlacedCount} planted so far — tap × when done.`}
             </p>
           </div>
           <button
             type="button"
             onClick={clearPrefill}
             className="w-7 h-7 rounded-md hover:bg-white/60 flex items-center justify-center text-[#3A6B20]"
-            aria-label="Cancel"
+            aria-label="Done"
           >
             <CloseIcon className="w-4 h-4" />
           </button>
@@ -305,12 +344,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       <div style={{ borderBottom: "1px solid #E4E4DC", background: "#FDFDF8" }}>
         <div className="max-w-3xl mx-auto" style={{ display: "flex", alignItems: "stretch", overflow: "hidden" }}>
           <div style={{ display: "flex", overflowX: "auto", flex: 1, gap: 0 }}>
-            {(["plant", "sun", "companions", "smart"] as const).map((tab) => {
+            {(["plant", "sun", "companions", "smart", "select"] as const).map((tab) => {
               const labels: Record<string, string> = {
                 plant: "Plant",
                 sun: "Sun Map",
                 companions: "Companions",
                 smart: "Smart Layout ✦",
+                select: "Select",
               };
               const isActive = activeTab === tab;
               return (
@@ -319,6 +359,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   onClick={() => {
                     setActiveTab(tab);
                     if (tab !== "plant") setPanel({ type: "none" });
+                    // Leaving select mode clears the selection so it doesn't
+                    // ambush the user when they come back later.
+                    if (tab !== "select") setSelectedCells(new Set());
                   }}
                   style={{
                     fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500,
@@ -467,6 +510,20 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                             </span>
                           )}
 
+                          {/* Selection checkmark (multi-select mode) */}
+                          {selectMode && selectedCells.has(cell.id) && (
+                            <span
+                              className="absolute inset-0 flex items-center justify-center bg-[#1C3D0A]/15 rounded-lg"
+                            >
+                              <span
+                                className="rounded-full bg-[#1C3D0A] text-white flex items-center justify-center shadow"
+                                style={{ width: Math.max(14, cellPx * 0.42), height: Math.max(14, cellPx * 0.42) }}
+                              >
+                                <Check style={{ width: Math.max(8, cellPx * 0.25), height: Math.max(8, cellPx * 0.25) }} strokeWidth={3} />
+                              </span>
+                            </span>
+                          )}
+
                           {/* Empty cell plus icon — but NOT for footprint
                               cells, which are visually occupied by their
                               anchor's plant and shouldn't invite a tap. */}
@@ -536,8 +593,51 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             </div>
           </div>
 
+          {/* Multi-select action bar — replaces the legend in select mode. */}
+          {selectMode ? (
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border bg-white shadow-sm" style={{ borderColor: "#E4E4DC" }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-md bg-[#F4F4EC] flex items-center justify-center shrink-0">
+                  <CheckSquare className="w-4 h-4 text-[#1C3D0A]" />
+                </div>
+                <p className="text-sm text-[#111109]">
+                  {selectedCells.size === 0 ? (
+                    <span className="text-[#6B6B5A]">Tap empty cells to select them</span>
+                  ) : (
+                    <><span className="font-semibold">{selectedCells.size}</span> cell{selectedCells.size === 1 ? "" : "s"} selected</>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {selectedCells.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCells(new Set())}
+                    className="px-3 py-1.5 text-xs font-medium text-[#6B6B5A] hover:text-[#111109] rounded-md hover:bg-[#F4F4EC] transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={selectedCells.size === 0 || !seasonId}
+                  onClick={() => {
+                    if (!seasonId) {
+                      toast.error("Create an active season first");
+                      return;
+                    }
+                    setPanel({ type: "bulk-picker", cellIds: Array.from(selectedCells) });
+                  }}
+                  className="px-4 py-1.5 text-xs font-semibold rounded-md bg-[#1C3D0A] text-white hover:bg-[#3d6b1e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Plant in {selectedCells.size || "selected"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {/* Legend — only show statuses present in this bed */}
-          {!sunMode && (
+          {!sunMode && !selectMode && (
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
               {presentStatuses.size === 0 && !hasAnyWarnings ? (
                 <span className="text-xs text-[#ADADAA]">Tap any cell to add a plant</span>
@@ -582,7 +682,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               {!(activeTab === "plant" && panel.type === "detail") && activeTab !== "companions" && (
                 <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "#F4F4EC" }}>
                   <p className="text-sm font-semibold" style={{ color: "#111109" }}>
-                    {activeTab === "smart" ? "AI layout planner" : activeTab === "plant" && panel.type === "picker" ? "Add a plant" : "Companion planting"}
+                    {activeTab === "smart"
+                      ? "AI layout planner"
+                      : activeTab === "select" && panel.type === "bulk-picker"
+                      ? "Plant in selected cells"
+                      : activeTab === "plant" && panel.type === "picker"
+                      ? "Add a plant"
+                      : "Companion planting"}
                   </p>
                   <button
                     onClick={() => { setPanel({ type: "none" }); if (activeTab !== "plant") setActiveTab("plant"); }}
@@ -604,8 +710,30 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       cellSizeIn={cellSizeIn}
                       recentPlants={recentPlants}
                       onClose={() => setPanel({ type: "none" })}
-                      onPlanted={() => handlePlanted(panel.cellId)}
+                      onPlanted={(id) => handlePlanted(id)}
                     />
+                  )}
+
+                  {/* Bulk picker — opened from multi-select mode */}
+                  {activeTab === "select" && panel.type === "bulk-picker" && (
+                    <div>
+                      <p className="mb-3 text-xs text-[#6B6B5A]">
+                        Pick a plant — it&apos;ll be added to all {panel.cellIds.length} selected cells.
+                      </p>
+                      <PlantPicker
+                        cellIds={panel.cellIds}
+                        seasonId={seasonId}
+                        userId={userId}
+                        cellSizeIn={cellSizeIn}
+                        recentPlants={recentPlants}
+                        onClose={() => {
+                          setPanel({ type: "none" });
+                          setSelectedCells(new Set());
+                          setActiveTab("plant");
+                        }}
+                        onPlanted={(id) => handlePlanted(id)}
+                      />
+                    </div>
                   )}
                   {activeTab === "plant" && panel.type === "detail" && (
                     <CellDetail

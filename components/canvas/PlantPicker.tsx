@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
-import { assignPlant } from "@/app/actions/planting";
+import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
 import { Search, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -31,6 +31,7 @@ function footprintHint(spacingInches: number | null, cellSizeIn: number): string
 
 export function PlantPicker({
   cellId,
+  cellIds,
   seasonId,
   userId,
   cellSizeIn,
@@ -38,14 +39,21 @@ export function PlantPicker({
   onClose,
   onPlanted,
 }: {
-  cellId: string;
+  /** Single-cell mode anchor. Ignored when cellIds is provided. */
+  cellId?: string;
+  /** Bulk mode: an array of anchor cells. When set, picking a plant
+   *  fans the placement out to every cell via bulkAssignPlant. */
+  cellIds?: string[];
   seasonId: string;
   userId: string;
   cellSizeIn: number;
   recentPlants: Plant[];
   onClose: () => void;
-  onPlanted?: () => void;
+  /** Fired once per planted cell so BedGrid can run its placement
+   *  animation. In bulk mode it's invoked per anchor. */
+  onPlanted?: (cellId: string) => void;
 }) {
+  const isBulk = !!cellIds && cellIds.length > 0;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Plant[]>(recentPlants);
   const [isSearching, startSearch] = useTransition();
@@ -69,8 +77,26 @@ export function PlantPicker({
     setAssigningId(plantId);
     setSpacingWarnings([]);
     startAssign(async () => {
-      const result = await assignPlant(cellId, plantId, seasonId);
-      onPlanted?.();
+      if (isBulk) {
+        const ids = cellIds!;
+        const summary = await bulkAssignPlant(ids, plantId, seasonId);
+        // Fire placement animations for each successful anchor. We don't
+        // know exactly which ids succeeded vs were skipped due to
+        // overlap, so we fire for all and let the visual refetch settle
+        // — incorrect animations are harmless.
+        ids.forEach((id) => onPlanted?.(id));
+        const parts: string[] = [];
+        if (summary.planted > 0) parts.push(`Planted ${summary.planted}`);
+        if (summary.skipped > 0) parts.push(`${summary.skipped} skipped`);
+        if (summary.reduced > 0) parts.push(`${summary.reduced} with reduced spacing`);
+        if (summary.planted > 0) toast.success(parts.join(" · "));
+        else toast.error("Couldn't plant any — cells may already be occupied");
+        onClose();
+        return;
+      }
+
+      const result = await assignPlant(cellId!, plantId, seasonId);
+      onPlanted?.(cellId!);
       // Footprint warning takes precedence — it's the more actionable
       // signal ("not enough room" vs "neighbors are close"). Keep the
       // picker open briefly so the user can see what happened.
