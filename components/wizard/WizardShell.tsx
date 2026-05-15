@@ -139,7 +139,7 @@ export function WizardShell() {
 
       {step > 1 && (
         <p className="text-center text-xs text-[#ADADAA] mb-4">
-          ✓ Your progress is saved — you can continue anytime.
+          A few quick questions and you'll be planting.
         </p>
       )}
 

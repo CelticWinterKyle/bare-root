@@ -36,8 +36,14 @@ export default async function GardenPage({
         include: {
           cells: {
             include: {
-              plantings: {
-                where: { season: { isActive: true } },
+              // PlantingCell is the source of truth — counts both primary
+              // (anchor) cells AND footprint cells of multi-cell plants.
+              // The legacy `plantings` relation only catches anchors, which
+              // undercounts on beds with 2×2 tomatoes.
+              occupiedBy: {
+                where: { planting: { season: { isActive: true } } },
+                select: { plantingId: true },
+                take: 1,
               },
             },
           },
@@ -103,7 +109,9 @@ export default async function GardenPage({
     yPosition: bed.yPosition,
     widthFt: bed.widthFt,
     heightFt: bed.heightFt,
-    plantCount: bed.cells.reduce((sum, c) => sum + c.plantings.length, 0),
+    // Number of CELLS occupied (so a 2×2 tomato shows as 4, not 1).
+    // Matches what Robyn sees on the grid.
+    plantCount: bed.cells.reduce((sum, c) => sum + c.occupiedBy.length, 0),
   }));
 
   const totalPlantCount = beds.reduce((sum, b) => sum + b.plantCount, 0);

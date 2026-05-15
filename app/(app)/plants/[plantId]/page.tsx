@@ -77,9 +77,13 @@ export default async function PlantDetailPage({
           cells: {
             select: {
               id: true,
-              plantings: {
-                where: { season: { isActive: true } },
-                select: { id: true },
+              // Use occupiedBy (PlantingCell join) so footprint cells of
+              // multi-cell plants count as occupied, not just the anchor.
+              // Otherwise a 2×2 tomato makes only its anchor look planted
+              // and AddToBedDialog reports the bed as more empty than it is.
+              occupiedBy: {
+                where: { planting: { season: { isActive: true } } },
+                select: { plantingId: true },
                 take: 1,
               },
             },
@@ -99,7 +103,7 @@ export default async function PlantDetailPage({
       name: b.name,
       widthFt: b.widthFt,
       heightFt: b.heightFt,
-      emptyCellCount: b.cells.filter((c) => c.plantings.length === 0).length,
+      emptyCellCount: b.cells.filter((c) => c.occupiedBy.length === 0).length,
     })),
   }));
 

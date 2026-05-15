@@ -109,7 +109,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // planting instead of opening the picker. Triggered from the Move
   // button in CellDetail.
   const [movingPlanting, setMovingPlanting] = useState<{ id: string; plantName: string } | null>(null);
-  const [, startMove] = useTransition();
+  const [isMoving, startMove] = useTransition();
   const [, startSunUpdate] = useTransition();
   const [, startPrefillAssign] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
@@ -215,6 +215,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     // committed to relocating this planting, so don't sidetrack into
     // pickers or selection toggles.
     if (movingPlanting) {
+      // Guard against double-taps while the previous move is still
+      // round-tripping. Without this, two fast taps fire two concurrent
+      // movePlanting calls; the second wins, the first is silently
+      // erased, and the grid flickers between states.
+      if (isMoving) return;
       if (cell.planting?.id === movingPlanting.id || cell.footprint?.plantingId === movingPlanting.id) {
         // Tapped one of its own current cells — silently cancel as no-op.
         toast.info("That's where it currently is");
