@@ -74,6 +74,28 @@ function inferCategoryFromName(name: string): PlantCategory {
   return "OTHER";
 }
 
+/**
+ * Collapse plants that share a lowercase name. Perenual's API returns
+ * multiple distinct species under the same common name ("tomato",
+ * "sweet pepperbush", etc.) — 5 identical-looking rows in a search
+ * result is just noise to a gardener. Rule: when a seed-source entry
+ * with the same lowercase name exists, drop the Perenual ones. When
+ * only Perenual entries exist for a name, keep the first.
+ */
+function dedupePlantsByName<T extends { name: string; source: string | null }>(plants: T[]): T[] {
+  const byKey = new Map<string, T>();
+  for (const p of plants) {
+    const key = p.name.toLowerCase().trim();
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, p);
+    } else if (p.source === "seed" && existing.source !== "seed") {
+      byKey.set(key, p);
+    }
+  }
+  return Array.from(byKey.values());
+}
+
 export async function searchPlantsAction(
   query: string,
   category: PlantCategory | null,
@@ -87,10 +109,13 @@ export async function searchPlantsAction(
     ],
   };
 
+  // Over-fetch (96 vs the 48 we'll return) so dedupe doesn't leave a
+  // sparse result list when the raw query had heavy Perenual duplicates.
+  // Source DESC puts seed plants first so they win the dedupe tie-break.
   const cached = await db.plantLibrary.findMany({
     where,
-    orderBy: { name: "asc" as const },
-    take: 48,
+    orderBy: [{ source: "desc" as const }, { name: "asc" as const }],
+    take: 96,
   });
 
   // Hit API if cache miss and we have a query
@@ -120,15 +145,16 @@ export async function searchPlantsAction(
           // ignore duplicate key on concurrent requests
         }
       }
-      return db.plantLibrary.findMany({
+      const refreshed = await db.plantLibrary.findMany({
         where,
-        orderBy: { name: "asc" },
-        take: 48,
+        orderBy: [{ source: "desc" as const }, { name: "asc" as const }],
+        take: 96,
       });
+      return dedupePlantsByName(refreshed).slice(0, 48);
     }
   }
 
-  return cached;
+  return dedupePlantsByName(cached).slice(0, 48);
 }
 
 export async function getPlantAction(plantId: string) {

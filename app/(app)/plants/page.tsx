@@ -20,7 +20,7 @@ export default async function PlantsPage({
   const user = await requireUser();
   const { q, category } = await searchParams;
 
-  const [plants, inventory] = await Promise.all([
+  const [rawPlants, inventory] = await Promise.all([
     db.plantLibrary.findMany({
       where: {
         AND: [
@@ -32,13 +32,28 @@ export default async function PlantsPage({
         ],
       },
       orderBy: [{ source: "desc" }, { name: "asc" }],
-      take: 48,
+      // Over-fetch so the dedupe below doesn't leave a sparse list when
+      // Perenual duplicates dominate (e.g. searching "tomato" returns
+      // 5 indistinguishable Perenual rows we'll collapse).
+      take: 96,
     }),
     db.seedInventory.findMany({
       where: { userId: user.id },
       select: { plantId: true, quantity: true },
     }),
   ]);
+
+  // Collapse Perenual duplicates against seed entries with the same
+  // lowercase name. Same rule as searchPlantsAction.
+  const seen = new Map<string, (typeof rawPlants)[number]>();
+  for (const p of rawPlants) {
+    const key = p.name.toLowerCase().trim();
+    const existing = seen.get(key);
+    if (!existing || (p.source === "seed" && existing.source !== "seed")) {
+      seen.set(key, p);
+    }
+  }
+  const plants = Array.from(seen.values()).slice(0, 48);
 
   const inventoryByPlant = new Map<string, number>();
   for (const item of inventory) {
