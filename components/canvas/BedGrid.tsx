@@ -53,7 +53,7 @@ const SUN_BG: Record<string, string> = {
 // Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
 const FRAME_PAD = 52;
 
-type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null };
+type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null };
 type Planting = {
   id: string;
   status: PlantingStatus;
@@ -69,7 +69,12 @@ type CellData = {
   row: number;
   col: number;
   sunLevel: SunLevel;
+  /** Set only on the anchor (primary) cell of a planting. */
   planting: Planting | null;
+  /** Set when this cell is a non-anchor footprint cell of a multi-cell
+   *  planting. Renders the same status color as the anchor but no label,
+   *  and routes clicks to the anchor's detail panel. */
+  footprint: { plantingId: string; primaryCellId: string; status: PlantingStatus } | null;
   warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[];
 };
 type Props = {
@@ -91,7 +96,7 @@ type PanelState =
   | { type: "detail"; planting: Planting; cell: CellData }
   | { type: "smart-layout" };
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, userId, recentPlants, isPro, prefillPlant }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -202,6 +207,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
     }
     if (cell.planting) {
       setPanel({ type: "detail", planting: cell.planting, cell });
+      return;
+    }
+    // Footprint cell: tapping a non-anchor cell of a multi-cell planting
+    // opens the same detail panel the anchor would.
+    if (cell.footprint) {
+      const anchor = cells.find((c) => c.id === cell.footprint!.primaryCellId);
+      if (anchor?.planting) {
+        setPanel({ type: "detail", planting: anchor.planting, cell: anchor });
+      }
       return;
     }
     // Guard: planting requires an active season. Without one, the picker
@@ -387,7 +401,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                     {displayCells.map((cell) => {
                       const sun = effectiveSun(cell);
                       const planting = cell.planting;
-                      const cellStyle = planting ? CELL_STYLE[planting.status] : null;
+                      // Footprint cells inherit the anchor's status color
+                      // but don't render label/dot/badges (those belong to
+                      // the primary cell).
+                      const footprintStatus = cell.footprint?.status ?? null;
+                      const effectiveStatus = planting?.status ?? footprintStatus;
+                      const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
+                      const isFootprintOnly = !planting && !!footprintStatus;
                       const hasHarmful = cell.warnings.some((w) => w.type === "HARMFUL");
                       const hasBeneficial = cell.warnings.some((w) => w.type === "BENEFICIAL");
                       const isSelected =
@@ -401,16 +421,16 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
 
                       const cellBg = sunMode
                         ? SUN_BG[sun]
-                        : planting
-                        ? cellStyle!.bg
+                        : cellStyle
+                        ? cellStyle.bg
                         : preview
                         ? "rgba(28,61,10,0.06)"
                         : "rgba(255,255,255,0.8)";
 
                       const cellBorder = sunMode
                         ? "rgba(28,61,10,0.1)"
-                        : planting
-                        ? cellStyle!.border
+                        : cellStyle
+                        ? cellStyle.border
                         : preview
                         ? "rgba(28,61,10,0.15)"
                         : "rgba(28,61,10,0.1)";
@@ -447,8 +467,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                             </span>
                           )}
 
-                          {/* Empty cell plus icon */}
-                          {!planting && !preview && !sunMode && (
+                          {/* Empty cell plus icon — but NOT for footprint
+                              cells, which are visually occupied by their
+                              anchor's plant and shouldn't invite a tap. */}
+                          {!planting && !isFootprintOnly && !preview && !sunMode && (
                             <span className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none" style={{ fontSize: "18px", color: "rgba(28,61,10,0.15)" }}>
                               +
                             </span>
@@ -579,6 +601,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cells, seasonId, 
                       cellId={panel.cellId}
                       seasonId={seasonId}
                       userId={userId}
+                      cellSizeIn={cellSizeIn}
                       recentPlants={recentPlants}
                       onClose={() => setPanel({ type: "none" })}
                       onPlanted={() => handlePlanted(panel.cellId)}

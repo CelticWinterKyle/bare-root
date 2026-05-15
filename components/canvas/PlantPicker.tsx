@@ -3,7 +3,8 @@ import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant } from "@/app/actions/planting";
-import { Search, Loader2, Leaf, AlertTriangle } from "lucide-react";
+import { Search, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import Image from "next/image";
 import type { SpacingWarning } from "@/lib/services/spacing";
 
@@ -13,12 +14,26 @@ type Plant = {
   category: string;
   imageUrl: string | null;
   daysToMaturity: number | null;
+  spacingInches: number | null;
 };
+
+/**
+ * "Needs X×X cells" for a plant in this bed. Derived from spacing data
+ * already in PlantLibrary, so it's free to compute per-row. Returns null
+ * for 1×1 plants (the default) so we don't add noise.
+ */
+function footprintHint(spacingInches: number | null, cellSizeIn: number): string | null {
+  if (!spacingInches) return null;
+  const side = Math.max(1, Math.ceil(spacingInches / cellSizeIn));
+  if (side <= 1) return null;
+  return `Needs ${side}×${side} cells`;
+}
 
 export function PlantPicker({
   cellId,
   seasonId,
   userId,
+  cellSizeIn,
   recentPlants,
   onClose,
   onPlanted,
@@ -26,6 +41,7 @@ export function PlantPicker({
   cellId: string;
   seasonId: string;
   userId: string;
+  cellSizeIn: number;
   recentPlants: Plant[];
   onClose: () => void;
   onPlanted?: () => void;
@@ -55,12 +71,17 @@ export function PlantPicker({
     startAssign(async () => {
       const result = await assignPlant(cellId, plantId, seasonId);
       onPlanted?.();
-      if (result.spacingWarnings.length > 0) {
+      // Footprint warning takes precedence — it's the more actionable
+      // signal ("not enough room" vs "neighbors are close"). Keep the
+      // picker open briefly so the user can see what happened.
+      if (result.footprintWarning) {
+        toast.warning(result.footprintWarning, { duration: 6000 });
+      } else if (result.spacingWarnings.length > 0) {
         setSpacingWarnings(result.spacingWarnings);
         setTimeout(onClose, 2500);
-      } else {
-        onClose();
+        return;
       }
+      onClose();
     });
   }
 
@@ -125,6 +146,10 @@ export function PlantPicker({
                 <p className="font-medium text-sm text-[#111109] truncate">{plant.name}</p>
                 <p className="text-xs text-[#ADADAA]">
                   {plant.daysToMaturity ? `${plant.daysToMaturity} days` : plant.category}
+                  {(() => {
+                    const hint = footprintHint(plant.spacingInches, cellSizeIn);
+                    return hint ? <span className="text-[#3A6B20] font-medium"> · {hint}</span> : null;
+                  })()}
                 </p>
               </div>
               {isAssigning && assigningId === plant.id && (

@@ -46,7 +46,7 @@ export default async function BedPage({
           id: plantParam,
           OR: [{ customForUserId: null }, { customForUserId: user.id }],
         },
-        select: { id: true, name: true, category: true, imageUrl: true, daysToMaturity: true },
+        select: { id: true, name: true, category: true, imageUrl: true, daysToMaturity: true, spacingInches: true },
       })
     : null;
 
@@ -75,16 +75,28 @@ export default async function BedPage({
       },
       cells: {
         include: {
-          plantings: {
-            where: viewingSeason ? { seasonId: viewingSeason.id } : { season: { isActive: true } },
+          // PlantingCell is the source of truth for "what's growing in this
+          // cell?" — it covers both primary (anchor) cells and footprint
+          // cells of multi-cell plants. Filtered to the viewing season.
+          occupiedBy: {
+            where: {
+              planting: viewingSeason
+                ? { seasonId: viewingSeason.id }
+                : { season: { isActive: true } },
+            },
             include: {
-              plant: {
-                select: {
-                  id: true,
-                  name: true,
-                  category: true,
-                  imageUrl: true,
-                  daysToMaturity: true,
+              planting: {
+                include: {
+                  plant: {
+                    select: {
+                      id: true,
+                      name: true,
+                      category: true,
+                      imageUrl: true,
+                      daysToMaturity: true,
+                      spacingInches: true,
+                    },
+                  },
                 },
               },
             },
@@ -104,10 +116,12 @@ export default async function BedPage({
       )
     : [];
 
-  // All plant IDs in this bed for the viewing season (for companion lookup)
+  // All plant IDs in this bed for the viewing season (for companion lookup).
+  // Pull from occupiedBy so multi-cell plants count once and footprint cells
+  // contribute too.
   const bedPlantIds = [
     ...new Set(
-      bed.cells.flatMap((cell) => cell.plantings.map((p) => p.plantId))
+      bed.cells.flatMap((cell) => cell.occupiedBy.map((oc) => oc.planting.plantId))
     ),
   ];
 
@@ -139,6 +153,7 @@ export default async function BedPage({
           category: true,
           imageUrl: true,
           daysToMaturity: true,
+          spacingInches: true,
         },
       },
     },
@@ -148,9 +163,15 @@ export default async function BedPage({
   });
   const recentPlants = recentPlantings.map((p) => p.plant);
 
-  // Build cell data with companion warnings
+  // Build cell data with companion warnings. Per cell, occupiedBy is at
+  // most one entry for the viewing season (enforced in app code by
+  // assignPlant). That entry tells us whether this cell is the anchor
+  // (isPrimary) or a footprint cell — and only the anchor renders the
+  // plant label / status pill / interactive detail panel.
   const cells = bed.cells.map((cell) => {
-    const rawPlanting = cell.plantings[0] ?? null;
+    const occ = cell.occupiedBy[0] ?? null;
+    const isPrimary = occ?.isPrimary ?? false;
+    const rawPlanting = occ && isPrimary ? occ.planting : null;
 
     let warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[] = [];
 
@@ -190,6 +211,17 @@ export default async function BedPage({
             notes: rawPlanting.notes,
           }
         : null,
+      // Footprint info: when this cell is part of a multi-cell planting but
+      // ISN'T the anchor. The grid renderer uses these to color the cell to
+      // match its anchor and to route taps to the anchor's detail panel.
+      footprint:
+        occ && !isPrimary
+          ? {
+              plantingId: occ.planting.id,
+              primaryCellId: occ.planting.cellId,
+              status: occ.planting.status,
+            }
+          : null,
       warnings,
     };
   });
@@ -248,7 +280,13 @@ export default async function BedPage({
               widthFt: bed.widthFt,
               heightFt: bed.heightFt,
               cellSizeIn: bed.cellSizeIn,
-              plantingCount: bed.cells.reduce((sum, c) => sum + c.plantings.length, 0),
+              // Count distinct anchor plantings (footprint cells share an
+              // anchor so we don't double-count multi-cell plants).
+              plantingCount: new Set(
+                bed.cells.flatMap((c) =>
+                  c.occupiedBy.filter((oc) => oc.isPrimary).map((oc) => oc.planting.id)
+                )
+              ).size,
             }}
           />
         </div>

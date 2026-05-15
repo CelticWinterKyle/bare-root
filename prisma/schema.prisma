@@ -195,7 +195,13 @@ model Cell {
   notes    String?
 
   bed       Bed        @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  // Plantings where this is the PRIMARY (anchor) cell — used for rendering
+  // labels and as the legacy single-cell relation. Most queries should use
+  // `occupiedBy` instead to also catch footprint cells from multi-cell plants.
   plantings Planting[]
+  // All plantings occupying this cell (primary or footprint). For "what's
+  // growing in this cell?" this is the source of truth.
+  occupiedBy PlantingCell[]
 
   @@unique([bedId, row, col])
 }
@@ -219,6 +225,11 @@ model Season {
 
 model Planting {
   id                  String         @id @default(cuid())
+  // The "primary" / anchor cell — where the plant label renders. For
+  // multi-cell plants (tomato in a 6" grid, etc.) this is the cell the
+  // user actually tapped; additional footprint cells live in the `cells`
+  // relation. Kept here as a denormalized pointer so most existing queries
+  // (which only care about the anchor) keep working unchanged.
   cellId              String
   seasonId            String
   plantId             String
@@ -238,12 +249,39 @@ model Planting {
   cell        Cell            @relation(fields: [cellId], references: [id], onDelete: Cascade)
   season      Season          @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   plant       PlantLibrary    @relation(fields: [plantId], references: [id])
+  // All cells this planting occupies (the anchor + any footprint cells).
+  // Invariant: exactly one entry per planting has isPrimary=true, and
+  // that entry's cellId matches Planting.cellId above.
+  cells       PlantingCell[]
   photos      PlantingPhoto[]
   harvestLogs HarvestLog[]
   growthNotes GrowthNote[]
   reminders   Reminder[]
 
   @@unique([cellId, seasonId])
+}
+
+// Join table linking a Planting to every Cell in its footprint.
+//
+// A single-cell plant (lettuce in 12" cells, spacingInches ~= cellSizeIn)
+// has one PlantingCell entry with isPrimary=true.
+//
+// A multi-cell plant (tomato in 6" cells, spacingInches=18) has multiple
+// entries — one isPrimary=true at the anchor, and additional non-primary
+// entries for each footprint cell.
+//
+// "One planting per cell per season" is enforced in application code
+// (assignPlant) since Prisma can't express that across this relation.
+model PlantingCell {
+  plantingId String
+  cellId     String
+  isPrimary  Boolean @default(false)
+
+  planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+  cell     Cell     @relation(fields: [cellId], references: [id], onDelete: Cascade)
+
+  @@id([plantingId, cellId])
+  @@index([cellId])
 }
 
 model GrowthNote {
