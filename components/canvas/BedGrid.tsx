@@ -291,6 +291,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     activeTab === "smart" ||
     activeTab === "companions" ||
     (activeTab === "select" && panel.type === "bulk-picker");
+
+  // On mobile the picker/detail panel slides in BELOW the grid, which is
+  // easy to miss if the grid pushes it offscreen. Scroll it into view
+  // once the panel opens so the tap visibly "did something."
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showPanel || !isMobile || !panelRef.current) return;
+    // Wait a beat so the panel has started its 300ms expand transition
+    // — scrollIntoView on a collapsed (max-height 0) element jumps to
+    // the wrong place.
+    const t = setTimeout(() => {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [showPanel, isMobile, panel.type]);
   const canRotate = gridRows !== gridCols;
   const isEmpty = cells.every((c) => !c.planting);
 
@@ -671,6 +686,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
 
         {/* Side panel — slides in (below grid on mobile, beside on desktop) */}
         <div
+          ref={panelRef}
           className="overflow-hidden transition-all duration-300 ease-in-out w-full md:w-auto md:shrink-0"
           style={isMobile
             ? { maxHeight: showPanel ? 640 : 0, opacity: showPanel ? 1 : 0 }
