@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
 import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
-import { Loader2, Trash2, X } from "lucide-react";
+import { Loader2, Trash2, X, Move } from "lucide-react";
 import type { PlantingStatus } from "@/lib/generated/prisma/enums";
 import Link from "next/link";
 
@@ -37,6 +37,9 @@ type Props = {
   gardenId: string;
   bedId: string;
   onClose: () => void;
+  /** When provided, the Move button is shown. Clicking it puts BedGrid
+   *  into move mode — the next empty cell tap relocates this planting. */
+  onMoveStart?: (planting: { id: string; plantName: string }) => void;
 };
 
 function toInputDate(d: Date | null): string {
@@ -44,7 +47,7 @@ function toInputDate(d: Date | null): string {
   return new Date(d).toISOString().split("T")[0];
 }
 
-export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Props) {
+export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMoveStart }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
@@ -305,8 +308,27 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose }: Pro
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          Harvest log
+          Open
         </Link>
+        {onMoveStart && (
+          <button
+            onClick={() => {
+              onMoveStart({ id: planting.id, plantName: planting.plant.name });
+              onClose();
+            }}
+            style={{
+              flex: 1, padding: "8px 10px", borderRadius: "8px",
+              fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 600,
+              background: "transparent", color: "#3A6B20",
+              border: "1.5px solid rgba(58,107,32,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+              cursor: "pointer",
+            }}
+          >
+            <Move className="w-3 h-3" />
+            Move
+          </button>
+        )}
         <button
           onClick={handleRemoveClick}
           disabled={isRemoving}

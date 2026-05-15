@@ -3,10 +3,10 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { PlantPicker } from "./PlantPicker";
 import { CellDetail } from "./CellDetail";
 import { SmartLayoutPanel } from "./SmartLayoutPanel";
-import { updateCellSun, assignPlant, bulkAssignPlant } from "@/app/actions/planting";
+import { updateCellSun, assignPlant, bulkAssignPlant, movePlanting } from "@/app/actions/planting";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sprout, X as CloseIcon, Check, CheckSquare } from "lucide-react";
+import { Sprout, X as CloseIcon, Check, CheckSquare, Move } from "lucide-react";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -105,6 +105,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const sunMode = activeTab === "sun";
   const selectMode = activeTab === "select";
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  // Move-mode state: when set, the next empty-cell tap relocates this
+  // planting instead of opening the picker. Triggered from the Move
+  // button in CellDetail.
+  const [movingPlanting, setMovingPlanting] = useState<{ id: string; plantName: string } | null>(null);
+  const [, startMove] = useTransition();
   const [, startSunUpdate] = useTransition();
   const [, startPrefillAssign] = useTransition();
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
@@ -206,6 +211,38 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const dense = cellPx < 36;
 
   function handleCellClick(cell: CellData) {
+    // Move flow takes precedence over everything else — the user has
+    // committed to relocating this planting, so don't sidetrack into
+    // pickers or selection toggles.
+    if (movingPlanting) {
+      if (cell.planting?.id === movingPlanting.id || cell.footprint?.plantingId === movingPlanting.id) {
+        // Tapped one of its own current cells — silently cancel as no-op.
+        toast.info("That's where it currently is");
+        return;
+      }
+      if (cell.planting || cell.footprint) {
+        toast.error("That cell is occupied. Pick an empty one.");
+        return;
+      }
+      const target = cell;
+      const mv = movingPlanting;
+      startMove(async () => {
+        try {
+          const result = await movePlanting(mv.id, target.id);
+          handlePlanted(target.id);
+          if (result.footprintWarning) {
+            toast.warning(result.footprintWarning, { duration: 5000 });
+          } else {
+            toast.success(`Moved ${mv.plantName}`);
+          }
+          setMovingPlanting(null);
+        } catch (err) {
+          console.error(err);
+          toast.error(err instanceof Error ? err.message : "Couldn't move — please try again");
+        }
+      });
+      return;
+    }
     if (selectMode) {
       // Bulk-select mode: tapping toggles cell selection. Only empty cells
       // are selectable — already-planted or footprint cells get a no-op
@@ -320,6 +357,38 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
 
   return (
     <div className="flex flex-col">
+      {/* Move-mode banner — set from the CellDetail Move button. The
+          next empty-cell tap relocates the planting. */}
+      {movingPlanting && (
+        <div
+          className="flex items-center gap-3 px-[22px] md:px-8 py-3"
+          style={{
+            background: "#FFF3E8",
+            borderBottom: "1px solid rgba(212,130,10,0.25)",
+          }}
+        >
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-[rgba(212,130,10,0.25)] shrink-0">
+            <Move className="w-4 h-4 text-[#D4820A]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-[#7A4A0A]">
+              Tap an empty cell to move <span className="italic">{movingPlanting.plantName}</span>
+            </p>
+            <p className="text-xs text-[#A06010] mt-0.5">
+              Footprint and current cells move together. Tap × to cancel.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMovingPlanting(null)}
+            className="w-7 h-7 rounded-md hover:bg-white/60 flex items-center justify-center text-[#A06010]"
+            aria-label="Cancel move"
+          >
+            <CloseIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Prefill banner — shown when user arrived from plant detail page */}
       {pendingPlant && (
         <div
@@ -758,6 +827,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       gardenId={gardenId}
                       bedId={bedId}
                       onClose={() => setPanel({ type: "none" })}
+                      onMoveStart={(p) => setMovingPlanting(p)}
                     />
                   )}
                   {/* Smart layout */}

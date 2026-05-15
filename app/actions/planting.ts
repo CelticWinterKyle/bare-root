@@ -40,8 +40,11 @@ async function resolveFootprint(args: {
   bed: { gridRows: number; gridCols: number; cellSizeIn: number };
   spacingInches: number | null;
   seasonId: string;
+  /** When moving an existing planting, exclude its own cells from the
+   *  "occupied" check so we don't refuse to place it on top of itself. */
+  excludePlantingId?: string;
 }): Promise<FootprintPlacement> {
-  const { anchorCell, bed, spacingInches, seasonId } = args;
+  const { anchorCell, bed, spacingInches, seasonId, excludePlantingId } = args;
   const spacing = spacingInches ?? bed.cellSizeIn;
   const sideCells = Math.max(1, Math.ceil(spacing / bed.cellSizeIn));
 
@@ -68,12 +71,16 @@ async function resolveFootprint(args: {
   });
   const cellByPos = new Map(cellsInBed.map((c) => [`${c.row},${c.col}`, c.id]));
 
-  // Drop cells already occupied in this season.
+  // Drop cells already occupied in this season — but ignore the moving
+  // planting's own cells when present, so it can re-anchor onto itself.
   const candidateIds = cellsInBed.map((c) => c.id);
   const occupied = await db.plantingCell.findMany({
     where: {
       cellId: { in: candidateIds },
-      planting: { seasonId },
+      planting: {
+        seasonId,
+        ...(excludePlantingId ? { id: { not: excludePlantingId } } : {}),
+      },
     },
     select: { cellId: true },
   });
@@ -200,6 +207,97 @@ export async function assignPlant(
 
   revalidatePath(`/garden/${cell.bed.gardenId}/beds/${cell.bedId}`);
   return { spacingWarnings, footprintWarning };
+}
+
+/**
+ * Move an existing planting to a different anchor cell (within the same
+ * bed). Recomputes the footprint at the new anchor using the plant's
+ * spacing, then atomically swaps the PlantingCell rows. The planting
+ * record itself (and all its photos/harvest logs/notes/etc) is
+ * preserved — only its location changes.
+ *
+ * Cross-bed moves are not supported in v1 — too many edge cases (different
+ * cell sizes, different garden, possibly different season). Tap-to-remove
+ * + re-plant in the new bed if you need cross-bed.
+ */
+export async function movePlanting(
+  plantingId: string,
+  newAnchorCellId: string
+): Promise<{ footprintWarning?: string }> {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
+    include: {
+      plant: { select: { name: true, spacingInches: true } },
+      cell: { select: { bedId: true } },
+    },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  const newAnchor = await db.cell.findFirst({
+    where: { id: newAnchorCellId, bed: { garden: gardenEditFilter(user.id) } },
+    include: { bed: true },
+  });
+  if (!newAnchor) throw new Error("Target cell not found");
+
+  // Same-bed enforcement — cross-bed moves are out of scope for v1.
+  if (planting.cell.bedId !== newAnchor.bedId) {
+    throw new Error("Can't move a planting between beds. Remove and replant instead.");
+  }
+
+  // No-op if anchoring on the same cell.
+  if (newAnchorCellId === planting.cellId) return {};
+
+  const placement = await resolveFootprint({
+    anchorCell: {
+      id: newAnchor.id,
+      row: newAnchor.row,
+      col: newAnchor.col,
+      bedId: newAnchor.bedId,
+    },
+    bed: {
+      gridRows: newAnchor.bed.gridRows,
+      gridCols: newAnchor.bed.gridCols,
+      cellSizeIn: newAnchor.bed.cellSizeIn,
+    },
+    spacingInches: planting.plant.spacingInches,
+    seasonId: planting.seasonId,
+    excludePlantingId: planting.id,
+  });
+
+  const primary = placement.cells.find((c) => c.isPrimary);
+  if (!primary) {
+    throw new Error("That cell is already occupied.");
+  }
+
+  // Atomically: remove old PlantingCell rows, update anchor pointer,
+  // insert new PlantingCell rows. The Planting row itself (and all of
+  // its photos/logs/notes/reminders) is untouched.
+  await db.$transaction(async (tx) => {
+    await tx.plantingCell.deleteMany({ where: { plantingId } });
+    await tx.planting.update({
+      where: { id: plantingId },
+      data: { cellId: newAnchorCellId },
+    });
+    await tx.plantingCell.createMany({
+      data: placement.cells.map((c) => ({
+        plantingId,
+        cellId: c.cellId,
+        isPrimary: c.isPrimary,
+      })),
+    });
+  });
+
+  revalidatePath(`/garden/${newAnchor.bed.gardenId}/beds/${newAnchor.bedId}`);
+
+  if (placement.footprintReduced) {
+    const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
+    return {
+      footprintWarning: `${planting.plant.name} normally needs a ${sideCells}×${sideCells} area — moved into ${placement.cells.length} of ${placement.desiredFootprint} cells.`,
+    };
+  }
+  return {};
 }
 
 /**
