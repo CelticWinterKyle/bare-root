@@ -16,6 +16,18 @@ export type LibraryPlant = {
   spacingInches: number | null;
 };
 
+// Category accents — used as a left-edge stripe on each library card so
+// the panel reads as a colored crop list instead of grey rows.
+const CATEGORY_ACCENT: Record<string, string> = {
+  VEGETABLE: "#4a8a2e",
+  FRUIT: "#C44A2A",
+  HERB: "#7DA84E",
+  FLOWER: "#BC6B8A",
+  TREE: "#3d6b32",
+  SHRUB: "#5A8240",
+  OTHER: "#A07640",
+};
+
 function footprintHint(spacingInches: number | null, cellSizeIn: number): string | null {
   if (!spacingInches) return null;
   const side = Math.max(1, Math.ceil(spacingInches / cellSizeIn));
@@ -39,6 +51,7 @@ function DraggablePlantCard({
     data: { kind: "plant", plant },
   });
   const hint = footprintHint(plant.spacingInches, cellSizeIn);
+  const accent = CATEGORY_ACCENT[plant.category] ?? CATEGORY_ACCENT.OTHER;
 
   return (
     <button
@@ -47,21 +60,26 @@ function DraggablePlantCard({
       {...listeners}
       type="button"
       onClick={onClick}
-      className={`group relative w-full text-left rounded-lg border transition-all ${
+      className={`group relative w-full text-left rounded-lg border transition-all overflow-hidden ${
         isDragging ? "opacity-40 scale-95" : "hover:border-[#7DA84E] hover:shadow-sm"
       }`}
       style={{
         background: selected ? "#E4F0D4" : "#FDFDF8",
         borderColor: selected ? "#7DA84E" : "#E4E4DC",
-        padding: "8px 10px",
+        padding: "8px 10px 8px 14px",
         display: "flex",
         alignItems: "center",
         gap: "10px",
         cursor: isDragging ? "grabbing" : "grab",
       }}
     >
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 bottom-0"
+        style={{ width: 4, background: accent }}
+      />
       <div
-        className="shrink-0 rounded-md overflow-hidden flex items-center justify-center"
+        className="shrink-0 rounded-md overflow-hidden flex items-center justify-center relative"
         style={{
           width: 36,
           height: 36,
@@ -72,10 +90,9 @@ function DraggablePlantCard({
           <Image
             src={plant.imageUrl}
             alt={plant.name}
-            width={72}
-            height={72}
-            className="w-full h-full object-cover"
-            unoptimized
+            fill
+            sizes="36px"
+            className="object-cover"
           />
         ) : (
           <span style={{ fontSize: 18 }}>🌱</span>

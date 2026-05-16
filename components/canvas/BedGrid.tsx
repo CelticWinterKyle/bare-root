@@ -428,8 +428,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Auto-fit cell size:
   // Mobile: fit exactly to viewport width accounting for grid's actual horizontal padding
   //   (16px left + 16px right = 32px) + gaps ((cols-1) × 4px). No height cap — page scrolls.
-  // Desktop: balance width vs height, cap cells so the bed fits without vertical scroll.
-  const fitByW = Math.floor((vpW - FRAME_PAD) / displayCols);
+  // Desktop: cells size to a height target. With the bed column now sizing
+  //   to its content, measuring viewport width creates a feedback loop
+  //   (cell size depends on width which depends on cell size). Height target
+  //   sidesteps that — the bed grows to whatever the viewport height allows.
   const rowGaps = (displayRows - 1) * 4;
   const colGaps = (displayCols - 1) * 4;
   const fitByH = Math.floor((maxViewportH - FRAME_PAD - rowGaps) / displayRows);
@@ -439,7 +441,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const mobileFitByH = Math.floor((mobileViewportH - 52 - (displayRows - 1) * 4) / displayRows);
   const baseCellPx = isMobile
     ? Math.max(28, Math.min(mobileFitByW, mobileFitByH))
-    : Math.max(20, Math.min(fitByH, Math.max(fitByW, targetByH)));
+    : Math.max(20, Math.min(fitByH, targetByH));
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
   // Dense mode: hide labels when cells are too small to read them
@@ -781,9 +783,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-start" style={{ marginTop: "20px" }}>
-        {/* Bed column */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start md:justify-center" style={{ marginTop: "20px" }}>
+        {/* Bed column — size-to-content so the bed and sidebar sit as a
+            visually related pair instead of the bed floating in a wide
+            empty column. */}
+        <div className="flex flex-col gap-6 md:shrink-0">
           {/* Viewport: desktop caps height + scrolls; mobile flows naturally so page scrolls */}
           <div
             ref={viewportRef}
