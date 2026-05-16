@@ -7,64 +7,237 @@ import styles from "./landing.module.css";
 // Kept inline as an SVG so it ships as part of the page payload without an
 // extra request and stays editable alongside the component.
 function GardenIsoSvg() {
+  // Iso projection: grid (gx, gy) → screen point. z lifts up (negative Y).
+  // 2:1 tile (game-iso convention) — clean isometric without a perfect 1.73:1
+  // mathematical projection, which renders better at small sizes.
+  const TW = 34;
+  const TH = 17;
+  const COLS = 8;
+  const ROWS = 4;
+  const WALL = 16;
+  const OX = 196;
+  const OY = 78;
+
+  const p = (gx: number, gy: number, z = 0) =>
+    `${OX + (gx - gy) * (TW / 2)},${OY + (gx + gy) * (TH / 2) - z}`;
+
+  // Build a closed cell parallelogram path (for highlights/footprints).
+  const cellPath = (gx: number, gy: number, w = 1, h = 1) =>
+    `M${p(gx, gy)} L${p(gx + w, gy)} L${p(gx + w, gy + h)} L${p(gx, gy + h)} Z`;
+
+  // Center of a cell (grid space).
+  const cc = (gx: number, gy: number, w = 1, h = 1, z = 0) =>
+    p(gx + w / 2, gy + h / 2, z);
+
+  // Plant placements — tomato 2×2 (multi-cell), basil 1×1 (companion), pepper 1×1, lettuce 1×2, plus one highlighted empty cell.
   return (
-    <svg viewBox="0 0 460 540" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 460 345" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <pattern id="grassPat" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
-          <rect width="18" height="9" fill="#4a7c3f" />
-          <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4" />
-          <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35" />
-          <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3" />
+        <pattern id="soilTex" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+          <rect width="14" height="14" fill="#3a2818" />
+          <circle cx="3" cy="3" r="1.2" fill="#241510" opacity="0.6" />
+          <circle cx="10" cy="8" r="1" fill="#241510" opacity="0.5" />
+          <circle cx="6" cy="11" r="0.9" fill="#4a3220" opacity="0.6" />
         </pattern>
-        <pattern id="soilPat" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
-          <rect width="12" height="12" fill="#3d2b1f" />
-          <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6" />
-          <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5" />
-        </pattern>
-        <filter id="dropShadow"><feDropShadow dx="3" dy="6" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4" /></filter>
+        <linearGradient id="woodTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#C49458" />
+          <stop offset="100%" stopColor="#A07640" />
+        </linearGradient>
+        <linearGradient id="woodSouth" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7D5630" />
+          <stop offset="100%" stopColor="#5A3A18" />
+        </linearGradient>
+        <linearGradient id="woodEast" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#9A7040" />
+          <stop offset="100%" stopColor="#6B4625" />
+        </linearGradient>
+        <radialGradient id="bedShadow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#000" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <polygon points="230,40 410,180 230,320 50,180" fill="url(#grassPat)" />
-      <g filter="url(#dropShadow)">
-        <polygon points="100,210 160,180 220,210 160,240" fill="#5A3A18" />
-        <polygon points="160,180 220,210 220,222 160,192" fill="#7D5630" />
-        <polygon points="100,200 160,170 220,200 160,230" fill="#C49458" />
-        <polygon points="106,198 158,172 214,198 162,224" fill="url(#soilPat)" />
-        <circle cx="125" cy="200" r="3.5" fill="#2d5a1b" opacity="0.85" />
-        <circle cx="145" cy="190" r="3" fill="#4a8a2e" opacity="0.75" />
-        <circle cx="165" cy="200" r="3.5" fill="#2d5a1b" opacity="0.85" />
-        <circle cx="185" cy="190" r="3" fill="#4a8a2e" opacity="0.7" />
-        <circle cx="195" cy="208" r="3.2" fill="#2d5a1b" opacity="0.8" />
-        <text x="160" y="212" textAnchor="middle" fill="#f0e0c0" fontSize="10" fontWeight="700" fontFamily="Fraunces, Georgia, serif" fontStyle="italic">Bed A</text>
-      </g>
-      <g filter="url(#dropShadow)">
-        <polygon points="230,235 290,205 350,235 290,265" fill="#5A3A18" />
-        <polygon points="290,205 350,235 350,247 290,217" fill="#7D5630" />
-        <polygon points="230,225 290,195 350,225 290,255" fill="#C49458" />
-        <polygon points="236,223 288,197 344,223 292,249" fill="url(#soilPat)" />
-        <ellipse cx="265" cy="218" rx="11" ry="8" fill="#C44A2A" opacity="0.9" />
-        <ellipse cx="265" cy="218" rx="8" ry="5" fill="#8C2A18" opacity="0.85" />
-        <circle cx="310" cy="226" r="3.2" fill="#4a8a2e" opacity="0.8" />
-        <circle cx="325" cy="216" r="2.8" fill="#2d5a1b" opacity="0.85" />
-        <text x="290" y="237" textAnchor="middle" fill="#f0e0c0" fontSize="10" fontWeight="700" fontFamily="Fraunces, Georgia, serif" fontStyle="italic">Bed B</text>
-      </g>
-      <g filter="url(#dropShadow)">
-        <polygon points="180,150 230,125 280,150 230,175" fill="#5A3A18" />
-        <polygon points="230,125 280,150 280,160 230,135" fill="#7D5630" />
-        <polygon points="180,142 230,117 280,142 230,167" fill="#C49458" />
-        <polygon points="186,140 228,119 274,140 232,161" fill="url(#soilPat)" />
-        <circle cx="208" cy="142" r="2.5" fill="#E0A030" opacity="0.85" />
-        <circle cx="222" cy="135" r="2.5" fill="#E0A030" opacity="0.85" />
-        <circle cx="236" cy="142" r="2.5" fill="#E0A030" opacity="0.85" />
-        <circle cx="250" cy="135" r="2.5" fill="#E0A030" opacity="0.85" />
-        <text x="230" y="153" textAnchor="middle" fill="#f0e0c0" fontSize="9" fontWeight="700" fontFamily="Fraunces, Georgia, serif" fontStyle="italic">Bed C</text>
-      </g>
-      <line x1="160" y1="200" x2="230" y2="225" stroke="rgba(168,216,112,0.15)" strokeWidth="3" strokeDasharray="3 4" />
-      <line x1="230" y1="225" x2="230" y2="150" stroke="rgba(168,216,112,0.15)" strokeWidth="3" strokeDasharray="3 4" />
-      <g opacity="0.18" transform="translate(60, 470)">
-        <circle cx="0" cy="0" r="18" fill="none" stroke="#A8D870" strokeWidth="1" />
-        <text x="0" y="-22" textAnchor="middle" fill="#A8D870" fontSize="9" fontFamily="IBM Plex Mono">N</text>
-        <line x1="0" y1="-14" x2="0" y2="-2" stroke="#A8D870" strokeWidth="1.5" />
-      </g>
+
+      {/* Ground shadow under bed */}
+      <ellipse
+        cx={OX + ((COLS - ROWS) * TW) / 4}
+        cy={OY + ((COLS + ROWS) * TH) / 2 + WALL + 14}
+        rx={(COLS + ROWS) * TW * 0.32}
+        ry={14}
+        fill="url(#bedShadow)"
+      />
+
+      {/* South face (front wall) */}
+      <polygon
+        points={`${p(0, ROWS)} ${p(COLS, ROWS)} ${p(COLS, ROWS, -WALL)} ${p(0, ROWS, -WALL)}`}
+        fill="url(#woodSouth)"
+      />
+      {/* Faint plank seams on south face */}
+      {[1, 2, 3].map((i) => (
+        <line
+          key={`ss${i}`}
+          x1={p(i * (COLS / 4), ROWS).split(",")[0]}
+          y1={p(i * (COLS / 4), ROWS).split(",")[1]}
+          x2={p(i * (COLS / 4), ROWS, -WALL).split(",")[0]}
+          y2={p(i * (COLS / 4), ROWS, -WALL).split(",")[1]}
+          stroke="#3a2410"
+          strokeWidth="0.6"
+          opacity="0.5"
+        />
+      ))}
+      {/* East face (right wall) */}
+      <polygon
+        points={`${p(COLS, 0)} ${p(COLS, ROWS)} ${p(COLS, ROWS, -WALL)} ${p(COLS, 0, -WALL)}`}
+        fill="url(#woodEast)"
+      />
+
+      {/* Bed top — soil */}
+      <polygon points={`${p(0, 0)} ${p(COLS, 0)} ${p(COLS, ROWS)} ${p(0, ROWS)}`} fill="#3a2818" />
+      <polygon points={`${p(0, 0)} ${p(COLS, 0)} ${p(COLS, ROWS)} ${p(0, ROWS)}`} fill="url(#soilTex)" />
+
+      {/* Wood frame outline (the rim of the bed) */}
+      <polygon
+        points={`${p(0, 0)} ${p(COLS, 0)} ${p(COLS, ROWS)} ${p(0, ROWS)}`}
+        fill="none"
+        stroke="url(#woodTop)"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+
+      {/* Grid lines on soil — subtle sage */}
+      {Array.from({ length: COLS - 1 }, (_, i) => (
+        <line
+          key={`gv${i}`}
+          x1={p(i + 1, 0).split(",")[0]}
+          y1={p(i + 1, 0).split(",")[1]}
+          x2={p(i + 1, ROWS).split(",")[0]}
+          y2={p(i + 1, ROWS).split(",")[1]}
+          stroke="#A8D870"
+          strokeWidth="0.5"
+          opacity="0.18"
+        />
+      ))}
+      {Array.from({ length: ROWS - 1 }, (_, i) => (
+        <line
+          key={`gh${i}`}
+          x1={p(0, i + 1).split(",")[0]}
+          y1={p(0, i + 1).split(",")[1]}
+          x2={p(COLS, i + 1).split(",")[0]}
+          y2={p(COLS, i + 1).split(",")[1]}
+          stroke="#A8D870"
+          strokeWidth="0.5"
+          opacity="0.18"
+        />
+      ))}
+
+      {/* 2×2 Tomato footprint at (2,1)-(3,2) — multi-cell highlight */}
+      <path
+        d={cellPath(2, 1, 2, 2)}
+        fill="rgba(196,74,42,0.10)"
+        stroke="rgba(196,74,42,0.55)"
+        strokeWidth="1"
+        strokeDasharray="3 2"
+      />
+      {/* Tomato foliage (clustered green circles) */}
+      {[
+        [2.4, 1.4],
+        [3.2, 1.3],
+        [2.6, 2.0],
+        [3.4, 1.9],
+        [2.9, 2.5],
+        [2.3, 2.7],
+      ].map(([gx, gy], i) => {
+        const [cx, cy] = cc(gx, gy, 0, 0, 6).split(",");
+        return <circle key={`tf${i}`} cx={cx} cy={cy} r={4.5 + (i % 2) * 0.5} fill="#3d6b32" opacity="0.88" />;
+      })}
+      {/* Tomato fruit — red */}
+      {[
+        [2.8, 1.7, 5],
+        [3.3, 2.1, 4],
+        [2.5, 2.2, 3.6],
+      ].map(([gx, gy, r], i) => {
+        const [cx, cy] = cc(gx, gy, 0, 0, 8).split(",");
+        return (
+          <g key={`tom${i}`}>
+            <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.85} fill="#C44A2A" />
+            <ellipse cx={Number(cx) - r * 0.3} cy={Number(cy) - r * 0.35} rx={r * 0.35} ry={r * 0.25} fill="#E8704A" opacity="0.8" />
+          </g>
+        );
+      })}
+
+      {/* 1×1 Basil at (4,1) — companion to tomato */}
+      <path d={cellPath(4, 1)} fill="rgba(125,168,78,0.10)" stroke="rgba(125,168,78,0.55)" strokeWidth="1" />
+      {[
+        [4.3, 1.3],
+        [4.65, 1.4],
+        [4.4, 1.65],
+        [4.7, 1.7],
+        [4.5, 1.5],
+      ].map(([gx, gy], i) => {
+        const [cx, cy] = cc(gx, gy, 0, 0, 5).split(",");
+        return <ellipse key={`ba${i}`} cx={cx} cy={cy} rx={3.4} ry={2.6} fill="#4a8a2e" opacity="0.9" transform={`rotate(${i * 30} ${cx} ${cy})`} />;
+      })}
+
+      {/* 1×1 Pepper at (5,1) */}
+      <path d={cellPath(5, 1)} fill="rgba(212,130,10,0.08)" stroke="rgba(212,130,10,0.5)" strokeWidth="1" />
+      {[
+        [5.3, 1.3],
+        [5.6, 1.5],
+        [5.45, 1.7],
+      ].map(([gx, gy], i) => {
+        const [cx, cy] = cc(gx, gy, 0, 0, 6).split(",");
+        return (
+          <g key={`pp${i}`}>
+            <circle cx={cx} cy={cy} r="3" fill="#3d6b32" opacity="0.8" />
+            <ellipse cx={Number(cx) + 1} cy={Number(cy) + 1.5} rx="2.2" ry="1.4" fill="#E0A030" />
+          </g>
+        );
+      })}
+
+      {/* 1×2 Lettuce at (0,2)-(0,3) */}
+      <path d={cellPath(0, 2, 1, 2)} fill="rgba(74,138,46,0.10)" stroke="rgba(74,138,46,0.55)" strokeWidth="1" strokeDasharray="3 2" />
+      {[
+        [0.5, 2.4],
+        [0.5, 3.4],
+      ].map(([gx, gy], i) => {
+        const [cx, cy] = cc(gx, gy, 0, 0, 4).split(",");
+        return (
+          <g key={`lt${i}`}>
+            <circle cx={cx} cy={cy} r="6" fill="#56904a" opacity="0.65" />
+            <circle cx={cx} cy={cy} r="4.5" fill="#6BA85A" opacity="0.85" />
+            <circle cx={cx} cy={cy} r="2.5" fill="#A8D870" opacity="0.7" />
+          </g>
+        );
+      })}
+
+      {/* Empty highlighted cell at (6,2) — "tap to plant" affordance */}
+      <path
+        d={cellPath(6, 2)}
+        fill="rgba(168,216,112,0.12)"
+        stroke="#A8D870"
+        strokeWidth="1.3"
+        strokeDasharray="4 3"
+      />
+      <text
+        x={cc(6, 2).split(",")[0]}
+        y={Number(cc(6, 2).split(",")[1]) + 4}
+        textAnchor="middle"
+        fill="#A8D870"
+        fontSize="14"
+        fontFamily="IBM Plex Mono"
+        opacity="0.85"
+      >
+        +
+      </text>
+
+      {/* Tiny companion-link arc from basil → tomato */}
+      <path
+        d={`M${cc(4, 1, 0, 0, 10)} Q${cc(3.5, 1, 0, 0, 20)} ${cc(3, 1.5, 0, 0, 12)}`}
+        fill="none"
+        stroke="#A8D870"
+        strokeWidth="1"
+        strokeDasharray="2 2"
+        opacity="0.6"
+      />
     </svg>
   );
 }

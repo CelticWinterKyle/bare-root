@@ -269,7 +269,7 @@
 /* Hero canvas mockup */
 .heroCanvas {
   position: relative;
-  aspect-ratio: 1 / 1.2;
+  aspect-ratio: 4 / 3;
   background: #19280E;
   border-radius: 16px;
   overflow: hidden;
@@ -1712,7 +1712,6 @@
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .hero { grid-template-columns: 1fr; gap: 60px; padding-top: 60px; }
-  .heroCanvas { aspect-ratio: 4/3; }
   .duet { grid-template-columns: 1fr; gap: 80px; }
   .companionsInner { grid-template-columns: 1fr; gap: 50px; }
   .fieldGuide { grid-template-columns: 1fr; gap: 24px; }
