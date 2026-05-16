@@ -10,13 +10,13 @@ function GardenIsoSvg() {
   // Iso projection: grid (gx, gy) → screen point. z lifts up (negative Y).
   // 2:1 tile (game-iso convention) — clean isometric without a perfect 1.73:1
   // mathematical projection, which renders better at small sizes.
-  const TW = 34;
-  const TH = 17;
+  const TW = 48;
+  const TH = 24;
   const COLS = 8;
   const ROWS = 4;
-  const WALL = 16;
-  const OX = 196;
-  const OY = 78;
+  const WALL = 22;
+  const OX = 182;
+  const OY = 82;
 
   const p = (gx: number, gy: number, z = 0) =>
     `${OX + (gx - gy) * (TW / 2)},${OY + (gx + gy) * (TH / 2) - z}`;
@@ -146,16 +146,16 @@ function GardenIsoSvg() {
         [2.9, 2.5],
         [2.3, 2.7],
       ].map(([gx, gy], i) => {
-        const [cx, cy] = cc(gx, gy, 0, 0, 6).split(",");
-        return <circle key={`tf${i}`} cx={cx} cy={cy} r={4.5 + (i % 2) * 0.5} fill="#3d6b32" opacity="0.88" />;
+        const [cx, cy] = cc(gx, gy, 0, 0, 8).split(",");
+        return <circle key={`tf${i}`} cx={cx} cy={cy} r={6.5 + (i % 2) * 0.8} fill="#3d6b32" opacity="0.88" />;
       })}
       {/* Tomato fruit — red */}
       {[
-        [2.8, 1.7, 5],
-        [3.3, 2.1, 4],
-        [2.5, 2.2, 3.6],
+        [2.8, 1.7, 7],
+        [3.3, 2.1, 5.5],
+        [2.5, 2.2, 5],
       ].map(([gx, gy, r], i) => {
-        const [cx, cy] = cc(gx, gy, 0, 0, 8).split(",");
+        const [cx, cy] = cc(gx, gy, 0, 0, 11).split(",");
         return (
           <g key={`tom${i}`}>
             <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.85} fill="#C44A2A" />
@@ -173,8 +173,8 @@ function GardenIsoSvg() {
         [4.7, 1.7],
         [4.5, 1.5],
       ].map(([gx, gy], i) => {
-        const [cx, cy] = cc(gx, gy, 0, 0, 5).split(",");
-        return <ellipse key={`ba${i}`} cx={cx} cy={cy} rx={3.4} ry={2.6} fill="#4a8a2e" opacity="0.9" transform={`rotate(${i * 30} ${cx} ${cy})`} />;
+        const [cx, cy] = cc(gx, gy, 0, 0, 7).split(",");
+        return <ellipse key={`ba${i}`} cx={cx} cy={cy} rx={4.8} ry={3.6} fill="#4a8a2e" opacity="0.9" transform={`rotate(${i * 30} ${cx} ${cy})`} />;
       })}
 
       {/* 1×1 Pepper at (5,1) */}
@@ -184,11 +184,11 @@ function GardenIsoSvg() {
         [5.6, 1.5],
         [5.45, 1.7],
       ].map(([gx, gy], i) => {
-        const [cx, cy] = cc(gx, gy, 0, 0, 6).split(",");
+        const [cx, cy] = cc(gx, gy, 0, 0, 8).split(",");
         return (
           <g key={`pp${i}`}>
-            <circle cx={cx} cy={cy} r="3" fill="#3d6b32" opacity="0.8" />
-            <ellipse cx={Number(cx) + 1} cy={Number(cy) + 1.5} rx="2.2" ry="1.4" fill="#E0A030" />
+            <circle cx={cx} cy={cy} r="4.2" fill="#3d6b32" opacity="0.8" />
+            <ellipse cx={Number(cx) + 1.4} cy={Number(cy) + 2} rx="3" ry="2" fill="#E0A030" />
           </g>
         );
       })}
@@ -199,12 +199,12 @@ function GardenIsoSvg() {
         [0.5, 2.4],
         [0.5, 3.4],
       ].map(([gx, gy], i) => {
-        const [cx, cy] = cc(gx, gy, 0, 0, 4).split(",");
+        const [cx, cy] = cc(gx, gy, 0, 0, 6).split(",");
         return (
           <g key={`lt${i}`}>
-            <circle cx={cx} cy={cy} r="6" fill="#56904a" opacity="0.65" />
-            <circle cx={cx} cy={cy} r="4.5" fill="#6BA85A" opacity="0.85" />
-            <circle cx={cx} cy={cy} r="2.5" fill="#A8D870" opacity="0.7" />
+            <circle cx={cx} cy={cy} r="8.5" fill="#56904a" opacity="0.65" />
+            <circle cx={cx} cy={cy} r="6.2" fill="#6BA85A" opacity="0.85" />
+            <circle cx={cx} cy={cy} r="3.5" fill="#A8D870" opacity="0.7" />
           </g>
         );
       })}
@@ -219,10 +219,10 @@ function GardenIsoSvg() {
       />
       <text
         x={cc(6, 2).split(",")[0]}
-        y={Number(cc(6, 2).split(",")[1]) + 4}
+        y={Number(cc(6, 2).split(",")[1]) + 6}
         textAnchor="middle"
         fill="#A8D870"
-        fontSize="14"
+        fontSize="20"
         fontFamily="IBM Plex Mono"
         opacity="0.85"
       >
@@ -322,22 +322,6 @@ export default async function LandingPage() {
           <div className={styles.heroCanvasPill}>Garden Canvas — Interactive</div>
           <div className={styles.heroCanvasHint}>Drag to rearrange · scroll to zoom</div>
           <GardenIsoSvg />
-          <div className={`${styles.heroOverlay} ${styles.overlayZone}`}>
-            <div className="icon">◐</div>
-            <div>
-              <span className={styles.overlayLabel}>Your zone</span>
-              <span className={styles.overlayValue}><em>7b</em> · Last frost Apr 15</span>
-            </div>
-          </div>
-          <div className={`${styles.heroOverlay} ${styles.overlayCompanion}`}>
-            <div className={styles.overlayCompanionHead}>
-              <span className={styles.overlayCompanionDot} />
-              <span className={styles.overlayCompanionLabel}>Companion match</span>
-            </div>
-            <div className={styles.overlayCompanionBody}>
-              <strong>Tomatoes</strong> and <strong>basil</strong> — pest deterrent &amp; better flavor.
-            </div>
-          </div>
         </div>
       </section>
 
