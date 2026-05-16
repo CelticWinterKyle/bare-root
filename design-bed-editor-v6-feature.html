@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed Editor — Feature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white:       #FDFDF8;
+  --paper:       #F8F5EB;
+  --surface:     #F4F4EC;
+  --rule:        #E4E4DC;
+  --deep:        #1C3D0A;
+  --mid:         #3A6B20;
+  --sage:        #7DA84E;
+  --pale:        #E4F0D4;
+  --pale-2:      #D4E8BE;
+  --amber:       #D4820A;
+  --amber-pale:  #FDF2E0;
+  --rust:        #7A2A18;
+  --ink:         #111109;
+  --ink-2:       #3A3A30;
+  --muted:       #6B6B5A;
+  --ghost:       #ADADAA;
+  --soil:        #3a2818;
+  --wood:        #C49458;
+  --wood-dark:   #7D5630;
+  --wood-deep:   #5A3A18;
+
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body:    'DM Sans', system-ui, sans-serif;
+  --ff-mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--ff-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+.page {
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 32px 36px 80px;
+}
+
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  display: block;
+  width: 22px;
+  height: 1.5px;
+  background: var(--sage);
+}
+.eyebrow.muted { color: var(--mid); }
+.eyebrow.muted::before { background: var(--mid); }
+
+/* ── Topbar ───────────────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule);
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.crumbs .back {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mid);
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-style: italic;
+}
+.crumbs .here {
+  font-family: var(--ff-display);
+  font-style: italic;
+  color: var(--ink);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.modes {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+}
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 100px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.mode-btn .ic { font-size: 14px; line-height: 1; }
+.mode-btn:hover { background: var(--white); color: var(--ink); }
+.mode-btn.active {
+  background: var(--deep);
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* ── Editorial hero strip ─────────────────────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 36px;
+  align-items: end;
+  padding-bottom: 28px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--rule);
+}
+.hero-title {
+  font-family: var(--ff-display);
+  font-size: clamp(48px, 6vw, 80px);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 120;
+  margin: 14px 0 18px;
+}
+.hero-title em { font-style: italic; color: var(--deep); }
+.hero-sub {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 520px;
+  font-variation-settings: 'opsz' 22;
+}
+.hero-sub strong { font-style: normal; font-weight: 600; color: var(--deep); }
+
+.hero-meta {
+  text-align: right;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-meta .row {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.hero-meta .row:last-child { border-bottom: none; }
+.hero-meta .row .k { color: var(--ghost); font-size: 9px; }
+.hero-meta .row .v {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 16;
+  text-transform: none;
+}
+.hero-meta .row .v em { font-style: italic; color: var(--deep); }
+.hero-meta .row .v.amber { color: var(--amber); }
+
+/* ── Main layout: bed on left as feature, editorial column right ─────── */
+.layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* The bed column — narrow, vertical, pinned left like a feature image */
+.bed-feature {
+  position: sticky;
+  top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bed-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 22px 50px -22px rgba(28,61,10,0.16),
+    0 4px 12px -4px rgba(28,61,10,0.05);
+}
+.bed-card-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(0deg, rgba(248,245,235,0.5), transparent);
+}
+.bed-card-head .title {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 16;
+}
+.bed-card-head .ctrls { display: flex; gap: 3px; }
+.ctrl-btn {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: var(--surface);
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ctrl-btn:hover { background: var(--rule); color: var(--ink); }
+
+.bed-stage {
+  padding: 36px 28px 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.bed {
+  width: 240px;
+  background: linear-gradient(180deg, #D2A06A 0%, #B27E40 100%);
+  padding: 12px;
+  border-radius: 10px;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(90,58,24,0.5),
+    inset 0 2px 4px rgba(255,255,255,0.18),
+    inset 0 -2px 6px rgba(0,0,0,0.18),
+    0 14px 24px -10px rgba(28,18,10,0.28);
+}
+.bed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 6px,
+    rgba(90,58,24,0.07) 7px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+
+.bed-plate {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--wood-deep);
+  color: #f0e0c0;
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 12px;
+  border-radius: 100px;
+  z-index: 5;
+}
+
+.soil {
+  position: relative;
+  background:
+    radial-gradient(rgba(36,21,16,0.5) 1px, transparent 1.5px),
+    radial-gradient(rgba(74,50,32,0.55) 1px, transparent 1.5px),
+    var(--soil);
+  background-size: 14px 14px, 22px 22px;
+  background-position: 0 0, 7px 11px;
+  border-radius: 5px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 2 / 8;
+  overflow: hidden;
+}
+
+.cell {
+  position: relative;
+  border-right: 1px solid rgba(168,216,112,0.16);
+  border-bottom: 1px solid rgba(168,216,112,0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell:nth-child(2n) { border-right: none; }
+.cell:nth-last-child(-n+2) { border-bottom: none; }
+.cell .plus {
+  font-family: var(--ff-mono);
+  font-size: 16px;
+  color: rgba(168,216,112,0.3);
+  font-weight: 300;
+}
+.cell.selected {
+  background: rgba(168,216,112,0.18);
+  box-shadow: inset 0 0 0 2px var(--sage);
+}
+.cell.selected .plus { color: var(--sage); }
+
+.plant {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.plant .disc {
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -4px 8px rgba(0,0,0,0.22),
+    0 3px 8px rgba(0,0,0,0.22);
+  position: relative;
+}
+.plant .disc::after {
+  content: '';
+  position: absolute;
+  top: 14%; left: 22%;
+  width: 28%; height: 24%;
+  background: rgba(255,255,255,0.32);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.plant .label {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 10.5px;
+  color: var(--white);
+  margin-top: -34%;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+  position: relative;
+  z-index: 2;
+  font-variation-settings: 'opsz' 14;
+}
+
+/* TOMATO 2×2 at rows 0-1 */
+.p-tomato { top: 0; left: 0; width: 100%; height: 25%; }
+.p-tomato .disc {
+  width: 65%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 28%, #E8704A 0%, #C44A2A 55%, #8C2A18 100%);
+}
+.p-tomato .label { color: #fff; font-size: 12px; }
+
+/* BASIL 1×1 at col 0, row 2 */
+.p-basil { top: 25%; left: 0; width: 50%; height: 12.5%; }
+.p-basil .disc {
+  width: 70%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 30%, #6BAF50 0%, #4a8a2e 55%, #2d5a1b 100%);
+}
+
+/* LETTUCE 1×2 at col 1, rows 3-4 */
+.p-lettuce { top: 37.5%; left: 50%; width: 50%; height: 25%; }
+.p-lettuce .disc {
+  width: 70%;
+  aspect-ratio: 1 / 1.7;
+  border-radius: 60% / 50%;
+  background: radial-gradient(ellipse at 30% 30%, #A8D870 0%, #6BA85A 50%, #3d6b32 100%);
+}
+.p-lettuce .label { margin-top: -54%; }
+
+/* Companion arc */
+.companion-arc {
+  position: absolute;
+  top: 12.5%;
+  left: 12%;
+  width: 32%;
+  height: 22%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Quick ledger under the bed */
+.bed-card-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--rule);
+  background: var(--white);
+}
+.bed-card-foot .stat {
+  padding: 14px 18px;
+  border-right: 1px solid var(--rule);
+}
+.bed-card-foot .stat:last-child { border-right: none; }
+.bed-card-foot .stat .label {
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.bed-card-foot .stat .value {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 24;
+}
+.bed-card-foot .stat .value em { font-style: italic; color: var(--deep); }
+.bed-card-foot .stat .value.amber { color: var(--amber); }
+.bed-card-foot .stat .sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Caption beneath the bed */
+.bed-caption {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 16px;
+  line-height: 1.5;
+  font-variation-settings: 'opsz' 16;
+}
+.bed-caption strong { color: var(--ink); font-style: normal; font-weight: 600; }
+
+/* ── Editorial column on the right ────────────────────────────────────── */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
+}
+.section:last-child { border-bottom: none; }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-head .h2 {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 28;
+  margin-top: 6px;
+}
+.section-head .h2 em { font-style: italic; color: var(--deep); }
+.section-head .action {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Library (inline) */
+.library {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.lib-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.lib-search {
+  position: relative;
+  flex: 1;
+}
+.lib-search input {
+  width: 100%;
+  padding: 9px 12px 9px 30px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.lib-search input:focus { border-color: var(--sage); }
+.lib-search::before {
+  content: '⌕';
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ghost);
+  font-size: 13px;
+}
+.lib-count {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 500;
+}
+
+.plant-list {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.plant-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px 9px 14px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  overflow: hidden;
+}
+.plant-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -6px rgba(28,61,10,0.12);
+  border-color: var(--pale-2);
+}
+.plant-card.is-selected {
+  background: var(--pale);
+  border-color: var(--sage);
+}
+.plant-card .stripe {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+.plant-card .swatch {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.plant-card .disc-sm {
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.2);
+}
+.plant-card .info { flex: 1; min-width: 0; }
+.plant-card .name {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 14;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plant-card .meta {
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.plant-card .meta strong { color: var(--mid); font-weight: 600; }
+
+.cat-veg     { background: #4a8a2e; }
+.cat-fruit   { background: #C44A2A; }
+.cat-herb    { background: var(--sage); }
+.cat-flower  { background: #BC6B8A; }
+
+/* Companion notes */
+.comp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+.comp-glyph {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.comp-glyph.good {
+  background: var(--pale);
+  color: var(--deep);
+  border: 1px solid var(--pale-2);
+}
+.comp-glyph.bad {
+  background: rgba(122,42,24,0.1);
+  color: var(--rust);
+  border: 1px solid rgba(122,42,24,0.2);
+}
+.comp-item .body { flex: 1; }
+.comp-item .pair {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+  font-variation-settings: 'opsz' 16;
+}
+.comp-item .pair em {
+  font-style: italic;
+  color: var(--deep);
+}
+.comp-item .pair .plus-sign {
+  color: var(--sage);
+  margin: 0 6px;
+  font-style: normal;
+  font-weight: 400;
+}
+.comp-item .note {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  font-variation-settings: 'opsz' 16;
+}
+
+/* Timeline */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 8px;
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  position: relative;
+  border-bottom: 1px dashed var(--rule);
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-when {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  padding-top: 3px;
+}
+.tl-when strong { color: var(--deep); font-weight: 600; }
+.tl-body {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.tl-body strong { color: var(--ink); font-weight: 600; }
+.tl-body em { font-style: italic; color: var(--deep); }
+.tl-tag {
+  display: inline-block;
+  margin-right: 6px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+.tl-tag.done { color: var(--mid); background: var(--pale); border: 1px solid var(--pale-2); }
+.tl-tag.up { color: var(--amber); background: var(--amber-pale); border: 1px solid rgba(212,130,10,0.25); }
+
+/* Sun mini */
+.sun-mini {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 18px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+.sun-mini-bed {
+  width: 56px;
+  border: 3px solid var(--wood);
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 2 / 8;
+  overflow: hidden;
+  background: var(--soil);
+}
+.sun-mini-bed .sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.sm.full   { background: #FEF9C3; }
+.sm.partial{ background: #FEF3C7; }
+.sm.shade  { background: #E0F2FE; }
+.sun-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.sun-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.sun-row .sw {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  font-size: 11px;
+}
+.sun-row strong {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 14;
+}
+.sun-row .n {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; }
+  .bed-feature { position: relative; top: 0; }
+  .plant-list { grid-template-columns: 1fr; }
+  .hero { grid-template-columns: 1fr; gap: 24px; }
+  .hero-meta { text-align: left; }
+  .hero-meta .row { justify-content: flex-start; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bed-feature, .section { animation: rise 0.6s cubic-bezier(0.2,0.8,0.2,1) backwards; }
+.bed-feature { animation-delay: 0.08s; }
+.section:nth-of-type(1) { animation-delay: 0.16s; }
+.section:nth-of-type(2) { animation-delay: 0.22s; }
+.section:nth-of-type(3) { animation-delay: 0.28s; }
+.section:nth-of-type(4) { animation-delay: 0.34s; }
+
+@keyframes seed-glow {
+  0%, 100% { box-shadow: inset 0 0 0 2px var(--sage); }
+  50% { box-shadow: inset 0 0 0 2px var(--sage), 0 0 0 4px rgba(168,216,112,0.18); }
+}
+.cell.selected { animation: seed-glow 2.4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="crumbs">
+      <span class="back">‹</span>
+      <span>Robyn's Garden</span>
+      <span style="color: var(--ghost);">/</span>
+      <span class="here">Bed Two</span>
+    </div>
+    <div class="modes">
+      <button class="mode-btn active"><span class="ic">❀</span> Plant</button>
+      <button class="mode-btn"><span class="ic">☀</span> Sun</button>
+      <button class="mode-btn"><span class="ic">⚘</span> Pairs</button>
+      <button class="mode-btn"><span class="ic">✦</span> AI</button>
+      <button class="mode-btn"><span class="ic">▢</span> Select</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <span class="eyebrow">§ 01 · Beds · Robyn's Garden</span>
+      <h1 class="hero-title"><em>Bed</em> Two.</h1>
+      <p class="hero-sub">
+        A tall, narrow cedar bed against the south fence. Tomato anchors the
+        top, basil pairs beside it, lettuce shelters in the shade below. <strong>Twelve cells open</strong> for the rest of the season.
+      </p>
+    </div>
+    <div class="hero-meta">
+      <div class="row"><span class="k">Dimensions</span><span class="v">2 × 8 <em>ft</em></span></div>
+      <div class="row"><span class="k">Grid</span><span class="v">2 × 8</span></div>
+      <div class="row"><span class="k">Cells</span><span class="v">12&quot;</span></div>
+      <div class="row"><span class="k">Zone</span><span class="v">5a</span></div>
+      <div class="row"><span class="k">Sun</span><span class="v">☀ full</span></div>
+      <div class="row"><span class="k">Next harvest</span><span class="v amber">~28d</span></div>
+    </div>
+  </section>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- ── BED FEATURE COLUMN ──────────────────────────────────── -->
+    <aside class="bed-feature">
+      <div class="bed-card">
+        <div class="bed-card-head">
+          <span class="title"><em>The</em> bed</span>
+          <div class="ctrls">
+            <button class="ctrl-btn" title="Rotate">↻</button>
+            <button class="ctrl-btn" title="Zoom in">⊕</button>
+            <button class="ctrl-btn" title="Zoom out">⊖</button>
+          </div>
+        </div>
+
+        <div class="bed-stage">
+          <div class="bed">
+            <span class="bed-plate">Bed Two · Cedar</span>
+            <div class="soil">
+              <!-- 16 cells -->
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"><span class="plus">+</span></div>
+              <div class="cell"><span class="plus">+</span></div><div class="cell"></div>
+              <div class="cell"><span class="plus">+</span></div><div class="cell"></div>
+              <div class="cell"><span class="plus">+</span></div><div class="cell"><span class="plus">+</span></div>
+              <div class="cell"><span class="plus">+</span></div><div class="cell"><span class="plus">+</span></div>
+              <div class="cell"><span class="plus">+</span></div><div class="cell selected"><span class="plus">+</span></div>
+
+              <div class="plant p-tomato">
+                <div class="disc"></div>
+                <span class="label">Tomato</span>
+              </div>
+              <div class="plant p-basil">
+                <div class="disc"></div>
+                <span class="label">Basil</span>
+              </div>
+              <div class="plant p-lettuce">
+                <div class="disc"></div>
+                <span class="label">Lettuce</span>
+              </div>
+
+              <svg class="companion-arc" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M 30 12 Q 70 50 30 88" stroke="rgba(212,130,10,0.55)" stroke-width="0.8" stroke-dasharray="3 2.5" fill="none"/>
+                <circle cx="30" cy="12" r="1.4" fill="#D4820A" opacity="0.7"/>
+                <circle cx="30" cy="88" r="1.4" fill="#D4820A" opacity="0.7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="bed-card-foot">
+          <div class="stat">
+            <div class="label">Planted</div>
+            <div class="value"><em>4</em><span style="font-size:13px; color:var(--muted); font-weight:500;"> / 16</span></div>
+            <div class="sub">25% filled</div>
+          </div>
+          <div class="stat">
+            <div class="label">Pairs</div>
+            <div class="value">1</div>
+            <div class="sub">tomato &amp; basil</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="bed-caption">
+        Drag any plant from the library onto an empty cell. <strong>Shift</strong>+drag to bypass the foot-grid snap.
+      </p>
+    </aside>
+
+    <!-- ── EDITORIAL COLUMN ────────────────────────────────────── -->
+    <div class="column">
+
+      <!-- Library (inline section, not a sticky sidebar) -->
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow muted">§ 02 · Library</span>
+            <div class="h2"><em>Plant</em> from your collection</div>
+          </div>
+          <span class="action">All 358 →</span>
+        </div>
+
+        <div class="library">
+          <div class="lib-bar">
+            <div class="lib-search">
+              <input type="search" placeholder="Search plants…" />
+            </div>
+            <span class="lib-count">7 recent</span>
+          </div>
+          <div class="plant-list">
+            <div class="plant-card is-selected">
+              <span class="stripe cat-fruit"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 35% 30%, #E8704A, #C44A2A 60%, #8C2A18);"></div></div>
+              <div class="info">
+                <div class="name">Tomato</div>
+                <div class="meta">75d · <strong>2×2</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-herb"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 35% 30%, #6BAF50, #4a8a2e 60%, #2d5a1b);"></div></div>
+              <div class="info">
+                <div class="name">Basil</div>
+                <div class="meta">60d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-veg"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #A8D870, #6BA85A 60%, #3d6b32);"></div></div>
+              <div class="info">
+                <div class="name">Lettuce</div>
+                <div class="meta">50d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-veg"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #E0B040, #D4820A 60%, #8C6010);"></div></div>
+              <div class="info">
+                <div class="name">Bell pepper</div>
+                <div class="meta">75d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-veg"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #8FB05E, #4A8A2E 60%, #2D5A1B);"></div></div>
+              <div class="info">
+                <div class="name">Bush bean</div>
+                <div class="meta">55d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-flower"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #E8A4C2, #BC6B8A 60%, #6B2A4A);"></div></div>
+              <div class="info">
+                <div class="name">Marigold</div>
+                <div class="meta">70d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-veg"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #E8BB58, #C18A28 60%, #6B4A14);"></div></div>
+              <div class="info">
+                <div class="name">Carrot</div>
+                <div class="meta">65d · <strong>1×1</strong></div>
+              </div>
+            </div>
+            <div class="plant-card">
+              <span class="stripe cat-herb"></span>
+              <div class="swatch"><div class="disc-sm" style="background: radial-gradient(circle at 30% 30%, #A8D870, #7DA84E 60%, #3d6b32);"></div></div>
+              <div class="info">
+                <div class="name">Borage</div>
+                <div class="meta">50d · <strong>1×1</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Companions -->
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow muted">§ 03 · Companions</span>
+            <div class="h2">What grows <em>well together</em></div>
+          </div>
+          <span class="action">1 match</span>
+        </div>
+
+        <div class="comp-list">
+          <div class="comp-item">
+            <span class="comp-glyph good">✓</span>
+            <div class="body">
+              <div class="pair"><em>Tomato</em><span class="plus-sign">+</span><em>Basil</em></div>
+              <div class="note">
+                Classic pairing — basil masks the tomato&apos;s scent from hornworms, deters whiteflies, and is said to improve the fruit&apos;s flavor when grown alongside.
+              </div>
+            </div>
+          </div>
+          <div class="comp-item">
+            <span class="comp-glyph good">✓</span>
+            <div class="body">
+              <div class="pair"><em>Lettuce</em><span class="plus-sign">+</span><em>Tomato</em></div>
+              <div class="note">
+                The tomato&apos;s canopy shades the lettuce, slowing bolt and extending the harvest into early summer. Mutual benefit in a south-facing bed.
+              </div>
+            </div>
+          </div>
+          <div class="comp-item">
+            <span class="comp-glyph bad">!</span>
+            <div class="body">
+              <div class="pair">Avoid <em>Fennel</em> in this bed</div>
+              <div class="note">
+                Fennel is allelopathic — its root secretions inhibit growth in most companions, especially tomatoes and beans. Plant it elsewhere.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Activity timeline -->
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow muted">§ 04 · This bed</span>
+            <div class="h2"><em>Activity</em> &amp; upcoming</div>
+          </div>
+          <span class="action">Full history →</span>
+        </div>
+
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-when"><strong>Today</strong><br>2h ago</div>
+            <div class="tl-body">
+              <span class="tl-tag done">+ planted</span>
+              <em>Lettuce</em> at <strong>B4–B5</strong> · 1×2 footprint
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-when"><strong>Today</strong><br>2h ago</div>
+            <div class="tl-body">
+              <span class="tl-tag done">+ planted</span>
+              <em>Basil</em> at <strong>A3</strong>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-when"><strong>Today</strong><br>2h ago</div>
+            <div class="tl-body">
+              <span class="tl-tag done">+ planted</span>
+              <em>Tomato</em> at <strong>A1–B2</strong> · 2×2 footprint
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-when">May 18</div>
+            <div class="tl-body">
+              <span class="tl-tag up">↑ upcoming</span>
+              Transplant <em>Tomato</em> seedlings outside
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-when">Jun 12</div>
+            <div class="tl-body">
+              <span class="tl-tag up">⊕ upcoming</span>
+              Begin <em>Lettuce</em> outer-leaf harvest
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sun map peek -->
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow muted">§ 05 · Sun</span>
+            <div class="h2">How the <em>light</em> falls</div>
+          </div>
+          <span class="action">Edit →</span>
+        </div>
+
+        <div class="sun-mini">
+          <div class="sun-mini-bed">
+            <div class="sm full">☀</div><div class="sm full">☀</div>
+            <div class="sm full">☀</div><div class="sm full">☀</div>
+            <div class="sm full">☀</div><div class="sm full">☀</div>
+            <div class="sm full">☀</div><div class="sm partial">⛅</div>
+            <div class="sm partial">⛅</div><div class="sm partial">⛅</div>
+            <div class="sm partial">⛅</div><div class="sm partial">⛅</div>
+            <div class="sm partial">⛅</div><div class="sm shade">🌥</div>
+            <div class="sm shade">🌥</div><div class="sm shade">🌥</div>
+          </div>
+          <div class="sun-legend">
+            <div class="sun-row">
+              <span class="sw" style="background:#FEF9C3;">☀</span>
+              <strong>Full sun</strong>
+              <span class="n">7 cells · top</span>
+            </div>
+            <div class="sun-row">
+              <span class="sw" style="background:#FEF3C7;">⛅</span>
+              <strong>Partial</strong>
+              <span class="n">6 cells · mid</span>
+            </div>
+            <div class="sun-row">
+              <span class="sw" style="background:#E0F2FE;">🌥</span>
+              <strong>Shade</strong>
+              <span class="n">3 cells · house wall</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
