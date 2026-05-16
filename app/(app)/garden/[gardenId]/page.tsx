@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Sprout } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
-import { GardenOverview } from "@/components/canvas/GardenOverview";
+import { GardenCanvasToggle } from "@/components/canvas/GardenCanvasToggle";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
@@ -35,15 +35,25 @@ export default async function GardenPage({
       beds: {
         include: {
           cells: {
+            orderBy: [{ row: "asc" }, { col: "asc" }],
             include: {
               // PlantingCell is the source of truth — counts both primary
               // (anchor) cells AND footprint cells of multi-cell plants.
               // The legacy `plantings` relation only catches anchors, which
-              // undercounts on beds with 2×2 tomatoes.
+              // undercounts on beds with 2×2 tomatoes. We also pull the
+              // plant category so the 2D top-down view can colour each
+              // occupied cell by crop type without an extra round-trip.
               occupiedBy: {
                 where: { planting: { season: { isActive: true } } },
-                select: { plantingId: true },
-                take: 1,
+                select: {
+                  plantingId: true,
+                  isPrimary: true,
+                  planting: {
+                    select: {
+                      plant: { select: { category: true } },
+                    },
+                  },
+                },
               },
             },
           },
@@ -109,9 +119,22 @@ export default async function GardenPage({
     yPosition: bed.yPosition,
     widthFt: bed.widthFt,
     heightFt: bed.heightFt,
+    gridCols: bed.gridCols,
+    gridRows: bed.gridRows,
     // Number of CELLS occupied (so a 2×2 tomato shows as 4, not 1).
     // Matches what Robyn sees on the grid.
     plantCount: bed.cells.reduce((sum, c) => sum + c.occupiedBy.length, 0),
+    // Per-cell occupancy used by the 2D top-down render — each occupied
+    // cell becomes a colored square; the 3D iso view ignores this field.
+    cells: bed.cells.map((c) => ({
+      row: c.row,
+      col: c.col,
+      occupants: c.occupiedBy.map((o) => ({
+        plantingId: o.plantingId,
+        isPrimary: o.isPrimary,
+        category: o.planting.plant.category as string,
+      })),
+    })),
   }));
 
   const totalPlantCount = beds.reduce((sum, b) => sum + b.plantCount, 0);
@@ -308,14 +331,7 @@ export default async function GardenPage({
                     ))}
                   </div>
                 </div>
-                {/* Dark pill — desktop only */}
-                <div
-                  className="hidden md:block absolute z-[2]"
-                  style={{ top: "10px", left: "10px", fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(143,168,90,0.6)", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: "100px", border: "1px solid rgba(143,168,90,0.2)" }}
-                >
-                  Garden Canvas — Interactive 3D
-                </div>
-                <GardenOverview
+                <GardenCanvasToggle
                   garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
                   beds={beds}
                 />
