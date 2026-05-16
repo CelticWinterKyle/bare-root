@@ -235,7 +235,7 @@ export function GardenOverview2D({ garden, beds }: { garden: Garden2D; beds: Bed
   return (
     <div
       className="relative w-full"
-      style={{ background: "#19280e", height: "clamp(320px, 42vh, 520px)" }}
+      style={{ background: "#19280e", aspectRatio: "16 / 9" }}
     >
       <svg
         ref={svgRef}
