@@ -8,7 +8,16 @@ export async function POST() {
     return new Response("No billing account", { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return Response.json(
+      {
+        error:
+          "Billing not configured — set NEXT_PUBLIC_APP_URL in Vercel env vars.",
+      },
+      { status: 500 }
+    );
+  }
 
   const session = await stripe.billingPortal.sessions.create({
     customer: user.stripeCustomerId,

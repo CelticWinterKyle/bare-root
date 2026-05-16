@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Bare Root",
@@ -10,16 +10,40 @@ const LAST_UPDATED = "May 14, 2026";
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#FAF7F2]">
-      <nav className="flex items-center justify-between px-8 py-6 max-w-3xl mx-auto">
-        <Link href="/" className="font-display text-2xl font-semibold text-[#1C3D0A]">Bare Root</Link>
-        <Link href="/" className="text-sm text-[#6B6B5A] hover:text-[#111109]">Back to home</Link>
-      </nav>
-
-      <article className="max-w-3xl mx-auto px-6 pt-8 pb-24">
-        <p className="text-xs uppercase tracking-wider text-[#7DA84E] font-mono mb-3">Legal</p>
-        <h1 className="font-display text-4xl font-semibold text-[#111109] mb-2">Privacy Policy</h1>
-        <p className="text-sm text-[#ADADAA] mb-12">Last updated: {LAST_UPDATED}</p>
+    <MarketingChrome>
+      <article
+        className="container-narrow"
+        style={{ padding: "56px 24px 64px", maxWidth: 760, margin: "0 auto" }}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <MarketingEyebrow>§ Legal · Privacy</MarketingEyebrow>
+        </div>
+        <h1
+          style={{
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontSize: "clamp(36px, 5vw, 56px)",
+            fontWeight: 800,
+            color: "#111109",
+            letterSpacing: "-0.035em",
+            lineHeight: 0.95,
+            fontVariationSettings: "'opsz' 64",
+            marginBottom: 14,
+          }}
+        >
+          Privacy <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Policy</em>
+        </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-ibm-plex-mono), monospace",
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "#ADADAA",
+            marginBottom: 40,
+          }}
+        >
+          Last updated · {LAST_UPDATED}
+        </p>
 
         <Section title="Summary">
           <p>
@@ -194,23 +218,26 @@ export default function PrivacyPage() {
           </p>
         </Section>
       </article>
-
-      <footer className="border-t border-[#E4E4DC] py-8 text-center text-sm text-[#ADADAA]">
-        <div className="flex items-center justify-center gap-6 mb-3">
-          <Link href="/" className="hover:text-[#111109]">Home</Link>
-          <Link href="/pricing" className="hover:text-[#111109]">Pricing</Link>
-          <Link href="/privacy" className="hover:text-[#111109]">Privacy</Link>
-          <Link href="/terms" className="hover:text-[#111109]">Terms</Link>
-        </div>
-      </footer>
-    </main>
+    </MarketingChrome>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-10">
-      <h2 className="font-display text-xl font-semibold text-[#111109] mb-3">{title}</h2>
+    <section style={{ marginBottom: 40 }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-fraunces), Georgia, serif",
+          fontSize: 22,
+          fontWeight: 800,
+          color: "#111109",
+          letterSpacing: "-0.02em",
+          marginBottom: 12,
+          fontVariationSettings: "'opsz' 24",
+        }}
+      >
+        {title}
+      </h2>
       <div className="space-y-3 text-[#3A3A30] text-[15px] leading-relaxed [&_h3]:font-semibold [&_h3]:text-[#111109] [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-sm [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul_li]:text-[14px]">
         {children}
       </div>

@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher([
   "/",
   "/pricing(.*)",
+  "/privacy(.*)",
+  "/terms(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
@@ -13,7 +15,15 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) return NextResponse.next();
+  // Forward the pathname as a request header so Server Components can
+  // condition layout chrome on the current route (e.g. hide the app
+  // shell during onboarding) without a separate server-state lookup.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
+
+  if (isPublicRoute(req)) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
 
   const { userId } = await auth();
   if (!userId) {
@@ -22,7 +32,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {

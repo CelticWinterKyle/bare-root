@@ -69,10 +69,16 @@ export async function GET(req: Request) {
 
   for (const [, userReminders] of byUser) {
     const user = userReminders[0].user;
-
-    if (!isLocalMorning(now, user.timezone)) continue;
+    const inMorningWindow = isLocalMorning(now, user.timezone);
 
     for (const reminder of userReminders) {
+      // System reminders (start seeds, transplant, harvest, frost, etc.)
+      // batch into the morning so we don't ping users at 2am. CUSTOM
+      // reminders carry a user-picked datetime and should fire at that
+      // time regardless of where it lands in the day — otherwise a
+      // "remind me at 3pm" gets pushed to the next morning, which
+      // defeats the point of letting users set their own time.
+      if (reminder.type !== "CUSTOM" && !inMorningWindow) continue;
       const pref = await db.notificationPreference.findUnique({
         where: { userId_type: { userId: user.id, type: reminder.type as never } },
       });

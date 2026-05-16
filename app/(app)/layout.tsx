@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { Settings } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -8,8 +10,40 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { PwaInstallPrompt } from "@/components/layout/PwaInstallPrompt";
 
+// Paths that bypass the onboarding gate. /onboarding hosts the wizard
+// itself; /invite/[token] handles collaborator joins (those users get
+// dropped straight into the inviting garden without needing to set up
+// their own).
+const ONBOARDING_BYPASS = ["/onboarding", "/invite"];
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+
+  // Read the pathname forwarded by middleware (proxy.ts) so we can
+  // gate chrome + redirects on the current route.
+  const heads = await headers();
+  const pathname = heads.get("x-pathname") ?? "";
+  const isOnboardingPath = ONBOARDING_BYPASS.some((p) => pathname.startsWith(p));
+
+  // If the user hasn't finished onboarding, force them back to the
+  // wizard from anywhere else. Without this guard a user can URL-type
+  // their way into broken empty pages mid-setup.
+  if (!user.onboardingComplete && !isOnboardingPath) {
+    redirect("/onboarding");
+  }
+
+  // Onboarding + invite render as standalone pages — no sidebar, no
+  // mobile nav, no notification bell. They handle their own chrome so
+  // the wizard feels like a wizard and the invite card feels like one
+  // dedicated screen.
+  if (isOnboardingPath) {
+    return (
+      <div className="min-h-screen" style={{ background: "#FDFDF8" }}>
+        {children}
+        <PwaInstallPrompt />
+      </div>
+    );
+  }
 
   const reminders = await db.reminder.findMany({
     where: { userId: user.id, dismissed: false, sentAt: { not: null } },

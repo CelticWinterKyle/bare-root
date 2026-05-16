@@ -845,7 +845,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           }
           const plantList = Object.values(plantSummary).sort((a, b) => b.count - a.count);
           return (
-            <aside className="w-full md:w-[240px] md:shrink-0 hidden md:block">
+            <aside className="w-full lg:w-[240px] lg:shrink-0 hidden lg:block">
               <div
                 className="rounded-xl border shadow-sm"
                 style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
 
 const COMPARISON = [
   { feature: "Gardens", free: "1", pro: "Unlimited" },
@@ -29,7 +30,7 @@ const FAQ = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes — 7 days free when you first upgrade. Your card is required upfront but won't be charged until the trial ends.",
+    a: "Yes — 7 days free when you first upgrade. Your card is required upfront but won’t be charged until the trial ends.",
   },
   {
     q: "Does it work on mobile?",
@@ -41,117 +42,382 @@ const FAQ = [
   },
 ];
 
-function Cell({ value }: { value: boolean | string }) {
-  if (typeof value === "string") return <span className="text-sm text-[#111109]">{value}</span>;
-  if (value) return <Check className="w-4 h-4 text-[#3A6B20] mx-auto" />;
-  return <span className="text-[#E4E4DC] text-lg leading-none">—</span>;
+function Cell({ value, dark = false }: { value: boolean | string; dark?: boolean }) {
+  if (typeof value === "string") {
+    return (
+      <span style={{ fontSize: 13, color: dark ? "#A8D870" : "#111109" }}>{value}</span>
+    );
+  }
+  if (value) {
+    return (
+      <Check
+        className="mx-auto"
+        style={{ width: 16, height: 16, color: dark ? "#A8D870" : "#3A6B20" }}
+      />
+    );
+  }
+  return <span style={{ color: dark ? "rgba(168,216,112,0.35)" : "#E4E4DC", fontSize: 18 }}>—</span>;
 }
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-[#FAF7F2]">
-      <nav className="flex items-center justify-between px-8 py-6 container-narrow">
-        <Link href="/" className="font-display text-2xl font-semibold text-[#1C3D0A]">Bare Root</Link>
-        <div className="flex items-center gap-4">
-          <Link href="/sign-in" className="text-sm text-[#6B6B5A] hover:text-[#111109] transition-colors">Sign in</Link>
-          <Link href="/sign-up" className="text-sm bg-[#1C3D0A] text-white px-4 py-2 rounded-lg hover:bg-[#3A6B20] transition-colors">Start free</Link>
+    <MarketingChrome>
+      {/* Hero */}
+      <section
+        className="container-narrow"
+        style={{ padding: "80px 32px 56px", textAlign: "center" }}
+      >
+        <div style={{ marginBottom: 18 }}>
+          <MarketingEyebrow>§ Pricing · Two tiers</MarketingEyebrow>
         </div>
-      </nav>
-
-      <section className="container-narrow px-6 pt-16 pb-8 text-center">
-        <h1 className="font-display text-4xl font-semibold text-[#111109] mb-3">Simple, honest pricing</h1>
-        <p className="text-[#6B6B5A] text-lg">Free to start. Upgrade when you want more.</p>
+        <h1
+          style={{
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontSize: "clamp(40px, 5.5vw, 64px)",
+            fontWeight: 800,
+            lineHeight: 0.95,
+            letterSpacing: "-0.035em",
+            color: "#111109",
+            fontVariationSettings: "'opsz' 96",
+            marginBottom: 18,
+          }}
+        >
+          Simple, <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>honest</em> pricing.
+        </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontStyle: "italic",
+            fontSize: 19,
+            color: "#3A3A30",
+            maxWidth: 560,
+            margin: "0 auto",
+            fontVariationSettings: "'opsz' 22",
+          }}
+        >
+          Free to start. Upgrade when you want more.
+        </p>
       </section>
 
       {/* Plan cards */}
-      <section className="container-narrow px-6 pb-16">
-        <div className="grid gap-4 sm:grid-cols-2 mb-16">
+      <section
+        className="container-narrow"
+        style={{ padding: "0 32px 64px", display: "grid", gridTemplateColumns: "1fr", gap: 18 }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
           {/* Free */}
-          <div className="bg-white border border-[#E4E4DC] rounded-2xl p-6">
-            <p className="font-semibold text-lg text-[#111109] mb-1">Free</p>
-            <p className="text-3xl font-bold text-[#111109] mb-1">$0</p>
-            <p className="text-sm text-[#ADADAA] mb-6">Forever</p>
+          <div
+            style={{
+              background: "#FDFDF8",
+              border: "1px solid #E4E4DC",
+              borderRadius: 18,
+              padding: "32px 28px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-ibm-plex-mono), monospace",
+                fontSize: 10,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#6B6B5A",
+                marginBottom: 12,
+              }}
+            >
+              Free
+            </p>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 24 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-fraunces), Georgia, serif",
+                  fontSize: 52,
+                  fontWeight: 800,
+                  color: "#111109",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1,
+                }}
+              >
+                $0
+              </span>
+              <span style={{ fontSize: 14, color: "#6B6B5A" }}>forever</span>
+            </div>
             <Link
               href="/sign-up"
-              className="block w-full text-center border border-[#1C3D0A] text-[#1C3D0A] font-medium py-3 rounded-xl hover:bg-[#F4F4EC] transition-colors text-sm mb-6"
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "center",
+                border: "1.5px solid #1C3D0A",
+                color: "#1C3D0A",
+                fontWeight: 600,
+                padding: "11px 16px",
+                borderRadius: 10,
+                textDecoration: "none",
+                fontSize: 14,
+              }}
             >
-              Get started free
+              Get started
             </Link>
+            <p
+              style={{
+                marginTop: 16,
+                fontSize: 13,
+                color: "#6B6B5A",
+                fontStyle: "italic",
+                fontFamily: "var(--font-fraunces), Georgia, serif",
+              }}
+            >
+              One garden, three beds, the plant library. Plenty to actually grow something this season.
+            </p>
           </div>
 
           {/* Pro */}
-          <div className="bg-[#1C3D0A] rounded-2xl p-6 text-white relative overflow-hidden">
-            <div className="absolute top-4 right-4 text-[11px] bg-[#D4820A] px-2 py-0.5 rounded-full font-medium">7-day trial</div>
-            <p className="font-semibold text-lg mb-1">Pro</p>
-            <div className="flex items-end gap-1 mb-1">
-              <p className="text-3xl font-bold">$4.58</p>
-              <p className="text-white/60 text-sm mb-1">/mo, billed annually</p>
+          <div
+            style={{
+              background: "#1C3D0A",
+              borderRadius: 18,
+              padding: "32px 28px",
+              color: "#FDFDF8",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                background: "rgba(168,216,112,0.18)",
+                border: "1px solid rgba(168,216,112,0.3)",
+                color: "#A8D870",
+                fontSize: 9,
+                fontFamily: "var(--font-ibm-plex-mono), monospace",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                padding: "4px 9px",
+                borderRadius: 100,
+                fontWeight: 600,
+              }}
+            >
+              7-day trial
+            </span>
+            <p
+              style={{
+                fontFamily: "var(--font-ibm-plex-mono), monospace",
+                fontSize: 10,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "rgba(168,216,112,0.7)",
+                marginBottom: 12,
+              }}
+            >
+              Pro
+            </p>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-fraunces), Georgia, serif",
+                  fontWeight: 800,
+                  fontSize: 52,
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1,
+                  color: "#FDFDF8",
+                }}
+              >
+                $<em style={{ fontStyle: "italic" }}>4</em>
+                <sup style={{ fontSize: 24, verticalAlign: "super", fontWeight: 700 }}>58</sup>
+              </span>
+              <span style={{ fontSize: 13, color: "rgba(253,253,248,0.6)" }}>/mo, billed annually</span>
             </div>
-            <p className="text-sm text-white/60 mb-6">or $7/mo, billed monthly</p>
+            <p style={{ fontSize: 13, color: "rgba(253,253,248,0.55)", marginBottom: 24 }}>
+              or $7/mo billed monthly
+            </p>
             <Link
               href="/sign-up"
-              className="block w-full text-center bg-white text-[#1C3D0A] font-semibold py-3 rounded-xl hover:bg-white/90 transition-colors text-sm mb-1"
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "center",
+                background: "#FDFDF8",
+                color: "#1C3D0A",
+                fontWeight: 700,
+                padding: "11px 16px",
+                borderRadius: 10,
+                textDecoration: "none",
+                fontSize: 14,
+              }}
             >
               Start free trial
             </Link>
-            <p className="text-xs text-white/50 text-center">No charge for 7 days</p>
+            <p
+              style={{
+                marginTop: 16,
+                fontSize: 13,
+                color: "rgba(253,253,248,0.7)",
+                fontStyle: "italic",
+                fontFamily: "var(--font-fraunces), Georgia, serif",
+              }}
+            >
+              Every feature. Unlimited gardens. The full editorial planning experience.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Comparison table */}
-        <div className="bg-white rounded-2xl border border-[#E4E4DC] overflow-hidden mb-16">
-          <table className="w-full">
+      {/* Comparison table */}
+      <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
+        <div style={{ marginBottom: 24 }}>
+          <MarketingEyebrow>§ Compare</MarketingEyebrow>
+        </div>
+        <div
+          style={{
+            background: "#FDFDF8",
+            border: "1px solid #E4E4DC",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr className="border-b border-[#E4E4DC]">
-                <th className="text-left px-5 py-4 text-sm text-[#ADADAA] font-medium">Feature</th>
-                <th className="text-center px-5 py-4 text-sm text-[#ADADAA] font-medium">Free</th>
-                <th className="text-center px-5 py-4 text-sm text-[#1C3D0A] font-semibold">Pro</th>
+              <tr style={{ borderBottom: "1px solid #E4E4DC", background: "#F8F5EB" }}>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "14px 20px",
+                    fontFamily: "var(--font-ibm-plex-mono), monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#6B6B5A",
+                    fontWeight: 500,
+                  }}
+                >
+                  Feature
+                </th>
+                <th
+                  style={{
+                    textAlign: "center",
+                    padding: "14px 20px",
+                    fontFamily: "var(--font-ibm-plex-mono), monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#6B6B5A",
+                    fontWeight: 500,
+                    width: 110,
+                  }}
+                >
+                  Free
+                </th>
+                <th
+                  style={{
+                    textAlign: "center",
+                    padding: "14px 20px",
+                    fontFamily: "var(--font-ibm-plex-mono), monospace",
+                    fontSize: 10,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#1C3D0A",
+                    fontWeight: 600,
+                    width: 110,
+                  }}
+                >
+                  Pro
+                </th>
               </tr>
             </thead>
             <tbody>
               {COMPARISON.map((row, i) => (
-                <tr key={row.feature} className={i % 2 === 0 ? "bg-white" : "bg-[#FAF7F2]"}>
-                  <td className="px-5 py-3 text-sm text-[#111109]">{row.feature}</td>
-                  <td className="px-5 py-3 text-center"><Cell value={row.free} /></td>
-                  <td className="px-5 py-3 text-center"><Cell value={row.pro} /></td>
+                <tr key={row.feature} style={{ borderTop: i === 0 ? "none" : "1px solid #F4F4EC" }}>
+                  <td style={{ padding: "11px 20px", fontSize: 13.5, color: "#111109" }}>
+                    {row.feature}
+                  </td>
+                  <td style={{ padding: "11px 20px", textAlign: "center" }}>
+                    <Cell value={row.free} />
+                  </td>
+                  <td style={{ padding: "11px 20px", textAlign: "center" }}>
+                    <Cell value={row.pro} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </section>
 
-        {/* FAQ */}
-        <h2 className="font-display text-2xl font-semibold text-[#111109] mb-6">Questions</h2>
-        <div className="space-y-4 mb-16">
+      {/* FAQ */}
+      <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
+        <div style={{ marginBottom: 24 }}>
+          <MarketingEyebrow>§ Questions</MarketingEyebrow>
+        </div>
+        <div style={{ display: "grid", gap: 12 }}>
           {FAQ.map((item) => (
-            <div key={item.q} className="bg-white rounded-xl border border-[#E4E4DC] p-5">
-              <p className="font-medium text-[#111109] mb-1.5 text-sm">{item.q}</p>
-              <p className="text-[#6B6B5A] text-sm">{item.a}</p>
+            <div
+              key={item.q}
+              style={{
+                background: "#FDFDF8",
+                border: "1px solid #E4E4DC",
+                borderRadius: 14,
+                padding: "18px 22px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-fraunces), Georgia, serif",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: "#111109",
+                  marginBottom: 6,
+                  letterSpacing: "-0.015em",
+                  fontVariationSettings: "'opsz' 18",
+                }}
+              >
+                {item.q}
+              </p>
+              <p style={{ fontSize: 14, color: "#3A3A30", lineHeight: 1.5 }}>{item.a}</p>
             </div>
           ))}
         </div>
-
-        <div className="text-center">
-          <p className="font-display text-2xl font-semibold text-[#111109] mb-4">Your best garden starts here.</p>
-          <Link
-            href="/sign-up"
-            className="inline-flex bg-[#1C3D0A] text-white px-8 py-4 rounded-xl text-base font-medium hover:bg-[#3A6B20] transition-colors"
-          >
-            Start planning free →
-          </Link>
-        </div>
       </section>
 
-      <footer className="border-t border-[#E4E4DC] py-8 text-center text-sm text-[#ADADAA]">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
-          <Link href="/" className="hover:text-[#111109]">Home</Link>
-          <Link href="/pricing" className="hover:text-[#111109]">Pricing</Link>
-          <Link href="/sign-in" className="hover:text-[#111109]">Sign in</Link>
-          <Link href="/privacy" className="hover:text-[#111109]">Privacy</Link>
-          <Link href="/terms" className="hover:text-[#111109]">Terms</Link>
-        </div>
-        <p>Companion planting data from <a href="https://openfarm.cc" target="_blank" rel="noopener noreferrer" className="underline">OpenFarm</a> (CC BY 4.0)</p>
-      </footer>
-    </main>
+      {/* Final CTA */}
+      <section
+        className="container-narrow"
+        style={{ padding: "0 32px 96px", textAlign: "center" }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontWeight: 800,
+            fontSize: "clamp(28px, 4vw, 40px)",
+            color: "#111109",
+            letterSpacing: "-0.03em",
+            marginBottom: 22,
+          }}
+        >
+          Your best garden <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>starts here</em>.
+        </p>
+        <Link
+          href="/sign-up"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
+            background: "#1C3D0A",
+            color: "#FDFDF8",
+            padding: "14px 24px",
+            borderRadius: 10,
+            textDecoration: "none",
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          Start planning — free
+          <span style={{ fontFamily: "var(--font-fraunces), Georgia, serif", fontStyle: "italic" }}>
+            →
+          </span>
+        </Link>
+      </section>
+    </MarketingChrome>
   );
 }
