@@ -437,18 +437,20 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Height constraint derived from window height — avoids circular dependency
-  // with measuring a container whose size depends on its own content
-  const [maxViewportH, setMaxViewportH] = useState(400);
+  // Height constraint derived from window height. We deliberately let this
+  // grow up to ~640px on tall monitors so dense beds (e.g. a 4×16 grid)
+  // don't get squeezed into 19px cells. Cells stay click-friendly via the
+  // minimum/target clamp below — for shorter beds the bed just doesn't
+  // fill the available height.
+  const [maxViewportH, setMaxViewportH] = useState(560);
   const [mobileViewportH, setMobileViewportH] = useState(600);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     // header h-14 (56) + main pb-24 (96) + pt-10 (40) + page-header+mb-6 (68)
     // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 384px → use 396 for safety
-    // Cap at 420 so cells don't grow huge on large monitors.
     const update = () => {
       const mobile = window.innerWidth < 768;
-      setMaxViewportH(Math.max(200, Math.min(window.innerHeight - 396, 420)));
+      setMaxViewportH(Math.max(360, Math.min(window.innerHeight - 240, 720)));
       setMobileViewportH(Math.max(200, window.innerHeight - 300));
       setIsMobile(mobile);
     };
@@ -476,13 +478,25 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const rowGaps = (displayRows - 1) * 4;
   const colGaps = (displayCols - 1) * 4;
   const fitByH = Math.floor((maxViewportH - FRAME_PAD - rowGaps) / displayRows);
-  const targetByH = Math.min(300, Math.floor((maxViewportH * 0.95 - FRAME_PAD - rowGaps) / displayRows));
   const mobileFitByW = Math.floor((vpW - 32 - colGaps) / displayCols);
   // 52 = grid padding 28px (14px top + 14px bottom) + flex centering py-3 (24px)
   const mobileFitByH = Math.floor((mobileViewportH - 52 - (displayRows - 1) * 4) / displayRows);
+
+  // Desktop cell size: keep cells in the 32–56px range so they stay
+  // click-friendly even on dense (16-row) beds. Below 32 the cells
+  // become unreadable; above 56 wastes screen on short beds. If the
+  // viewport-height fit lands inside the band, use it; otherwise clamp.
+  // The viewport itself scrolls (overflow-auto + maxHeight) when the
+  // bed runs taller than the available space.
+  const DESKTOP_CELL_MIN = 32;
+  const DESKTOP_CELL_MAX = 56;
+  const desktopCellPx = Math.max(
+    DESKTOP_CELL_MIN,
+    Math.min(DESKTOP_CELL_MAX, fitByH)
+  );
   const baseCellPx = isMobile
     ? Math.max(28, Math.min(mobileFitByW, mobileFitByH))
-    : Math.max(20, Math.min(fitByH, targetByH));
+    : desktopCellPx;
   const cellPx = Math.max(20, Math.round(baseCellPx * zoom));
 
   // Dense mode: hide labels when cells are too small to read them
