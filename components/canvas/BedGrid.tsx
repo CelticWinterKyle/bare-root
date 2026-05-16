@@ -55,6 +55,20 @@ const STATUS_DOT_COLOR: Record<string, string> = {
   FAILED:        "#7A2A18",
 };
 
+// Plant-category accent colors — used for the disc rendered inside a
+// planted cell. Matches the 2D garden view and dashboard so a tomato
+// reads as red, a herb reads as sage, etc., regardless of which view
+// you're in.
+const CATEGORY_COLOR: Record<string, string> = {
+  VEGETABLE: "#4a8a2e",
+  FRUIT: "#C44A2A",
+  HERB: "#7DA84E",
+  FLOWER: "#BC6B8A",
+  TREE: "#3d6b32",
+  SHRUB: "#5A8240",
+  OTHER: "#A07640",
+};
+
 const SUN_CYCLE: SunLevel[] = ["FULL_SUN", "PARTIAL_SUN", "PARTIAL_SHADE", "FULL_SHADE"];
 const SUN_LABEL: Record<string, string> = {
   FULL_SUN: "☀️", PARTIAL_SUN: "⛅", PARTIAL_SHADE: "🌥️", FULL_SHADE: "☁️",
@@ -178,15 +192,18 @@ function CellTile({
   const labelSize = Math.max(7, Math.min(10, cellPx * 0.18));
   const badgePx = 13;
 
+  // Empty cells are translucent paper so the bed's soil texture shows
+  // through. Planted cells use the existing status tint. Drop-hover
+  // highlights sage to confirm a valid drop target.
   const cellBg = sunMode
     ? SUN_BG[sun]
     : cellStyle
     ? cellStyle.bg
     : preview
-    ? "rgba(28,61,10,0.06)"
+    ? "rgba(228,240,212,0.6)"
     : isOver
-    ? "rgba(125,168,78,0.18)"
-    : "rgba(255,255,255,0.8)";
+    ? "rgba(168,216,112,0.35)"
+    : "rgba(253,253,248,0.55)";
 
   const cellBorder = sunMode
     ? "rgba(28,61,10,0.1)"
@@ -196,7 +213,7 @@ function CellTile({
     ? "rgba(28,61,10,0.15)"
     : isOver
     ? "#7DA84E"
-    : "rgba(28,61,10,0.1)";
+    : "rgba(168,216,112,0.22)";
 
   const cellBoxShadow = isHoveredByPlanner
     ? "inset 0 0 0 2px #D4820A, 0 2px 8px rgba(196,121,10,0.3)"
@@ -254,10 +271,32 @@ function CellTile({
       {!isAnchor && !isFootprintOnly && !preview && !sunMode && (
         <span
           className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none"
-          style={{ fontSize: "18px", color: "rgba(28,61,10,0.15)" }}
+          style={{ fontSize: Math.max(14, cellPx * 0.32), color: "rgba(168,216,112,0.45)" }}
         >
           +
         </span>
+      )}
+      {/* Category-colored disc — adds the rich visual weight that matches
+          the 2D garden view and dashboard preview. Anchor cell shows a
+          bold disc; footprint cells (no anchor planting) show a softer
+          one with the same color. */}
+      {(isAnchor || isFootprintOnly) && !sunMode && (
+        <div
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <div
+            style={{
+              width: cellPx * 0.55,
+              height: cellPx * 0.55,
+              borderRadius: "50%",
+              background:
+                CATEGORY_COLOR[cell.planting?.plant.category ?? "OTHER"] ?? "#A07640",
+              opacity: isAnchor ? 0.85 : 0.45,
+              boxShadow: isAnchor ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
+            }}
+          />
+        </div>
       )}
       {isAnchor && cell.planting && !sunMode && !dense && (
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1 px-0.5 gap-0.5 pointer-events-none">
@@ -268,16 +307,18 @@ function CellTile({
               borderRadius: "50%",
               background: STATUS_DOT_COLOR[cell.planting.status] ?? "#ADADAA",
               flexShrink: 0,
+              boxShadow: "0 0 0 1.5px rgba(253,253,248,0.85)",
             }}
           />
           <span
             style={{
               fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              color: "#3A3A30",
+              fontWeight: 800,
+              color: "#1C3D0A",
               fontSize: labelSize,
               lineHeight: 1.1,
               textAlign: "center",
+              textShadow: "0 1px 0 rgba(253,253,248,0.7)",
             }}
           >
             {cell.planting.plant.name.split(" ")[0]}
@@ -784,6 +825,151 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start md:justify-center" style={{ marginTop: "20px" }}>
+        {/* Stats panel — fills the left whitespace with useful chrome. */}
+        {(() => {
+          const totalCells = gridCols * gridRows;
+          const filledCells = cells.filter((c) => c.planting || c.footprint).length;
+          const fillPct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
+          const plantSummary: Record<string, { name: string; category: string; count: number }> = {};
+          for (const c of cells) {
+            if (!c.planting) continue;
+            const key = c.planting.plant.id;
+            if (!plantSummary[key]) {
+              plantSummary[key] = {
+                name: c.planting.plant.name,
+                category: c.planting.plant.category,
+                count: 0,
+              };
+            }
+            plantSummary[key].count += 1;
+          }
+          const plantList = Object.values(plantSummary).sort((a, b) => b.count - a.count);
+          return (
+            <aside className="w-full md:w-[240px] md:shrink-0 hidden md:block">
+              <div
+                className="rounded-xl border shadow-sm"
+                style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}
+              >
+                <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #F4F4EC" }}>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      color: "#7DA84E",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Bed stats
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 32,
+                        fontWeight: 800,
+                        color: "#111109",
+                        letterSpacing: "-0.025em",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {filledCells}
+                    </span>
+                    <span style={{ fontSize: 13, color: "#6B6B5A" }}>/ {totalCells} cells</span>
+                  </div>
+                  <div
+                    className="mt-3 rounded-full overflow-hidden"
+                    style={{ height: 6, background: "#F4F4EC" }}
+                  >
+                    <div
+                      style={{
+                        width: `${fillPct}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, #3A6B20, #7DA84E)",
+                        transition: "width 0.4s",
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1.5">
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>
+                      {fillPct}% planted
+                    </span>
+                    {filledCells > 0 && (
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>
+                        {totalCells - filledCells} open
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-5 py-4">
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color: "#ADADAA",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Planted
+                  </div>
+                  {plantList.length === 0 ? (
+                    <p style={{ fontSize: 12, color: "#ADADAA", fontStyle: "italic" }}>
+                      Drag a plant onto the bed to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {plantList.map((p) => (
+                        <div
+                          key={p.name}
+                          className="flex items-center gap-2"
+                        >
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.OTHER,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "#111109",
+                              flex: 1,
+                              minWidth: 0,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {p.name}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-mono)",
+                              fontSize: 10,
+                              color: "#6B6B5A",
+                              fontWeight: 500,
+                            }}
+                          >
+                            ×{p.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </aside>
+          );
+        })()}
         {/* Bed column — size-to-content so the bed and sidebar sit as a
             visually related pair instead of the bed floating in a wide
             empty column. */}
@@ -805,15 +991,26 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             )}
             {/* Center bed in viewport when smaller than viewport */}
             <div className="flex items-center justify-center min-h-full py-3">
-              {/* Graph-paper bed container */}
+              {/* Wood-framed soil bed — matches the dashboard preview and
+                  2D garden view so the editor's bed speaks the same visual
+                  language. Outer warm wood ring, dotted soil interior. */}
               <div
                 className="shrink-0"
                 style={{
-                  backgroundImage: "repeating-linear-gradient(0deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%), repeating-linear-gradient(90deg, rgba(28,61,10,0.06) 0, rgba(28,61,10,0.06) 1px, transparent 1px, transparent 100%)",
-                  backgroundSize: "40px 40px",
-                  backgroundColor: "#FDFDF8",
+                  // Subtle dotted soil pattern (browns) overlaid on a deep
+                  // soil background — same vocabulary used in the 2D view.
+                  backgroundImage:
+                    "radial-gradient(rgba(36,21,16,0.45) 1px, transparent 1.5px), radial-gradient(rgba(74,50,32,0.55) 1px, transparent 1.5px)",
+                  backgroundSize: "14px 14px, 22px 22px",
+                  backgroundPosition: "0 0, 7px 11px",
+                  backgroundColor: "#3a2818",
                   borderRadius: "12px",
-                  border: "1.5px solid #E4E4DC",
+                  // Outer wood frame: warm rim with a darker inner shadow
+                  // so the bed reads as 3D-ish.
+                  border: "6px solid #C49458",
+                  outline: "1px solid #7D5630",
+                  boxShadow:
+                    "inset 0 0 0 2px rgba(122,75,40,0.4), 0 4px 18px -6px rgba(28,18,10,0.35)",
                   overflow: "hidden",
                 }}
               >
