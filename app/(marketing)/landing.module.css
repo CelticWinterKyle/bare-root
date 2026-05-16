@@ -187,7 +187,7 @@
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 80px;
-  align-items: end;
+  align-items: center;
 }
 .heroLeft { position: relative; }
 .heroMeta {
