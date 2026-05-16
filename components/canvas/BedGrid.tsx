@@ -1,12 +1,25 @@
 "use client";
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useMemo } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { PlantPicker } from "./PlantPicker";
 import { CellDetail } from "./CellDetail";
 import { SmartLayoutPanel } from "./SmartLayoutPanel";
+import { PlantLibrary, type LibraryPlant } from "./PlantLibrary";
 import { updateCellSun, assignPlant, bulkAssignPlant, movePlanting } from "@/app/actions/planting";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sprout, X as CloseIcon, Check, CheckSquare, Move } from "lucide-react";
+import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, Grid3x3, MousePointer2 } from "lucide-react";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -127,9 +140,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     router.replace(pathname, { scroll: false });
   }
 
-  // Portrait beds (more rows than cols) auto-rotate on desktop only.
-  // On mobile, rotation creates unscrollable horizontal overflow, so we start un-rotated
-  // and correct to desktop-rotation in the useEffect once we know the viewport.
+  // Rotation is now manual-only via the toolbar button — beds render in
+  // their stored orientation (gridCols × gridRows) so a 2×8 bed reads as
+  // 2 wide × 8 tall, matching reality and the dashboard preview.
   const [rotated, setRotated] = useState(false);
   const [zoom, setZoom] = useState(1);
 
@@ -174,8 +187,6 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       setMobileViewportH(Math.max(200, window.innerHeight - 300));
       setIsMobile(mobile);
     };
-    // Set initial rotation: only auto-rotate on desktop
-    if (window.innerWidth >= 768 && gridRows > gridCols) setRotated(true);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -360,7 +371,90 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
 
   const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE] hover:text-[#111109]";
 
+  // ── Drag-and-drop wiring ───────────────────────────────────────────────────
+  type DragSource =
+    | { kind: "plant"; plant: LibraryPlant }
+    | { kind: "planting"; plantingId: string; plantName: string; fromCellId: string };
+
+  const [dragSource, setDragSource] = useState<DragSource | null>(null);
+
+  // PointerSensor with a 4px activation distance prevents the mouse-down on
+  // an empty cell from being interpreted as a drag — keeps clicks working.
+  // TouchSensor uses a small delay so quick taps don't start a drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } })
+  );
+
+  function onDragStart(e: DragStartEvent) {
+    const data = e.active.data.current;
+    if (!data) return;
+    if (data.kind === "plant") setDragSource({ kind: "plant", plant: data.plant });
+    else if (data.kind === "planting") setDragSource({
+      kind: "planting",
+      plantingId: data.plantingId,
+      plantName: data.plantName,
+      fromCellId: data.fromCellId,
+    });
+  }
+
+  function onDragEnd(e: DragEndEvent) {
+    const source = dragSource;
+    setDragSource(null);
+    if (!source || !e.over) return;
+    const overData = e.over.data.current;
+    if (!overData || overData.kind !== "cell") return;
+    const targetCell = overData.cell as CellData;
+
+    if (source.kind === "plant") {
+      if (!seasonId) {
+        toast.error("Create an active season first");
+        return;
+      }
+      if (targetCell.planting || targetCell.footprint) {
+        toast.error("That cell is already occupied");
+        return;
+      }
+      const plant = source.plant;
+      startPrefillAssign(async () => {
+        try {
+          const result = await assignPlant(targetCell.id, plant.id, seasonId);
+          handlePlanted(targetCell.id);
+          if (result.footprintWarning) toast.warning(result.footprintWarning, { duration: 5000 });
+          else toast.success(`Planted ${plant.name}`);
+        } catch (err) {
+          console.error(err);
+          toast.error(err instanceof Error ? err.message : "Couldn't plant — please try again");
+        }
+      });
+      return;
+    }
+
+    if (source.kind === "planting") {
+      if (targetCell.id === source.fromCellId) return;
+      if (targetCell.planting || targetCell.footprint) {
+        toast.error("That cell is already occupied");
+        return;
+      }
+      const pid = source.plantingId;
+      const name = source.plantName;
+      const targetId = targetCell.id;
+      startMove(async () => {
+        try {
+          const result = await movePlanting(pid, targetId);
+          handlePlanted(targetId);
+          if (result.footprintWarning) toast.warning(result.footprintWarning, { duration: 5000 });
+          else toast.success(`Moved ${name}`);
+        } catch (err) {
+          console.error(err);
+          toast.error(err instanceof Error ? err.message : "Couldn't move — please try again");
+        }
+      });
+    }
+  }
+
   return (
+    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
     <div className="flex flex-col">
       {/* Move-mode banner — set from the CellDetail Move button. The
           next empty-cell tap relocates the planting. */}
@@ -906,5 +1000,39 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         </div>
       </div>
     </div>
+    <DragOverlay dropAnimation={null}>
+      {dragSource?.kind === "plant" ? (
+        <div
+          className="rounded-lg shadow-2xl px-3 py-2"
+          style={{
+            background: "#FDFDF8",
+            border: "1.5px solid #7DA84E",
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: 13,
+            color: "#1C3D0A",
+            cursor: "grabbing",
+          }}
+        >
+          {dragSource.plant.name}
+        </div>
+      ) : dragSource?.kind === "planting" ? (
+        <div
+          className="rounded-lg shadow-2xl px-3 py-2"
+          style={{
+            background: "#E4F0D4",
+            border: "1.5px solid #3A6B20",
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: 13,
+            color: "#1C3D0A",
+            cursor: "grabbing",
+          }}
+        >
+          ↪ {dragSource.plantName}
+        </div>
+      ) : null}
+    </DragOverlay>
+    </DndContext>
   );
 }
