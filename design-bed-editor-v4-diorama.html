@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed Editor — Diorama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:   #F8F4EA;
+  --paper-d: #EFE7D3;
+  --ink:     #1E1A12;
+  --ink-2:   #3A2E1F;
+  --muted:   #7A6D54;
+  --ghost:   #B3A688;
+
+  --grass-1: #6B8E3A;
+  --grass-2: #4A6B22;
+  --grass-3: #8AAE56;
+  --grass-4: #2D4318;
+
+  --soil-l:  #6B4F2D;
+  --soil-m:  #4A3520;
+  --soil-d:  #2D1F12;
+  --soil-x:  #1A1108;
+
+  --wood-l:  #B68855;
+  --wood-m:  #8A6238;
+  --wood-d:  #5C3F22;
+  --wood-x:  #2F1F10;
+
+  --leaf-l:  #8FBE5C;
+  --leaf-m:  #5C9A35;
+  --leaf-d:  #305A18;
+
+  --tomato:  #CC4030;
+  --tomato-x:#7A1F18;
+  --berry:   #E08540;
+
+  --sky:     #8FA6C0;
+  --sun:     #FBC75E;
+  --cream:   #F5EDD3;
+}
+
+body {
+  background: var(--paper);
+  font-family: 'Geist', system-ui, sans-serif;
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.45;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  position: relative;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.crumb .here { color: var(--ink); font-weight: 500; }
+.crumb .arr { color: var(--ghost); }
+.title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(48px, 6vw, 76px);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 96;
+}
+.title em {
+  font-style: italic;
+  color: var(--leaf-d);
+}
+.meta {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.meta .dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--ghost);
+}
+.meta strong { color: var(--ink-2); font-weight: 600; }
+
+.modes {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 100px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px -4px rgba(46,30,12,0.12);
+}
+.mode {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mode:hover { color: var(--ink); background: rgba(0,0,0,0.04); }
+.mode.active {
+  background: var(--ink-2);
+  color: var(--cream);
+  box-shadow: 0 2px 8px -2px rgba(46,30,12,0.4);
+}
+.mode .ic { font-size: 14px; }
+
+/* ── Main grid ────────────────────────────────────────────────────────── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── Stage ────────────────────────────────────────────────────────────── */
+.stage {
+  position: relative;
+  background:
+    radial-gradient(ellipse 700px 400px at 50% 20%, rgba(143,166,192,0.12), transparent 70%),
+    linear-gradient(180deg, #DCD6B8 0%, #C8BD96 60%, #A89B72 100%);
+  border-radius: 18px;
+  padding: 60px 40px 80px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.4) inset,
+    0 30px 60px -30px rgba(46,30,12,0.3);
+}
+
+/* Grass texture on the ground */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 8% 15%, var(--grass-3) 1px, transparent 2px),
+    radial-gradient(circle at 22% 78%, var(--grass-1) 1.5px, transparent 2.5px),
+    radial-gradient(circle at 45% 32%, var(--grass-2) 1px, transparent 2px),
+    radial-gradient(circle at 68% 88%, var(--grass-3) 1.5px, transparent 2.5px),
+    radial-gradient(circle at 88% 52%, var(--grass-1) 1px, transparent 2px),
+    radial-gradient(circle at 12% 92%, var(--grass-4) 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, var(--grass-2) 1px, transparent 2px),
+    radial-gradient(circle at 38% 65%, var(--grass-3) 1px, transparent 2px),
+    radial-gradient(circle at 92% 84%, var(--grass-2) 1.5px, transparent 2.5px);
+  background-size: 80px 80px;
+  opacity: 0.45;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Subtle sunbeam from top-right */
+.stage::after {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(251,199,94,0.25) 0%, transparent 50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Lighting sticker — sun stamp top-right */
+.sun-stamp {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  z-index: 3;
+  background: rgba(255,255,255,0.4);
+  padding: 6px 12px 6px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px);
+}
+.sun-stamp .ic {
+  font-size: 16px;
+  color: var(--sun);
+  filter: drop-shadow(0 0 6px rgba(251,199,94,0.5));
+}
+
+.compass-stamp {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  backdrop-filter: blur(8px);
+}
+.compass-stamp::before {
+  content: '';
+  width: 2px; height: 18px;
+  background: linear-gradient(180deg, var(--tomato) 50%, var(--ink-2) 50%);
+  border-radius: 1px;
+}
+.compass-stamp::after {
+  content: 'N';
+  position: absolute;
+  top: -16px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+/* Bed wrapper centered */
+.bed-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+}
+
+/* Ground shadow under the bed */
+.bed-shadow {
+  position: absolute;
+  bottom: -38px;
+  left: 50%;
+  transform: translateX(-50%) skewX(-30deg);
+  width: 80%;
+  height: 36px;
+  background: radial-gradient(ellipse, rgba(46,30,12,0.45) 0%, transparent 70%);
+  filter: blur(6px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* The bed — rendered with proper plank perspective */
+.bed {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  aspect-ratio: 2 / 8;
+  z-index: 2;
+}
+
+/* Wood frame — 4 sides rendered as planks */
+.frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow:
+    0 18px 28px -10px rgba(46,30,12,0.55),
+    inset 0 0 0 1px rgba(0,0,0,0.2);
+}
+
+/* Top plank (visible because of slight tilt) */
+.plank-top {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  right: -14px;
+  height: 18px;
+  background:
+    linear-gradient(180deg, var(--wood-l) 0%, var(--wood-m) 100%);
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 -1px 0 rgba(0,0,0,0.2) inset;
+  z-index: 3;
+}
+.plank-top::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0, transparent 64px,
+    rgba(0,0,0,0.18) 64px, rgba(0,0,0,0.18) 66px
+  );
+}
+.plank-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(46,21,8,0.18) 0, rgba(46,21,8,0.18) 1px,
+      transparent 1px, transparent 3px,
+      rgba(255,220,170,0.06) 3px, rgba(255,220,170,0.06) 4px,
+      transparent 4px, transparent 6px
+    );
+  opacity: 0.6;
+}
+
+/* Left/right planks (visible vertical wood strips) */
+.plank-side {
+  position: absolute;
+  top: 0;
+  bottom: -10px;
+  width: 14px;
+  background: linear-gradient(90deg, var(--wood-d) 0%, var(--wood-m) 60%, var(--wood-l) 100%);
+  box-shadow: inset -1px 0 0 rgba(0,0,0,0.3);
+}
+.plank-side.left { left: -14px; border-radius: 4px 0 0 4px; }
+.plank-side.right {
+  right: -14px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, var(--wood-l) 0%, var(--wood-m) 40%, var(--wood-d) 100%);
+}
+.plank-side::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      rgba(46,21,8,0.2) 0, rgba(46,21,8,0.2) 1px,
+      transparent 1px, transparent 5px,
+      rgba(255,220,170,0.05) 5px, rgba(255,220,170,0.05) 6px,
+      transparent 6px, transparent 9px
+    );
+  opacity: 0.7;
+}
+
+/* Bottom plank — partial visible */
+.plank-bot {
+  position: absolute;
+  bottom: -10px;
+  left: -14px;
+  right: -14px;
+  height: 10px;
+  background: linear-gradient(180deg, var(--wood-d), var(--wood-x));
+  border-radius: 0 0 4px 4px;
+  z-index: 2;
+}
+
+/* Soil — the surface of the bed */
+.soil {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse at 30% 20%, var(--soil-l) 0%, transparent 35%),
+    radial-gradient(ellipse at 70% 60%, var(--soil-l) 0%, transparent 28%),
+    radial-gradient(circle at 20% 80%, var(--soil-d) 0%, transparent 25%),
+    radial-gradient(circle at 80% 30%, var(--soil-x) 0%, transparent 22%),
+    radial-gradient(circle at 50% 50%, var(--soil-m), var(--soil-d));
+  border-radius: 4px;
+  box-shadow:
+    inset 0 6px 14px rgba(0,0,0,0.5),
+    inset 0 -2px 6px rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+/* Soil crumbs / texture — radial-gradient stipple */
+.soil::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255,220,170,0.18) 1px, transparent 1.8px),
+    radial-gradient(rgba(20,12,6,0.45) 1.2px, transparent 2px),
+    radial-gradient(rgba(120,80,40,0.3) 0.8px, transparent 1.4px);
+  background-size: 11px 11px, 17px 17px, 7px 7px;
+  background-position: 0 0, 5px 8px, 3px 5px;
+  opacity: 0.85;
+}
+
+/* Pebbles / wet spots */
+.soil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 8px 6px at 18% 12%, rgba(70,50,30,0.6), transparent 80%),
+    radial-gradient(ellipse 6px 4px at 88% 28%, rgba(70,50,30,0.5), transparent 80%),
+    radial-gradient(ellipse 7px 5px at 12% 62%, rgba(70,50,30,0.6), transparent 80%),
+    radial-gradient(ellipse 9px 6px at 78% 76%, rgba(70,50,30,0.5), transparent 80%),
+    radial-gradient(ellipse 6px 4px at 50% 40%, rgba(255,230,180,0.18), transparent 80%);
+  opacity: 0.7;
+}
+
+/* Cell grid — very subtle on soil */
+.cells {
+  position: absolute;
+  inset: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  z-index: 1;
+}
+.cell {
+  position: relative;
+  border-right: 1px dashed rgba(255,230,180,0.1);
+  border-bottom: 1px dashed rgba(255,230,180,0.1);
+}
+.cell:nth-child(2n) { border-right: none; }
+.cell:nth-last-child(-n+2) { border-bottom: none; }
+
+.cell.selected {
+  background:
+    radial-gradient(circle, rgba(143,190,92,0.5) 0%, rgba(143,190,92,0.2) 50%, transparent 80%);
+  box-shadow: inset 0 0 0 2px rgba(143,190,92,0.6);
+  border-radius: 6px;
+  animation: ripple 2.4s ease-in-out infinite;
+}
+@keyframes ripple {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(143,190,92,0.6); }
+  50% { box-shadow: inset 0 0 0 2px rgba(143,190,92,0.9), 0 0 0 4px rgba(143,190,92,0.15); }
+}
+
+/* Plants — realistic clusters */
+.plant {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.plant-shadow {
+  position: absolute;
+  bottom: -4px;
+  width: 70%;
+  height: 14px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.45), transparent 70%);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+/* TOMATO plant — at top of bed, spans 2x2 cells (top 25% of bed) */
+.p-tomato {
+  top: 1%;
+  left: 0;
+  right: 0;
+  height: 24%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.p-tomato svg { width: 90%; height: 100%; filter: drop-shadow(0 8px 8px rgba(0,0,0,0.4)); }
+
+/* BASIL plant — col 0, row 2 */
+.p-basil {
+  top: 25%;
+  left: 0;
+  width: 50%;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.p-basil svg { width: 80%; height: 80%; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
+
+/* LETTUCE — col 1, rows 3-4 */
+.p-lettuce {
+  top: 37.5%;
+  left: 50%;
+  width: 50%;
+  height: 25%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.p-lettuce svg { width: 88%; height: 88%; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.45)); }
+
+/* Plant name labels — emerge below each plant */
+.plant-tag {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--cream);
+  background: rgba(46,30,12,0.78);
+  padding: 2px 9px;
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  font-variation-settings: 'opsz' 12;
+}
+
+/* Markers below the bed: small wooden stakes with plant names */
+.stake-row {
+  position: absolute;
+  bottom: -68px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: none;
+  z-index: 1;
+}
+.stake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.stake-label {
+  background: var(--cream);
+  border: 1px solid rgba(46,30,12,0.2);
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  white-space: nowrap;
+  position: relative;
+}
+.stake-stick {
+  width: 2px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--wood-m), var(--wood-d));
+  border-radius: 0 0 1px 1px;
+}
+
+/* ── Stats — floating cards on the stage ──────────────────────────────── */
+.stage-stats {
+  position: absolute;
+  bottom: 28px;
+  left: 28px;
+  right: 28px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.stat {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px -4px rgba(46,30,12,0.18);
+}
+.stat .label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat .value {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 3px;
+  font-variation-settings: 'opsz' 26;
+}
+.stat .value em { font-style: italic; color: var(--leaf-d); }
+.stat .value.amber { color: var(--berry); }
+.stat .sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Library card ─────────────────────────────────────────────────────── */
+.library {
+  background: var(--paper);
+  border: 1px solid rgba(46,30,12,0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px -20px rgba(46,30,12,0.18);
+  position: sticky;
+  top: 24px;
+}
+.lib-head {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(46,30,12,0.08);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-d) 100%);
+}
+.lib-head h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 24;
+}
+.lib-head h2 em { font-style: italic; color: var(--leaf-d); }
+.lib-head .count {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.lib-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(46,30,12,0.08);
+  position: relative;
+}
+.lib-search input {
+  width: 100%;
+  padding: 9px 12px 9px 32px;
+  background: var(--paper-d);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  outline: none;
+}
+.lib-search input::placeholder { color: var(--muted); }
+.lib-search input:focus { background: white; border-color: var(--leaf-m); }
+.lib-search::before {
+  content: '⌕';
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.lib-list {
+  padding: 8px;
+  max-height: 600px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.plant-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: grab;
+  transition: background 0.15s;
+}
+.plant-card:hover { background: var(--paper-d); }
+.plant-card.selected { background: rgba(95,156,55,0.12); }
+.plant-card .photo {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: var(--soil-m);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.2),
+    inset 0 6px 8px rgba(0,0,0,0.35);
+}
+.plant-card .photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255,220,170,0.15) 1px, transparent 1.5px),
+    radial-gradient(rgba(20,12,6,0.4) 1px, transparent 1.5px);
+  background-size: 6px 6px, 9px 9px;
+}
+.plant-card .photo svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+.plant-card .info {
+  flex: 1;
+  min-width: 0;
+}
+.plant-card .name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 16;
+}
+.plant-card .name em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.plant-card .meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.plant-card .meta .ft {
+  background: rgba(95,156,55,0.12);
+  color: var(--leaf-d);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.lib-foot {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(46,30,12,0.08);
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  background: var(--paper-d);
+}
+.lib-foot em { font-style: italic; color: var(--leaf-d); }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .main { grid-template-columns: 1fr; }
+  .library { position: relative; top: 0; }
+}
+@media (max-width: 720px) {
+  .page { padding: 24px; }
+  .stage { padding: 36px 16px 60px; }
+  .stage-stats { position: relative; bottom: 0; left: 0; right: 0; margin-top: 40px; grid-template-columns: 1fr 1fr; }
+  .title { font-size: 44px; }
+}
+
+/* Entrance animation */
+@keyframes settle {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stage, .library { animation: settle 0.7s cubic-bezier(0.2,0.8,0.2,1) backwards; }
+.stage { animation-delay: 0.1s; }
+.library { animation-delay: 0.22s; }
+
+@keyframes plant-grow {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+.plant { animation: plant-grow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; transform-origin: center bottom; }
+.p-tomato { animation-delay: 0.3s; }
+.p-basil { animation-delay: 0.4s; }
+.p-lettuce { animation-delay: 0.5s; }
+
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="head">
+    <div>
+      <div class="crumb">
+        <span>Robyn's Garden</span>
+        <span class="arr">→</span>
+        <span class="here">Bed 2</span>
+      </div>
+      <h1 class="title">Your <em>cedar</em> bed</h1>
+      <div class="meta">
+        <span><strong>2 × 8 ft</strong></span>
+        <span class="dot"></span>
+        <span><strong>16 cells</strong> · 12&quot; each</span>
+        <span class="dot"></span>
+        <span>Zone <strong>5a</strong></span>
+        <span class="dot"></span>
+        <span>Spring <strong>2026</strong></span>
+      </div>
+    </div>
+    <div class="modes">
+      <button class="mode active"><span class="ic">🌱</span> Plant</button>
+      <button class="mode"><span class="ic">☀️</span> Sun</button>
+      <button class="mode"><span class="ic">🌿</span> Pairs</button>
+      <button class="mode"><span class="ic">✦</span> Auto</button>
+      <button class="mode"><span class="ic">▢</span> Select</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- STAGE — the photographic diorama -->
+    <section class="stage">
+      <span class="compass-stamp"></span>
+      <span class="sun-stamp">
+        <span class="ic">☀</span>
+        <span>Full sun · south-facing</span>
+      </span>
+
+      <div class="bed-wrap">
+        <div class="bed-shadow"></div>
+        <div class="bed">
+          <div class="frame">
+            <div class="plank-top"></div>
+            <div class="plank-side left"></div>
+            <div class="plank-side right"></div>
+            <div class="plank-bot"></div>
+          </div>
+
+          <div class="soil">
+            <div class="cells">
+              <!-- 16 cells row-major -->
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell selected"></div>
+            </div>
+
+            <!-- TOMATO 2x2 -->
+            <div class="plant p-tomato">
+              <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+                <!-- Foliage cluster -->
+                <ellipse cx="100" cy="115" rx="80" ry="48" fill="#3d6b20" opacity="0.85"/>
+                <ellipse cx="80" cy="105" rx="55" ry="42" fill="#5C9A35"/>
+                <ellipse cx="125" cy="100" rx="50" ry="40" fill="#6BAF3F"/>
+                <ellipse cx="100" cy="85" rx="42" ry="35" fill="#8AC04A"/>
+                <!-- Tomato fruits -->
+                <ellipse cx="78" cy="125" rx="22" ry="20" fill="#A0301D"/>
+                <ellipse cx="78" cy="125" rx="22" ry="20" fill="url(#tomato-grad)"/>
+                <ellipse cx="74" cy="118" rx="7" ry="5" fill="rgba(255,160,120,0.5)"/>
+                <ellipse cx="118" cy="118" rx="20" ry="18" fill="#A0301D"/>
+                <ellipse cx="118" cy="118" rx="20" ry="18" fill="url(#tomato-grad)"/>
+                <ellipse cx="114" cy="112" rx="6" ry="4" fill="rgba(255,160,120,0.5)"/>
+                <ellipse cx="98" cy="135" rx="14" ry="13" fill="#CC4030"/>
+                <ellipse cx="95" cy="131" rx="4" ry="3" fill="rgba(255,160,120,0.4)"/>
+                <!-- Highlight leaves on top -->
+                <path d="M 75 70 Q 50 55 45 80 Q 55 90 75 85 Z" fill="#5C9A35" opacity="0.95"/>
+                <path d="M 125 65 Q 150 50 155 75 Q 145 88 125 82 Z" fill="#5C9A35" opacity="0.95"/>
+                <defs>
+                  <radialGradient id="tomato-grad" cx="0.35" cy="0.3">
+                    <stop offset="0%" stop-color="#E8704A"/>
+                    <stop offset="60%" stop-color="#CC4030"/>
+                    <stop offset="100%" stop-color="#7A1F18"/>
+                  </radialGradient>
+                </defs>
+              </svg>
+              <span class="plant-tag">Tomato · Cherokee</span>
+            </div>
+
+            <!-- BASIL 1x1 -->
+            <div class="plant p-basil">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+                <ellipse cx="30" cy="55" rx="22" ry="30" fill="#3d6b20" transform="rotate(-22 30 55)"/>
+                <ellipse cx="70" cy="55" rx="22" ry="30" fill="#3d6b20" transform="rotate(22 70 55)"/>
+                <ellipse cx="50" cy="40" rx="28" ry="36" fill="#5C9A35"/>
+                <ellipse cx="30" cy="55" rx="18" ry="26" fill="#6BAF3F" transform="rotate(-22 30 55)"/>
+                <ellipse cx="70" cy="55" rx="18" ry="26" fill="#6BAF3F" transform="rotate(22 70 55)"/>
+                <ellipse cx="50" cy="40" rx="22" ry="30" fill="#8AC04A"/>
+                <ellipse cx="50" cy="35" rx="14" ry="22" fill="#A8D870" opacity="0.75"/>
+              </svg>
+              <span class="plant-tag">Basil</span>
+            </div>
+
+            <!-- LETTUCE 1x2 -->
+            <div class="plant p-lettuce">
+              <svg viewBox="0 0 100 160" preserveAspectRatio="xMidYMid meet">
+                <!-- Lower head -->
+                <ellipse cx="50" cy="115" rx="42" ry="38" fill="#3d6b20"/>
+                <ellipse cx="50" cy="115" rx="34" ry="30" fill="#5C9A35"/>
+                <ellipse cx="50" cy="113" rx="24" ry="22" fill="#8AC04A"/>
+                <ellipse cx="50" cy="111" rx="14" ry="14" fill="#B8D880"/>
+                <!-- Veins -->
+                <path d="M 16 115 Q 50 100 84 115 M 25 130 Q 50 118 75 130 M 50 78 Q 50 150 50 150" stroke="#2D5018" stroke-width="0.9" fill="none" opacity="0.5"/>
+                <!-- Upper head -->
+                <ellipse cx="50" cy="48" rx="40" ry="36" fill="#3d6b20"/>
+                <ellipse cx="50" cy="48" rx="32" ry="28" fill="#5C9A35"/>
+                <ellipse cx="50" cy="46" rx="22" ry="20" fill="#8AC04A"/>
+                <ellipse cx="50" cy="44" rx="12" ry="12" fill="#B8D880"/>
+                <path d="M 16 48 Q 50 35 84 48 M 25 63 Q 50 50 75 63 M 50 14 Q 50 82 50 82" stroke="#2D5018" stroke-width="0.9" fill="none" opacity="0.5"/>
+              </svg>
+              <span class="plant-tag">Lettuce</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating glass stats over the diorama -->
+      <div class="stage-stats">
+        <div class="stat">
+          <div class="label">Planted</div>
+          <div class="value"><em>4</em> <span style="font-size:13px; color:var(--muted); font-weight:400;">of 16</span></div>
+          <div class="sub">25% of bed</div>
+        </div>
+        <div class="stat">
+          <div class="label">Companions</div>
+          <div class="value">1 <span style="font-size:13px; color:var(--muted); font-weight:400; font-style:italic;">match</span></div>
+          <div class="sub">tomato & basil</div>
+        </div>
+        <div class="stat">
+          <div class="label">Next harvest</div>
+          <div class="value amber">~28d</div>
+          <div class="sub">lettuce</div>
+        </div>
+        <div class="stat">
+          <div class="label">Last activity</div>
+          <div class="value">2h <span style="font-size:13px; color:var(--muted); font-weight:400; font-style:italic;">ago</span></div>
+          <div class="sub">planted lettuce</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <aside class="library">
+      <div class="lib-head">
+        <h2><em>Plant</em> library</h2>
+        <div class="count">358 varieties · 7 recently used</div>
+      </div>
+      <div class="lib-search">
+        <input type="text" placeholder="Search the catalog…" />
+      </div>
+      <div class="lib-list">
+
+        <div class="plant-card selected">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="50" cy="60" rx="40" ry="32" fill="#3d6b20"/>
+              <ellipse cx="50" cy="55" rx="30" ry="26" fill="#5C9A35"/>
+              <ellipse cx="36" cy="60" rx="14" ry="13" fill="#A0301D"/>
+              <ellipse cx="36" cy="60" rx="14" ry="13" fill="url(#tg)"/>
+              <ellipse cx="64" cy="58" rx="12" ry="11" fill="#A0301D"/>
+              <ellipse cx="64" cy="58" rx="12" ry="11" fill="url(#tg)"/>
+              <defs>
+                <radialGradient id="tg" cx="0.35" cy="0.3">
+                  <stop offset="0%" stop-color="#E8704A"/>
+                  <stop offset="100%" stop-color="#7A1F18"/>
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Tomato <em>Cherokee Purple</em></div>
+            <div class="meta">
+              <span class="ft">2×2</span>
+              <span>75 days</span>
+              <span>·</span>
+              <span>full sun</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="30" cy="58" rx="22" ry="28" fill="#3d6b20" transform="rotate(-20 30 58)"/>
+              <ellipse cx="70" cy="58" rx="22" ry="28" fill="#3d6b20" transform="rotate(20 70 58)"/>
+              <ellipse cx="50" cy="44" rx="26" ry="34" fill="#5C9A35"/>
+              <ellipse cx="50" cy="40" rx="18" ry="26" fill="#8AC04A"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Basil <em>Genovese</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>60 days</span>
+              <span>·</span>
+              <span>full sun</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="50" cy="55" rx="38" ry="34" fill="#3d6b20"/>
+              <ellipse cx="50" cy="52" rx="30" ry="27" fill="#5C9A35"/>
+              <ellipse cx="50" cy="50" rx="20" ry="18" fill="#8AC04A"/>
+              <ellipse cx="50" cy="48" rx="11" ry="10" fill="#B8D880"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Lettuce <em>Buttercrunch</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>50 days</span>
+              <span>·</span>
+              <span>part shade ok</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="50" cy="40" rx="28" ry="36" fill="#3d6b20"/>
+              <ellipse cx="50" cy="38" rx="22" ry="30" fill="#5C9A35"/>
+              <ellipse cx="44" cy="62" rx="14" ry="20" fill="#E08540"/>
+              <ellipse cx="58" cy="60" rx="12" ry="16" fill="#F0A040"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Bell pepper <em>California</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>75 days</span>
+              <span>·</span>
+              <span>full sun</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <path d="M 30 30 L 30 22 M 40 30 L 40 18 M 50 30 L 50 16 M 60 30 L 60 18 M 70 30 L 70 22" stroke="#5C9A35" stroke-width="2.5" stroke-linecap="round"/>
+              <ellipse cx="50" cy="62" rx="18" ry="28" fill="#E08540"/>
+              <ellipse cx="50" cy="62" rx="14" ry="24" fill="#F0A040"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Carrot <em>Nantes</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>65 days</span>
+              <span>·</span>
+              <span>~9 per cell</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="35" cy="45" rx="22" ry="20" fill="#3d6b20"/>
+              <ellipse cx="65" cy="45" rx="22" ry="20" fill="#3d6b20"/>
+              <ellipse cx="35" cy="45" rx="18" ry="16" fill="#5C9A35"/>
+              <ellipse cx="65" cy="45" rx="18" ry="16" fill="#5C9A35"/>
+              <ellipse cx="50" cy="68" rx="22" ry="18" fill="#6BAF3F"/>
+              <circle cx="40" cy="42" r="6" fill="#BC6B8A"/>
+              <circle cx="60" cy="42" r="6" fill="#BC6B8A"/>
+              <circle cx="50" cy="68" r="5" fill="#FBC75E"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Marigold <em>French</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>70 days</span>
+              <span>·</span>
+              <span>repels pests</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plant-card">
+          <div class="photo">
+            <svg viewBox="0 0 100 100">
+              <ellipse cx="50" cy="52" rx="30" ry="38" fill="#3d6b20"/>
+              <ellipse cx="50" cy="50" rx="22" ry="28" fill="#5C9A35"/>
+              <ellipse cx="50" cy="48" rx="14" ry="18" fill="#8AC04A"/>
+            </svg>
+          </div>
+          <div class="info">
+            <div class="name">Bush bean <em>Provider</em></div>
+            <div class="meta">
+              <span class="ft">1×1</span>
+              <span>55 days</span>
+              <span>·</span>
+              <span>full sun</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="lib-foot">
+        <em>Drag</em> any plant onto the bed
+      </div>
+    </aside>
+
+  </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed Editor — Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0F1B14;
+  --panel:    #142318;
+  --panel-2:  #1B2D20;
+  --ink:      #C8E0C8;
+  --ink-d:    #7C9A7E;
+  --ghost:    #4F6E54;
+  --line:     rgba(168,216,112,0.18);
+  --line-strong: rgba(168,216,112,0.4);
+  --grid:     rgba(168,216,112,0.08);
+  --accent:   #A8D870;
+  --warn:     #F0A040;
+  --danger:   #E0613A;
+  --soil:     #2D2418;
+  --soil-fill:#1F1A12;
+  --wood:     #6B5232;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  min-height: 100vh;
+  font-variant-ligatures: none;
+}
+
+/* Blueprint grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(rgba(168,216,112,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168,216,112,0.04) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 1200px 700px at 50% 50%, transparent 30%, rgba(0,0,0,0.4) 100%);
+}
+
+.page {
+  position: relative;
+  z-index: 2;
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 24px 32px 80px;
+}
+
+/* ── Topbar ───────────────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-bottom: 18px;
+  font-size: 11px;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.brand .dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(168,216,112,0.7);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.crumb {
+  color: var(--ink-d);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.crumb .sep { color: var(--ghost); }
+.crumb .here { color: var(--ink); font-weight: 500; }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--ink-d);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.btn:hover { color: var(--ink); background: var(--panel-2); }
+.btn.active { color: var(--accent); border-color: var(--line-strong); background: rgba(168,216,112,0.06); }
+.btn.primary {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn.primary:hover { background: #BCE282; }
+
+.kbd {
+  display: inline-block;
+  padding: 0 4px;
+  font-size: 10px;
+  color: var(--ink-d);
+  background: rgba(168,216,112,0.08);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  margin-left: 4px;
+}
+
+/* ── Spec header ──────────────────────────────────────────────────────── */
+.spec {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 22px;
+  padding: 22px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-bottom: 18px;
+  position: relative;
+}
+.spec::before {
+  content: '01';
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--ghost);
+}
+.spec-id {
+  font-family: 'JetBrains Mono';
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ghost);
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+.spec-id .accent { color: var(--accent); }
+.spec h1 {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.05;
+}
+.spec h1 .num {
+  color: var(--accent);
+  font-weight: 800;
+}
+.spec h1 .name {
+  color: var(--ink-d);
+  font-weight: 400;
+  font-size: 32px;
+  margin-left: 12px;
+}
+
+.spec-fields {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 28px;
+  align-items: end;
+}
+.field {
+  border-left: 1px solid var(--line);
+  padding-left: 14px;
+}
+.field .key {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--ghost);
+  margin-bottom: 6px;
+}
+.field .val {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.field .val .unit { color: var(--ink-d); font-weight: 400; font-size: 13px; margin-left: 3px; }
+.field .val.warn { color: var(--warn); }
+.field .val.ok { color: var(--accent); }
+
+/* ── Workspace ────────────────────────────────────────────────────────── */
+.work {
+  display: grid;
+  grid-template-columns: auto 1fr 320px;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Mode rail (left) */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px;
+}
+.rail-btn {
+  width: 56px;
+  padding: 12px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--ink-d);
+  font: inherit;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s;
+}
+.rail-btn .ic {
+  font-family: 'Inter Tight';
+  font-size: 18px;
+  font-weight: 600;
+}
+.rail-btn .lb {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.rail-btn:hover { background: var(--panel-2); color: var(--ink); }
+.rail-btn.active {
+  background: rgba(168,216,112,0.1);
+  color: var(--accent);
+  border-color: var(--line-strong);
+}
+.rail-btn.active::after {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+.rail-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 8px;
+}
+
+/* Canvas */
+.canvas {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.canvas-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--ink-d);
+}
+.canvas-bar .left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  letter-spacing: 0.18em;
+}
+.canvas-bar .right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.zoom-readout {
+  font-family: 'JetBrains Mono';
+  color: var(--accent);
+  font-weight: 500;
+}
+.coord-readout {
+  color: var(--ghost);
+}
+.coord-readout .live { color: var(--accent); }
+
+.canvas-body {
+  padding: 56px 64px 64px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ruler / axis */
+.axis-x, .axis-y {
+  position: absolute;
+  color: var(--ink-d);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.axis-x {
+  top: 30px;
+  display: flex;
+  pointer-events: none;
+}
+.axis-y {
+  left: 30px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.bed-wrap {
+  position: relative;
+}
+.bed-wrap::before, .bed-wrap::after {
+  content: '';
+  position: absolute;
+  background: var(--line-strong);
+}
+
+/* Origin marker */
+.origin {
+  position: absolute;
+  top: -18px;
+  left: -22px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  color: var(--ghost);
+  letter-spacing: 0.18em;
+}
+.origin::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--panel);
+}
+
+/* The actual bed: 2 cols × 8 rows, technical wireframe */
+.bed {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, 80px);
+  grid-template-rows: repeat(8, 80px);
+  gap: 0;
+  background: var(--soil-fill);
+  border: 1.5px solid var(--accent);
+  outline: 4px solid var(--wood);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 1px var(--bg), 0 0 0 5px var(--line);
+}
+
+.cell {
+  position: relative;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.cell::after {
+  content: attr(data-coord);
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 8px;
+  color: var(--ghost);
+  letter-spacing: 0.08em;
+}
+.cell.empty .icon {
+  width: 12px;
+  height: 12px;
+  border: 1px dashed var(--ghost);
+}
+.cell.empty .lbl {
+  font-size: 9px;
+  color: var(--ghost);
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+/* Selected cell */
+.cell.selected {
+  background: rgba(168,216,112,0.08);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.cell.selected::after { color: var(--accent); }
+.cell.selected .icon {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.cell.selected .lbl { color: var(--accent); opacity: 1; }
+
+/* Planted footprints — bordered blocks spanning multiple cells */
+.footprint {
+  position: absolute;
+  border: 1.5px solid;
+  background: rgba(168,216,112,0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  pointer-events: none;
+}
+.footprint .fp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.footprint .fp-id {
+  color: inherit;
+  opacity: 0.9;
+}
+.footprint .fp-size {
+  color: var(--ink-d);
+  font-size: 8px;
+}
+.footprint .fp-name {
+  font-family: 'Inter Tight';
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.footprint .fp-meta {
+  font-size: 9px;
+  color: var(--ink-d);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.footprint .fp-glyph {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Inter Tight';
+}
+
+/* TOMATO 2×2 at cols 0-1, rows 0-1 */
+.fp-tomato {
+  top: 0; left: 0;
+  width: 160px; height: 160px;
+  border-color: var(--danger);
+  background: rgba(224,97,58,0.08);
+  color: var(--danger);
+}
+.fp-tomato .fp-glyph {
+  background: var(--danger);
+  color: var(--bg);
+}
+
+/* BASIL 1×1 at col 0, row 2 */
+.fp-basil {
+  top: 160px; left: 0;
+  width: 80px; height: 80px;
+  border-color: var(--accent);
+  background: rgba(168,216,112,0.08);
+  color: var(--accent);
+}
+.fp-basil .fp-glyph {
+  background: var(--accent);
+  color: var(--bg);
+}
+.fp-basil .fp-name { font-size: 14px; }
+
+/* LETTUCE 1×2 at col 1, rows 3-4 */
+.fp-lettuce {
+  top: 240px; left: 80px;
+  width: 80px; height: 160px;
+  border-color: #8CBE5C;
+  background: rgba(140,190,92,0.08);
+  color: #B8E078;
+}
+.fp-lettuce .fp-glyph {
+  background: #8CBE5C;
+  color: var(--bg);
+}
+.fp-lettuce .fp-name { font-size: 14px; }
+
+/* Dimensions on outside of bed */
+.dim {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  font-family: 'JetBrains Mono';
+  font-size: 9px;
+  color: var(--ink-d);
+  letter-spacing: 0.14em;
+}
+.dim-line {
+  height: 1px;
+  background: var(--line-strong);
+  position: relative;
+}
+.dim-line::before, .dim-line::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  top: -3px;
+  background: var(--panel);
+}
+.dim-line::before { left: -3px; }
+.dim-line::after { right: -3px; }
+
+.dim-bottom {
+  bottom: -28px;
+  left: 0; right: 0;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.dim-bottom .dim-line { width: 100%; }
+
+.dim-right {
+  right: -50px;
+  top: 0; bottom: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  justify-content: center;
+}
+.dim-right .vline {
+  width: 1px;
+  background: var(--line-strong);
+  flex: 1;
+  position: relative;
+}
+.dim-right .vline::before, .dim-right .vline::after {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  left: -3px;
+  background: var(--panel);
+}
+.dim-right .vline::before { top: -3px; }
+.dim-right .vline::after { bottom: -3px; }
+
+/* Annotation: companion link */
+.annot {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+.annot-line {
+  position: absolute;
+  border-left: 1px dashed var(--warn);
+}
+.annot-arrow {
+  position: absolute;
+  font-family: 'JetBrains Mono';
+  font-size: 9px;
+  color: var(--warn);
+  letter-spacing: 0.16em;
+  padding: 3px 7px;
+  background: var(--panel);
+  border: 1px solid var(--warn);
+  border-radius: 2px;
+}
+
+/* ── Inspector (right) ────────────────────────────────────────────────── */
+.inspector {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
+  position: sticky;
+  top: 12px;
+}
+.insp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+}
+.insp-tab {
+  flex: 1;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--ink-d);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.insp-tab:hover { color: var(--ink); }
+.insp-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(168,216,112,0.04);
+}
+
+.insp-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.insp-section h3 {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--ghost);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.insp-section h3 .count {
+  font-size: 9px;
+  color: var(--ink-d);
+  background: rgba(168,216,112,0.08);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.insp-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+.insp-search input {
+  width: 100%;
+  padding: 8px 10px 8px 26px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+}
+.insp-search input::placeholder { color: var(--ghost); }
+.insp-search input:focus { border-color: var(--accent); }
+.insp-search::before {
+  content: '⌕';
+  position: absolute;
+  left: 8px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ghost);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  overflow-y: auto;
+}
+.list-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.list-row:hover { background: var(--panel-2); }
+.list-row.selected { background: rgba(168,216,112,0.08); border-color: var(--line-strong); }
+.list-row .swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter Tight';
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg);
+}
+.list-row .name {
+  font-family: 'Inter Tight';
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.list-row .code {
+  font-size: 10px;
+  color: var(--ink-d);
+  letter-spacing: 0.1em;
+}
+.list-row .ft {
+  font-size: 10px;
+  color: var(--ink-d);
+  letter-spacing: 0.1em;
+}
+
+.insp-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--ink-d);
+  letter-spacing: 0.16em;
+  text-align: center;
+}
+.insp-foot .key { color: var(--accent); }
+
+/* ── Bottom log / scope ──────────────────────────────────────────────── */
+.scope {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.scope-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 14px 18px;
+}
+.scope-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.scope-head h4 {
+  font-family: 'Inter Tight';
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.scope-head .badge {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  background: rgba(168,216,112,0.08);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(168,216,112,0.06);
+}
+.log-row:last-child { border-bottom: none; }
+.log-row .ts {
+  color: var(--ghost);
+  font-size: 10px;
+}
+.log-row .msg { color: var(--ink); font-size: 12px; }
+.log-row .msg em { color: var(--accent); font-style: normal; }
+.log-row .msg .warn { color: var(--warn); }
+.log-row .tag {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-d);
+}
+.log-row .tag.ok { color: var(--accent); }
+.log-row .tag.match { color: var(--warn); }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .work { grid-template-columns: auto 1fr; }
+  .inspector { grid-column: 1 / -1; position: relative; top: 0; max-height: none; }
+  .scope { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .work { grid-template-columns: 1fr; }
+  .rail {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .rail-btn.active::after { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="brand"><span class="dot"></span>BARE_ROOT</span>
+      <span class="crumb">
+        <span>/ gardens / robyns_garden / beds /</span>
+        <span class="here">bed_02</span>
+      </span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn"><span>↶</span> undo<span class="kbd">⌘Z</span></button>
+      <button class="btn"><span>↷</span> redo<span class="kbd">⇧⌘Z</span></button>
+      <span style="width:14px;"></span>
+      <button class="btn">⊕ zoom<span class="kbd">+</span></button>
+      <button class="btn">⊖ zoom<span class="kbd">-</span></button>
+      <button class="btn">⤢ fit<span class="kbd">0</span></button>
+      <span style="width:14px;"></span>
+      <button class="btn primary">save</button>
+    </div>
+  </div>
+
+  <!-- SPEC HEADER -->
+  <div class="spec">
+    <div>
+      <div class="spec-id">REF · <span class="accent">BR-G01-B02</span> · revision 0.07</div>
+      <h1>Bed <span class="num">02</span><span class="name">/ raised cedar plot</span></h1>
+    </div>
+    <div class="spec-fields">
+      <div class="field">
+        <div class="key">DIMENSIONS</div>
+        <div class="val">2 × 8<span class="unit">ft</span></div>
+      </div>
+      <div class="field">
+        <div class="key">GRID</div>
+        <div class="val">2 × 8<span class="unit">cells</span></div>
+      </div>
+      <div class="field">
+        <div class="key">CELL</div>
+        <div class="val">12<span class="unit">in</span></div>
+      </div>
+      <div class="field">
+        <div class="key">ZONE</div>
+        <div class="val ok">5a</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="work">
+
+    <!-- MODE RAIL -->
+    <nav class="rail">
+      <button class="rail-btn active" title="Plant">
+        <span class="ic">⌾</span>
+        <span class="lb">plant</span>
+      </button>
+      <button class="rail-btn" title="Sun">
+        <span class="ic">☀</span>
+        <span class="lb">sun</span>
+      </button>
+      <button class="rail-btn" title="Pairs">
+        <span class="ic">⚭</span>
+        <span class="lb">pairs</span>
+      </button>
+      <button class="rail-btn" title="AI">
+        <span class="ic">✦</span>
+        <span class="lb">auto</span>
+      </button>
+      <button class="rail-btn" title="Select">
+        <span class="ic">▢</span>
+        <span class="lb">select</span>
+      </button>
+      <div class="rail-sep"></div>
+      <button class="rail-btn" title="Notes">
+        <span class="ic">✎</span>
+        <span class="lb">notes</span>
+      </button>
+    </nav>
+
+    <!-- CANVAS -->
+    <div class="canvas">
+      <div class="canvas-bar">
+        <div class="left">
+          <span>VIEWPORT</span>
+          <span class="zoom-readout">1.0×</span>
+        </div>
+        <div class="right">
+          <span class="coord-readout">XY <span class="live">[0.62, 4.18]</span></span>
+          <span class="coord-readout">CELL <span class="live">A4</span></span>
+          <span>·</span>
+          <span>16 cells · 4 occupied · 12 open</span>
+        </div>
+      </div>
+
+      <div class="canvas-body">
+        <div class="bed-wrap">
+          <span class="origin">0,0</span>
+
+          <div class="bed">
+            <!-- Cells (16 total) with coordinate labels -->
+            <div class="cell" data-coord="A1"></div>
+            <div class="cell" data-coord="B1"></div>
+            <div class="cell" data-coord="A2"></div>
+            <div class="cell" data-coord="B2"></div>
+            <div class="cell" data-coord="A3"></div>
+            <div class="cell empty" data-coord="B3"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell empty" data-coord="A4"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell" data-coord="B4"></div>
+            <div class="cell empty" data-coord="A5"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell" data-coord="B5"></div>
+            <div class="cell empty" data-coord="A6"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell empty" data-coord="B6"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell empty" data-coord="A7"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell empty" data-coord="B7"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell empty" data-coord="A8"><span class="icon"></span><span class="lbl">empty</span></div>
+            <div class="cell selected empty" data-coord="B8"><span class="icon"></span><span class="lbl">selected</span></div>
+
+            <!-- Footprints overlaid -->
+            <div class="footprint fp-tomato">
+              <div class="fp-head">
+                <span class="fp-id">P-01</span>
+                <span class="fp-size">2×2</span>
+              </div>
+              <div>
+                <div class="fp-name">Tomato</div>
+                <div class="fp-meta">cherokee · 75d</div>
+              </div>
+              <div class="fp-glyph">T</div>
+            </div>
+
+            <div class="footprint fp-basil">
+              <div class="fp-head">
+                <span class="fp-id">P-02</span>
+                <span class="fp-size">1×1</span>
+              </div>
+              <div>
+                <div class="fp-name">Basil</div>
+                <div class="fp-meta">60d</div>
+              </div>
+              <div class="fp-glyph">B</div>
+            </div>
+
+            <div class="footprint fp-lettuce">
+              <div class="fp-head">
+                <span class="fp-id">P-03</span>
+                <span class="fp-size">1×2</span>
+              </div>
+              <div>
+                <div class="fp-name">Lettuce</div>
+                <div class="fp-meta">50d</div>
+              </div>
+              <div class="fp-glyph">L</div>
+            </div>
+
+            <!-- Companion annotation -->
+            <svg
+              style="position:absolute; top:50px; left:75px; width:80px; height:160px; pointer-events:none; z-index:6;"
+              viewBox="0 0 80 160"
+            >
+              <path d="M 5 10 Q 50 50 5 110" stroke="#F0A040" stroke-width="1" stroke-dasharray="3 2" fill="none"/>
+              <circle cx="5" cy="10" r="2.5" fill="#F0A040"/>
+              <circle cx="5" cy="110" r="2.5" fill="#F0A040"/>
+            </svg>
+            <span class="annot-arrow" style="top: 60px; left: 165px;">⚭ PAIR · BENEFICIAL</span>
+          </div>
+
+          <!-- Dimensions -->
+          <div class="dim dim-bottom">
+            <span style="position:absolute; left:50%; transform:translateX(-50%); top:0; background:var(--panel); padding:0 8px;">2.00 FT</span>
+            <div class="dim-line"></div>
+          </div>
+          <div class="dim dim-right">
+            <span style="position:absolute; left:50%; transform:translateX(-50%) rotate(90deg); transform-origin: center; top:50%; background:var(--panel); padding:0 8px; white-space:nowrap;">8.00 FT</span>
+            <div class="vline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <aside class="inspector">
+      <div class="insp-tabs">
+        <button class="insp-tab active">PLANTS</button>
+        <button class="insp-tab">SEL</button>
+        <button class="insp-tab">LOG</button>
+      </div>
+
+      <div class="insp-section">
+        <h3>LIBRARY <span class="count">358</span></h3>
+        <div class="insp-search">
+          <input type="text" placeholder="search…" />
+        </div>
+      </div>
+
+      <div class="list">
+        <div class="list-row selected">
+          <span class="swatch" style="background:#E0613A;">T</span>
+          <span class="name">Tomato</span>
+          <span class="code">TOM-CHE</span>
+          <span class="ft">2×2</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#A8D870;">B</span>
+          <span class="name">Basil</span>
+          <span class="code">BAS-GEN</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#8CBE5C;">L</span>
+          <span class="name">Lettuce</span>
+          <span class="code">LET-BUT</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#F0A040;">P</span>
+          <span class="name">Bell pepper</span>
+          <span class="code">PEP-BEL</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#7AA84E;">C</span>
+          <span class="name">Carrot</span>
+          <span class="code">CAR-NAN</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#8FB05E;">B</span>
+          <span class="name">Bush bean</span>
+          <span class="code">BEA-PRO</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#BC6B8A;">M</span>
+          <span class="name">Marigold</span>
+          <span class="code">MAR-FRE</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#5A8240;">S</span>
+          <span class="name">Spinach</span>
+          <span class="code">SPI-BLO</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#A07640;">R</span>
+          <span class="name">Radish</span>
+          <span class="code">RAD-CHE</span>
+          <span class="ft">1×1</span>
+        </div>
+        <div class="list-row">
+          <span class="swatch" style="background:#7DA84E;">P</span>
+          <span class="name">Pea</span>
+          <span class="code">PEA-SUG</span>
+          <span class="ft">1×1</span>
+        </div>
+      </div>
+
+      <div class="insp-foot">
+        DRAG <span class="key">▶</span> CELL · OR PRESS <span class="key">P</span>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="scope">
+    <div class="scope-card">
+      <div class="scope-head">
+        <h4>Companion analysis</h4>
+        <span class="badge">1 MATCH · 0 CONFLICTS</span>
+      </div>
+      <div class="log-row">
+        <span class="tag match">⚭ PAIR</span>
+        <span class="msg"><em>Tomato</em> + <em>Basil</em> · pest deterrent · flavor enhancement</span>
+        <span class="ts">P-01 ↔ P-02</span>
+      </div>
+      <div class="log-row">
+        <span class="tag ok">○ OK</span>
+        <span class="msg"><em>Lettuce</em> tolerates partial shade from neighboring tomato canopy</span>
+        <span class="ts">P-03</span>
+      </div>
+      <div class="log-row">
+        <span class="tag">○ INFO</span>
+        <span class="msg">No conflicts detected across 4 active plantings</span>
+        <span class="ts">SCAN</span>
+      </div>
+    </div>
+    <div class="scope-card">
+      <div class="scope-head">
+        <h4>Activity log</h4>
+        <span class="badge">REV 0.07</span>
+      </div>
+      <div class="log-row">
+        <span class="ts">02:14</span>
+        <span class="msg">Placed <em>Lettuce</em> at <em>B4:B5</em> · 1×2 footprint</span>
+        <span class="tag ok">+ADD</span>
+      </div>
+      <div class="log-row">
+        <span class="ts">02:11</span>
+        <span class="msg">Placed <em>Basil</em> at <em>A3</em></span>
+        <span class="tag ok">+ADD</span>
+      </div>
+      <div class="log-row">
+        <span class="ts">02:09</span>
+        <span class="msg">Placed <em>Tomato</em> at <em>A1:B2</em> · 2×2 footprint</span>
+        <span class="tag ok">+ADD</span>
+      </div>
+      <div class="log-row">
+        <span class="ts">02:08</span>
+        <span class="msg">Created bed · seeded zone <em>5a</em> frost data</span>
+        <span class="tag">INIT</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
