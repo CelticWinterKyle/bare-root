@@ -309,8 +309,12 @@ export function GardenOverview({ garden, beds }: { garden: Garden; beds: Bed[] }
     if (dragging) {
       const { sx, sy } = getSvgPoint(e);
       const { x, y } = isoToWorld(sx, sy);
-      const newX = Math.max(0, dragging.bedStartX + (x - dragging.worldStartX));
-      const newY = Math.max(0, dragging.bedStartY + (y - dragging.worldStartY));
+      // Match the 2D view: snap to 1ft, Shift for 0.1ft.
+      const step = e.shiftKey ? 0.1 : 1;
+      const rawX = dragging.bedStartX + (x - dragging.worldStartX);
+      const rawY = dragging.bedStartY + (y - dragging.worldStartY);
+      const newX = Math.max(0, Math.round(rawX / step) * step);
+      const newY = Math.max(0, Math.round(rawY / step) * step);
       setPositions((prev) => ({ ...prev, [dragging.bedId]: { x: newX, y: newY } }));
       return;
     }

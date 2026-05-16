@@ -157,8 +157,14 @@ export function GardenOverview2D({ garden, beds }: { garden: Garden2D; beds: Bed
       if (!bed) return;
       const nx = dragging.bedStartX + (w.x - dragging.startX);
       const ny = dragging.bedStartY + (w.y - dragging.startY);
-      const clampedX = Math.max(0, Math.min(GW - bed.widthFt, nx));
-      const clampedY = Math.max(0, Math.min(GH - bed.heightFt, ny));
+      // Snap to 1ft increments so beds line up with the lawn grid. Hold
+      // Shift for a 0.1ft (~1 inch) nudge — matches the commit-time
+      // precision so power users can fine-tune without lying to the DB.
+      const step = e.shiftKey ? 0.1 : 1;
+      const snappedX = Math.round(nx / step) * step;
+      const snappedY = Math.round(ny / step) * step;
+      const clampedX = Math.max(0, Math.min(GW - bed.widthFt, snappedX));
+      const clampedY = Math.max(0, Math.min(GH - bed.heightFt, snappedY));
       setPositions((p) => ({ ...p, [bed.id]: { x: clampedX, y: clampedY } }));
     } else if (panning) {
       const dx = ((e.clientX - panning.clientX) / panning.svgW) * viewW;
