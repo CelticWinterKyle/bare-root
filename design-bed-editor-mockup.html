@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Bed Editor (Mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Page */
+  --paper:       #FDFDF8;
+  --cream:       #F8F5EB;
+  --rule:        #E4E4DC;
+
+  /* Greens */
+  --deep:        #1C3D0A;
+  --mid:         #3A6B20;
+  --sage:        #7DA84E;
+  --pale:        #E4F0D4;
+  --pale-2:      #D4E8BE;
+
+  /* Accents */
+  --amber:       #D4820A;
+  --amber-pale:  #FDF2E0;
+  --rust:        #7A2A18;
+  --tomato:      #C44A2A;
+  --basil:       #4a8a2e;
+  --lettuce:     #6BA85A;
+
+  /* Type */
+  --ink:         #111109;
+  --ink-2:       #3A3A30;
+  --muted:       #6B6B5A;
+  --ghost:       #ADADAA;
+
+  /* Earth */
+  --soil:        #3a2818;
+  --soil-dark:   #241510;
+  --soil-warm:   #4a3220;
+  --wood:        #C49458;
+  --wood-dark:   #7D5630;
+  --wood-deep:   #5A3A18;
+
+  /* Fonts */
+  --ff-display:  'Fraunces', Georgia, serif;
+  --ff-body:     'DM Sans', system-ui, sans-serif;
+  --ff-mono:     'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--paper);
+  font-family: var(--ff-body);
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Page-wide paper grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+::selection { background: var(--pale); color: var(--deep); }
+
+/* ── Reusable bits ──────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  display: block;
+  width: 22px;
+  height: 1.5px;
+  background: var(--sage);
+}
+.eyebrow.muted { color: var(--mid); }
+.eyebrow.muted::before { background: var(--mid); }
+.eyebrow.ghost { color: var(--ghost); }
+.eyebrow.ghost::before { background: var(--ghost); }
+
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* ── Topbar ─────────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(253,253,248,0.86);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid rgba(228,228,220,0.7);
+}
+.topbar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 14px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.crumbs .back {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  color: var(--mid);
+  font-size: 14px;
+  font-family: var(--ff-display);
+  font-style: italic;
+}
+.crumbs .sep { color: var(--ghost); }
+.crumbs .here {
+  color: var(--ink);
+  font-weight: 600;
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variation-settings: 'opsz' 14;
+}
+
+.tool-cluster {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 100px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+}
+.tool-btn {
+  width: 30px; height: 30px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+  transition: background 0.12s, color 0.12s;
+}
+.tool-btn:hover { background: var(--paper); color: var(--ink); }
+.tool-btn.active { background: var(--paper); color: var(--deep); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+.tool-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+  margin: 0 4px;
+}
+
+/* ── Hero strip ─────────────────────────────────────────────────────────── */
+.hero {
+  padding: 60px 36px 32px;
+  position: relative;
+}
+.hero-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+.hero-title {
+  font-family: var(--ff-display);
+  font-size: clamp(58px, 8vw, 96px);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 144;
+  margin-bottom: 22px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--deep);
+  font-weight: 700;
+}
+.hero-title .period {
+  color: var(--amber);
+  font-style: normal;
+}
+
+.hero-strap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.strap-pill {
+  font-family: var(--ff-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  padding: 5px 10px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+.strap-pill strong {
+  color: var(--deep);
+  font-weight: 600;
+}
+.strap-pill.green {
+  background: var(--pale);
+  border-color: var(--pale-2);
+  color: var(--deep);
+}
+.strap-pill.amber {
+  background: var(--amber-pale);
+  border-color: rgba(212,130,10,0.25);
+  color: var(--amber);
+}
+
+/* ── Mode rail ──────────────────────────────────────────────────────────── */
+.mode-rail {
+  position: absolute;
+  right: 36px;
+  top: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px -8px rgba(28,61,10,0.12);
+}
+.mode-btn {
+  width: 44px;
+  padding: 9px 0 7px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  position: relative;
+  transition: background 0.12s, color 0.12s;
+}
+.mode-btn .icon {
+  font-size: 17px;
+  line-height: 1;
+}
+.mode-btn .label {
+  font-family: var(--ff-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.mode-btn:hover { background: var(--cream); color: var(--ink); }
+.mode-btn.active {
+  background: var(--pale);
+  color: var(--deep);
+  font-weight: 600;
+}
+.mode-btn.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 18px;
+  background: var(--deep);
+  border-radius: 2px;
+}
+
+/* ── Workshop ───────────────────────────────────────────────────────────── */
+.workshop {
+  padding: 12px 36px 64px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Canvas card — the centerpiece. Drafting-paper feel. */
+.canvas-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 22px 50px -22px rgba(28,61,10,0.18),
+    0 4px 12px -4px rgba(28,61,10,0.06);
+  position: relative;
+}
+
+.canvas-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--rule);
+  background: linear-gradient(0deg, rgba(248,245,235,0.4), transparent);
+}
+.canvas-head-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.canvas-head .title {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 18;
+  letter-spacing: -0.01em;
+}
+.canvas-head .scale {
+  font-family: var(--ff-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ghost);
+}
+
+.canvas-body {
+  position: relative;
+  padding: 56px 60px;
+  /* Drafting-paper micro-dot grid behind the bed */
+  background-image:
+    radial-gradient(rgba(28,61,10,0.10) 1px, transparent 1.5px),
+    radial-gradient(rgba(28,61,10,0.05) 1px, transparent 1.5px);
+  background-size: 24px 24px, 12px 12px;
+  background-position: 0 0, 6px 6px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Drafting corner brackets */
+.canvas-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: rgba(28,61,10,0.25);
+  border-style: solid;
+}
+.cc-tl { top: 14px; left: 14px; border-width: 1px 0 0 1px; }
+.cc-tr { top: 14px; right: 14px; border-width: 1px 1px 0 0; }
+.cc-bl { bottom: 14px; left: 14px; border-width: 0 0 1px 1px; }
+.cc-br { bottom: 14px; right: 14px; border-width: 0 1px 1px 0; }
+
+/* The drafted bed (HTML + SVG composition) */
+.bed-frame {
+  position: relative;
+  padding: 36px 0 36px 38px;
+  /* Ruler space lives in this padding */
+}
+
+/* Top ruler */
+.ruler-top {
+  position: absolute;
+  top: 14px;
+  left: 38px;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  height: 18px;
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.ruler-top .tick {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ruler-top .tick::after {
+  content: '';
+  width: 1px;
+  height: 6px;
+  background: var(--muted);
+  opacity: 0.6;
+}
+.ruler-top .axis-label {
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  transform: translateX(calc(-100% - 8px));
+  font-size: 8px;
+  color: var(--ghost);
+}
+
+/* Left ruler */
+.ruler-left {
+  position: absolute;
+  top: 36px;
+  left: 14px;
+  bottom: 36px;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.ruler-left .tick {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-right: 4px;
+  position: relative;
+}
+.ruler-left .tick::after {
+  content: '';
+  width: 6px;
+  height: 1px;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+/* The actual bed (wood frame + soil + cells) */
+.bed {
+  width: 218px;
+  position: relative;
+}
+.bed-wood {
+  background:
+    linear-gradient(180deg, #D2A06A 0%, #B27E40 100%);
+  padding: 14px;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(90,58,24,0.55),
+    inset 0 2px 4px rgba(255,255,255,0.18),
+    inset 0 -2px 6px rgba(0,0,0,0.18),
+    0 14px 24px -10px rgba(28,18,10,0.28);
+  position: relative;
+}
+/* Wood grain — subtle horizontal striations */
+.bed-wood::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 6px,
+    rgba(90,58,24,0.07) 7px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+
+/* Engraved bed-name plate on the wood */
+.bed-plate {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--wood-deep);
+  color: #f0e0c0;
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 12px;
+  border-radius: 100px;
+  box-shadow:
+    inset 0 1px 1px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,255,255,0.15);
+  font-variation-settings: 'opsz' 12;
+}
+
+/* Soil + cell grid */
+.bed-soil {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 8;
+  background-color: var(--soil);
+  background-image:
+    radial-gradient(rgba(36,21,16,0.5) 1px, transparent 1.5px),
+    radial-gradient(rgba(74,50,32,0.55) 1px, transparent 1.5px);
+  background-size: 14px 14px, 22px 22px;
+  background-position: 0 0, 7px 11px;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+
+.bed-soil .cell {
+  position: relative;
+  border-right: 1px solid rgba(168,216,112,0.16);
+  border-bottom: 1px solid rgba(168,216,112,0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bed-soil .cell:nth-child(2n) { border-right: none; }
+.bed-soil .cell:nth-last-child(-n+2) { border-bottom: none; }
+
+.cell .plus {
+  font-family: var(--ff-mono);
+  font-size: 18px;
+  color: rgba(168,216,112,0.32);
+  pointer-events: none;
+  font-weight: 300;
+}
+
+/* Selected/hover cell — sage outline */
+.cell.selected {
+  background: rgba(168,216,112,0.16);
+  box-shadow: inset 0 0 0 1.5px var(--sage);
+}
+.cell.selected .plus {
+  color: var(--sage);
+  font-size: 22px;
+}
+
+/* Plant disc overlays — multi-cell plants are drawn as a single big disc
+   absolutely positioned over their footprint. */
+.plant-disc {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.plant-disc .core {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 -3px 6px rgba(0,0,0,0.18);
+}
+.plant-disc .name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--soil-dark);
+  font-size: 11px;
+  letter-spacing: -0.005em;
+  text-shadow: 0 1px 0 rgba(253,253,248,0.5);
+  text-align: center;
+  font-variation-settings: 'opsz' 12;
+  margin-top: 2px;
+}
+
+/* TOMATO — 2×2 anchored at (col 0, row 0), spans top 2 rows full width */
+.disc-tomato {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 25%;
+}
+.disc-tomato .core {
+  width: 72%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 30%, #E8704A 0%, var(--tomato) 55%, #8C2A18 100%);
+}
+.disc-tomato .core::before {
+  content: '';
+  position: absolute;
+  top: 18%; left: 28%;
+  width: 18%; height: 14%;
+  background: rgba(255,255,255,0.35);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.disc-tomato .name {
+  color: #f8f5eb;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  margin-top: -36%;
+  position: relative;
+  z-index: 2;
+  font-size: 12px;
+}
+
+/* BASIL — 1×1 at (col 0, row 2) */
+.disc-basil {
+  top: 25%;
+  left: 0;
+  width: 50%;
+  height: 12.5%;
+  display: flex;
+  flex-direction: column;
+}
+.disc-basil .core {
+  width: 70%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 30%, #6BA85A 0%, var(--basil) 50%, #2d5a1b 100%);
+  position: relative;
+}
+.disc-basil .core::before {
+  content: '';
+  position: absolute;
+  top: 15%; left: 25%;
+  width: 20%; height: 16%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  filter: blur(1.5px);
+}
+.disc-basil .name {
+  color: #f8f5eb;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  margin-top: -34%;
+  position: relative;
+  z-index: 2;
+  font-size: 10px;
+}
+
+/* LETTUCE — 1×2 at (col 1, rows 3-4) */
+.disc-lettuce {
+  top: 37.5%;
+  left: 50%;
+  width: 50%;
+  height: 25%;
+}
+.disc-lettuce .core {
+  width: 68%;
+  aspect-ratio: 1 / 1.7;
+  border-radius: 50px;
+  background: radial-gradient(ellipse at 30% 30%, #A8D870 0%, var(--lettuce) 50%, #3d6b32 100%);
+  position: relative;
+}
+.disc-lettuce .core::before {
+  content: '';
+  position: absolute;
+  top: 12%; left: 22%;
+  width: 22%; height: 14%;
+  background: rgba(255,255,255,0.35);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.disc-lettuce .name {
+  color: #f8f5eb;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  margin-top: -55%;
+  position: relative;
+  z-index: 2;
+  font-size: 10px;
+}
+
+/* Companion link — subtle dashed amber line tomato → basil */
+.companion-link {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  /* Drawn from center of tomato (12.5% from top, 50% across) to basil (32%) */
+}
+
+/* Compass rose stamped on the soil */
+.compass {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(168,216,112,0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(36,21,16,0.4);
+  z-index: 3;
+  pointer-events: none;
+}
+.compass::before {
+  content: 'N';
+  position: absolute;
+  top: -16px;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  color: rgba(168,216,112,0.55);
+  letter-spacing: 0.1em;
+}
+.compass::after {
+  content: '';
+  width: 2px;
+  height: 12px;
+  background: linear-gradient(180deg, var(--sage), transparent);
+}
+
+/* Dimension labels at corners of the bed-frame */
+.dim {
+  position: absolute;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+.dim-h {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.dim-h::before,
+.dim-h::after {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--mid);
+  opacity: 0.4;
+}
+.dim-v {
+  top: 50%;
+  right: -36px;
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: center;
+}
+.dim-v::before,
+.dim-v::after {
+  content: '';
+  width: 30px;
+  height: 1px;
+  background: var(--mid);
+  opacity: 0.4;
+}
+
+/* Canvas footer — ledger of stats */
+.canvas-foot {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--rule);
+  background: var(--cream);
+}
+.canvas-foot .stat {
+  padding: 18px 22px;
+  border-right: 1px solid var(--rule);
+}
+.canvas-foot .stat:last-child { border-right: none; }
+.canvas-foot .stat .label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.canvas-foot .stat .value {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 30;
+}
+.canvas-foot .stat .value em {
+  font-style: italic;
+  color: var(--deep);
+}
+.canvas-foot .stat .sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  margin-top: 5px;
+  font-weight: 500;
+}
+.canvas-foot .stat .value-amber { color: var(--amber); }
+
+/* ── Library ───────────────────────────────────────────────────────────── */
+.library {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 100px);
+  box-shadow:
+    0 22px 50px -22px rgba(28,61,10,0.14),
+    0 4px 12px -4px rgba(28,61,10,0.04);
+}
+.lib-head {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.lib-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.lib-head .title {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 18;
+  letter-spacing: -0.01em;
+}
+.lib-head .title em {
+  color: var(--deep);
+}
+.lib-search {
+  position: relative;
+}
+.lib-search input {
+  width: 100%;
+  padding: 9px 12px 9px 32px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--cream);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+.lib-search input:focus {
+  border-color: var(--sage);
+  background: var(--paper);
+}
+.lib-search input::placeholder { color: var(--ghost); }
+.lib-search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ghost);
+  font-size: 12px;
+}
+
+.lib-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--cream);
+}
+.lib-tab {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  transition: background 0.12s, color 0.12s;
+}
+.lib-tab .icon { font-size: 13px; line-height: 1; }
+.lib-tab:hover { background: var(--paper); color: var(--ink); }
+.lib-tab.active {
+  background: var(--paper);
+  color: var(--deep);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.lib-recent-label {
+  padding: 14px 18px 6px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 500;
+}
+
+.lib-list {
+  padding: 0 12px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.plant-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px 9px 16px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 11px;
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  overflow: hidden;
+}
+.plant-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -6px rgba(28,61,10,0.12);
+  border-color: var(--pale-2);
+}
+.plant-card.selected {
+  background: var(--pale);
+  border-color: var(--sage);
+}
+.plant-card .stripe {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+.plant-card .swatch {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+.plant-card .swatch-disc {
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2);
+}
+.plant-card .info {
+  flex: 1;
+  min-width: 0;
+}
+.plant-card .name {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 16;
+}
+.plant-card .meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+.plant-card .meta strong {
+  color: var(--mid);
+  font-weight: 600;
+}
+
+.lib-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--cream);
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 500;
+}
+.lib-foot em {
+  color: var(--deep);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Plant-card category stripes */
+.cat-veg     { background: #4a8a2e; }
+.cat-fruit   { background: var(--tomato); }
+.cat-herb    { background: var(--sage); }
+.cat-flower  { background: #BC6B8A; }
+.cat-other   { background: var(--wood); }
+
+/* ── Notes section (below workshop) ─────────────────────────────────────── */
+.notes {
+  padding: 16px 36px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+.note-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 26px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.note-head .title {
+  font-family: var(--ff-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 24;
+}
+.note-head .title em {
+  font-style: italic;
+  color: var(--deep);
+}
+
+.companion-item {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.companion-item:last-child { border-bottom: none; }
+.companion-glyph {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+.companion-glyph.beneficial {
+  background: var(--pale);
+  color: var(--deep);
+  border: 1px solid var(--pale-2);
+}
+.companion-glyph.harmful {
+  background: rgba(122,42,24,0.1);
+  color: var(--rust);
+  border: 1px solid rgba(122,42,24,0.2);
+}
+.companion-body {
+  flex: 1;
+}
+.companion-pair {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+.companion-pair em {
+  font-style: italic;
+  color: var(--deep);
+}
+.companion-pair .plus-sign {
+  color: var(--sage);
+  margin: 0 6px;
+  font-style: normal;
+  font-weight: 400;
+}
+.companion-note {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  font-variation-settings: 'opsz' 16;
+}
+
+/* Sun map mini */
+.sun-mini {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.sun-mini-bed {
+  width: 84px;
+  background: var(--soil);
+  border: 4px solid var(--wood);
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 2 / 8;
+  overflow: hidden;
+}
+.sun-mini-bed .sm-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.sun-mini-bed .sm-cell:nth-child(2n) { border-right: none; }
+.sun-mini-bed .sm-cell:nth-last-child(-n+2) { border-bottom: none; }
+.sm-full   { background: #FEF9C3; }
+.sm-partial{ background: #FEF3C7; }
+.sm-shade  { background: #E0F2FE; }
+
+.sun-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sun-legend .row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.sun-legend .row .sw {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 1px solid var(--rule);
+}
+.sun-legend .row strong {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--ink);
+}
+.sun-legend .row span.note {
+  color: var(--muted);
+  margin-left: auto;
+  font-size: 11.5px;
+}
+
+/* ── Watermark §§ behind notes ─────────────────────────────────────────── */
+.notes-section {
+  position: relative;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .workshop { grid-template-columns: 1fr; }
+  .library {
+    position: relative;
+    top: 0;
+    max-height: none;
+    order: 2;
+  }
+  .canvas-card { order: 1; }
+  .mode-rail { right: 24px; top: 24px; }
+  .notes { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .hero { padding: 40px 22px 24px; }
+  .hero-title { font-size: 52px; }
+  .workshop { padding: 8px 22px 48px; }
+  .notes { padding: 8px 22px 64px; }
+  .canvas-body { padding: 32px 16px; }
+  .topbar-inner { padding: 12px 22px; }
+  .mode-rail {
+    position: relative;
+    right: 0; top: 0;
+    flex-direction: row;
+    margin-top: 24px;
+    max-width: max-content;
+  }
+  .mode-btn.active::before { display: none; }
+}
+
+/* ── Entrance animation ─────────────────────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero > *, .canvas-card, .library, .note-card {
+  animation: rise 0.6s cubic-bezier(0.2,0.8,0.2,1) backwards;
+}
+.hero > *:nth-child(1) { animation-delay: 0.05s; }
+.hero > *:nth-child(2) { animation-delay: 0.12s; }
+.hero > *:nth-child(3) { animation-delay: 0.2s; }
+.canvas-card  { animation-delay: 0.18s; }
+.library      { animation-delay: 0.26s; }
+.note-card:nth-of-type(1) { animation-delay: 0.34s; }
+.note-card:nth-of-type(2) { animation-delay: 0.4s; }
+
+@keyframes seed-glow {
+  0%, 100% { box-shadow: inset 0 0 0 1.5px var(--sage); }
+  50% { box-shadow: inset 0 0 0 1.5px var(--sage), 0 0 0 4px rgba(168,216,112,0.18); }
+}
+.cell.selected { animation: seed-glow 2.4s ease-in-out infinite; }
+
+</style>
+</head>
+<body>
+
+  <!-- ══════════════════════ TOPBAR ══════════════════════ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="crumbs">
+        <span class="back">‹</span>
+        <span>Robyn's Garden</span>
+        <span class="sep">/</span>
+        <span class="here">Bed Two</span>
+      </div>
+      <div class="tool-cluster">
+        <button class="tool-btn" title="Zoom in">⊕</button>
+        <button class="tool-btn" title="Zoom out">⊖</button>
+        <span class="tool-divider"></span>
+        <button class="tool-btn" title="Rotate">↻</button>
+        <button class="tool-btn" title="Fit">⤢</button>
+        <span class="tool-divider"></span>
+        <button class="tool-btn" title="Notifications">◔</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- ══════════════════════ HERO ══════════════════════ -->
+    <section class="hero">
+      <div class="hero-meta">
+        <span class="eyebrow">§ 01 · Beds · Robyn's Garden</span>
+      </div>
+      <h1 class="hero-title">
+        <em>Bed</em> Two<span class="period">.</span>
+      </h1>
+      <div class="hero-strap">
+        <span class="strap-pill green">2 × 8 ft</span>
+        <span class="strap-pill">2 × 8 grid</span>
+        <span class="strap-pill">12&quot; cells</span>
+        <span class="strap-pill">Zone <strong>5a</strong></span>
+        <span class="strap-pill amber">Spring 2026</span>
+        <span class="strap-pill">Last edited <strong>2h ago</strong></span>
+      </div>
+
+      <!-- Vertical mode rail (positioned absolutely top-right) -->
+      <nav class="mode-rail" aria-label="Bed modes">
+        <button class="mode-btn active">
+          <span class="icon">❀</span>
+          <span class="label">Plant</span>
+        </button>
+        <button class="mode-btn">
+          <span class="icon">☀</span>
+          <span class="label">Sun</span>
+        </button>
+        <button class="mode-btn">
+          <span class="icon">⚘</span>
+          <span class="label">Pairs</span>
+        </button>
+        <button class="mode-btn">
+          <span class="icon">✦</span>
+          <span class="label">AI</span>
+        </button>
+        <button class="mode-btn">
+          <span class="icon">▢</span>
+          <span class="label">Select</span>
+        </button>
+      </nav>
+    </section>
+
+    <!-- ══════════════════════ WORKSHOP ══════════════════════ -->
+    <section class="workshop">
+
+      <!-- ── CANVAS CARD ───────────────────────────────────────────── -->
+      <div class="canvas-card">
+        <div class="canvas-head">
+          <div class="canvas-head-left">
+            <span class="eyebrow muted">§ Canvas</span>
+            <span class="title">The bed.</span>
+          </div>
+          <span class="scale">Scale · 1 ft = 1 cell</span>
+        </div>
+
+        <div class="canvas-body">
+          <!-- Drafting corners -->
+          <span class="canvas-corner cc-tl"></span>
+          <span class="canvas-corner cc-tr"></span>
+          <span class="canvas-corner cc-bl"></span>
+          <span class="canvas-corner cc-br"></span>
+
+          <div class="bed-frame">
+            <!-- Top ruler -->
+            <div class="ruler-top">
+              <span class="axis-label">FT</span>
+              <span class="tick">1</span>
+              <span class="tick">2</span>
+            </div>
+            <!-- Left ruler -->
+            <div class="ruler-left">
+              <span class="tick">1</span>
+              <span class="tick">2</span>
+              <span class="tick">3</span>
+              <span class="tick">4</span>
+              <span class="tick">5</span>
+              <span class="tick">6</span>
+              <span class="tick">7</span>
+              <span class="tick">8</span>
+            </div>
+
+            <!-- The bed -->
+            <div class="bed">
+              <div class="bed-wood">
+                <span class="bed-plate">Bed Two · Cedar</span>
+                <div class="bed-soil">
+                  <!-- 16 cells, row-major -->
+                  <!-- Row 0 -->
+                  <div class="cell"><!-- tomato anchor --></div>
+                  <div class="cell"></div>
+                  <!-- Row 1 -->
+                  <div class="cell"></div>
+                  <div class="cell"></div>
+                  <!-- Row 2 -->
+                  <div class="cell"><!-- basil --></div>
+                  <div class="cell"><span class="plus">+</span></div>
+                  <!-- Row 3 -->
+                  <div class="cell"><span class="plus">+</span></div>
+                  <div class="cell"><!-- lettuce part 1 --></div>
+                  <!-- Row 4 -->
+                  <div class="cell"><span class="plus">+</span></div>
+                  <div class="cell"><!-- lettuce part 2 --></div>
+                  <!-- Row 5 -->
+                  <div class="cell"><span class="plus">+</span></div>
+                  <div class="cell"><span class="plus">+</span></div>
+                  <!-- Row 6 -->
+                  <div class="cell"><span class="plus">+</span></div>
+                  <div class="cell"><span class="plus">+</span></div>
+                  <!-- Row 7 (last) — selected/hover state -->
+                  <div class="cell"><span class="plus">+</span></div>
+                  <div class="cell selected"><span class="plus">+</span></div>
+
+                  <!-- Plant disc overlays -->
+                  <div class="plant-disc disc-tomato">
+                    <div class="core"></div>
+                    <span class="name">Tomato</span>
+                  </div>
+                  <div class="plant-disc disc-basil">
+                    <div class="core"></div>
+                    <span class="name">Basil</span>
+                  </div>
+                  <div class="plant-disc disc-lettuce">
+                    <div class="core"></div>
+                    <span class="name">Lettuce</span>
+                  </div>
+
+                  <!-- Companion link: tomato → basil — SVG inside the bed -->
+                  <svg
+                    class="companion-link"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    style="position:absolute; left: 0; top: 0; width: 50%; height: 37.5%;"
+                  >
+                    <!-- From tomato center (50, 33) to basil center (50, 88) -->
+                    <path d="M 50 33 Q 38 60 50 88"
+                      stroke="rgba(212,130,10,0.55)"
+                      stroke-width="0.9"
+                      stroke-dasharray="3 2.5"
+                      fill="none"
+                    />
+                    <circle cx="50" cy="33" r="1.4" fill="var(--amber)" opacity="0.7" />
+                    <circle cx="50" cy="88" r="1.4" fill="var(--amber)" opacity="0.7" />
+                  </svg>
+
+                  <!-- Compass rose -->
+                  <span class="compass"></span>
+                </div>
+              </div>
+
+              <!-- Horizontal dimension label -->
+              <div class="dim dim-h">2 ft</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEDGER FOOTER -->
+        <div class="canvas-foot">
+          <div class="stat">
+            <div class="label">Planted</div>
+            <div class="value"><em>4</em><span style="font-size:14px; color:var(--muted); font-weight:500;"> / 16</span></div>
+            <div class="sub">25% filled</div>
+          </div>
+          <div class="stat">
+            <div class="label">Pairs</div>
+            <div class="value">1</div>
+            <div class="sub">tomato &amp; basil</div>
+          </div>
+          <div class="stat">
+            <div class="label">Next harvest</div>
+            <div class="value value-amber">~28d</div>
+            <div class="sub">lettuce</div>
+          </div>
+          <div class="stat">
+            <div class="label">Sun</div>
+            <div class="value">☀ <span style="font-size:13px; color:var(--muted); font-style:italic; font-weight:600;">full</span></div>
+            <div class="sub">south-facing</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LIBRARY ───────────────────────────────────────────────── -->
+      <aside class="library">
+        <div class="lib-head">
+          <div class="lib-head-row">
+            <span class="title"><em>Plant</em> library</span>
+            <span class="eyebrow ghost">358</span>
+          </div>
+          <div class="lib-search">
+            <span class="lib-search-icon">⌕</span>
+            <input type="search" placeholder="Search plants…" />
+          </div>
+        </div>
+
+        <div class="lib-tabs">
+          <button class="lib-tab active">
+            <span class="icon">❀</span>
+            <span>Plant</span>
+          </button>
+          <button class="lib-tab">
+            <span class="icon">☀</span>
+            <span>Sun</span>
+          </button>
+          <button class="lib-tab">
+            <span class="icon">⚘</span>
+            <span>Pairs</span>
+          </button>
+          <button class="lib-tab">
+            <span class="icon">✦</span>
+            <span>AI</span>
+          </button>
+          <button class="lib-tab">
+            <span class="icon">▢</span>
+            <span>Select</span>
+          </button>
+        </div>
+
+        <div class="lib-recent-label">Recently used</div>
+
+        <div class="lib-list">
+          <div class="plant-card selected">
+            <span class="stripe cat-fruit"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 35% 30%, #E8704A, var(--tomato) 60%, #8C2A18);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Tomato <span style="font-style:italic; font-weight:500; color:var(--muted); font-size:12px;">Cherokee Purple</span></div>
+              <div class="meta">75d · <strong>2×2 cells</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-herb"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 35% 30%, #6BA85A, var(--basil) 60%, #2d5a1b);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Basil <span style="font-style:italic; font-weight:500; color:var(--muted); font-size:12px;">Genovese</span></div>
+              <div class="meta">60d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-veg"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #A8D870, var(--lettuce) 60%, #3d6b32);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Lettuce <span style="font-style:italic; font-weight:500; color:var(--muted); font-size:12px;">Buttercrunch</span></div>
+              <div class="meta">50d · <strong>1×1</strong> · part shade</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-veg"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #E0B040, var(--amber) 60%, #8C6010);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Bell pepper</div>
+              <div class="meta">75d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-veg"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #8FB05E, #4A8A2E 60%, #2D5A1B);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Bush bean <span style="font-style:italic; font-weight:500; color:var(--muted); font-size:12px;">Provider</span></div>
+              <div class="meta">55d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-flower"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #E8A4C2, #BC6B8A 60%, #6B2A4A);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Marigold</div>
+              <div class="meta">70d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-herb"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #A8D870, var(--sage) 60%, #3d6b32);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Borage</div>
+              <div class="meta">50d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+
+          <div class="plant-card">
+            <span class="stripe cat-veg"></span>
+            <div class="swatch">
+              <div class="swatch-disc" style="background: radial-gradient(circle at 30% 30%, #E8BB58, #C18A28 60%, #6B4A14);"></div>
+            </div>
+            <div class="info">
+              <div class="name">Carrot <span style="font-style:italic; font-weight:500; color:var(--muted); font-size:12px;">Nantes</span></div>
+              <div class="meta">65d · <strong>1×1</strong> · full sun</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lib-foot">
+          <em>Drag</em> onto a cell — or tap to select
+        </div>
+      </aside>
+
+    </section>
+
+    <!-- ══════════════════════ NOTES ══════════════════════ -->
+    <section class="notes">
+
+      <!-- COMPANIONS -->
+      <div class="note-card">
+        <div class="note-head">
+          <div>
+            <span class="eyebrow muted">§ 02</span>
+            <div class="title" style="margin-top:6px;">
+              <em>Companions</em> in this bed
+            </div>
+          </div>
+          <span class="strap-pill green" style="margin: 0;">1 match</span>
+        </div>
+
+        <div class="companion-item">
+          <span class="companion-glyph beneficial">✓</span>
+          <div class="companion-body">
+            <div class="companion-pair">
+              <em>Tomato</em><span class="plus-sign">+</span><em>Basil</em>
+            </div>
+            <div class="companion-note">
+              Classic pairing — basil masks the tomato&apos;s scent from hornworms, deters whiteflies, and is said to improve the fruit&apos;s flavor when grown alongside.
+            </div>
+          </div>
+        </div>
+
+        <div class="companion-item">
+          <span class="companion-glyph beneficial">✓</span>
+          <div class="companion-body">
+            <div class="companion-pair">
+              <em>Lettuce</em><span class="plus-sign">+</span><em>Tomato</em>
+            </div>
+            <div class="companion-note">
+              The tomato&apos;s canopy shades the lettuce, slowing bolt and extending the harvest into early summer. Mutually beneficial in this bed&apos;s south-facing exposure.
+            </div>
+          </div>
+        </div>
+
+        <div class="companion-item">
+          <span class="companion-glyph harmful">!</span>
+          <div class="companion-body">
+            <div class="companion-pair">
+              Avoid <em>Fennel</em> in this bed
+            </div>
+            <div class="companion-note">
+              Fennel is allelopathic — its root secretions inhibit growth in most companions, especially tomatoes and beans. Plant it elsewhere.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUN MAP PEEK -->
+      <div class="note-card">
+        <div class="note-head">
+          <div>
+            <span class="eyebrow muted">§ 03</span>
+            <div class="title" style="margin-top:6px;">
+              The <em>sun map</em>
+            </div>
+          </div>
+          <a class="strap-pill amber" style="margin:0; cursor:pointer;">Edit →</a>
+        </div>
+
+        <div class="sun-mini">
+          <div class="sun-mini-bed">
+            <div class="sm-cell sm-full">☀</div><div class="sm-cell sm-full">☀</div>
+            <div class="sm-cell sm-full">☀</div><div class="sm-cell sm-full">☀</div>
+            <div class="sm-cell sm-full">☀</div><div class="sm-cell sm-full">☀</div>
+            <div class="sm-cell sm-full">☀</div><div class="sm-cell sm-partial">⛅</div>
+            <div class="sm-cell sm-partial">⛅</div><div class="sm-cell sm-partial">⛅</div>
+            <div class="sm-cell sm-partial">⛅</div><div class="sm-cell sm-partial">⛅</div>
+            <div class="sm-cell sm-partial">⛅</div><div class="sm-cell sm-shade">🌥</div>
+            <div class="sm-cell sm-shade">🌥</div><div class="sm-cell sm-shade">🌥</div>
+          </div>
+          <div class="sun-legend">
+            <div class="row">
+              <span class="sw" style="background:#FEF9C3;">☀</span>
+              <strong>Full sun</strong>
+              <span class="note">7 cells · top</span>
+            </div>
+            <div class="row">
+              <span class="sw" style="background:#FEF3C7;">⛅</span>
+              <strong>Partial</strong>
+              <span class="note">6 cells · mid</span>
+            </div>
+            <div class="row">
+              <span class="sw" style="background:#E0F2FE;">🌥</span>
+              <strong>Shade</strong>
+              <span class="note">3 cells · house wall</span>
+            </div>
+            <div style="margin-top:10px; font-family: var(--ff-display); font-style: italic; font-size: 13px; color: var(--muted); line-height: 1.4; padding-top:10px; border-top: 1px dashed var(--rule);">
+              The fence to the east clips morning sun on rows 7–8. Plant shade-tolerant greens there.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+</body>
+</html>
