@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Root — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white:       #FDFDF8;
+  --surface:     #F4F4EC;
+  --surface-2:   #EAEAE0;
+  --paper:       #F8F5EB;
+  --deep:        #1C3D0A;
+  --mid:         #3A6B20;
+  --sage:        #7DA84E;
+  --pale:        #E4F0D4;
+  --pale-2:      #D4E8BE;
+  --amber:       #D4820A;
+  --amber-pale:  #FDF2E0;
+  --rust:        #7A2A18;
+  --soil:        #5A3A18;
+  --ink:         #111109;
+  --ink-2:       #3A3A30;
+  --muted:       #6B6B5A;
+  --ghost:       #ADADAA;
+  --rule:        #E4E4DC;
+
+  --ff-display:  'Fraunces', Georgia, serif;
+  --ff-body:     'DM Sans', system-ui, sans-serif;
+  --ff-mono:     'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--white);
+  font-family: var(--ff-body);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--pale); color: var(--deep); }
+
+/* ── Reusable bits ──────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--sage);
+}
+
+.tag {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 100px;
+  border: 1px solid var(--rule);
+  color: var(--muted);
+  background: var(--white);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.tag-green { color: var(--deep); border-color: var(--pale-2); background: var(--pale); }
+.tag-amber { color: var(--amber); border-color: rgba(212,130,10,0.25); background: var(--amber-pale); }
+.tag-dark  { color: #A8D870; border-color: rgba(168,216,112,0.3); background: rgba(168,216,112,0.15); }
+
+/* ── App shell ──────────────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.sidebar-logo {
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-mark {
+  width: 34px; height: 34px;
+  background: var(--deep);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.sidebar-mark::before {
+  content: '';
+  position: absolute;
+  right: -10px; top: -10px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--mid);
+  opacity: 0.4;
+}
+.sidebar-mark-leaf {
+  font-size: 17px;
+  position: relative;
+  z-index: 1;
+}
+.sidebar-logo-text {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+  font-variation-settings: 'opsz' 22;
+}
+.sidebar-logo-sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  margin-top: 2px;
+}
+.nav-section { padding: 16px 0 6px; }
+.nav-section-label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  padding: 0 22px 8px;
+  font-weight: 500;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  border-left: 2px solid transparent;
+  margin-right: 10px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.nav-item:hover { color: var(--ink); background: var(--surface); }
+.nav-item.active {
+  color: var(--deep);
+  font-weight: 600;
+  background: var(--pale);
+  border-left-color: var(--deep);
+}
+.nav-item.active .nav-icon { color: var(--sage); }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; color: var(--ghost); }
+.nav-badge {
+  margin-left: auto;
+  background: var(--amber);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 22px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sidebar-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  font-variation-settings: 'opsz' 16;
+}
+.sidebar-user {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-pro {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--amber), #F0A030);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Main content */
+.main { flex: 1; min-width: 0; }
+
+/* ── Top bar (date + weather) ───────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(253,253,248,0.86);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid rgba(228,228,220,0.7);
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-date {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+.topbar-edition {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ghost);
+}
+.topbar-edition em {
+  color: var(--sage);
+  font-style: normal;
+  font-weight: 600;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.topbar-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.topbar-btn:hover { background: var(--surface-2); }
+.topbar-btn-pip {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 8px; height: 8px;
+  background: var(--amber);
+  border-radius: 50%;
+  border: 1.5px solid var(--white);
+}
+
+/* ── Hero greeting ──────────────────────────────────────────────────────── */
+.hero {
+  padding: 56px 40px 40px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 56px;
+  align-items: end;
+  border-bottom: 1px solid var(--rule);
+}
+.hero-left .eyebrow { margin-bottom: 20px; }
+.hero-date {
+  font-family: var(--ff-display);
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-style: italic;
+  color: var(--mid);
+  margin-bottom: 12px;
+  font-variation-settings: 'opsz' 18;
+}
+.hero-greeting {
+  font-family: var(--ff-display);
+  font-size: clamp(48px, 6vw, 76px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  margin-bottom: 16px;
+  font-variation-settings: 'opsz' 120;
+}
+.hero-greeting em { font-style: italic; color: var(--deep); font-weight: 700; }
+.hero-sub {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 540px;
+  font-variation-settings: 'opsz' 22;
+}
+
+/* Weather card in hero */
+.weather {
+  background: var(--deep);
+  color: var(--white);
+  border-radius: 16px;
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 20px 50px -16px rgba(28,61,10,0.35),
+    0 4px 12px -4px rgba(28,61,10,0.15);
+}
+.weather::before {
+  content: '';
+  position: absolute;
+  right: -30px; top: -30px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: var(--mid);
+  opacity: 0.45;
+}
+.weather::after {
+  content: '';
+  position: absolute;
+  right: 20px; bottom: -40px;
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: var(--sage);
+  opacity: 0.18;
+}
+.weather-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+.weather-temp {
+  font-family: var(--ff-display);
+  font-size: 68px;
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'opsz' 96;
+}
+.weather-temp sup {
+  font-size: 24px;
+  vertical-align: super;
+  font-weight: 400;
+}
+.weather-zone {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+}
+.weather-desc {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(255,255,255,0.9);
+}
+.weather-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 14px 0;
+  position: relative;
+  z-index: 1;
+}
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.weather-stat .label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 4px;
+}
+.weather-stat .value {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: white;
+  font-variation-settings: 'opsz' 18;
+}
+.weather-stat .value em { font-style: italic; color: #A8D870; }
+.weather-alert {
+  margin-top: 14px;
+  padding: 9px 12px;
+  background: rgba(212,130,10,0.18);
+  border: 1px solid rgba(212,130,10,0.3);
+  border-radius: 8px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #F2A03D;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+/* ── Today's notes (task carousel) ──────────────────────────────────────── */
+.today-section {
+  padding: 56px 40px 0;
+}
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.section-head .eyebrow {
+  color: var(--mid);
+}
+.section-head .eyebrow::before { background: var(--mid); }
+.section-title {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 26;
+  margin-top: 6px;
+}
+.section-title em { font-style: italic; color: var(--deep); }
+.section-action {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 600;
+  cursor: pointer;
+}
+.section-action:hover { color: var(--deep); }
+
+.task-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.task-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  transition: transform 0.18s, box-shadow 0.18s;
+  cursor: pointer;
+}
+.task-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -8px rgba(28,61,10,0.12);
+  border-color: var(--pale-2);
+}
+.task-card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.task-icon {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.task-icon-seed { background: var(--amber-pale); color: var(--amber); }
+.task-icon-water { background: #EFF6FB; color: #4B9EBF; }
+.task-icon-harvest { background: var(--pale); color: var(--mid); }
+.task-icon-frost { background: #E8F0FF; color: #2C4D7D; }
+.task-icon-trans { background: #EEF6E7; color: var(--mid); }
+.task-type {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+.task-plant {
+  font-family: var(--ff-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 4px;
+  font-variation-settings: 'opsz' 22;
+}
+.task-plant em { font-style: italic; color: var(--deep); }
+.task-detail {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.task-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage);
+  font-weight: 600;
+  margin-top: 10px;
+}
+.task-when-due { color: var(--amber); }
+.task-when-now { color: var(--mid); }
+
+/* ── Garden showcase ────────────────────────────────────────────────────── */
+.dashboard-grid {
+  padding: 56px 40px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  align-items: start;
+}
+
+.garden-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px -4px rgba(28,61,10,0.06);
+}
+.garden-card-header {
+  background: var(--deep);
+  padding: 24px 28px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.garden-card-header::before {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: var(--mid);
+  opacity: 0.35;
+}
+.garden-card-header::after {
+  content: '';
+  position: absolute;
+  right: 40px; bottom: -60px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: var(--sage);
+  opacity: 0.13;
+}
+.garden-card-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.garden-card-name {
+  font-family: var(--ff-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--white);
+  font-variation-settings: 'opsz' 36;
+  line-height: 1.05;
+}
+.garden-card-name em { font-style: italic; color: #A8D870; }
+.garden-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.garden-card-meta .tag-dark { font-size: 9px; }
+.garden-card-open {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.garden-card-open:hover { background: rgba(255,255,255,0.18); }
+.garden-card-canvas {
+  position: relative;
+  background: #19280E;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+.garden-card-canvas svg { width: 100%; height: 100%; display: block; }
+.garden-card-canvas-pill {
+  position: absolute;
+  top: 12px; left: 12px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(168,216,112,0.6);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(168,216,112,0.18);
+}
+.garden-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--white);
+}
+.garden-stat {
+  padding: 18px 22px;
+  border-right: 1px solid var(--rule);
+}
+.garden-stat:last-child { border-right: none; }
+.garden-stat .label {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.garden-stat .value {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 32;
+}
+.garden-stat .value em { font-style: italic; color: var(--deep); }
+.garden-stat .value-amber { color: var(--amber); }
+.garden-stat .value-sub {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Bed list under garden card */
+.beds-strip {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.bed-tile {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.bed-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--pale-2);
+  box-shadow: 0 8px 24px -8px rgba(28,61,10,0.1);
+}
+.bed-tile-accent {
+  height: 4px;
+}
+.bed-tile-1 .bed-tile-accent { background: var(--deep); }
+.bed-tile-2 .bed-tile-accent { background: var(--amber); }
+.bed-tile-3 .bed-tile-accent { background: var(--sage); }
+.bed-tile-body {
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.bed-tile-name {
+  font-family: var(--ff-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 22;
+}
+.bed-tile-meta {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 3px;
+  font-weight: 500;
+}
+.bed-tile-count {
+  text-align: right;
+  flex-shrink: 0;
+}
+.bed-tile-count .num {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 26;
+}
+.bed-tile-count .label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Mini grid preview inside bed tile */
+.bed-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 0 14px 14px;
+}
+.bed-tile-grid .micro-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+}
+.mc-active { background: var(--pale); }
+.mc-multi  { background: var(--pale); border: 1.5px solid var(--mid); }
+.mc-amber  { background: var(--amber-pale); }
+.mc-empty  { background: var(--surface); }
+.mc-seed   { background: #FFFBEB; }
+
+/* ── Sidebar widgets ────────────────────────────────────────────────────── */
+.dash-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.widget {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.widget-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.widget-title {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 18;
+}
+.widget-title em { font-style: italic; color: var(--deep); }
+.widget-meta {
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 500;
+}
+
+/* Season progress */
+.season-card {
+  padding: 18px;
+}
+.season-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--deep);
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 26;
+  margin-bottom: 4px;
+}
+.season-dates {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.season-bar {
+  height: 8px;
+  background: var(--surface);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+}
+.season-bar-fill {
+  position: absolute;
+  inset: 0;
+  width: 28%;
+  background: linear-gradient(90deg, var(--mid), var(--sage));
+  border-radius: 100px;
+}
+.season-bar::before {
+  content: '';
+  position: absolute;
+  left: 28%;
+  top: -4px; bottom: -4px;
+  width: 4px;
+  background: var(--deep);
+  border-radius: 100px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 3px rgba(28,61,10,0.15);
+}
+.season-progress {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+.season-progress strong { color: var(--deep); font-weight: 600; }
+
+/* Coming up list */
+.upcoming-list { padding: 8px 0; }
+.upcoming-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 18px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.upcoming-item:hover { background: var(--surface); }
+.upcoming-item + .upcoming-item { border-top: 1px solid var(--rule); }
+.upcoming-day {
+  background: var(--pale);
+  border: 1px solid var(--pale-2);
+  border-radius: 8px;
+  padding: 5px 0;
+  text-align: center;
+}
+.upcoming-day-num {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--deep);
+  line-height: 1;
+  letter-spacing: -0.015em;
+}
+.upcoming-day-dow {
+  font-family: var(--ff-mono);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-top: 2px;
+  font-weight: 600;
+}
+.upcoming-info { min-width: 0; }
+.upcoming-type {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 2px;
+}
+.upcoming-type-seed    { color: var(--amber); }
+.upcoming-type-trans   { color: var(--mid); }
+.upcoming-type-harvest { color: var(--amber); }
+.upcoming-name {
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 16;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upcoming-name em { font-style: italic; color: var(--deep); }
+.upcoming-where {
+  font-size: 10px;
+  color: var(--ghost);
+  margin-top: 1px;
+}
+.upcoming-pip {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--sage);
+}
+
+/* Reminders widget */
+.reminder-item {
+  padding: 13px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s;
+}
+.reminder-item:hover { background: var(--surface); }
+.reminder-item + .reminder-item { border-top: 1px solid var(--rule); }
+.reminder-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.reminder-strip {
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+.reminder-1 .reminder-strip { background: var(--amber); }
+.reminder-2 .reminder-strip { background: #4B9EBF; }
+.reminder-1 .reminder-icon  { background: var(--amber-pale); color: var(--amber); }
+.reminder-2 .reminder-icon  { background: #EFF6FB; color: #4B9EBF; }
+.reminder-text { flex: 1; min-width: 0; }
+.reminder-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.reminder-sub {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.reminder-time {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* Quick stats grid widget */
+.qstats {
+  padding: 6px 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.qstat {
+  padding: 12px 10px;
+  text-align: center;
+}
+.qstat .num {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 32;
+}
+.qstat .num em { font-style: italic; color: var(--deep); }
+.qstat .label {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* ── Journal section ────────────────────────────────────────────────────── */
+.journal {
+  background: var(--paper);
+  padding: 64px 40px 80px;
+  border-top: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+.journal::before {
+  content: 'JOURNAL';
+  position: absolute;
+  top: -20px;
+  right: -30px;
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 220px;
+  line-height: 1;
+  color: rgba(28,61,10,0.03);
+  letter-spacing: -0.045em;
+  pointer-events: none;
+  user-select: none;
+}
+.journal-inner { position: relative; z-index: 1; }
+.journal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+.polaroid {
+  background: var(--white);
+  border-radius: 4px;
+  padding: 12px 12px 16px;
+  box-shadow:
+    0 4px 18px -2px rgba(28,61,10,0.1),
+    0 1px 4px rgba(28,61,10,0.06);
+  position: relative;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+.polaroid:nth-child(1) { transform: rotate(-1.5deg); }
+.polaroid:nth-child(2) { transform: rotate(1deg); margin-top: 18px; }
+.polaroid:nth-child(3) { transform: rotate(-0.8deg); }
+.polaroid:nth-child(4) { transform: rotate(1.6deg); margin-top: 14px; }
+.polaroid:hover { transform: rotate(0) translateY(-4px) scale(1.025); z-index: 2; }
+.polaroid-img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.polaroid-img-tomato { background: linear-gradient(135deg, #C44A2A, #8C2A18); }
+.polaroid-img-basil  { background: linear-gradient(135deg, #4A8A2E, #2D5A1B); }
+.polaroid-img-pepper { background: linear-gradient(135deg, #E0A030, #B26F18); }
+.polaroid-img-bed    { background: linear-gradient(135deg, #5A7A3A, #3A5A20); }
+.polaroid-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), transparent 50%);
+}
+.polaroid-img-tomato::before {
+  content: '🍅';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  opacity: 0.7;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+.polaroid-img-basil::before  { content: '🌿'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; opacity: 0.6; }
+.polaroid-img-pepper::before { content: '🌶'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; opacity: 0.7; }
+.polaroid-img-bed::before    { content: '🌱'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; opacity: 0.55; }
+
+.polaroid-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.polaroid-stamp {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ghost);
+  font-weight: 500;
+}
+.polaroid-rating {
+  display: flex;
+  gap: 1px;
+  color: var(--amber);
+  font-size: 9px;
+}
+.polaroid-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 17;
+}
+.polaroid-yield {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Suggestion strip (bottom) ──────────────────────────────────────────── */
+.suggest {
+  padding: 56px 40px 80px;
+  border-top: 1px solid var(--rule);
+}
+.suggest-card {
+  background: linear-gradient(135deg, var(--pale) 0%, var(--white) 60%);
+  border: 1px solid var(--pale-2);
+  border-radius: 16px;
+  padding: 36px 40px;
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 40px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.suggest-card::after {
+  content: '';
+  position: absolute;
+  right: -50px; bottom: -50px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: var(--sage);
+  opacity: 0.08;
+}
+.suggest-card > * { position: relative; z-index: 1; }
+.suggest-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mid);
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+.suggest-title {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 10px;
+  font-variation-settings: 'opsz' 32;
+}
+.suggest-title em { font-style: italic; color: var(--deep); }
+.suggest-body {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 56ch;
+  font-variation-settings: 'opsz' 20;
+  margin-bottom: 14px;
+}
+.suggest-cta {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.suggest-cta:hover { color: var(--mid); }
+.suggest-cta-arrow {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 18px;
+  font-variation-settings: 'opsz' 22;
+  transition: transform 0.15s;
+}
+.suggest-cta:hover .suggest-cta-arrow { transform: translateX(3px); }
+
+.suggest-viz {
+  text-align: center;
+}
+.suggest-viz-num {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-size: 108px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--deep);
+  line-height: 0.9;
+  font-variation-settings: 'opsz' 144;
+}
+.suggest-viz-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+/* ── Mobile responsive (preview a narrow layout side) ───────────────────── */
+@media (max-width: 1024px) {
+  .sidebar { display: none; }
+  .hero { grid-template-columns: 1fr; gap: 28px; padding: 36px 24px 28px; }
+  .dashboard-grid { grid-template-columns: 1fr; padding: 40px 24px; }
+  .task-row { grid-template-columns: 1fr 1fr; }
+  .topbar { padding: 16px 24px; }
+  .today-section, .suggest, .journal { padding-left: 24px; padding-right: 24px; }
+  .beds-strip { grid-template-columns: 1fr 1fr; }
+  .journal-grid { grid-template-columns: 1fr 1fr; }
+  .suggest-card { grid-template-columns: 1fr; gap: 24px; padding: 28px; }
+  .suggest-viz-num { font-size: 80px; }
+}
+@media (max-width: 640px) {
+  .task-row { grid-template-columns: 1fr; }
+  .garden-card-stats { grid-template-columns: 1fr 1fr; }
+  .garden-stat { border-bottom: 1px solid var(--rule); }
+  .garden-stat:nth-child(odd) { border-right: 1px solid var(--rule); }
+  .garden-stat:nth-child(n+3) { border-bottom: none; }
+  .beds-strip { grid-template-columns: 1fr; }
+  .journal-grid { grid-template-columns: 1fr; }
+  .polaroid { transform: none !important; margin: 0 !important; }
+  .hero-greeting { font-size: 42px; }
+}
+
+/* Subtle entrance */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-left > *, .weather { animation: rise 0.6s cubic-bezier(0.2,0.8,0.2,1) backwards; }
+.hero-left > *:nth-child(1) { animation-delay: 0.05s; }
+.hero-left > *:nth-child(2) { animation-delay: 0.12s; }
+.hero-left > *:nth-child(3) { animation-delay: 0.2s; }
+.hero-left > *:nth-child(4) { animation-delay: 0.28s; }
+.weather { animation-delay: 0.18s; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-mark">
+        <span class="sidebar-mark-leaf">🌿</span>
+      </div>
+      <div>
+        <div class="sidebar-logo-text">bare root</div>
+        <div class="sidebar-logo-sub">Garden Planner</div>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-section">
+        <div class="nav-section-label">Planning</div>
+        <a class="nav-item active"><span class="nav-icon">◐</span> Dashboard</a>
+        <a class="nav-item"><span class="nav-icon">⊞</span> Garden</a>
+        <a class="nav-item"><span class="nav-icon">⊟</span> Calendar</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Library</div>
+        <a class="nav-item"><span class="nav-icon">❀</span> Plants</a>
+        <a class="nav-item"><span class="nav-icon">▦</span> Inventory</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Activity</div>
+        <a class="nav-item">
+          <span class="nav-icon">◷</span> Reminders
+          <span class="nav-badge">3</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <a class="nav-item"><span class="nav-icon">⚙</span> Settings</a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">R</div>
+      <span class="sidebar-user">Robyn Wright</span>
+      <span class="sidebar-pro">Pro</span>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════ MAIN ══════════════════════ -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-meta">
+        <span class="topbar-date">Friday · May 15, 2026</span>
+        <span class="topbar-edition">The garden — <em>Day 24</em> of Spring</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-btn" title="Notifications">
+          ◔
+          <span class="topbar-btn-pip"></span>
+        </div>
+        <div class="topbar-btn" title="Search">⌕</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ HERO ══════════════════════ -->
+    <section class="hero">
+      <div class="hero-left">
+        <span class="eyebrow">Today's edition</span>
+        <div class="hero-date">Friday morning · the 15th of May</div>
+        <h1 class="hero-greeting">Good morning,<br><em>Robyn.</em></h1>
+        <p class="hero-sub">
+          The peas are climbing. Tomatoes need transplanting this weekend.
+          Last night was 38°F — closer to the line than we'd like, but no frost.
+        </p>
+      </div>
+
+      <div class="weather">
+        <div class="weather-top">
+          <div class="weather-temp">68<sup>°</sup></div>
+          <div>
+            <div class="weather-zone">Zone 7b · 45213</div>
+            <div class="weather-desc">Partly cloudy · light breeze</div>
+          </div>
+        </div>
+        <div class="weather-divider"></div>
+        <div class="weather-stats">
+          <div class="weather-stat">
+            <div class="label">Low</div>
+            <div class="value">42<sup style="font-size:11px;">°</sup></div>
+          </div>
+          <div class="weather-stat">
+            <div class="label">High</div>
+            <div class="value">74<sup style="font-size:11px;">°</sup></div>
+          </div>
+          <div class="weather-stat">
+            <div class="label">Last frost</div>
+            <div class="value"><em>Apr 15</em></div>
+          </div>
+        </div>
+        <div class="weather-alert">
+          ⚠ Cold night Tue · 36°F forecast
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ TODAY'S TASKS ══════════════════════ -->
+    <section class="today-section">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">§ 01 · The list</span>
+          <div class="section-title">Four things for <em>today</em>.</div>
+        </div>
+        <a class="section-action">All reminders →</a>
+      </div>
+
+      <div class="task-row">
+        <div class="task-card">
+          <div class="task-card-head">
+            <div class="task-icon task-icon-trans">↑</div>
+            <div class="task-type">Transplant</div>
+          </div>
+          <div class="task-plant"><em>Tomato</em> seedlings</div>
+          <div class="task-detail">Move from the indoor tray out to Bed B — daytime temps are holding.</div>
+          <div class="task-when task-when-now">● Today · this weekend</div>
+        </div>
+
+        <div class="task-card">
+          <div class="task-card-head">
+            <div class="task-icon task-icon-harvest">⊕</div>
+            <div class="task-type">Harvest</div>
+          </div>
+          <div class="task-plant">Loose-leaf <em>lettuce</em></div>
+          <div class="task-detail">Bed A · ready to clip the outer leaves. Best before it bolts in heat.</div>
+          <div class="task-when task-when-now">● Peak window — now</div>
+        </div>
+
+        <div class="task-card">
+          <div class="task-card-head">
+            <div class="task-icon task-icon-frost">❅</div>
+            <div class="task-type">Frost watch</div>
+          </div>
+          <div class="task-plant">Cover <em>peppers</em></div>
+          <div class="task-detail">Tuesday night dips to 36°. Row cover or relocate to garage for the night.</div>
+          <div class="task-when task-when-due">↗ Due Tue evening</div>
+        </div>
+
+        <div class="task-card">
+          <div class="task-card-head">
+            <div class="task-icon task-icon-seed">✿</div>
+            <div class="task-type">Start indoors</div>
+          </div>
+          <div class="task-plant"><em>Cucumber</em> seeds</div>
+          <div class="task-detail">3 weeks before transplant. Soak overnight, sow 1/2" deep.</div>
+          <div class="task-when">○ Sun, May 18</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ GARDEN + SIDEBAR ══════════════════════ -->
+    <section class="dashboard-grid">
+
+      <!-- Main column: garden showcase + beds -->
+      <div>
+        <div class="section-head" style="border-bottom: none; padding-bottom: 8px;">
+          <div>
+            <span class="eyebrow">§ 02 · Your garden</span>
+            <div class="section-title"><em>Robyn's</em> Garden</div>
+          </div>
+          <a class="section-action">Open canvas →</a>
+        </div>
+
+        <div class="garden-card">
+          <div class="garden-card-header">
+            <div class="garden-card-row">
+              <div>
+                <h2 class="garden-card-name">8 × 4 ft <em>raised</em></h2>
+                <div class="garden-card-meta">
+                  <span class="tag tag-dark">Zone 7b</span>
+                  <span class="tag tag-dark">Spring 2026</span>
+                  <span class="tag tag-dark">3 beds · 96 cells</span>
+                </div>
+              </div>
+              <a class="garden-card-open">Open <span style="font-family: var(--ff-display); font-style: italic; font-size: 14px;">→</span></a>
+            </div>
+          </div>
+
+          <div class="garden-card-canvas">
+            <div class="garden-card-canvas-pill">Garden Canvas · Interactive 3D</div>
+            <svg viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <pattern id="grassDB" x="0" y="0" width="18" height="9" patternUnits="userSpaceOnUse">
+                  <rect width="18" height="9" fill="#4a7c3f"/>
+                  <ellipse cx="4" cy="4.5" rx="1.8" ry="1.1" fill="#3d6b32" opacity="0.4"/>
+                  <ellipse cx="13" cy="2" rx="1.2" ry="0.8" fill="#56904a" opacity="0.35"/>
+                  <ellipse cx="9" cy="7" rx="1.4" ry="0.9" fill="#3d6b32" opacity="0.3"/>
+                </pattern>
+                <pattern id="soilDB" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                  <rect width="12" height="12" fill="#3d2b1f"/>
+                  <circle cx="3" cy="3" r="1.3" fill="#2d1f14" opacity="0.6"/>
+                  <circle cx="8.5" cy="7" r="1.1" fill="#2d1f14" opacity="0.5"/>
+                </pattern>
+                <filter id="ds"><feDropShadow dx="3" dy="6" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4"/></filter>
+              </defs>
+              <polygon points="400,30 700,180 400,330 100,180" fill="url(#grassDB)"/>
+              <g filter="url(#ds)">
+                <polygon points="175,200 245,165 320,200 250,235" fill="#5A3A18"/>
+                <polygon points="245,165 320,200 320,212 245,177" fill="#7D5630"/>
+                <polygon points="175,190 245,155 320,190 250,225" fill="#C49458"/>
+                <polygon points="183,188 243,158 314,188 254,218" fill="url(#soilDB)"/>
+                <circle cx="205" cy="190" r="3.5" fill="#2d5a1b" opacity="0.85"/>
+                <circle cx="225" cy="180" r="3" fill="#4a8a2e" opacity="0.75"/>
+                <circle cx="250" cy="190" r="3.5" fill="#2d5a1b" opacity="0.85"/>
+                <circle cx="275" cy="180" r="3" fill="#4a8a2e" opacity="0.7"/>
+                <circle cx="288" cy="200" r="3.2" fill="#2d5a1b" opacity="0.8"/>
+                <text x="247" y="207" text-anchor="middle" fill="#f0e0c0" font-size="10" font-weight="700" font-family="Fraunces, Georgia, serif" font-style="italic">Bed A</text>
+              </g>
+              <g filter="url(#ds)">
+                <polygon points="350,235 420,200 490,235 420,270" fill="#5A3A18"/>
+                <polygon points="420,200 490,235 490,247 420,212" fill="#7D5630"/>
+                <polygon points="350,225 420,190 490,225 420,260" fill="#C49458"/>
+                <polygon points="358,223 418,193 484,223 424,253" fill="url(#soilDB)"/>
+                <ellipse cx="395" cy="220" rx="14" ry="9" fill="#C44A2A" opacity="0.9"/>
+                <ellipse cx="395" cy="220" rx="9" ry="6" fill="#8C2A18" opacity="0.85"/>
+                <circle cx="445" cy="227" r="3.2" fill="#4a8a2e" opacity="0.8"/>
+                <circle cx="463" cy="217" r="2.8" fill="#2d5a1b" opacity="0.85"/>
+                <text x="420" y="240" text-anchor="middle" fill="#f0e0c0" font-size="10" font-weight="700" font-family="Fraunces, Georgia, serif" font-style="italic">Bed B</text>
+              </g>
+              <g filter="url(#ds)">
+                <polygon points="500,155 555,125 615,155 560,185" fill="#5A3A18"/>
+                <polygon points="555,125 615,155 615,165 555,135" fill="#7D5630"/>
+                <polygon points="500,147 555,117 615,147 560,177" fill="#C49458"/>
+                <polygon points="508,145 553,119 609,145 562,171" fill="url(#soilDB)"/>
+                <circle cx="528" cy="146" r="2.5" fill="#E0A030" opacity="0.85"/>
+                <circle cx="544" cy="139" r="2.5" fill="#E0A030" opacity="0.85"/>
+                <circle cx="560" cy="146" r="2.5" fill="#E0A030" opacity="0.85"/>
+                <circle cx="576" cy="139" r="2.5" fill="#E0A030" opacity="0.85"/>
+                <circle cx="591" cy="151" r="2.5" fill="#E0A030" opacity="0.85"/>
+                <text x="558" y="160" text-anchor="middle" fill="#f0e0c0" font-size="9" font-weight="700" font-family="Fraunces, Georgia, serif" font-style="italic">Bed C</text>
+              </g>
+              <g opacity="0.2" transform="translate(140, 320)">
+                <circle cx="0" cy="0" r="14" fill="none" stroke="#A8D870" stroke-width="1"/>
+                <text x="0" y="-17" text-anchor="middle" fill="#A8D870" font-size="8" font-family="IBM Plex Mono">N</text>
+                <line x1="0" y1="-11" x2="0" y2="-3" stroke="#A8D870" stroke-width="1.5"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="garden-card-stats">
+            <div class="garden-stat">
+              <div class="label">Plantings</div>
+              <div class="value"><em>18</em></div>
+              <div class="value-sub">across 3 beds</div>
+            </div>
+            <div class="garden-stat">
+              <div class="label">This year</div>
+              <div class="value">12.4 lbs</div>
+              <div class="value-sub">harvested</div>
+            </div>
+            <div class="garden-stat">
+              <div class="label">Next harvest</div>
+              <div class="value value-amber">~16 d</div>
+              <div class="value-sub">cherry tomato</div>
+            </div>
+            <div class="garden-stat">
+              <div class="label">Active reminders</div>
+              <div class="value">3</div>
+              <div class="value-sub">2 this week</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="beds-strip">
+          <div class="bed-tile bed-tile-1">
+            <div class="bed-tile-accent"></div>
+            <div class="bed-tile-body">
+              <div>
+                <div class="bed-tile-name">Bed <em>A</em></div>
+                <div class="bed-tile-meta">8 × 2 ft · greens &amp; roots</div>
+              </div>
+              <div class="bed-tile-count">
+                <div class="num">10</div>
+                <div class="label">plants</div>
+              </div>
+            </div>
+            <div class="bed-tile-grid">
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-amber"></div>
+              <div class="micro-cell mc-amber"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+            </div>
+          </div>
+
+          <div class="bed-tile bed-tile-2">
+            <div class="bed-tile-accent"></div>
+            <div class="bed-tile-body">
+              <div>
+                <div class="bed-tile-name">Bed <em>B</em></div>
+                <div class="bed-tile-meta">4 × 4 ft · main fruit bed</div>
+              </div>
+              <div class="bed-tile-count">
+                <div class="num">6</div>
+                <div class="label">plants</div>
+              </div>
+            </div>
+            <div class="bed-tile-grid">
+              <div class="micro-cell mc-multi"></div>
+              <div class="micro-cell mc-multi"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-multi"></div>
+              <div class="micro-cell mc-multi"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+            </div>
+          </div>
+
+          <div class="bed-tile bed-tile-3">
+            <div class="bed-tile-accent"></div>
+            <div class="bed-tile-body">
+              <div>
+                <div class="bed-tile-name">Bed <em>C</em></div>
+                <div class="bed-tile-meta">3 × 3 ft · herbs</div>
+              </div>
+              <div class="bed-tile-count">
+                <div class="num">2</div>
+                <div class="label">plants</div>
+              </div>
+            </div>
+            <div class="bed-tile-grid">
+              <div class="micro-cell mc-seed"></div>
+              <div class="micro-cell mc-seed"></div>
+              <div class="micro-cell mc-active"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+              <div class="micro-cell mc-empty"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: sidebar widgets -->
+      <aside class="dash-side">
+
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">The <em>season</em></div>
+            <span class="widget-meta">Day 24 / 86</span>
+          </div>
+          <div class="season-card">
+            <div class="season-name">Spring 2026</div>
+            <div class="season-dates">Apr 21 → Jul 16</div>
+            <div class="season-bar">
+              <div class="season-bar-fill"></div>
+            </div>
+            <div class="season-progress">
+              <span>Spring start</span>
+              <span><strong>28%</strong> complete</span>
+              <span>Summer</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">At a <em>glance</em></div>
+            <span class="widget-meta">Year to date</span>
+          </div>
+          <div class="qstats">
+            <div class="qstat">
+              <div class="num"><em>18</em></div>
+              <div class="label">Active plantings</div>
+            </div>
+            <div class="qstat">
+              <div class="num">6</div>
+              <div class="label">Days since rain</div>
+            </div>
+            <div class="qstat">
+              <div class="num">12.4<span style="font-size:14px;">lb</span></div>
+              <div class="label">Harvested</div>
+            </div>
+            <div class="qstat">
+              <div class="num">★★★★☆</div>
+              <div class="label">Avg rating</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">Coming <em>up</em></div>
+            <a class="section-action" style="font-size: 9px;">View →</a>
+          </div>
+          <div class="upcoming-list">
+            <div class="upcoming-item">
+              <div class="upcoming-day">
+                <div class="upcoming-day-num">18</div>
+                <div class="upcoming-day-dow">Sun</div>
+              </div>
+              <div class="upcoming-info">
+                <span class="upcoming-type upcoming-type-seed">Start seeds</span>
+                <div class="upcoming-name"><em>Cucumber</em></div>
+                <div class="upcoming-where">Bed B · indoor tray</div>
+              </div>
+              <div class="upcoming-pip"></div>
+            </div>
+            <div class="upcoming-item">
+              <div class="upcoming-day">
+                <div class="upcoming-day-num">22</div>
+                <div class="upcoming-day-dow">Thu</div>
+              </div>
+              <div class="upcoming-info">
+                <span class="upcoming-type upcoming-type-trans">Transplant</span>
+                <div class="upcoming-name"><em>Pepper</em></div>
+                <div class="upcoming-where">Bed B · outdoors</div>
+              </div>
+              <div class="upcoming-pip"></div>
+            </div>
+            <div class="upcoming-item">
+              <div class="upcoming-day">
+                <div class="upcoming-day-num">31</div>
+                <div class="upcoming-day-dow">Sat</div>
+              </div>
+              <div class="upcoming-info">
+                <span class="upcoming-type upcoming-type-harvest">Est. harvest</span>
+                <div class="upcoming-name"><em>Cherry tomato</em></div>
+                <div class="upcoming-where">Bed B · ripening</div>
+              </div>
+              <div class="upcoming-pip"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title"><em>Alerts</em></div>
+            <span class="widget-meta">3 new</span>
+          </div>
+          <div>
+            <div class="reminder-item reminder-1">
+              <div class="reminder-strip"></div>
+              <div class="reminder-icon">❅</div>
+              <div class="reminder-text">
+                <div class="reminder-title">Frost watch Tue night</div>
+                <div class="reminder-sub">36°F forecast. Cover peppers + young tomatoes.</div>
+                <div class="reminder-time">12 min ago</div>
+              </div>
+            </div>
+            <div class="reminder-item reminder-2">
+              <div class="reminder-strip"></div>
+              <div class="reminder-icon">💧</div>
+              <div class="reminder-text">
+                <div class="reminder-title">Bed A needs water</div>
+                <div class="reminder-sub">Hasn't rained in 6 days. Top 1" of soil dry.</div>
+                <div class="reminder-time">This morning</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </section>
+
+    <!-- ══════════════════════ JOURNAL ══════════════════════ -->
+    <section class="journal">
+      <div class="journal-inner">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">§ 03 · The journal</span>
+            <div class="section-title">Recent <em>entries</em>.</div>
+          </div>
+          <a class="section-action">Full history →</a>
+        </div>
+
+        <div class="journal-grid">
+          <div class="polaroid">
+            <div class="polaroid-img polaroid-img-tomato"></div>
+            <div class="polaroid-meta">
+              <span class="polaroid-stamp">May 14 · Wed</span>
+              <span class="polaroid-rating">★★★★★</span>
+            </div>
+            <div class="polaroid-name">First handful</div>
+            <div class="polaroid-yield">Sun Gold · 0.6 lb</div>
+          </div>
+          <div class="polaroid">
+            <div class="polaroid-img polaroid-img-basil"></div>
+            <div class="polaroid-meta">
+              <span class="polaroid-stamp">May 11 · Sun</span>
+              <span class="polaroid-rating">★★★★☆</span>
+            </div>
+            <div class="polaroid-name">Big harvest day</div>
+            <div class="polaroid-yield">Basil · 3 bunches</div>
+          </div>
+          <div class="polaroid">
+            <div class="polaroid-img polaroid-img-pepper"></div>
+            <div class="polaroid-meta">
+              <span class="polaroid-stamp">May 09 · Fri</span>
+              <span class="polaroid-rating">★★★★★</span>
+            </div>
+            <div class="polaroid-name">Shishito set</div>
+            <div class="polaroid-yield">First peppers · 8</div>
+          </div>
+          <div class="polaroid">
+            <div class="polaroid-img polaroid-img-bed"></div>
+            <div class="polaroid-meta">
+              <span class="polaroid-stamp">May 05 · Mon</span>
+              <span class="polaroid-rating">★★★★☆</span>
+            </div>
+            <div class="polaroid-name">Bed B reset</div>
+            <div class="polaroid-yield">Companion mix v2</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ SUGGESTION ══════════════════════ -->
+    <section class="suggest">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">§ 04 · Worth doing</span>
+          <div class="section-title">A suggestion from the <em>field</em>.</div>
+        </div>
+      </div>
+      <div class="suggest-card">
+        <div>
+          <div class="suggest-eyebrow">Succession planting</div>
+          <div class="suggest-title">Plant another round of <em>lettuce</em> by Sunday.</div>
+          <p class="suggest-body">
+            You'll be eating the current head in about a week. Direct-sow
+            another row now and you'll have a continuous supply through
+            early July — well before summer heat makes it bolt.
+          </p>
+          <a class="suggest-cta">
+            Plan succession sowing
+            <span class="suggest-cta-arrow">→</span>
+          </a>
+        </div>
+        <div class="suggest-viz">
+          <div class="suggest-viz-num">14<span style="font-size:50px;">d</span></div>
+          <div class="suggest-viz-label">until last sow date</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
