@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useRef, useEffect, useMemo } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -19,7 +19,7 @@ import { PlantLibrary, type LibraryPlant } from "./PlantLibrary";
 import { updateCellSun, assignPlant, bulkAssignPlant, movePlanting } from "@/app/actions/planting";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, Grid3x3, MousePointer2 } from "lucide-react";
+import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, MousePointer2 } from "lucide-react";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -109,6 +109,230 @@ type PanelState =
   | { type: "bulk-picker"; cellIds: string[] }
   | { type: "detail"; planting: Planting; cell: CellData }
   | { type: "smart-layout" };
+
+// Internal cell tile — owns the per-cell DnD wiring so each cell can be both
+// a drop target (for plants being placed) and a drag source (for moving an
+// existing planting to a new cell). React hooks can't be called inside a
+// .map(), which is why this is its own component rather than inline.
+function CellTile({
+  cell,
+  cellPx,
+  dense,
+  effectiveStatus,
+  isAnchor,
+  isFootprintOnly,
+  sunMode,
+  sun,
+  selectMode,
+  isSelectedForBulk,
+  preview,
+  isSelected,
+  isNew,
+  isHoveredByPlanner,
+  hasHarmful,
+  hasBeneficial,
+  onClick,
+}: {
+  cell: CellData;
+  cellPx: number;
+  dense: boolean;
+  effectiveStatus: PlantingStatus | null;
+  isAnchor: boolean;
+  isFootprintOnly: boolean;
+  sunMode: boolean;
+  sun: SunLevel;
+  selectMode: boolean;
+  isSelectedForBulk: boolean;
+  preview: LayoutAssignment | undefined;
+  isSelected: boolean;
+  isNew: boolean;
+  isHoveredByPlanner: boolean;
+  hasHarmful: boolean;
+  hasBeneficial: boolean;
+  onClick: () => void;
+}) {
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop:${cell.id}`,
+    data: { kind: "cell", cell },
+    disabled: !!cell.planting || !!cell.footprint,
+  });
+  const drag = useDraggable({
+    id: `drag:${cell.id}`,
+    data: cell.planting
+      ? {
+          kind: "planting",
+          plantingId: cell.planting.id,
+          plantName: cell.planting.plant.name,
+          fromCellId: cell.id,
+        }
+      : undefined,
+    disabled: !cell.planting,
+  });
+
+  function setRef(node: HTMLDivElement | null) {
+    setDropRef(node);
+    drag.setNodeRef(node);
+  }
+
+  const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
+  const labelSize = Math.max(7, Math.min(10, cellPx * 0.18));
+  const badgePx = 13;
+
+  const cellBg = sunMode
+    ? SUN_BG[sun]
+    : cellStyle
+    ? cellStyle.bg
+    : preview
+    ? "rgba(28,61,10,0.06)"
+    : isOver
+    ? "rgba(125,168,78,0.18)"
+    : "rgba(255,255,255,0.8)";
+
+  const cellBorder = sunMode
+    ? "rgba(28,61,10,0.1)"
+    : cellStyle
+    ? cellStyle.border
+    : preview
+    ? "rgba(28,61,10,0.15)"
+    : isOver
+    ? "#7DA84E"
+    : "rgba(28,61,10,0.1)";
+
+  const cellBoxShadow = isHoveredByPlanner
+    ? "inset 0 0 0 2px #D4820A, 0 2px 8px rgba(196,121,10,0.3)"
+    : isSelected
+    ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
+    : isOver
+    ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
+    : isAnchor
+    ? "0 1px 3px rgba(28,61,10,0.08)"
+    : "none";
+
+  const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
+
+  return (
+    <div
+      ref={setRef}
+      {...dragProps}
+      onClick={onClick}
+      className={`relative flex items-end justify-center select-none transition-all duration-150 ${
+        isNew ? "scale-110 z-10" : "scale-100"
+      }`}
+      style={{
+        width: cellPx,
+        height: cellPx,
+        background: cellBg,
+        border: `1.5px solid ${cellBorder}`,
+        borderRadius: "8px",
+        borderStyle: preview && !isAnchor ? "dashed" : "solid",
+        boxShadow: cellBoxShadow,
+        opacity: drag.isDragging ? 0.35 : 1,
+        cursor: isAnchor ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
+      }}
+    >
+      {sunMode && (
+        <span
+          className="absolute inset-0 flex items-center justify-center leading-none"
+          style={{ fontSize: Math.max(10, cellPx * 0.45) }}
+        >
+          {SUN_LABEL[sun]}
+        </span>
+      )}
+      {selectMode && isSelectedForBulk && (
+        <span className="absolute inset-0 flex items-center justify-center bg-[#1C3D0A]/15 rounded-lg">
+          <span
+            className="rounded-full bg-[#1C3D0A] text-white flex items-center justify-center shadow"
+            style={{ width: Math.max(14, cellPx * 0.42), height: Math.max(14, cellPx * 0.42) }}
+          >
+            <Check
+              style={{ width: Math.max(8, cellPx * 0.25), height: Math.max(8, cellPx * 0.25) }}
+              strokeWidth={3}
+            />
+          </span>
+        </span>
+      )}
+      {!isAnchor && !isFootprintOnly && !preview && !sunMode && (
+        <span
+          className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none"
+          style={{ fontSize: "18px", color: "rgba(28,61,10,0.15)" }}
+        >
+          +
+        </span>
+      )}
+      {isAnchor && cell.planting && !sunMode && !dense && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1 px-0.5 gap-0.5 pointer-events-none">
+          <div
+            style={{
+              width: "5px",
+              height: "5px",
+              borderRadius: "50%",
+              background: STATUS_DOT_COLOR[cell.planting.status] ?? "#ADADAA",
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              color: "#3A3A30",
+              fontSize: labelSize,
+              lineHeight: 1.1,
+              textAlign: "center",
+            }}
+          >
+            {cell.planting.plant.name.split(" ")[0]}
+          </span>
+        </div>
+      )}
+      {isAnchor && cell.planting && !sunMode && dense && (
+        <span
+          className="absolute inset-0 flex items-center justify-center font-bold select-none pointer-events-none"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: Math.max(7, cellPx * 0.28),
+            color: "#3A3A30",
+          }}
+          title={cell.planting.plant.name}
+        >
+          {cell.planting.plant.name.slice(0, Math.max(1, Math.floor(cellPx / 14)))}
+        </span>
+      )}
+      {preview && !isAnchor && !sunMode && !dense && (
+        <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5 pointer-events-none">
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontStyle: "italic",
+              color: "#1C3D0A",
+              fontSize: Math.max(8, labelSize - 1),
+              textAlign: "center",
+              display: "block",
+              lineHeight: 1.1,
+            }}
+          >
+            {preview.plantName.split(" ")[0]}
+          </span>
+        </div>
+      )}
+      {!sunMode && isAnchor && (hasHarmful || hasBeneficial) && (
+        <span
+          className="absolute top-1 right-1 rounded-full ring-[1.5px] ring-white shadow-sm pointer-events-none"
+          style={{
+            width: badgePx,
+            height: badgePx,
+            background: hasHarmful ? "#7A2A18" : "#3A6B20",
+          }}
+        />
+      )}
+      {!sunMode && (
+        <div
+          className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-100 pointer-events-none"
+          style={{ boxShadow: "inset 0 0 0 2px rgba(28,61,10,0.35)", borderRadius: "8px" }}
+        />
+      )}
+    </div>
+  );
+}
 
 export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant }: Props) {
   const router = useRouter();
@@ -523,63 +747,37 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         </div>
       )}
 
-      {/* Tab row */}
+      {/* Canvas toolbar — zoom/rotate only. Tabs moved into the sidebar. */}
       <div style={{ borderBottom: "1px solid #E4E4DC", background: "#FDFDF8" }}>
-        <div className="max-w-3xl mx-auto" style={{ display: "flex", alignItems: "stretch", overflow: "hidden" }}>
-          <div style={{ display: "flex", overflowX: "auto", flex: 1, gap: 0 }}>
-            {(["plant", "sun", "companions", "smart", "select"] as const).map((tab) => {
-              const labels: Record<string, string> = {
-                plant: "Plant",
-                sun: "Sun Map",
-                companions: "Companions",
-                smart: "Smart Layout ✦",
-                select: "Select",
-              };
-              const isActive = activeTab === tab;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveTab(tab);
-                    if (tab !== "plant") setPanel({ type: "none" });
-                    // Leaving select mode clears the selection so it doesn't
-                    // ambush the user when they come back later.
-                    if (tab !== "select") setSelectedCells(new Set());
-                  }}
-                  style={{
-                    fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500,
-                    color: isActive ? "#1C3D0A" : "#6B6B5A",
-                    padding: "10px 14px",
-                    borderBottom: isActive ? "2px solid #1C3D0A" : "2px solid transparent",
-                    whiteSpace: "nowrap", cursor: "pointer", background: "none",
-                    border: "none", borderBottomStyle: "solid",
-                    transition: "color 0.15s, border-color 0.15s",
-                  }}
-                >
-                  {labels[tab]}
-                </button>
-              );
-            })}
-          </div>
-          {/* Zoom + rotate controls pushed right */}
-          <div style={{ display: "flex", alignItems: "center", gap: "2px", padding: "0 8px", flexShrink: 0 }}>
-            {canRotate && (
-              <button onClick={() => setRotated((r) => !r)} title={rotated ? "Portrait" : "Landscape"} className={btnBase}>
-                <RotateCw className="w-3.5 h-3.5" />
-              </button>
-            )}
-            <button onClick={() => setZoom((z) => Math.min(4, z * 1.35))} title="Zoom in (+)" className={btnBase}>
-              <ZoomIn className="w-3.5 h-3.5" />
+        <div className="flex items-center justify-end gap-1 px-[22px] md:px-8 py-2">
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "#ADADAA",
+              marginRight: "auto",
+            }}
+          >
+            {gridCols} × {gridRows} grid · {cellSizeIn}&quot; cells
+          </span>
+          {canRotate && (
+            <button onClick={() => setRotated((r) => !r)} title={rotated ? "Portrait" : "Landscape"} className={btnBase}>
+              <RotateCw className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.35))} title="Zoom out (−)" className={btnBase}>
-              <ZoomOut className="w-3.5 h-3.5" />
+          )}
+          <button onClick={() => setZoom((z) => Math.min(4, z * 1.35))} title="Zoom in (+)" className={btnBase}>
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.35))} title="Zoom out (−)" className={btnBase}>
+            <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            {zoom !== 1 && (
-              <button onClick={() => setZoom(1)} title="Fit" className={btnBase}>
-                <Maximize2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          {zoom !== 1 && (
+            <button onClick={() => setZoom(1)} title="Fit" className={btnBase}>
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -625,150 +823,40 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     }}
                   >
                     {displayCells.map((cell) => {
-                      const sun = effectiveSun(cell);
                       const planting = cell.planting;
-                      // Footprint cells inherit the anchor's status color
-                      // but don't render label/dot/badges (those belong to
-                      // the primary cell).
                       const footprintStatus = cell.footprint?.status ?? null;
                       const effectiveStatus = planting?.status ?? footprintStatus;
-                      const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
                       const isFootprintOnly = !planting && !!footprintStatus;
-                      const hasHarmful = cell.warnings.some((w) => w.type === "HARMFUL");
-                      const hasBeneficial = cell.warnings.some((w) => w.type === "BENEFICIAL");
                       const isSelected =
                         (panel.type === "picker" && panel.cellId === cell.id) ||
                         (panel.type === "detail" && panel.cell.id === cell.id);
-                      const preview = previewAssignments.find((a) => a.row === cell.row && a.col === cell.col);
-                      const isNew = justPlanted.has(cell.id);
-                      const labelSize = Math.max(7, Math.min(10, cellPx * 0.18));
-                      const badgePx = 13;
-                      const isHoveredByPlanner = hoveredAssignment?.row === cell.row && hoveredAssignment?.col === cell.col;
-
-                      const cellBg = sunMode
-                        ? SUN_BG[sun]
-                        : cellStyle
-                        ? cellStyle.bg
-                        : preview
-                        ? "rgba(28,61,10,0.06)"
-                        : "rgba(255,255,255,0.8)";
-
-                      const cellBorder = sunMode
-                        ? "rgba(28,61,10,0.1)"
-                        : cellStyle
-                        ? cellStyle.border
-                        : preview
-                        ? "rgba(28,61,10,0.15)"
-                        : "rgba(28,61,10,0.1)";
-
-                      const cellBoxShadow = isHoveredByPlanner
-                        ? "inset 0 0 0 2px #D4820A, 0 2px 8px rgba(196,121,10,0.3)"
-                        : isSelected
-                        ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
-                        : planting
-                        ? "0 1px 3px rgba(28,61,10,0.08)"
-                        : "none";
-
+                      const preview = previewAssignments.find(
+                        (a) => a.row === cell.row && a.col === cell.col
+                      );
                       return (
-                        <div
+                        <CellTile
                           key={cell.id}
+                          cell={cell}
+                          cellPx={cellPx}
+                          dense={dense}
+                          effectiveStatus={effectiveStatus}
+                          isAnchor={!!planting}
+                          isFootprintOnly={isFootprintOnly}
+                          sunMode={sunMode}
+                          sun={effectiveSun(cell)}
+                          selectMode={selectMode}
+                          isSelectedForBulk={selectedCells.has(cell.id)}
+                          preview={preview}
+                          isSelected={isSelected}
+                          isNew={justPlanted.has(cell.id)}
+                          isHoveredByPlanner={
+                            hoveredAssignment?.row === cell.row &&
+                            hoveredAssignment?.col === cell.col
+                          }
+                          hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
+                          hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
                           onClick={() => handleCellClick(cell)}
-                          className={`relative flex items-end justify-center cursor-pointer select-none transition-all duration-150 ${
-                            isNew ? "scale-110 z-10" : "scale-100"
-                          }`}
-                          style={{
-                            width: cellPx,
-                            height: cellPx,
-                            background: cellBg,
-                            border: `1.5px solid ${cellBorder}`,
-                            borderRadius: "8px",
-                            borderStyle: preview && !planting ? "dashed" : "solid",
-                            boxShadow: cellBoxShadow,
-                          }}
-                        >
-                          {/* Sun mode emoji */}
-                          {sunMode && (
-                            <span className="absolute inset-0 flex items-center justify-center leading-none" style={{ fontSize: Math.max(10, cellPx * 0.45) }}>
-                              {SUN_LABEL[sun]}
-                            </span>
-                          )}
-
-                          {/* Selection checkmark (multi-select mode) */}
-                          {selectMode && selectedCells.has(cell.id) && (
-                            <span
-                              className="absolute inset-0 flex items-center justify-center bg-[#1C3D0A]/15 rounded-lg"
-                            >
-                              <span
-                                className="rounded-full bg-[#1C3D0A] text-white flex items-center justify-center shadow"
-                                style={{ width: Math.max(14, cellPx * 0.42), height: Math.max(14, cellPx * 0.42) }}
-                              >
-                                <Check style={{ width: Math.max(8, cellPx * 0.25), height: Math.max(8, cellPx * 0.25) }} strokeWidth={3} />
-                              </span>
-                            </span>
-                          )}
-
-                          {/* Empty cell plus icon — but NOT for footprint
-                              cells, which are visually occupied by their
-                              anchor's plant and shouldn't invite a tap. */}
-                          {!planting && !isFootprintOnly && !preview && !sunMode && (
-                            <span className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none" style={{ fontSize: "18px", color: "rgba(28,61,10,0.15)" }}>
-                              +
-                            </span>
-                          )}
-
-                          {/* Planted cell: status dot + label */}
-                          {planting && !sunMode && !dense && (
-                            <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1 px-0.5 gap-0.5">
-                              <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: STATUS_DOT_COLOR[planting.status] ?? "#ADADAA", flexShrink: 0 }} />
-                              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "#3A3A30", fontSize: labelSize, lineHeight: 1.1, textAlign: "center" }}>
-                                {planting.plant.name.split(" ")[0]}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Dense mode: abbreviated name */}
-                          {planting && !sunMode && dense && (
-                            <span
-                              className="absolute inset-0 flex items-center justify-center font-bold select-none pointer-events-none"
-                              style={{
-                                fontFamily: "var(--font-display)",
-                                fontSize: Math.max(7, cellPx * 0.28),
-                                color: "#3A3A30",
-                              }}
-                              title={planting.plant.name}
-                            >
-                              {planting.plant.name.slice(0, Math.max(1, Math.floor(cellPx / 14)))}
-                            </span>
-                          )}
-
-                          {/* Preview overlay */}
-                          {preview && !planting && !sunMode && !dense && (
-                            <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5">
-                              <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic", color: "#1C3D0A", fontSize: Math.max(8, labelSize - 1), textAlign: "center", display: "block", lineHeight: 1.1 }}>
-                                {preview.plantName.split(" ")[0]}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Companion badge */}
-                          {!sunMode && planting && (hasHarmful || hasBeneficial) && (
-                            <span
-                              className="absolute top-1 right-1 rounded-full ring-[1.5px] ring-white shadow-sm"
-                              style={{
-                                width: badgePx,
-                                height: badgePx,
-                                background: hasHarmful ? "#7A2A18" : "#3A6B20",
-                              }}
-                            />
-                          )}
-
-                          {/* Hover ring */}
-                          {!sunMode && (
-                            <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-100"
-                              style={{ boxShadow: "inset 0 0 0 2px rgba(28,61,10,0.35)", borderRadius: "8px" }}
-                            />
-                          )}
-                        </div>
+                        />
                       );
                     })}
                   </div>
@@ -852,149 +940,242 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           )}
         </div>
 
-        {/* Side panel — slides in (below grid on mobile, beside on desktop) */}
+        {/* Sidebar — always visible. Holds the mode switcher (top), the
+            mode-specific content, and contextual cell detail. */}
         <div
           ref={panelRef}
-          className="overflow-hidden transition-all duration-300 ease-in-out w-full md:w-auto md:shrink-0"
-          style={isMobile
-            ? { maxHeight: showPanel ? 640 : 0, opacity: showPanel ? 1 : 0 }
-            : { width: showPanel ? 272 : 0, opacity: showPanel ? 1 : 0 }}
+          className="w-full md:w-[340px] md:shrink-0 flex flex-col"
         >
-          <div className="w-full md:w-[272px]" style={{ minWidth: 0 }}>
-            <div className="rounded-xl border shadow-md overflow-hidden" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
-              {/* Panel header — not shown for CellDetail (it has its own header) */}
-              {!(activeTab === "plant" && panel.type === "detail") && activeTab !== "companions" && (
-                <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "#F4F4EC" }}>
-                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>
-                    {activeTab === "smart"
-                      ? "AI layout planner"
-                      : activeTab === "select" && panel.type === "bulk-picker"
-                      ? "Plant in selected cells"
-                      : activeTab === "plant" && panel.type === "picker"
-                      ? "Add a plant"
-                      : "Companion planting"}
-                  </p>
+          <div
+            className="rounded-xl border shadow-md overflow-hidden flex flex-col"
+            style={{ background: "#FDFDF8", borderColor: "#E4E4DC", maxHeight: isMobile ? undefined : maxViewportH + 40 }}
+          >
+            {/* Mode switcher — icon row */}
+            <div
+              className="flex items-stretch border-b shrink-0"
+              style={{ background: "#F8F8F2", borderColor: "#E4E4DC" }}
+            >
+              {(["plant", "sun", "companions", "smart", "select"] as const).map((tab) => {
+                const ICON: Record<string, React.ReactNode> = {
+                  plant: <Leaf className="w-4 h-4" />,
+                  sun: <Sun className="w-4 h-4" />,
+                  companions: <Sprout className="w-4 h-4" />,
+                  smart: <Sparkles className="w-4 h-4" />,
+                  select: <MousePointer2 className="w-4 h-4" />,
+                };
+                const LABEL: Record<string, string> = {
+                  plant: "Plant",
+                  sun: "Sun",
+                  companions: "Pairs",
+                  smart: "AI",
+                  select: "Select",
+                };
+                const isActive = activeTab === tab;
+                return (
                   <button
-                    onClick={() => { setPanel({ type: "none" }); if (activeTab !== "plant") setActiveTab("plant"); }}
-                    className="w-6 h-6 flex items-center justify-center rounded-full text-[#ADADAA] hover:text-[#111109] hover:bg-[#F4F4EC] transition-colors"
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab);
+                      if (tab !== "plant") setPanel({ type: "none" });
+                      if (tab !== "select") setSelectedCells(new Set());
+                    }}
+                    className="flex-1 flex flex-col items-center gap-1 py-2.5 transition-colors"
+                    style={{
+                      background: isActive ? "#FDFDF8" : "transparent",
+                      color: isActive ? "#1C3D0A" : "#6B6B5A",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      fontWeight: isActive ? 600 : 500,
+                      borderTop: isActive ? "2px solid #1C3D0A" : "2px solid transparent",
+                      borderBottom: isActive ? "2px solid transparent" : "2px solid #E4E4DC",
+                      cursor: "pointer",
+                    }}
+                    aria-pressed={isActive}
                   >
-                    <X className="w-3.5 h-3.5" />
+                    {ICON[tab]}
+                    <span>{LABEL[tab]}</span>
                   </button>
+                );
+              })}
+            </div>
+
+            <div className="flex-1 overflow-y-auto" style={{ maxHeight: 640 }}>
+              {/* PLANT MODE: always-visible library, plus detail panel when a cell with a planting is selected */}
+              {activeTab === "plant" && panel.type !== "detail" && panel.type !== "picker" && (
+                <PlantLibrary
+                  recentPlants={recentPlants}
+                  cellSizeIn={cellSizeIn}
+                  userId={userId}
+                  onCardClick={(p) => setPendingPlant(p)}
+                  selectedPlantId={pendingPlant?.id ?? null}
+                />
+              )}
+              {activeTab === "plant" && panel.type === "picker" && (
+                <div className="p-4">
+                  <PlantPicker
+                    cellId={panel.cellId}
+                    seasonId={seasonId}
+                    userId={userId}
+                    cellSizeIn={cellSizeIn}
+                    recentPlants={recentPlants}
+                    onClose={() => setPanel({ type: "none" })}
+                    onPlanted={(id) => handlePlanted(id)}
+                  />
+                </div>
+              )}
+              {activeTab === "plant" && panel.type === "detail" && (
+                <CellDetail
+                  planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
+                  warnings={panel.cell.warnings}
+                  gardenId={gardenId}
+                  bedId={bedId}
+                  onClose={() => setPanel({ type: "none" })}
+                  onMoveStart={(p) => setMovingPlanting(p)}
+                />
+              )}
+
+              {/* SUN MODE */}
+              {activeTab === "sun" && (
+                <div className="p-5 space-y-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "#FEF9C3" }}
+                  >
+                    <Sun className="w-5 h-5" style={{ color: "#A36207" }} />
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>Sun map</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
+                    Tap any cell to cycle its sun level. Use this to map shadows from fences, trees, or the house so plant suggestions match each spot&apos;s reality.
+                  </p>
+                  <div className="space-y-1.5 pt-2">
+                    {Object.entries(SUN_LABEL).map(([key, emoji]) => (
+                      <div key={key} className="flex items-center gap-2 text-xs">
+                        <span style={{ width: 22, height: 22, borderRadius: 6, background: SUN_BG[key], display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                          {emoji}
+                        </span>
+                        <span style={{ color: "#3A3A30" }}>
+                          {key.replace("_", " ").toLowerCase()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <div style={{ maxHeight: 560, overflowY: "auto" }}>
-                <div className={activeTab === "plant" && panel.type === "detail" ? "" : "p-4"}>
-                  {/* Plant mode: picker or detail */}
-                  {activeTab === "plant" && panel.type === "picker" && (
-                    <PlantPicker
-                      cellId={panel.cellId}
-                      seasonId={seasonId}
-                      userId={userId}
-                      cellSizeIn={cellSizeIn}
-                      recentPlants={recentPlants}
-                      onClose={() => setPanel({ type: "none" })}
-                      onPlanted={(id) => handlePlanted(id)}
-                    />
-                  )}
-
-                  {/* Bulk picker — opened from multi-select mode */}
-                  {activeTab === "select" && panel.type === "bulk-picker" && (
-                    <div>
-                      <p className="mb-3 text-xs text-[#6B6B5A]">
-                        Pick a plant — it&apos;ll be added to all {panel.cellIds.length} selected cells.
-                      </p>
-                      <PlantPicker
-                        cellIds={panel.cellIds}
-                        seasonId={seasonId}
-                        userId={userId}
-                        cellSizeIn={cellSizeIn}
-                        recentPlants={recentPlants}
-                        onClose={() => {
-                          setPanel({ type: "none" });
-                          setSelectedCells(new Set());
-                          setActiveTab("plant");
-                        }}
-                        onPlanted={(id) => handlePlanted(id)}
-                      />
+              {/* COMPANIONS MODE */}
+              {activeTab === "companions" && (
+                <div className="p-4">
+                  {cells.every((c) => c.warnings.length === 0) ? (
+                    <div className="text-center py-10" style={{ color: "#ADADAA" }}>
+                      <Sprout className="w-7 h-7 mx-auto mb-2" />
+                      <p className="text-sm">No companion notes</p>
+                      <p className="text-xs mt-1">Add neighbouring plants to see relationships</p>
                     </div>
-                  )}
-                  {activeTab === "plant" && panel.type === "detail" && (
-                    <CellDetail
-                      planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
-                      warnings={panel.cell.warnings}
-                      gardenId={gardenId}
-                      bedId={bedId}
-                      onClose={() => setPanel({ type: "none" })}
-                      onMoveStart={(p) => setMovingPlanting(p)}
-                    />
-                  )}
-                  {/* Smart layout */}
-                  {activeTab === "smart" && (
-                    isPro ? (
-                      <SmartLayoutPanel
-                        bedId={bedId}
-                        seasonId={seasonId}
-                        userId={userId}
-                        recentPlants={recentPlants}
-                        onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
-                        onClose={() => setActiveTab("plant")}
-                        onHoverAssignment={setHoveredAssignment}
-                      />
-                    ) : (
-                      <div className="text-center py-8 space-y-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: "#F4F4EC" }}>
-                          <Sparkles className="w-6 h-6" style={{ color: "#ADADAA" }} />
-                        </div>
-                        <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
-                        <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                          Build an optimized bed from your plant wishlist. Respects spacing, sun requirements, and companion relations.
-                        </p>
-                        <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
-                          Upgrade to Pro →
-                        </a>
-                      </div>
-                    )
-                  )}
-                  {/* Companions overview */}
-                  {activeTab === "companions" && (
-                    <div className="p-4">
-                      {cells.every(c => c.warnings.length === 0) ? (
-                        <div className="text-center py-8" style={{ color: "#ADADAA" }}>
-                          <p className="text-sm">No companion relationships</p>
-                          <p className="text-xs mt-1">found in this bed</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {cells.filter(c => c.warnings.length > 0 && c.planting).map(c => (
-                            <div key={c.id}>
-                              <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "12px", color: "#111109", marginBottom: "4px" }}>
-                                {c.planting!.plant.name}
-                              </p>
-                              {c.warnings.map((w, i) => (
-                                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "7px", marginBottom: "3px" }}>
-                                  <div style={{
-                                    width: "18px", height: "18px", borderRadius: "50%",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: "9px", flexShrink: 0, marginTop: "1px",
-                                    background: w.type === "BENEFICIAL" ? "#E4F0D4" : "#FDF2E0",
-                                    color: w.type === "BENEFICIAL" ? "#1C3D0A" : "#D4820A",
-                                  }}>
-                                    {w.type === "BENEFICIAL" ? "✓" : "!"}
-                                  </div>
-                                  <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
-                                    {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
-                                  </span>
-                                </div>
-                              ))}
+                  ) : (
+                    <div className="space-y-3">
+                      {cells.filter((c) => c.warnings.length > 0 && c.planting).map((c) => (
+                        <div key={c.id}>
+                          <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "13px", color: "#111109", marginBottom: "6px" }}>
+                            {c.planting!.plant.name}
+                          </p>
+                          {c.warnings.map((w, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "7px", marginBottom: "4px" }}>
+                              <div
+                                style={{
+                                  width: "18px", height: "18px", borderRadius: "50%",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: "9px", flexShrink: 0, marginTop: "1px",
+                                  background: w.type === "BENEFICIAL" ? "#E4F0D4" : "#FDF2E0",
+                                  color: w.type === "BENEFICIAL" ? "#1C3D0A" : "#D4820A",
+                                }}
+                              >
+                                {w.type === "BENEFICIAL" ? "✓" : "!"}
+                              </div>
+                              <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
+                                {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                              </span>
                             </div>
                           ))}
                         </div>
-                      )}
+                      ))}
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {/* SMART MODE */}
+              {activeTab === "smart" && (
+                <div className={isPro ? "p-4" : "p-5"}>
+                  {isPro ? (
+                    <SmartLayoutPanel
+                      bedId={bedId}
+                      seasonId={seasonId}
+                      userId={userId}
+                      recentPlants={recentPlants}
+                      onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
+                      onClose={() => setActiveTab("plant")}
+                      onHoverAssignment={setHoveredAssignment}
+                    />
+                  ) : (
+                    <div className="text-center py-6 space-y-3">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: "#F4F4EC" }}>
+                        <Sparkles className="w-6 h-6" style={{ color: "#ADADAA" }} />
+                      </div>
+                      <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
+                      <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
+                        Build an optimized bed from your plant wishlist. Respects spacing, sun requirements, and companion relations.
+                      </p>
+                      <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
+                        Upgrade to Pro →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SELECT MODE */}
+              {activeTab === "select" && panel.type !== "bulk-picker" && (
+                <div className="p-5 space-y-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "#F0F8E8" }}
+                  >
+                    <CheckSquare className="w-5 h-5" style={{ color: "#1C3D0A" }} />
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>Multi-select</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
+                    Tap empty cells in the bed to select them. Then plant the same crop into all of them at once — useful for filling a row of carrots or onions.
+                  </p>
+                  {selectedCells.size > 0 && (
+                    <p className="text-xs" style={{ color: "#1C3D0A" }}>
+                      <strong>{selectedCells.size}</strong> cell{selectedCells.size === 1 ? "" : "s"} selected. Use the bar under the bed to plant.
+                    </p>
+                  )}
+                </div>
+              )}
+              {activeTab === "select" && panel.type === "bulk-picker" && (
+                <div className="p-4">
+                  <p className="mb-3 text-xs text-[#6B6B5A]">
+                    Pick a plant — it&apos;ll be added to all {panel.cellIds.length} selected cells.
+                  </p>
+                  <PlantPicker
+                    cellIds={panel.cellIds}
+                    seasonId={seasonId}
+                    userId={userId}
+                    cellSizeIn={cellSizeIn}
+                    recentPlants={recentPlants}
+                    onClose={() => {
+                      setPanel({ type: "none" });
+                      setSelectedCells(new Set());
+                      setActiveTab("plant");
+                    }}
+                    onPlanted={(id) => handlePlanted(id)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
