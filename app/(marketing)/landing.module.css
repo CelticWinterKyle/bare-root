@@ -295,8 +295,7 @@
 }
 .heroCanvasHint {
   position: absolute;
-  bottom: 18px; left: 50%;
-  transform: translateX(-50%);
+  bottom: 16px; right: 16px;
   z-index: 3;
   font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 9px;
@@ -317,12 +316,12 @@
   font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 .overlayZone {
-  bottom: 64px;
-  left: -28px;
+  bottom: 24px;
+  left: 24px;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 220px;
+  max-width: calc(100% - 48px);
 }
 .overlayZone .icon {
   width: 36px; height: 36px;
@@ -355,9 +354,9 @@
 }
 .overlayValue em { font-style: italic; color: #1C3D0A; }
 .overlayCompanion {
-  top: 28px;
-  right: -22px;
-  width: 232px;
+  top: 56px;
+  right: 18px;
+  width: min(232px, calc(100% - 36px));
 }
 .overlayCompanionHead {
   display: flex;
@@ -1735,6 +1734,27 @@
   .hero { padding: 50px 20px 50px; }
   .heroTitle { font-size: 48px; }
   .heroLede { font-size: 17px; }
+  .heroCanvas { aspect-ratio: 1 / 1; }
+  .heroCanvasHint { display: none; }
+  .overlayZone {
+    bottom: 16px;
+    left: 16px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .overlayZone .icon {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+  .overlayValue { font-size: 14px; }
+  .overlayCompanion {
+    top: 50px;
+    right: 14px;
+    width: min(190px, calc(100% - 28px));
+    padding: 10px 12px;
+  }
+  .overlayCompanionBody { font-size: 12px; }
   .fieldGuide, .duet, .ledger, .pricing { padding: 70px 20px; }
   .canvasShowcase, .companions, .journal { padding: 80px 0; }
   .canvasShowcaseInner, .journalInner, .companionsInner { padding: 0 20px; }

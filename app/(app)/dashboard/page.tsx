@@ -565,11 +565,25 @@ export default async function DashboardPage() {
                   <div className={styles.weatherZone}>
                     {primaryGarden.usdaZone ? `Zone ${primaryGarden.usdaZone}` : "No zone set"}
                   </div>
-                  <div className={styles.weatherDesc}>Weather unavailable</div>
+                  <div className={styles.weatherDesc}>
+                    {primaryGarden.locationZip ? "Weather refreshing" : "Weather unavailable"}
+                  </div>
                 </div>
               </div>
               <div className={styles.weatherEmpty}>
-                Add a ZIP code in garden settings to see the weather here.
+                {primaryGarden.locationZip ? (
+                  <>We&apos;ll pull the forecast for {primaryGarden.locationZip} on your next visit.</>
+                ) : (
+                  <>
+                    <Link
+                      href={`/garden/${primaryGarden.id}/settings`}
+                      style={{ color: "#A8D870", textDecoration: "underline" }}
+                    >
+                      Add a ZIP code
+                    </Link>{" "}
+                    in garden settings to see your local forecast here.
+                  </>
+                )}
               </div>
             </>
           )}
