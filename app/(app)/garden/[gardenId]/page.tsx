@@ -175,7 +175,7 @@ export default async function GardenPage({
   const btnGhost: React.CSSProperties = { ...btnBase, background: "transparent", color: "#3A3A30", borderColor: "#E4E4DC" };
 
   return (
-    <div>
+    <div className="container-wide">
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div className="flex items-start justify-between gap-4 px-[22px] md:px-8 pt-6 pb-5">

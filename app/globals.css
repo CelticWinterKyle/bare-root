@@ -88,6 +88,13 @@
   --status-harvesting:    #D4820A;
   --status-harvested:     #ADADAA;
   --status-failed:        #7A2A18;
+
+  /* Container widths — two tiers.
+     --container-narrow: editorial / marketing / prose. Hard editorial cap.
+     --container-wide:   spatial app views (garden canvas, bed editor, grids)
+                         that benefit from breathing room without going full-bleed. */
+  --container-narrow: 1200px;
+  --container-wide:   1360px;
 }
 
 @layer base {
@@ -114,6 +121,20 @@
   }
   .font-mono {
     font-family: var(--font-ibm-plex-mono), monospace;
+  }
+
+  /* Container helpers — pair with horizontal padding utilities at the call site. */
+  .container-narrow {
+    width: 100%;
+    max-width: var(--container-narrow);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .container-wide {
+    width: 100%;
+    max-width: var(--container-wide);
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Graph paper for bed grid */

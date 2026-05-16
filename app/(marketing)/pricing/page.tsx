@@ -50,7 +50,7 @@ function Cell({ value }: { value: boolean | string }) {
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-[#FAF7F2]">
-      <nav className="flex items-center justify-between px-8 py-6 max-w-5xl mx-auto">
+      <nav className="flex items-center justify-between px-8 py-6 container-narrow">
         <Link href="/" className="font-display text-2xl font-semibold text-[#1C3D0A]">Bare Root</Link>
         <div className="flex items-center gap-4">
           <Link href="/sign-in" className="text-sm text-[#6B6B5A] hover:text-[#111109] transition-colors">Sign in</Link>
@@ -58,13 +58,13 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <section className="max-w-5xl mx-auto px-6 pt-16 pb-8 text-center">
+      <section className="container-narrow px-6 pt-16 pb-8 text-center">
         <h1 className="font-display text-4xl font-semibold text-[#111109] mb-3">Simple, honest pricing</h1>
         <p className="text-[#6B6B5A] text-lg">Free to start. Upgrade when you want more.</p>
       </section>
 
       {/* Plan cards */}
-      <section className="max-w-3xl mx-auto px-6 pb-16">
+      <section className="container-narrow px-6 pb-16">
         <div className="grid gap-4 sm:grid-cols-2 mb-16">
           {/* Free */}
           <div className="bg-white border border-[#E4E4DC] rounded-2xl p-6">

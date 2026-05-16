@@ -233,7 +233,7 @@ export default async function BedPage({
   const bedNameRest = bedNameParts.slice(1).join(" ");
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="container-wide w-full flex flex-col">
       {/* Header — grid-header-clean */}
       <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
         {/* Back row */}

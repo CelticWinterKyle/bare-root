@@ -23,6 +23,12 @@
   --ghost: #ADADAA;
   --rule: #E4E4DC;
 
+  /* Editorial bleed: backgrounds run full-width while content centers at
+     the narrow container. The padding adapts to viewport width — under
+     1244px (1200 + 44 default gutter) it stays at 22px, then grows to
+     keep content centered on the 1200-wide track. */
+  --x-pad: max(22px, calc((100vw - var(--container-narrow)) / 2));
+
   background: var(--white);
   color: var(--ink);
   font-family: var(--font-body);
@@ -97,7 +103,7 @@
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
   border-bottom: 1px solid rgba(228,228,220,0.7);
-  padding: 16px 32px;
+  padding: 16px var(--x-pad);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -135,7 +141,7 @@
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
-  padding: 48px 32px 36px;
+  padding: 48px var(--x-pad) 36px;
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 48px;
@@ -347,7 +353,7 @@
 .sectionAction:hover { color: var(--deep); }
 
 /* ── Today's tasks ──────────────────────────────────────────────────────── */
-.todaySection { padding: 48px 32px 0; }
+.todaySection { padding: 48px var(--x-pad) 0; }
 
 .taskRow {
   display: grid;
@@ -456,7 +462,7 @@
 
 /* ── Dashboard grid (garden + sidebar widgets) ──────────────────────────── */
 .dashboardGrid {
-  padding: 48px 32px;
+  padding: 48px var(--x-pad);
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 28px;
@@ -982,7 +988,7 @@
 /* ── Journal ────────────────────────────────────────────────────────────── */
 .journal {
   background: var(--paper);
-  padding: 56px 32px 64px;
+  padding: 56px var(--x-pad) 64px;
   border-top: 1px solid var(--rule);
   position: relative;
   overflow: hidden;
@@ -1113,7 +1119,7 @@
 
 /* ── Suggestion strip ───────────────────────────────────────────────────── */
 .suggest {
-  padding: 48px 32px 64px;
+  padding: 48px var(--x-pad) 64px;
   border-top: 1px solid var(--rule);
 }
 .suggestCard {
@@ -1215,7 +1221,7 @@
 
 /* ── Empty-garden state ─────────────────────────────────────────────────── */
 .emptyState {
-  padding: 80px 32px;
+  padding: 80px var(--x-pad);
   display: flex;
   justify-content: center;
 }
@@ -1230,7 +1236,7 @@
 }
 .emptyHead {
   background: var(--deep);
-  padding: 36px 32px 28px;
+  padding: 36px var(--x-pad) 28px;
   position: relative;
   overflow: hidden;
   color: var(--white);
@@ -1263,7 +1269,7 @@
   font-variation-settings: 'opsz' 18;
 }
 .emptyBody {
-  padding: 24px 32px 32px;
+  padding: 24px var(--x-pad) 32px;
   background: var(--surface);
 }
 .emptyCta {

@@ -57,18 +57,20 @@ export default async function InventoryPage() {
   }));
 
   return (
-    <SeedInventoryClient
-      userId={user.id}
-      inventory={inventory.map((i) => ({
-        id: i.id,
-        plantId: i.plantId,
-        plantName: i.plant.name,
-        variety: i.variety,
-        quantity: i.quantity,
-        unit: i.unit,
-        notes: i.notes,
-      }))}
-      shoppingList={shoppingList}
-    />
+    <div className="container-narrow">
+      <SeedInventoryClient
+        userId={user.id}
+        inventory={inventory.map((i) => ({
+          id: i.id,
+          plantId: i.plantId,
+          plantName: i.plant.name,
+          variety: i.variety,
+          quantity: i.quantity,
+          unit: i.unit,
+          notes: i.notes,
+        }))}
+        shoppingList={shoppingList}
+      />
+    </div>
   );
 }

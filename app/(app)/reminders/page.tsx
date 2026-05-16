@@ -29,21 +29,23 @@ export default async function RemindersPage() {
   ]);
 
   return (
-    <RemindersClient
-      gardens={gardens}
-      reminders={reminders.map((r) => ({
-        id: r.id,
-        type: r.type,
-        title: r.title,
-        body: r.body,
-        scheduledAt: r.scheduledAt.toISOString(),
-        sentAt: r.sentAt?.toISOString() ?? null,
-        plantName: r.planting?.plant.name ?? null,
-        bedName: r.planting?.cell.bed.name ?? null,
-        gardenId: r.planting?.cell.bed.gardenId ?? r.garden?.id ?? null,
-        bedId: r.planting?.cell.bed.id ?? null,
-        gardenName: r.garden?.name ?? null,
-      }))}
-    />
+    <div className="container-narrow">
+      <RemindersClient
+        gardens={gardens}
+        reminders={reminders.map((r) => ({
+          id: r.id,
+          type: r.type,
+          title: r.title,
+          body: r.body,
+          scheduledAt: r.scheduledAt.toISOString(),
+          sentAt: r.sentAt?.toISOString() ?? null,
+          plantName: r.planting?.plant.name ?? null,
+          bedName: r.planting?.cell.bed.name ?? null,
+          gardenId: r.planting?.cell.bed.gardenId ?? r.garden?.id ?? null,
+          bedId: r.planting?.cell.bed.id ?? null,
+          gardenName: r.garden?.name ?? null,
+        }))}
+      />
+    </div>
   );
 }

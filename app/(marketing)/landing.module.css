@@ -115,7 +115,7 @@
   border-bottom: 1px solid rgba(228,228,220,0.6);
 }
 .navInner {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 18px 32px;
   display: flex;
@@ -181,7 +181,7 @@
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 100px 32px 80px;
   display: grid;
@@ -393,7 +393,7 @@
 
 /* ── Scroll cue ─────────────────────────────────────────────────────────── */
 .scrollCue {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 0 32px 80px;
   display: flex;
@@ -415,7 +415,7 @@
 
 /* ── Field guide intro ──────────────────────────────────────────────────── */
 .fieldGuide {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 100px 32px;
   display: grid;
@@ -517,7 +517,7 @@
   user-select: none;
 }
 .canvasShowcaseInner {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
@@ -822,7 +822,7 @@
 
 /* ── Duet ───────────────────────────────────────────────────────────────── */
 .duet {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 120px 32px;
   display: grid;
@@ -1079,7 +1079,7 @@
   background: radial-gradient(circle, rgba(212,130,10,0.12) 0%, transparent 60%);
 }
 .companionsInner {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
@@ -1267,7 +1267,7 @@
   border-bottom: 1px solid var(--rule);
 }
 .journalInner {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 0 32px;
 }
@@ -1370,7 +1370,7 @@
 
 /* ── Ledger ─────────────────────────────────────────────────────────────── */
 .ledger {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 120px 32px;
 }
@@ -1441,7 +1441,7 @@
 
 /* ── Pricing ────────────────────────────────────────────────────────────── */
 .pricing {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding: 120px 32px;
 }
@@ -1663,7 +1663,7 @@
   border-top: 1px solid var(--rule);
 }
 .footerInner {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
@@ -1693,7 +1693,7 @@
 }
 .footerCol a:hover { color: #1C3D0A; }
 .footerBottom {
-  max-width: 1200px;
+  max-width: var(--container-narrow);
   margin: 0 auto;
   padding-top: 28px;
   border-top: 1px solid var(--rule);

@@ -194,7 +194,7 @@ export default async function CalendarPage() {
     : "/garden";
 
   return (
-    <div>
+    <div className="container-narrow">
       {/* Page header */}
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
