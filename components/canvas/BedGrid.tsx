@@ -145,6 +145,8 @@ function CellTile({
   isHoveredByPlanner,
   hasHarmful,
   hasBeneficial,
+  mergeRight,
+  mergeBottom,
   onClick,
 }: {
   cell: CellData;
@@ -163,6 +165,12 @@ function CellTile({
   isHoveredByPlanner: boolean;
   hasHarmful: boolean;
   hasBeneficial: boolean;
+  /** True when the cell to the right shares this planting. Used to make the
+   *  inter-footprint border invisible so a multi-cell plant reads as one
+   *  continuous tinted block instead of N separate cells. */
+  mergeRight: boolean;
+  /** Same idea for the cell below. */
+  mergeBottom: boolean;
   onClick: () => void;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
@@ -189,24 +197,40 @@ function CellTile({
   }
 
   const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
-  const labelSize = Math.max(7, Math.min(10, cellPx * 0.18));
   const badgePx = 13;
+  const isOccupied = isAnchor || isFootprintOnly;
+  const category = cell.planting?.plant.category ?? "OTHER";
+  // Planted cells render as a semi-opaque category-colored block. The
+  // borders between cells of the same planting are made invisible (via
+  // mergeRight / mergeBottom) so a 2×2 tomato reads as one continuous
+  // tinted block, with the plant name italic on the anchor cell only.
+  const footprintTint = (() => {
+    if (!isOccupied) return null;
+    const base = CATEGORY_COLOR[category] ?? "#A07640";
+    // Convert to rgba with opacity. Quick parse of #RRGGBB.
+    const hex = base.replace("#", "");
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},0.82)`;
+  })();
 
-  // Empty cells are translucent paper so the bed's soil texture shows
-  // through. Planted cells use the existing status tint. Drop-hover
-  // highlights sage to confirm a valid drop target.
+  // Empty cells: translucent paper. Preview: pale sage. Drop-hover: sage.
+  // Planted cells: category-tinted block (replaces the old disc).
   const cellBg = sunMode
     ? SUN_BG[sun]
-    : cellStyle
-    ? cellStyle.bg
+    : footprintTint
+    ? footprintTint
     : preview
     ? "rgba(228,240,212,0.6)"
     : isOver
     ? "rgba(168,216,112,0.35)"
     : "rgba(253,253,248,0.55)";
 
-  const cellBorder = sunMode
+  const baseBorder = sunMode
     ? "rgba(28,61,10,0.1)"
+    : isOccupied
+    ? "rgba(253,253,248,0.22)"
     : cellStyle
     ? cellStyle.border
     : preview
@@ -221,27 +245,41 @@ function CellTile({
     ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
     : isOver
     ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
-    : isAnchor
-    ? "0 1px 3px rgba(28,61,10,0.08)"
+    : isOccupied
+    ? "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(253,253,248,0.18)"
     : "none";
 
   const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
+
+  // Footprints merge their internal borders so the block reads as one
+  // continuous tinted rectangle. Corners stay square between merged cells
+  // and rounded at the outer edges of the footprint.
+  const borderTopLeftRadius = !isOccupied ? 8 : 8;
+  const borderTopRightRadius = !isOccupied ? 8 : mergeRight ? 0 : 8;
+  const borderBottomRightRadius = !isOccupied ? 8 : (mergeRight || mergeBottom) ? 0 : 8;
+  const borderBottomLeftRadius = !isOccupied ? 8 : mergeBottom ? 0 : 8;
 
   return (
     <div
       ref={setRef}
       {...dragProps}
       onClick={onClick}
-      className={`relative flex items-end justify-center select-none transition-all duration-150 ${
+      className={`relative flex items-center justify-center select-none transition-all duration-150 ${
         isNew ? "scale-110 z-10" : "scale-100"
       }`}
       style={{
         width: cellPx,
         height: cellPx,
         background: cellBg,
-        border: `1.5px solid ${cellBorder}`,
-        borderRadius: "8px",
+        borderTop: `1.5px solid ${baseBorder}`,
+        borderLeft: `1.5px solid ${baseBorder}`,
+        borderRight: mergeRight ? "none" : `1.5px solid ${baseBorder}`,
+        borderBottom: mergeBottom ? "none" : `1.5px solid ${baseBorder}`,
         borderStyle: preview && !isAnchor ? "dashed" : "solid",
+        borderTopLeftRadius,
+        borderTopRightRadius,
+        borderBottomRightRadius,
+        borderBottomLeftRadius,
         boxShadow: cellBoxShadow,
         opacity: drag.isDragging ? 0.35 : 1,
         cursor: isAnchor ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
@@ -268,7 +306,7 @@ function CellTile({
           </span>
         </span>
       )}
-      {!isAnchor && !isFootprintOnly && !preview && !sunMode && (
+      {!isOccupied && !preview && !sunMode && (
         <span
           className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none"
           style={{ fontSize: Math.max(14, cellPx * 0.32), color: "rgba(168,216,112,0.45)" }}
@@ -276,96 +314,76 @@ function CellTile({
           +
         </span>
       )}
-      {/* Category-colored disc — adds the rich visual weight that matches
-          the 2D garden view and dashboard preview. Anchor cell shows a
-          bold disc; footprint cells (no anchor planting) show a softer
-          one with the same color. */}
-      {(isAnchor || isFootprintOnly) && !sunMode && (
-        <div
-          aria-hidden
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        >
-          <div
-            style={{
-              width: cellPx * 0.55,
-              height: cellPx * 0.55,
-              borderRadius: "50%",
-              background:
-                CATEGORY_COLOR[cell.planting?.plant.category ?? "OTHER"] ?? "#A07640",
-              opacity: isAnchor ? 0.85 : 0.45,
-              boxShadow: isAnchor ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
-            }}
-          />
-        </div>
-      )}
-      {isAnchor && cell.planting && !sunMode && !dense && (
-        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-1 px-0.5 gap-0.5 pointer-events-none">
-          <div
-            style={{
-              width: "5px",
-              height: "5px",
-              borderRadius: "50%",
-              background: STATUS_DOT_COLOR[cell.planting.status] ?? "#ADADAA",
-              flexShrink: 0,
-              boxShadow: "0 0 0 1.5px rgba(253,253,248,0.85)",
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              color: "#1C3D0A",
-              fontSize: labelSize,
-              lineHeight: 1.1,
-              textAlign: "center",
-              textShadow: "0 1px 0 rgba(253,253,248,0.7)",
-            }}
-          >
-            {cell.planting.plant.name.split(" ")[0]}
-          </span>
-        </div>
-      )}
-      {isAnchor && cell.planting && !sunMode && dense && (
+      {/* Anchor cell shows the plant name italic, centered, in paper-white
+          over the tint. Footprint cells inherit the tint with no label
+          (the label belongs to the anchor only). Matches the v5a mockup. */}
+      {isAnchor && cell.planting && !sunMode && (
         <span
-          className="absolute inset-0 flex items-center justify-center font-bold select-none pointer-events-none"
+          className="pointer-events-none px-1 text-center"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: Math.max(7, cellPx * 0.28),
-            color: "#3A3A30",
+            fontStyle: "italic",
+            fontWeight: 700,
+            fontSize: Math.max(9, Math.min(14, cellPx * 0.28)),
+            color: "#FDFDF8",
+            letterSpacing: "-0.005em",
+            textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 6px rgba(0,0,0,0.25)",
+            fontVariationSettings: "'opsz' 14",
+            lineHeight: 1.05,
+            zIndex: 2,
           }}
-          title={cell.planting.plant.name}
         >
-          {cell.planting.plant.name.slice(0, Math.max(1, Math.floor(cellPx / 14)))}
+          {cell.planting.plant.name.split(" ")[0]}
         </span>
       )}
-      {preview && !isAnchor && !sunMode && !dense && (
-        <div className="absolute inset-x-0 bottom-0 pb-1 px-0.5 pointer-events-none">
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontStyle: "italic",
-              color: "#1C3D0A",
-              fontSize: Math.max(8, labelSize - 1),
-              textAlign: "center",
-              display: "block",
-              lineHeight: 1.1,
-            }}
-          >
-            {preview.plantName.split(" ")[0]}
-          </span>
-        </div>
+      {/* Status indicator dot — small, top-right of anchor cell so the
+          italic name stays clean and centered. */}
+      {isAnchor && cell.planting && !sunMode && (
+        <span
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            top: 4,
+            right: 4,
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: STATUS_DOT_COLOR[cell.planting.status] ?? "#ADADAA",
+            boxShadow: "0 0 0 1.5px rgba(253,253,248,0.7)",
+          }}
+        />
       )}
+      {/* Preview from smart layout — italic name centered in the empty cell */}
+      {preview && !isAnchor && !sunMode && (
+        <span
+          className="pointer-events-none px-1 text-center"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontWeight: 600,
+            fontSize: Math.max(8, Math.min(12, cellPx * 0.24)),
+            color: "#1C3D0A",
+            lineHeight: 1.05,
+          }}
+        >
+          {preview.plantName.split(" ")[0]}
+        </span>
+      )}
+      {/* Companion-warning corner badge — only on anchor cells.
+          Positioned bottom-right so it doesn't fight the status dot. */}
       {!sunMode && isAnchor && (hasHarmful || hasBeneficial) && (
         <span
-          className="absolute top-1 right-1 rounded-full ring-[1.5px] ring-white shadow-sm pointer-events-none"
+          className="absolute rounded-full ring-[1.5px] ring-white shadow-sm pointer-events-none"
           style={{
-            width: badgePx,
-            height: badgePx,
+            bottom: 3,
+            right: 3,
+            width: badgePx - 2,
+            height: badgePx - 2,
             background: hasHarmful ? "#7A2A18" : "#3A6B20",
           }}
         />
       )}
-      {!sunMode && (
+      {!sunMode && !isOccupied && (
         <div
           className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-100 pointer-events-none"
           style={{ boxShadow: "inset 0 0 0 2px rgba(28,61,10,0.35)", borderRadius: "8px" }}
@@ -405,9 +423,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     router.replace(pathname, { scroll: false });
   }
 
-  // Rotation is now manual-only via the toolbar button — beds render in
-  // their stored orientation (gridCols × gridRows) so a 2×8 bed reads as
-  // 2 wide × 8 tall, matching reality and the dashboard preview.
+  // Auto-rotate tall beds on desktop so the long axis runs horizontal —
+  // a 2×8 bed renders as 8 wide × 2 tall, filling the canvas instead of
+  // floating as a sliver in dead space. Users can still flip manually
+  // via the rotate button. Mobile keeps the stored orientation since
+  // rotating a tall bed sideways would overflow a phone's narrow width.
   const [rotated, setRotated] = useState(false);
   const [zoom, setZoom] = useState(1);
 
@@ -455,6 +475,12 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       setIsMobile(mobile);
     };
     update();
+    // On desktop, auto-rotate tall beds (more rows than cols) to lay the
+    // long axis horizontal — the v5a design language. Only fires once on
+    // mount so a later manual flip via the rotate button sticks.
+    if (typeof window !== "undefined" && window.innerWidth >= 768 && gridRows > gridCols) {
+      setRotated(true);
+    }
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -475,12 +501,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   //   to its content, measuring viewport width creates a feedback loop
   //   (cell size depends on width which depends on cell size). Height target
   //   sidesteps that — the bed grows to whatever the viewport height allows.
-  const rowGaps = (displayRows - 1) * 4;
-  const colGaps = (displayCols - 1) * 4;
+  // Grid gap is 0 (cells share borders so multi-cell footprints can merge
+  // into one tinted block without 4px gaps cutting through them).
+  const rowGaps = 0;
+  const colGaps = 0;
   const fitByH = Math.floor((maxViewportH - FRAME_PAD - rowGaps) / displayRows);
   const mobileFitByW = Math.floor((vpW - 32 - colGaps) / displayCols);
   // 52 = grid padding 28px (14px top + 14px bottom) + flex centering py-3 (24px)
-  const mobileFitByH = Math.floor((mobileViewportH - 52 - (displayRows - 1) * 4) / displayRows);
+  const mobileFitByH = Math.floor((mobileViewportH - 52) / displayRows);
 
   // Desktop cell size: keep cells in the 32–56px range so they stay
   // click-friendly even on dense (16-row) beds. Below 32 the cells
@@ -1032,48 +1060,81 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     className="grid"
                     style={{
                       gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
-                      gap: "4px",
+                      gap: 0,
                       padding: "14px 16px",
                       background: "transparent",
                     }}
                   >
-                    {displayCells.map((cell) => {
-                      const planting = cell.planting;
-                      const footprintStatus = cell.footprint?.status ?? null;
-                      const effectiveStatus = planting?.status ?? footprintStatus;
-                      const isFootprintOnly = !planting && !!footprintStatus;
-                      const isSelected =
-                        (panel.type === "picker" && panel.cellId === cell.id) ||
-                        (panel.type === "detail" && panel.cell.id === cell.id);
-                      const preview = previewAssignments.find(
-                        (a) => a.row === cell.row && a.col === cell.col
-                      );
-                      return (
-                        <CellTile
-                          key={cell.id}
-                          cell={cell}
-                          cellPx={cellPx}
-                          dense={dense}
-                          effectiveStatus={effectiveStatus}
-                          isAnchor={!!planting}
-                          isFootprintOnly={isFootprintOnly}
-                          sunMode={sunMode}
-                          sun={effectiveSun(cell)}
-                          selectMode={selectMode}
-                          isSelectedForBulk={selectedCells.has(cell.id)}
-                          preview={preview}
-                          isSelected={isSelected}
-                          isNew={justPlanted.has(cell.id)}
-                          isHoveredByPlanner={
-                            hoveredAssignment?.row === cell.row &&
-                            hoveredAssignment?.col === cell.col
-                          }
-                          hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
-                          hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
-                          onClick={() => handleCellClick(cell)}
-                        />
-                      );
-                    })}
+                    {(() => {
+                      // Build a row,col → plantingId lookup so each cell
+                      // can ask its visual neighbors "are you part of the
+                      // same planting as me?" — used to merge interior
+                      // borders of a multi-cell footprint into one block.
+                      const ownerAt = new Map<string, string | null>();
+                      for (const c of cells) {
+                        const pid =
+                          c.planting?.id ?? c.footprint?.plantingId ?? null;
+                        ownerAt.set(`${c.row},${c.col}`, pid);
+                      }
+                      return displayCells.map((cell) => {
+                        const planting = cell.planting;
+                        const footprintStatus = cell.footprint?.status ?? null;
+                        const effectiveStatus = planting?.status ?? footprintStatus;
+                        const isFootprintOnly = !planting && !!footprintStatus;
+                        const isSelected =
+                          (panel.type === "picker" && panel.cellId === cell.id) ||
+                          (panel.type === "detail" && panel.cell.id === cell.id);
+                        const preview = previewAssignments.find(
+                          (a) => a.row === cell.row && a.col === cell.col
+                        );
+
+                        const ownPid =
+                          planting?.id ?? cell.footprint?.plantingId ?? null;
+
+                        // Translate "visual right / visual below" into a
+                        // data (row,col) lookup that respects rotation.
+                        // Unrotated: right = col+1, below = row+1.
+                        // Rotated: right = row+1, below = col+1.
+                        const rightKey = rotated
+                          ? `${cell.row + 1},${cell.col}`
+                          : `${cell.row},${cell.col + 1}`;
+                        const belowKey = rotated
+                          ? `${cell.row},${cell.col + 1}`
+                          : `${cell.row + 1},${cell.col}`;
+                        const mergeRight =
+                          !!ownPid && ownerAt.get(rightKey) === ownPid;
+                        const mergeBottom =
+                          !!ownPid && ownerAt.get(belowKey) === ownPid;
+
+                        return (
+                          <CellTile
+                            key={cell.id}
+                            cell={cell}
+                            cellPx={cellPx}
+                            dense={dense}
+                            effectiveStatus={effectiveStatus}
+                            isAnchor={!!planting}
+                            isFootprintOnly={isFootprintOnly}
+                            sunMode={sunMode}
+                            sun={effectiveSun(cell)}
+                            selectMode={selectMode}
+                            isSelectedForBulk={selectedCells.has(cell.id)}
+                            preview={preview}
+                            isSelected={isSelected}
+                            isNew={justPlanted.has(cell.id)}
+                            isHoveredByPlanner={
+                              hoveredAssignment?.row === cell.row &&
+                              hoveredAssignment?.col === cell.col
+                            }
+                            hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
+                            hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
+                            mergeRight={mergeRight}
+                            mergeBottom={mergeBottom}
+                            onClick={() => handleCellClick(cell)}
+                          />
+                        );
+                      });
+                    })()}
                   </div>
               </div>
             </div>
