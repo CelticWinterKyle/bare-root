@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
 import { useDraggable } from "@dnd-kit/core";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
@@ -87,12 +86,28 @@ function DraggablePlantCard({
         }}
       >
         {plant.imageUrl ? (
-          <Image
+          // Plain <img> — bypass Next's image optimizer. The Wikipedia /
+          // Perenual URLs we store in PlantLibrary.imageUrl sometimes 404
+          // through Next's /_next/image proxy (rate limits, content-type
+          // sniffing) even when the URL loads fine in a browser tab. The
+          // dashboard polaroids hit the same issue. Plain <img> sidesteps
+          // it — slight bytes win for the optimizer, big reliability win.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={plant.imageUrl}
-            alt={plant.name}
-            fill
-            sizes="36px"
-            className="object-cover"
+            alt=""
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              // Hide the broken-image icon when the src 404s; the parent
+              // background reveals the green fallback well enough.
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
           />
         ) : (
           <span style={{ fontSize: 18 }}>🌱</span>
