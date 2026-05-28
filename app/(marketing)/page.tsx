@@ -247,14 +247,14 @@ const COMPANIONS = [
   { wide: true, label: "Top pairing", good: true, pair: <><em>Tomatoes</em> + Basil</>, note: "Repels hornworms, masks scent from pests, and improves flavor of nearby fruit. Plant within the same square foot." },
   { label: "Beneficial", good: true, pair: <><em>Carrots</em> + Onions</>, note: "Onion smell deters carrot fly." },
   { label: "Beneficial", good: true, pair: <><em>Peppers</em> + Marigold</>, note: "Attracts pollinators, repels aphids." },
-  { label: "Keep apart", good: false, pair: <><em>Fennel</em> + most things</>, note: "Allelopathic — secretes a chemical that inhibits growth in neighbors." },
-  { label: "Keep apart", good: false, pair: <><em>Beans</em> + Onions</>, note: "Onions stunt bean growth — plant on opposite ends of the bed." },
+  { label: "Keep apart", good: false, pair: <><em>Fennel</em> + most things</>, note: "Allelopathic: secretes a chemical that inhibits growth in neighbors." },
+  { label: "Keep apart", good: false, pair: <><em>Beans</em> + Onions</>, note: "Onions stunt bean growth. Plant on opposite ends of the bed." },
 ];
 
 // Feature catalog rendered like a ledger.
 const LEDGER = [
   { num: "01", title: <>Visual <em>bed planner</em></>, desc: "Top-down canvas. Drag plants. Multi-cell footprints.", tier: "Free" },
-  { num: "02", title: <><em>Climate</em>-aware calendar</>, desc: "Personalized to your zip — frost dates, start-seed weeks, harvest windows.", tier: "Pro" },
+  { num: "02", title: <><em>Climate</em>-aware calendar</>, desc: "Personalized to your zip: frost dates, start-seed weeks, harvest windows.", tier: "Pro" },
   { num: "03", title: <>Companion <em>science</em></>, desc: "Built-in warnings, beneficial pairings, crop rotation history.", tier: "Free" },
   { num: "04", title: <>AI <em>layout planner</em></>, desc: "Hand it your wishlist; it builds an optimized bed in seconds.", tier: "Pro" },
   { num: "05", title: <>Harvest <em>logbook</em></>, desc: "Photos, weights, ratings. Season history that informs next year.", tier: "Pro" },
@@ -300,11 +300,11 @@ export default async function LandingPage() {
           </h1>
           <p className={styles.heroLede}>
             A visual planner that knows your climate, your beds, and what grows
-            well together — built for the gardener who&apos;s tired of guessing.
+            well together, built for the gardener who&apos;s tired of guessing.
           </p>
           <div className={styles.heroCta}>
             <Link href="/sign-up" className={`${styles.btn} ${styles.btnPrimary}`}>
-              Start planning — free
+              Start planning for free
               <span className={styles.arrow}>→</span>
             </Link>
             <Link href="/pricing" className={`${styles.btn} ${styles.btnGhost}`}>See pricing</Link>
@@ -319,7 +319,7 @@ export default async function LandingPage() {
         </div>
 
         <div className={styles.heroCanvas}>
-          <div className={styles.heroCanvasPill}>Garden Canvas — Interactive</div>
+          <div className={styles.heroCanvasPill}>Garden Canvas · Interactive</div>
           <div className={styles.heroCanvasHint}>Drag to rearrange · scroll to zoom</div>
           <GardenIsoSvg />
         </div>
@@ -348,12 +348,12 @@ export default async function LandingPage() {
           <p>
             So we built something that looks like your garden. Beds you can
             see from above. Plants that take up the right amount of space. A
-            calendar that knows when YOUR zip code&apos;s last frost is — not the
+            calendar that knows when YOUR zip code&apos;s last frost is, not the
             generic one printed on a seed packet from someone else&apos;s climate.
           </p>
           <div className={styles.signature}>
             Built for gardeners
-            <span className={styles.author}>— Kyle &amp; Robyn,</span>
+            <span className={styles.author}>Kyle &amp; Robyn,</span>
             <span className={styles.signatureRest}> in their backyard in 7b.</span>
           </div>
         </div>
@@ -367,7 +367,7 @@ export default async function LandingPage() {
             <h2>Drag, drop, and <em>actually see</em> your garden.</h2>
             <p>
               Top-down beds with real proportions. Plants take the room they
-              actually need — a tomato claims four cells, lettuce one. Tap to
+              actually need: a tomato claims four cells, lettuce one. Tap to
               plant, hold to move. Mistakes are cheap.
             </p>
           </div>
@@ -422,19 +422,19 @@ export default async function LandingPage() {
                 <div className={styles.bedSideBody}>
                   <div className={styles.bedSideRow}>
                     <div className={styles.bedSideRowIcon}>✓</div>
-                    <div className={styles.bedSideRowText}><strong>Basil</strong> — pest deterrent, improves flavor of nearby fruit.</div>
+                    <div className={styles.bedSideRowText}><strong>Basil</strong>: pest deterrent, improves flavor of nearby fruit.</div>
                   </div>
                   <div className={styles.bedSideRow}>
                     <div className={styles.bedSideRowIcon}>✓</div>
-                    <div className={styles.bedSideRowText}><strong>Marigold</strong> — repels nematodes and aphids.</div>
+                    <div className={styles.bedSideRowText}><strong>Marigold</strong>: repels nematodes and aphids.</div>
                   </div>
                   <div className={styles.bedSideRow}>
                     <div className={`${styles.bedSideRowIcon} ${styles.bedSideRowIconWarn}`}>!</div>
-                    <div className={styles.bedSideRowText}><strong>Fennel</strong> — keep at least 3 ft away. Inhibits growth.</div>
+                    <div className={styles.bedSideRowText}><strong>Fennel</strong>: keep at least 3 ft away. Inhibits growth.</div>
                   </div>
                   <div className={styles.bedSideRow}>
                     <div className={styles.bedSideRowIcon}>✓</div>
-                    <div className={styles.bedSideRowText}><strong>Carrot</strong> — beneficial roots loosen soil.</div>
+                    <div className={styles.bedSideRowText}><strong>Carrot</strong>: beneficial roots loosen soil.</div>
                   </div>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default async function LandingPage() {
           <h3>Knows your <em>zip code</em>. Tells you when to plant.</h3>
           <p>
             Your USDA hardiness zone. Your last and first frost dates. A
-            calendar built around YOUR climate — not someone else&apos;s. Start-seeds
+            calendar built around YOUR climate, not someone else&apos;s. Start-seeds
             reminders fire at the right week. Frost alerts come before the
             cold front.
           </p>
@@ -564,7 +564,7 @@ export default async function LandingPage() {
         <div className={styles.companionsInner}>
           <div className={styles.companionsText}>
             <span className={styles.eyebrow}>§ 05 · Companion science</span>
-            <h2>What grows well together — <em>and what won&apos;t</em>.</h2>
+            <h2>What grows well together, <em>and what won&apos;t</em>.</h2>
             <p>
               Centuries of gardener wisdom plus modern horticultural research,
               baked into every cell you tap. The AI layout planner reads your
@@ -676,7 +676,7 @@ export default async function LandingPage() {
               <li>20 photo uploads</li>
             </ul>
             <Link href="/sign-up" className={styles.planCta}>Get started free</Link>
-            <div className={styles.planFine}>Free forever — really</div>
+            <div className={styles.planFine}>Free forever, really</div>
           </div>
 
           <div className={`${styles.plan} ${styles.planPro}`}>
@@ -707,7 +707,7 @@ export default async function LandingPage() {
           <h2>The garden is <em>waiting</em>.</h2>
           <p>Plan it before the ground thaws.</p>
           <Link href="/sign-up" className={`${styles.btn} ${styles.btnPrimary} ${styles.finalCta}`}>
-            Start planning — free
+            Start planning for free
             <span className={styles.arrow}>→</span>
           </Link>
         </div>
