@@ -184,7 +184,7 @@ export default async function GardenPage({
   return (
     <div className="container-wide">
       {locked && (
-        <div style={{ background: "#FFF8E7", borderBottom: "1px solid #F0D8A0", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
+        <div style={{ background: "#FFF8E7", borderBottom: "1px solid #FDE68A", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
           This garden is read-only because it&apos;s over your free plan limit.{" "}
           <Link href="/settings/billing" style={{ textDecoration: "underline", color: "#7A4A0A" }}>Upgrade to Pro</Link>{" "}
           to edit it, or delete extras to get back under the limit.

@@ -68,11 +68,12 @@ export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
       <div className="text-center py-16 text-[#ADADAA]">
         <CalendarClock className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
         <p className="text-sm text-[#6B6B5A]">
-          You have {activePlantingCount} planting{activePlantingCount === 1 ? "" : "s"}, but no calendar events yet.
+          You have {activePlantingCount} planting{activePlantingCount === 1 ? "" : "s"}, but no upcoming events.
         </p>
         <p className="text-xs mt-2 max-w-sm mx-auto leading-relaxed">
-          Set a planted date on each planting (from the bed view) to fill in
-          start-seed, transplant, and estimated harvest dates here.
+          Set your garden&apos;s frost dates in garden settings so start-seed and
+          transplant dates can be calculated, and add a planted date to each
+          planting for harvest estimates.
         </p>
       </div>
     );
