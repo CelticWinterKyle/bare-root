@@ -4,6 +4,8 @@ import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Star, Leaf, TrendingUp } from "lucide-react";
+import { estimateYieldLbs } from "@/lib/services/yield";
+import type { PlantCategory } from "@/lib/generated/prisma/enums";
 
 export default async function SeasonSummaryPage({
   params,
@@ -20,8 +22,9 @@ export default async function SeasonSummaryPage({
       plantings: {
         include: {
           plant: { select: { id: true, name: true, category: true } },
-          cell: { include: { bed: { select: { name: true } } } },
+          cell: { include: { bed: { select: { name: true, cellSizeIn: true } } } },
           harvestLogs: true,
+          _count: { select: { cells: true } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -38,6 +41,7 @@ export default async function SeasonSummaryPage({
     beds: string[];
     totalHarvest: number;
     totalsByUnit: Record<string, number>;
+    estYieldLbs: number;
     logCount: number;
     rating: number | null;
     growAgain: boolean | null;
@@ -55,6 +59,7 @@ export default async function SeasonSummaryPage({
         beds: [],
         totalHarvest: 0,
         totalsByUnit: {},
+        estYieldLbs: 0,
         logCount: 0,
         rating: p.rating,
         growAgain: p.growAgain,
@@ -63,6 +68,8 @@ export default async function SeasonSummaryPage({
     }
     const bed = p.cell.bed.name;
     if (!byPlant[pid].beds.includes(bed)) byPlant[pid].beds.push(bed);
+    const est = estimateYieldLbs(p.plant.category as PlantCategory, p._count.cells || 1, p.cell.bed.cellSizeIn);
+    if (est != null) byPlant[pid].estYieldLbs += est;
     for (const log of p.harvestLogs) {
       byPlant[pid].totalHarvest += log.quantity;
       byPlant[pid].totalsByUnit[log.unit] = (byPlant[pid].totalsByUnit[log.unit] ?? 0) + log.quantity;
@@ -141,10 +148,15 @@ export default async function SeasonSummaryPage({
                     </Link>
                     <p className="text-xs text-[#ADADAA]">{s.beds.join(", ")}</p>
                   </div>
-                  <span className="text-sm font-semibold text-[#D4820A]">
+                  <span className="text-sm font-semibold text-[#D4820A] text-right">
                     {Object.entries(s.totalsByUnit)
                       .map(([u, q]) => `${Number(q.toFixed(2))} ${u}`)
                       .join(" · ")}
+                    {s.estYieldLbs > 0 && (
+                      <span className="block text-xs font-normal text-[#ADADAA]">
+                        ~{Number(s.estYieldLbs.toFixed(1))} lb est.
+                      </span>
+                    )}
                   </span>
                 </div>
               ))}

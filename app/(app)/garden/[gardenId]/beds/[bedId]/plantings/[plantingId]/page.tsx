@@ -8,6 +8,7 @@ import { HarvestLogSection } from "@/components/tracking/HarvestLogSection";
 import { PhotoGallery } from "@/components/tracking/PhotoGallery";
 import { GrowthNotes } from "@/components/tracking/GrowthNotes";
 import { RatingSection } from "@/components/tracking/RatingSection";
+import { estimateYieldLbs } from "@/lib/services/yield";
 
 export default async function PlantingDetailPage({
   params,
@@ -24,11 +25,12 @@ export default async function PlantingDetailPage({
     },
     include: {
       plant: { select: { id: true, name: true, daysToMaturity: true, category: true } },
-      cell: { include: { bed: { select: { id: true, name: true, gardenId: true } } } },
+      cell: { include: { bed: { select: { id: true, name: true, gardenId: true, cellSizeIn: true } } } },
       season: { select: { name: true } },
       harvestLogs: { orderBy: { harvestedAt: "desc" } },
       photos: { orderBy: { takenAt: "desc" } },
       growthNotes: { orderBy: { createdAt: "desc" } },
+      _count: { select: { cells: true } },
     },
   });
 
@@ -36,6 +38,14 @@ export default async function PlantingDetailPage({
 
   const totalHarvest = planting.harvestLogs.reduce((s, l) => s + l.quantity, 0);
   const harvestUnit = planting.harvestLogs[0]?.unit ?? "lbs";
+
+  // Estimated yield from the planting's footprint (category heuristic).
+  const footprintCells = planting._count.cells || 1;
+  const estYieldLbs = estimateYieldLbs(
+    planting.plant.category,
+    footprintCells,
+    planting.cell.bed.cellSizeIn
+  );
 
   const statusLabel = planting.status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
@@ -82,11 +92,23 @@ export default async function PlantingDetailPage({
               </p>
             </div>
           )}
+          {estYieldLbs != null && (
+            <div>
+              <p className="text-xs text-[#ADADAA]">Est. yield</p>
+              <p className="text-sm font-medium text-[#3A6B20]">
+                ~{estYieldLbs} lb
+                <span className="text-[#ADADAA] font-normal"> est.</span>
+              </p>
+            </div>
+          )}
           {planting.harvestLogs.length > 0 && (
             <div>
               <p className="text-xs text-[#ADADAA]">Total harvested</p>
               <p className="text-sm font-medium text-[#D4820A]">
                 {totalHarvest} {harvestUnit}
+                {estYieldLbs != null && harvestUnit === "lbs" && (
+                  <span className="text-[#ADADAA] font-normal"> of ~{estYieldLbs} est.</span>
+                )}
               </p>
             </div>
           )}
