@@ -1295,6 +1295,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 <PlantLibrary
                   recentPlants={recentPlants}
                   cellSizeIn={cellSizeIn}
+                  gridCols={gridCols}
+                  gridRows={gridRows}
                   userId={userId}
                   onCardClick={(p) => setPendingPlant(p)}
                   selectedPlantId={pendingPlant?.id ?? null}

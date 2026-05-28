@@ -36,12 +36,13 @@ export function CreateReminderDialog({ gardens }: { gardens: GardenOption[] }) {
     body: "",
     scheduledAt: defaultScheduledAt(),
     gardenId: "",
+    repeat: "" as "" | "weekly" | "monthly",
   });
 
   const canSave = form.title.trim().length > 0 && form.scheduledAt.length > 0;
 
   function reset() {
-    setForm({ title: "", body: "", scheduledAt: defaultScheduledAt(), gardenId: "" });
+    setForm({ title: "", body: "", scheduledAt: defaultScheduledAt(), gardenId: "", repeat: "" });
   }
 
   function handleSave() {
@@ -56,6 +57,7 @@ export function CreateReminderDialog({ gardens }: { gardens: GardenOption[] }) {
           body: form.body.trim() || undefined,
           scheduledAt: iso,
           gardenId: form.gardenId || undefined,
+          repeat: form.repeat || undefined,
         });
         toast.success("Reminder scheduled");
         reset();
@@ -114,6 +116,19 @@ export function CreateReminderDialog({ gardens }: { gardens: GardenOption[] }) {
               value={form.scheduledAt}
               onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Repeat</Label>
+            <select
+              value={form.repeat}
+              onChange={(e) => setForm((f) => ({ ...f, repeat: e.target.value as "" | "weekly" | "monthly" }))}
+              className="w-full border border-[#E4E4DC] rounded-md px-3 py-2 text-sm text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
+            >
+              <option value="">Don&apos;t repeat</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
           </div>
 
           {gardens.length > 0 && (

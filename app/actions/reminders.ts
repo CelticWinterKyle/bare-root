@@ -10,6 +10,7 @@ export async function createCustomReminder(data: {
   body?: string;
   scheduledAt: string; // ISO datetime
   gardenId?: string;
+  repeat?: "weekly" | "monthly";
 }) {
   const user = await requireUser();
 
@@ -23,6 +24,8 @@ export async function createCustomReminder(data: {
   if (when.getTime() < Date.now()) {
     throw new Error("Reminder time must be in the future");
   }
+
+  const recurring = data.repeat === "weekly" || data.repeat === "monthly";
 
   // If a gardenId is provided, confirm the user can at least view it so
   // the deep-link in the notification doesn't dump them onto a 404.
@@ -48,6 +51,10 @@ export async function createCustomReminder(data: {
       title,
       body: data.body?.trim() || null,
       scheduledAt: when,
+      recurring,
+      // Store a simple interval token (not a real cron) — the dispatcher
+      // reads this to schedule the next occurrence.
+      recurrenceCron: recurring ? data.repeat! : null,
     },
   });
 

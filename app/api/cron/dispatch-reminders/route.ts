@@ -122,6 +122,34 @@ export async function GET(req: Request) {
 
       await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
       dispatched++;
+
+      // Recurring reminders: schedule the SINGLE next occurrence as a fresh
+      // row (the just-sent one stays in history). recurrenceCron holds a
+      // simple interval token, not a real cron — weekly = +7d, monthly = +1mo.
+      if (reminder.recurring && (reminder.recurrenceCron === "weekly" || reminder.recurrenceCron === "monthly")) {
+        const next = new Date(reminder.scheduledAt);
+        if (reminder.recurrenceCron === "weekly") next.setDate(next.getDate() + 7);
+        else next.setMonth(next.getMonth() + 1);
+        // If the cron was delayed and the next slot is already past, roll it
+        // forward to the future so it doesn't immediately re-fire in a loop.
+        while (next.getTime() <= now.getTime()) {
+          if (reminder.recurrenceCron === "weekly") next.setDate(next.getDate() + 7);
+          else next.setMonth(next.getMonth() + 1);
+        }
+        await db.reminder.create({
+          data: {
+            userId: reminder.userId,
+            gardenId: reminder.gardenId,
+            plantingId: reminder.plantingId,
+            type: reminder.type,
+            title: reminder.title,
+            body: reminder.body,
+            scheduledAt: next,
+            recurring: true,
+            recurrenceCron: reminder.recurrenceCron,
+          },
+        });
+      }
     }
   }
 

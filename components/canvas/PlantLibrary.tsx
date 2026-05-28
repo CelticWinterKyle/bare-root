@@ -34,14 +34,32 @@ function footprintHint(spacingInches: number | null, cellSizeIn: number): string
   return `${side}×${side}`;
 }
 
+// How many of this plant fit the current bed (grid in cells), using the
+// same footprint rule as placement. Null when bed dims aren't supplied.
+function bedCapacity(
+  spacingInches: number | null,
+  cellSizeIn: number,
+  gridCols?: number,
+  gridRows?: number
+): number | null {
+  if (!gridCols || !gridRows) return null;
+  const side = Math.max(1, Math.ceil((spacingInches ?? cellSizeIn) / cellSizeIn));
+  const fit = Math.floor(gridCols / side) * Math.floor(gridRows / side);
+  return fit > 0 ? fit : null;
+}
+
 function DraggablePlantCard({
   plant,
   cellSizeIn,
+  gridCols,
+  gridRows,
   onClick,
   selected,
 }: {
   plant: LibraryPlant;
   cellSizeIn: number;
+  gridCols?: number;
+  gridRows?: number;
   onClick?: () => void;
   selected?: boolean;
 }) {
@@ -50,6 +68,7 @@ function DraggablePlantCard({
     data: { kind: "plant", plant },
   });
   const hint = footprintHint(plant.spacingInches, cellSizeIn);
+  const capacity = bedCapacity(plant.spacingInches, cellSizeIn, gridCols, gridRows);
   const accent = CATEGORY_ACCENT[plant.category] ?? CATEGORY_ACCENT.OTHER;
 
   return (
@@ -132,6 +151,7 @@ function DraggablePlantCard({
           {[
             plant.daysToMaturity ? `${plant.daysToMaturity}d` : null,
             hint ? `${hint} cells` : null,
+            capacity ? `~${capacity} fit` : null,
           ]
             .filter(Boolean)
             .join(" · ") || plant.category.toLowerCase()}
@@ -144,12 +164,16 @@ function DraggablePlantCard({
 export function PlantLibrary({
   recentPlants,
   cellSizeIn,
+  gridCols,
+  gridRows,
   userId,
   onCardClick,
   selectedPlantId,
 }: {
   recentPlants: LibraryPlant[];
   cellSizeIn: number;
+  gridCols?: number;
+  gridRows?: number;
   userId: string;
   /** Optional click handler — falls back to drag when omitted. */
   onCardClick?: (plant: LibraryPlant) => void;
@@ -227,6 +251,8 @@ export function PlantLibrary({
               key={p.id}
               plant={p}
               cellSizeIn={cellSizeIn}
+              gridCols={gridCols}
+              gridRows={gridRows}
               onClick={onCardClick ? () => onCardClick(p) : undefined}
               selected={selectedPlantId === p.id}
             />

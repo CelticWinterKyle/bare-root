@@ -25,6 +25,7 @@ type ReminderItem = {
   body: string | null;
   scheduledAt: string;
   sentAt: string | null;
+  recurrence: string | null;
   plantName: string | null;
   bedName: string | null;
   gardenId: string | null;
@@ -108,6 +109,11 @@ export function RemindersClient({
             >
               {formatRelativeDate(r.scheduledAt)}
             </span>
+            {r.recurrence && (
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-[#F4F4EC] text-[#6B6B5A]">
+                Repeats {r.recurrence}
+              </span>
+            )}
             {r.plantName && (
               <span className="text-xs text-[#ADADAA] truncate">{r.plantName}</span>
             )}

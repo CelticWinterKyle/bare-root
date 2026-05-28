@@ -8,6 +8,7 @@ import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
 import { PlantTimingEditor } from "@/components/plants/PlantTimingEditor";
 import { pestInfoFor } from "@/lib/services/pest-data";
+import { plantsPerArea } from "@/lib/services/spacing";
 import { gardenEditFilter } from "@/lib/permissions";
 
 const SUN_LABELS: Record<string, string> = {
@@ -174,6 +175,22 @@ export default async function PlantDetailPage({
         {plant.waterRequirement && (
           <Stat label="Water" value={WATER_LABELS[plant.waterRequirement] ?? plant.waterRequirement} />
         )}
+        {(() => {
+          if (!plant.spacingInches) return null;
+          // Capacity for a representative bed: the user's first bed if they
+          // have one, else a standard 4×8 ft bed at 12" cells.
+          const firstBed = gardensForPicker.flatMap((g) => g.beds)[0];
+          const w = firstBed?.widthFt ?? 4;
+          const h = firstBed?.heightFt ?? 8;
+          const count = plantsPerArea(plant.spacingInches, w, h, 12);
+          if (count <= 0) return null;
+          return (
+            <Stat
+              label="Fits per bed"
+              value={`~${count} in ${w}×${h} ft`}
+            />
+          );
+        })()}
       </div>
 
       {/* Planting timing — editable, drives the calendar + reminders */}
