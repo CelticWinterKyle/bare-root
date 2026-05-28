@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
 
 const COMPARISON = [
@@ -59,7 +60,11 @@ function Cell({ value, dark = false }: { value: boolean | string; dark?: boolean
   return <span style={{ color: dark ? "rgba(168,216,112,0.35)" : "#E4E4DC", fontSize: 18 }}>—</span>;
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Signed-in visitors should head to billing (to actually start checkout),
+  // not the sign-up form.
+  const user = await getCurrentUser();
+  const ctaHref = user ? "/settings/billing" : "/sign-up";
   return (
     <MarketingChrome>
       {/* Hero */}
@@ -142,7 +147,7 @@ export default function PricingPage() {
               <span style={{ fontSize: 14, color: "#6B6B5A" }}>forever</span>
             </div>
             <Link
-              href="/sign-up"
+              href={ctaHref}
               style={{
                 display: "block",
                 width: "100%",
@@ -233,7 +238,7 @@ export default function PricingPage() {
               or $7/mo billed monthly
             </p>
             <Link
-              href="/sign-up"
+              href={ctaHref}
               style={{
                 display: "block",
                 width: "100%",
@@ -398,7 +403,7 @@ export default function PricingPage() {
           Your best garden <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>starts here</em>.
         </p>
         <Link
-          href="/sign-up"
+          href={ctaHref}
           style={{
             display: "inline-flex",
             alignItems: "center",

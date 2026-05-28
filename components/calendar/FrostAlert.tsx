@@ -7,7 +7,12 @@ type Props = {
 };
 
 export function FrostAlert({ forecast, activePlantingCount }: Props) {
-  const frostDay = forecast.find((d) => d.minTemp <= 35);
+  // Pick the SOONEST frost day, not just the first in array order — a
+  // cache could hold an unsorted forecast, and a gardener trusts this to
+  // know when to cover plants.
+  const frostDay = forecast
+    .filter((d) => d.minTemp <= 35)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
   if (!frostDay || activePlantingCount === 0) return null;
 
   const d = new Date(frostDay.date + "T12:00:00");

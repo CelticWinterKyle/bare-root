@@ -8,7 +8,9 @@ const FROST_WINDOW_HOURS = 72;
 function hasFrostInWindow(forecast: ForecastDay[]): boolean {
   const cutoff = new Date(Date.now() + FROST_WINDOW_HOURS * 60 * 60 * 1000);
   return forecast.some((day) => {
-    const dayDate = new Date(day.date);
+    // Parse the date-only string at local noon so the 72h window isn't
+    // skewed by a UTC-midnight offset dropping a borderline frost day.
+    const dayDate = new Date(day.date + "T12:00:00");
     return dayDate <= cutoff && day.minTemp <= FROST_TEMP_F;
   });
 }

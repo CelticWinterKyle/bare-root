@@ -44,7 +44,7 @@ export function DesktopSidebar({
   const pathname = usePathname();
 
   function navItemStyle(href: string) {
-    const isActive = pathname.startsWith(href);
+    const isActive = pathname === href || pathname.startsWith(href + "/");
     return {
       display: "flex" as const,
       alignItems: "center" as const,
@@ -123,7 +123,7 @@ export function DesktopSidebar({
               {section.label}
             </div>
             {section.items.map(({ href, Icon, label }) => {
-              const isActive = pathname.startsWith(href);
+              const isActive = pathname === href || pathname.startsWith(href + "/");
               const badge = href === "/reminders" && unreadCount > 0 ? unreadCount : null;
               const proLocked = href === "/inventory" && !isPro;
               return (
@@ -162,8 +162,8 @@ export function DesktopSidebar({
         <div style={{ marginTop: "8px" }}>
           <Link href="/settings" style={navItemStyle("/settings")}>
             <Settings
-              style={{ width: "14px", height: "14px", flexShrink: 0, color: pathname.startsWith("/settings") ? "#7DA84E" : "#ADADAA" }}
-              strokeWidth={pathname.startsWith("/settings") ? 2 : 1.5}
+              style={{ width: "14px", height: "14px", flexShrink: 0, color: (pathname === "/settings" || pathname.startsWith("/settings/")) ? "#7DA84E" : "#ADADAA" }}
+              strokeWidth={(pathname === "/settings" || pathname.startsWith("/settings/")) ? 2 : 1.5}
             />
             Settings
           </Link>

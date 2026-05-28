@@ -20,6 +20,9 @@ export async function createCustomReminder(data: {
   if (Number.isNaN(when.getTime())) {
     throw new Error("Invalid date");
   }
+  if (when.getTime() < Date.now()) {
+    throw new Error("Reminder time must be in the future");
+  }
 
   // If a gardenId is provided, confirm the user can at least view it so
   // the deep-link in the notification doesn't dump them onto a 404.
@@ -89,16 +92,22 @@ export async function getRecentReminders(userId: string) {
   });
 }
 
+const VALID_REMINDER_TYPES = new Set<string>(Object.values(ReminderType));
+
 export async function updateNotificationPreference(
   type: string,
   data: { enabled?: boolean; channelEmail?: boolean; channelPush?: boolean }
 ) {
   const user = await requireUser();
+  if (!VALID_REMINDER_TYPES.has(type)) {
+    throw new Error("Invalid notification type");
+  }
+  const reminderType = type as ReminderType;
   await db.notificationPreference.upsert({
-    where: { userId_type: { userId: user.id, type: type as never } },
+    where: { userId_type: { userId: user.id, type: reminderType } },
     create: {
       userId: user.id,
-      type: type as never,
+      type: reminderType,
       enabled: data.enabled ?? true,
       channelEmail: data.channelEmail ?? true,
       channelPush: data.channelPush ?? true,

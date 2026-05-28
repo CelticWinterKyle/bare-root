@@ -74,28 +74,23 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  if (existingUser) {
-    await db.gardenCollaborator.upsert({
-      where: { gardenId_userId: { gardenId, userId: existingUser.id } },
-      create: { gardenId, userId: existingUser.id, role, acceptedAt: new Date() },
-      update: { role, acceptedAt: new Date() },
-    });
-  } else {
-    await db.gardenInvitation.upsert({
-      where: { gardenId_email: { gardenId, email: email.toLowerCase() } },
-      create: { gardenId, email: email.toLowerCase(), role, token, expiresAt },
-      update: { role, token, expiresAt, acceptedAt: null },
-    });
+  // Always send an invitation the recipient must accept — including existing
+  // accounts — so nobody is silently attached to someone else's garden
+  // without consent. Existing users accept via the same /invite link.
+  await db.gardenInvitation.upsert({
+    where: { gardenId_email: { gardenId, email: lowerEmail } },
+    create: { gardenId, email: lowerEmail, role, token, expiresAt },
+    update: { role, token, expiresAt, acceptedAt: null },
+  });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-    const html = buildInviteEmailHtml(
-      garden.name,
-      user.name ?? user.email,
-      role,
-      `${appUrl}/invite/${token}`
-    );
-    await sendReminderEmail(email, `You're invited to ${garden.name} on Bare Root`, html);
-  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const html = buildInviteEmailHtml(
+    garden.name,
+    user.name ?? user.email,
+    role,
+    `${appUrl}/invite/${token}`
+  );
+  await sendReminderEmail(lowerEmail, `You're invited to ${garden.name} on Bare Root`, html);
 
   revalidatePath(`/garden/${gardenId}/settings`);
 }
@@ -123,8 +118,10 @@ export async function updateCollaboratorRole(
   const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
   if (!garden) throw new Error("Garden not found");
 
-  await db.gardenCollaborator.update({
-    where: { gardenId_userId: { gardenId, userId: collaboratorUserId } },
+  // updateMany so a stale/already-removed row is a graceful no-op instead of
+  // throwing a P2025 the user sees as a generic error.
+  await db.gardenCollaborator.updateMany({
+    where: { gardenId, userId: collaboratorUserId },
     data: { role },
   });
 

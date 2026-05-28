@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { getLocationData } from "@/lib/data/location";
+import { assertGardenWritable, assertBedWritable } from "@/lib/tier";
 
 export async function updateBedPosition(bedId: string, xPosition: number, yPosition: number) {
   const user = await requireUser();
@@ -13,6 +14,8 @@ export async function updateBedPosition(bedId: string, xPosition: number, yPosit
     where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
   if (!bed) throw new Error("Bed not found");
+
+  await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
 
   await db.bed.update({ where: { id: bedId }, data: { xPosition, yPosition } });
   revalidatePath(`/garden/${bed.gardenId}`);
@@ -35,6 +38,8 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
     where: { id: gardenId, ...gardenEditFilter(user.id) },
   });
   if (!garden) throw new Error("Garden not found");
+
+  await assertGardenWritable(user.id, user.subscriptionTier, gardenId);
 
   if (input.widthFt !== undefined && input.widthFt <= 0) {
     throw new Error("Width must be greater than 0");

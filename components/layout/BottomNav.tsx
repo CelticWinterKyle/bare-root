@@ -36,7 +36,7 @@ export function BottomNav() {
         }}
       >
         {tabs.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname.startsWith(href);
+          const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}

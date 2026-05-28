@@ -103,6 +103,48 @@ export async function getLockedBedIds(
   return beds.slice(TIER_LIMITS.FREE.bedsPerGarden).map((b) => b.id);
 }
 
+/**
+ * Throw if a FREE user tries to EXPAND/EDIT a garden that's over their limit
+ * (locked read-only after a downgrade). Only applies to gardens the user
+ * owns. Removing/deleting is intentionally NOT gated so a downgraded user
+ * can delete extras to get back under the limit and unlock.
+ */
+export async function assertGardenWritable(
+  userId: string,
+  tier: Tier,
+  gardenId: string
+): Promise<void> {
+  if (tier === "PRO") return;
+  const locked = await getLockedGardenIds(userId, tier);
+  if (locked.includes(gardenId)) throw new TierLimitError("UPGRADE_REQUIRED");
+}
+
+/**
+ * Throw if a FREE user tries to EXPAND/EDIT a locked bed (or any bed in a
+ * locked garden). Only enforced for the garden's owner — collaborators are
+ * governed by the owner's tier.
+ */
+export async function assertBedWritable(
+  userId: string,
+  tier: Tier,
+  gardenId: string,
+  bedId: string
+): Promise<void> {
+  if (tier === "PRO") return;
+  const garden = await db.garden.findUnique({
+    where: { id: gardenId },
+    select: { userId: true },
+  });
+  if (!garden || garden.userId !== userId) return;
+  const [lockedGardens, lockedBeds] = await Promise.all([
+    getLockedGardenIds(userId, tier),
+    getLockedBedIds(gardenId, tier),
+  ]);
+  if (lockedGardens.includes(gardenId) || lockedBeds.includes(bedId)) {
+    throw new TierLimitError("UPGRADE_REQUIRED");
+  }
+}
+
 export function getBedCountForWarning(
   currentCount: number,
   tier: Tier

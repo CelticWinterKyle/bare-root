@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
+import { getLockedGardenIds } from "@/lib/tier";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Sprout } from "lucide-react";
@@ -174,8 +175,21 @@ export default async function GardenPage({
   };
   const btnGhost: React.CSSProperties = { ...btnBase, background: "transparent", color: "#3A3A30", borderColor: "#E4E4DC" };
 
+  // Over-limit gardens (e.g. after a Pro→Free downgrade) are read-only for
+  // the owner until they upgrade or delete extras. Enforced server-side too.
+  const locked =
+    garden.userId === user.id &&
+    (await getLockedGardenIds(user.id, user.subscriptionTier)).includes(gardenId);
+
   return (
     <div className="container-wide">
+      {locked && (
+        <div style={{ background: "#FFF8E7", borderBottom: "1px solid #F0D8A0", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
+          This garden is read-only because it&apos;s over your free plan limit.{" "}
+          <Link href="/settings/billing" style={{ textDecoration: "underline", color: "#7A4A0A" }}>Upgrade to Pro</Link>{" "}
+          to edit it, or delete extras to get back under the limit.
+        </div>
+      )}
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div className="flex items-start justify-between gap-4 px-[22px] md:px-8 pt-6 pb-5">

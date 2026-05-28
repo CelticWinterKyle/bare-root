@@ -740,6 +740,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     }
 
     if (source.kind === "planting") {
+      // Same guard the tap-move path has: ignore a second drag while a move
+      // is already in flight, so two quick drags can't fire concurrent
+      // movePlanting calls and race the PlantingCell rows.
+      if (isMoving) return;
       if (targetCell.id === source.fromCellId) return;
       if (targetCell.planting || targetCell.footprint) {
         toast.error("That cell is already occupied");
@@ -1252,6 +1256,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     key={tab}
                     type="button"
                     onClick={() => {
+                      // Cancel any active move/prefill mode when switching
+                      // tabs so its banner doesn't linger and lie about what
+                      // the next cell tap will do.
+                      if (tab !== activeTab) {
+                        setMovingPlanting(null);
+                        setPendingPlant(null);
+                      }
                       setActiveTab(tab);
                       if (tab !== "plant") setPanel({ type: "none" });
                       if (tab !== "select") setSelectedCells(new Set());

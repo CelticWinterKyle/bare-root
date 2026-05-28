@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
+import { assertBedWritable } from "@/lib/tier";
 import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
 import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
@@ -121,6 +122,8 @@ export async function assignPlant(
 }> {
   const user = await requireUser();
   const cell = await resolveCell(cellId, user.id);
+
+  await assertBedWritable(user.id, user.subscriptionTier, cell.bed.gardenId, cell.bedId);
 
   const plant = await db.plantLibrary.findUniqueOrThrow({
     where: { id: plantId },
@@ -251,6 +254,8 @@ export async function movePlanting(
     include: { bed: true },
   });
   if (!newAnchor) throw new Error("Target cell not found");
+
+  await assertBedWritable(user.id, user.subscriptionTier, newAnchor.bed.gardenId, newAnchor.bedId);
 
   // Same-bed enforcement — cross-bed moves are out of scope for v1.
   if (planting.cell.bedId !== newAnchor.bedId) {

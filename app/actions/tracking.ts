@@ -84,7 +84,16 @@ export async function uploadPhoto(plantingId: string, formData: FormData) {
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
-  await checkCanUploadPhoto(user.id, user.subscriptionTier);
+  // Count photos against the garden OWNER (and their tier), not the
+  // uploader — otherwise a collaborator's own count/tier would wrongly
+  // govern photos on someone else's garden.
+  const owner = await db.garden.findUnique({
+    where: { id: planting.cell.bed.gardenId },
+    select: { user: { select: { id: true, subscriptionTier: true } } },
+  });
+  if (owner?.user) {
+    await checkCanUploadPhoto(owner.user.id, owner.user.subscriptionTier);
+  }
 
   const file = formData.get("file") as File;
   if (!file || file.size === 0) throw new Error("No file provided");

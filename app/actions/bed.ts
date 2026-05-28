@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
-import { checkCanCreateBed } from "@/lib/tier";
+import { checkCanCreateBed, assertGardenWritable, assertBedWritable } from "@/lib/tier";
 
 type CreateBedInput = {
   gardenId: string;
@@ -21,6 +21,7 @@ export async function createBed(input: CreateBedInput): Promise<string> {
   });
   if (!garden) throw new Error("Garden not found");
 
+  await assertGardenWritable(user.id, user.subscriptionTier, input.gardenId);
   await checkCanCreateBed(input.gardenId, user.subscriptionTier);
 
   const gridCols = Math.max(1, Math.floor(input.widthFt * (12 / input.cellSizeIn)));
@@ -87,6 +88,8 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
     where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
   if (!bed) throw new Error("Bed not found");
+
+  await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
 
   const nextWidthFt = input.widthFt ?? bed.widthFt;
   const nextHeightFt = input.heightFt ?? bed.heightFt;
