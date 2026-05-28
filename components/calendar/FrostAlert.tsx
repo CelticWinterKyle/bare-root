@@ -19,7 +19,7 @@ export function FrostAlert({ forecast, activePlantingCount }: Props) {
       <div>
         <p className="text-sm font-semibold text-blue-900">Frost risk {label}</p>
         <p className="text-xs text-blue-700 mt-0.5">
-          Low of {frostDay.minTemp}°F — protect or cover your{" "}
+          Low of {frostDay.minTemp}°F, so protect or cover your{" "}
           {activePlantingCount} active planting{activePlantingCount !== 1 ? "s" : ""}.
         </p>
       </div>

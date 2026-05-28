@@ -432,14 +432,14 @@ export default async function DashboardPage() {
   let heroSub = "A quiet day in the garden. Worth checking the beds.";
   if (frostRisk && frostDay) {
     const lowF = Math.round(frostDay.minTemp);
-    heroSub = `Cold night ahead — ${lowF}°F forecast. Cover tender plants before dusk and check again in the morning.`;
+    heroSub = `Cold night ahead: ${lowF}°F forecast. Cover tender plants before dusk and check again in the morning.`;
   } else if (todayReminders.length >= 2) {
     heroSub = `${todayReminders.length} tasks waiting today. The garden's settled, but a few things need your hands.`;
   } else if (recentHarvests.length > 0) {
     const daysSince = daysBetween(startOfDay(recentHarvests[0].harvestedAt), today);
     if (daysSince <= 3) {
       const what = recentHarvests[0].planting.plant.name.toLowerCase();
-      heroSub = `Last harvest was ${daysSince === 0 ? "today" : `${daysSince} day${daysSince === 1 ? "" : "s"} ago`} — fresh ${what}. The yields are coming in.`;
+      heroSub = `Last harvest was ${daysSince === 0 ? "today" : `${daysSince} day${daysSince === 1 ? "" : "s"} ago`}, fresh ${what}. The yields are coming in.`;
     }
   } else if (activePlantingCount > 0) {
     heroSub = `${activePlantingCount} planting${activePlantingCount === 1 ? "" : "s"} growing across the season. A good time to walk the beds.`;
@@ -492,7 +492,7 @@ export default async function DashboardPage() {
           <span className={styles.topbarDate}>{fmtDay(now)}</span>
           {activeSeason && seasonDayN !== null && (
             <span className={styles.topbarEdition}>
-              The garden — <em>Day {seasonDayN}</em> of {activeSeason.name}
+              The garden · <em>Day {seasonDayN}</em> of {activeSeason.name}
             </span>
           )}
         </div>
@@ -1106,7 +1106,7 @@ export default async function DashboardPage() {
             <p className={styles.suggestBody}>
               The garden does best when something&apos;s always coming up. Look through your
               library and start a second sowing of greens, beans, or anything that
-              matures quickly — your harvests will stay continuous.
+              matures quickly, so your harvests will stay continuous.
             </p>
             <Link href="/plants" className={styles.suggestCta}>
               Open plant library

@@ -185,7 +185,7 @@ export function WizardShell() {
               How big is your garden space?
             </h2>
             <p className="text-[#6B6B5A] text-sm mb-6">
-              The total outdoor area — you'll add individual raised beds inside it.
+              The total outdoor area. You'll add individual raised beds inside it.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -214,7 +214,7 @@ export function WizardShell() {
               </div>
             </div>
             <p className="text-xs text-[#ADADAA] mt-3">
-              Don't know exactly? A rough estimate works fine — you can adjust later.
+              Don't know exactly? A rough estimate works fine. You can adjust later.
             </p>
             <div className="mt-8 flex justify-between">
               <Button variant="ghost" onClick={() => setStep(1)}>
@@ -378,8 +378,8 @@ export function WizardShell() {
                       <div className="font-medium">{size === "12" ? "1 ft squares" : "6 in squares"}</div>
                       <div className="text-xs mt-0.5 text-[#ADADAA]">
                         {size === "12"
-                          ? "Most beds — one plant per square foot"
-                          : "For dense planting — greens, herbs, carrots"}
+                          ? "Most beds: one plant per square foot"
+                          : "For dense planting: greens, herbs, carrots"}
                       </div>
                     </button>
                   ))}

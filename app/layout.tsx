@@ -29,7 +29,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bare Root — Visual Garden Planner",
+  title: "Bare Root: Visual Garden Planner",
   description:
     "Plan your garden. Grow with confidence. Bare Root is the visual garden planner that knows your climate, your beds, and what grows well together.",
   manifest: "/manifest.json",

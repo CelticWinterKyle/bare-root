@@ -13,7 +13,7 @@ export default function CalendarError({
         Couldn&apos;t load the calendar
       </p>
       <p className="text-sm text-[#6B6B5A] mb-8">
-        Your planting data is safe — this is a temporary display error.
+        Your planting data is safe. This is a temporary display error.
       </p>
       <div className="flex items-center justify-center gap-3">
         <button

@@ -158,8 +158,8 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
               onChange={(e) => setRole(e.target.value as "EDITOR" | "VIEWER")}
               className="border border-[#E4E4DC] rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
             >
-              <option value="EDITOR">Editor — can plan &amp; edit</option>
-              <option value="VIEWER">Viewer — read only</option>
+              <option value="EDITOR">Editor: can plan &amp; edit</option>
+              <option value="VIEWER">Viewer: read only</option>
             </select>
           </div>
           {error && <p className="text-xs text-[#B85C3A]">{error}</p>}

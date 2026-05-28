@@ -78,7 +78,7 @@ export default function PrivacyPage() {
             <li>Email address (required, used for sign-in and notifications)</li>
             <li>Display name (optional)</li>
             <li>Profile picture (optional, only if you upload one to Clerk)</li>
-            <li>Password (stored and verified entirely by our authentication provider Clerk — we never see it)</li>
+            <li>Password (stored and verified entirely by our authentication provider Clerk, and we never see it)</li>
           </ul>
           <h3>Garden data (everything you enter)</h3>
           <ul>
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
             <li>Subscription tier and Stripe customer ID (for Pro users)</li>
             <li>Notification preferences and push subscription endpoints</li>
             <li>Timezone (used to send reminders at the right time)</li>
-            <li>Standard server logs (IP, user agent, timestamp) retained for security and debugging — typically 30 days</li>
+            <li>Standard server logs (IP, user agent, timestamp) retained for security and debugging, typically 30 days</li>
           </ul>
         </Section>
 
@@ -116,12 +116,12 @@ export default function PrivacyPage() {
         <Section title="Who we share it with">
           <p>Bare Root runs on top of these third-party processors. Each only sees what they need to do their job:</p>
           <ul>
-            <li><strong>Clerk</strong> — authentication and password storage</li>
-            <li><strong>Stripe</strong> — payment processing (only Pro upgrades; we never store your card data ourselves)</li>
-            <li><strong>Vercel</strong> — hosting, database (Postgres), and file storage (your uploaded photos)</li>
-            <li><strong>Resend</strong> — transactional email (reminders, invitations)</li>
-            <li><strong>Web push services (Apple, Google, Mozilla)</strong> — delivering push notifications you opt in to</li>
-            <li><strong>Perenual / Wikipedia</strong> — public plant data we look up. We do NOT share your data with them; we only fetch plant info.</li>
+            <li><strong>Clerk</strong>: authentication and password storage</li>
+            <li><strong>Stripe</strong>: payment processing (only Pro upgrades; we never store your card data ourselves)</li>
+            <li><strong>Vercel</strong>: hosting, database (Postgres), and file storage (your uploaded photos)</li>
+            <li><strong>Resend</strong>: transactional email (reminders, invitations)</li>
+            <li><strong>Web push services (Apple, Google, Mozilla)</strong>: delivering push notifications you opt in to</li>
+            <li><strong>Perenual / Wikipedia</strong>: public plant data we look up. We do NOT share your data with them; we only fetch plant info.</li>
           </ul>
           <p>
             We may also disclose data if compelled by law (subpoena, court order)
@@ -149,10 +149,10 @@ export default function PrivacyPage() {
 
         <Section title="Your rights">
           <ul>
-            <li><strong>Access</strong> — request a copy of your data</li>
-            <li><strong>Correct</strong> — fix anything inaccurate (most fields are editable in the app)</li>
-            <li><strong>Delete</strong> — delete your account and all associated data</li>
-            <li><strong>Export</strong> — get your data in a portable format</li>
+            <li><strong>Access</strong>: request a copy of your data</li>
+            <li><strong>Correct</strong>: fix anything inaccurate (most fields are editable in the app)</li>
+            <li><strong>Delete</strong>: delete your account and all associated data</li>
+            <li><strong>Export</strong>: get your data in a portable format</li>
           </ul>
           <p>
             To exercise any of these, email{" "}

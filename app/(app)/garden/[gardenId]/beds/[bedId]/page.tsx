@@ -22,7 +22,7 @@ export async function generateMetadata({
     select: { name: true, garden: { select: { name: true } } },
   });
   return {
-    title: bed ? `${bed.name} — ${bed.garden.name} | Bare Root` : "Bare Root",
+    title: bed ? `${bed.name} · ${bed.garden.name} | Bare Root` : "Bare Root",
   };
 }
 

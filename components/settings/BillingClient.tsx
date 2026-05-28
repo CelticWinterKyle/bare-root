@@ -153,7 +153,7 @@ export function BillingClient({
       ) : (
         <>
           <p className="text-[#6B6B5A] mb-8">
-            {hadTrial ? "Upgrade to unlock all Pro features." : "Start a 7-day free trial — no charge until it ends."}
+            {hadTrial ? "Upgrade to unlock all Pro features." : "Start a 7-day free trial. No charge until it ends."}
           </p>
 
           {/* Billing toggle */}

@@ -81,7 +81,7 @@ export function AddToBedDialog({ plantId, plantName, gardens }: Props) {
           ) : !hasUsableGarden ? (
             <div className="text-center py-8 text-sm text-[#6B6B5A]">
               <p className="mb-2">None of your gardens have an active season.</p>
-              <p className="text-xs text-[#ADADAA] mb-4">Plantings are tracked by season — start one to add plants.</p>
+              <p className="text-xs text-[#ADADAA] mb-4">Plantings are tracked by season. Start one to add plants.</p>
               <Button
                 onClick={() => { setOpen(false); router.push(`/garden/${gardens[0].id}/seasons`); }}
                 variant="outline"

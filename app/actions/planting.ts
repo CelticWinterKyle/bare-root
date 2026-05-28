@@ -176,7 +176,7 @@ export async function assignPlant(
   let footprintWarning: string | undefined;
   if (placement.footprintReduced) {
     const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
-    footprintWarning = `${plant.name} normally needs a ${sideCells}×${sideCells} area — planted in ${placement.cells.length} of ${placement.desiredFootprint} cells. Crowded plants may produce less.`;
+    footprintWarning = `${plant.name} normally needs a ${sideCells}×${sideCells} area, but planted in ${placement.cells.length} of ${placement.desiredFootprint} cells. Crowded plants may produce less.`;
   }
 
   // Existing spacing check — distance between plantings within this bed.
@@ -294,7 +294,7 @@ export async function movePlanting(
   if (placement.footprintReduced) {
     const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
     return {
-      footprintWarning: `${planting.plant.name} normally needs a ${sideCells}×${sideCells} area — moved into ${placement.cells.length} of ${placement.desiredFootprint} cells.`,
+      footprintWarning: `${planting.plant.name} normally needs a ${sideCells}×${sideCells} area, but moved into ${placement.cells.length} of ${placement.desiredFootprint} cells.`,
     };
   }
   return {};

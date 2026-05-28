@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     return Response.json(
       {
         error:
-          "Billing not configured — set NEXT_PUBLIC_APP_URL in Vercel env vars.",
+          "Billing not configured: set NEXT_PUBLIC_APP_URL in Vercel env vars.",
       },
       { status: 500 }
     );
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return Response.json(
       {
         error:
-          "Billing not configured — Stripe price IDs missing. Set STRIPE_PRO_MONTHLY_PRICE_ID and STRIPE_PRO_ANNUAL_PRICE_ID.",
+          "Billing not configured: Stripe price IDs missing. Set STRIPE_PRO_MONTHLY_PRICE_ID and STRIPE_PRO_ANNUAL_PRICE_ID.",
       },
       { status: 500 }
     );

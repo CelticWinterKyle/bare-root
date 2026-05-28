@@ -16,7 +16,7 @@ export default function BedError({
         Couldn&apos;t load this bed
       </p>
       <p className="text-sm text-[#6B6B5A] mb-8">
-        Your plants are safe — this is a temporary display error.
+        Your plants are safe. This is a temporary display error.
       </p>
       <div className="flex items-center justify-center gap-3">
         <button

@@ -84,9 +84,9 @@ export default function TermsPage() {
         <Section title="Subscriptions and billing">
           <ul>
             <li>The Free tier is free to use, with the limits described on the pricing page.</li>
-            <li>Pro is billed in advance — monthly or annually — at the price shown when you subscribe. Prices include a 7-day free trial for first-time subscribers.</li>
+            <li>Pro is billed in advance (monthly or annually) at the price shown when you subscribe. Prices include a 7-day free trial for first-time subscribers.</li>
             <li>Subscriptions auto-renew until you cancel. You can cancel anytime from <Link href="/settings/billing" className="text-[#1C3D0A] underline">Settings → Billing &amp; Plan</Link>.</li>
-            <li>Cancellation takes effect at the end of the current billing period — you keep Pro access through what you&apos;ve already paid for.</li>
+            <li>Cancellation takes effect at the end of the current billing period. You keep Pro access through what you&apos;ve already paid for.</li>
             <li>We don&apos;t generally offer refunds for partial periods, but if you think your situation is exceptional, email us and we&apos;ll consider it.</li>
             <li>Payment processing is handled by Stripe under their terms. We never see your full card number.</li>
             <li>If a payment fails, we&apos;ll retry and notify you. Repeated failures may result in Pro access being suspended.</li>
@@ -169,7 +169,7 @@ export default function TermsPage() {
             Our total aggregate liability for any claim arising out of or
             relating to the service is limited to the amount you paid us in
             the 12 months preceding the claim, or $50 if you&apos;re on the
-            Free tier — whichever is greater.
+            Free tier, whichever is greater.
           </p>
         </Section>
 

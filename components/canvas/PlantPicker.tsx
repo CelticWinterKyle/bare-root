@@ -90,7 +90,7 @@ export function PlantPicker({
         if (summary.skipped > 0) parts.push(`${summary.skipped} skipped`);
         if (summary.reduced > 0) parts.push(`${summary.reduced} with reduced spacing`);
         if (summary.planted > 0) toast.success(parts.join(" · "));
-        else toast.error("Couldn't plant any — cells may already be occupied");
+        else toast.error("Couldn't plant any. Cells may already be occupied");
         onClose();
         return;
       }

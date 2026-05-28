@@ -220,7 +220,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                     </ul>
                   )}
                   {plantQuery.length >= 2 && !isSearching && plantResults.length === 0 && (
-                    <p className="text-xs text-[#ADADAA] mt-1">No plants found — try a different search.</p>
+                    <p className="text-xs text-[#ADADAA] mt-1">No plants found. Try a different search.</p>
                   )}
                 </div>
               )}
@@ -281,7 +281,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                 <div key={item.id} className="flex items-center justify-between p-3 bg-white border border-[#E4E4DC] rounded-xl">
                   <div>
                     <p className="text-sm font-medium text-[#111109]">
-                      {item.plantName}{item.variety ? ` — ${item.variety}` : ""}
+                      {item.plantName}{item.variety ? ` · ${item.variety}` : ""}
                     </p>
                     <p className="text-xs text-[#ADADAA]">
                       {item.quantity} {item.unit}

@@ -13,7 +13,7 @@ export default function GardenError({
         Couldn&apos;t load this garden
       </p>
       <p className="text-sm text-[#6B6B5A] mb-8">
-        Your garden data is safe — this is a temporary display error.
+        Your garden data is safe. This is a temporary display error.
       </p>
       <div className="flex items-center justify-center gap-3">
         <button

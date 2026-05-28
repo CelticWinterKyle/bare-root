@@ -22,7 +22,7 @@ const COMPARISON = [
 const FAQ = [
   {
     q: "What happens to my data if I downgrade?",
-    a: "Everything is preserved — your gardens, seasons, harvests, and photos stay intact. Pro features are just hidden until you upgrade again.",
+    a: "Everything is preserved. Your gardens, seasons, harvests, and photos stay intact. Pro features are just hidden until you upgrade again.",
   },
   {
     q: "Can I cancel anytime?",
@@ -30,11 +30,11 @@ const FAQ = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes — 7 days free when you first upgrade. Your card is required upfront but won’t be charged until the trial ends.",
+    a: "Yes, 7 days free when you first upgrade. Your card is required upfront but won’t be charged until the trial ends.",
   },
   {
     q: "Does it work on mobile?",
-    a: "Yes. Bare Root is a Progressive Web App — install it on your iPhone or Android home screen for a native app experience.",
+    a: "Yes. Bare Root is a Progressive Web App. Install it on your iPhone or Android home screen for a native app experience.",
   },
   {
     q: "Is Bare Root US-only?",
@@ -412,7 +412,7 @@ export default function PricingPage() {
             fontWeight: 600,
           }}
         >
-          Start planning — free
+          Start planning for free
           <span style={{ fontFamily: "var(--font-fraunces), Georgia, serif", fontStyle: "italic" }}>
             →
           </span>

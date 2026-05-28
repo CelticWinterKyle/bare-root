@@ -563,7 +563,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           setMovingPlanting(null);
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't move — please try again");
+          toast.error(err instanceof Error ? err.message : "Couldn't move. Please try again");
         }
       });
       return;
@@ -608,7 +608,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     // would silently fail server-side or save a planting with no season.
     if (!seasonId) {
       toast.error("Create an active season first", {
-        description: "Plantings are tracked by season — head to Seasons to start one.",
+        description: "Plantings are tracked by season. Head to Seasons to start one.",
       });
       return;
     }
@@ -631,7 +631,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           }
         } catch (err) {
           console.error(err);
-          toast.error("Couldn't plant — please try again");
+          toast.error("Couldn't plant. Please try again");
         }
       });
       return;
@@ -733,7 +733,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           else toast.success(`Planted ${plant.name}`);
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't plant — please try again");
+          toast.error(err instanceof Error ? err.message : "Couldn't plant. Please try again");
         }
       });
       return;
@@ -756,7 +756,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           else toast.success(`Moved ${name}`);
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't move — please try again");
+          toast.error(err instanceof Error ? err.message : "Couldn't move. Please try again");
         }
       });
     }
@@ -818,7 +818,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             <p className="text-xs text-[#3A6B20] mt-0.5">
               {prefillPlacedCount === 0
                 ? "We'll add it to each cell you tap. Tap × to stop."
-                : `${prefillPlacedCount} planted so far — tap × when done.`}
+                : `${prefillPlacedCount} planted so far. Tap × when done.`}
             </p>
           </div>
           <button
@@ -1371,7 +1371,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                 {w.type === "BENEFICIAL" ? "✓" : "!"}
                               </div>
                               <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
-                                {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                                {w.plantName}{w.notes ? `: ${w.notes}` : ""}
                               </span>
                             </div>
                           ))}
@@ -1423,7 +1423,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   </div>
                   <p className="text-sm font-semibold" style={{ color: "#111109" }}>Multi-select</p>
                   <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                    Tap empty cells in the bed to select them. Then plant the same crop into all of them at once — useful for filling a row of carrots or onions.
+                    Tap empty cells in the bed to select them. Then plant the same crop into all of them at once, useful for filling a row of carrots or onions.
                   </p>
                   {selectedCells.size > 0 && (
                     <p className="text-xs" style={{ color: "#1C3D0A" }}>
@@ -1435,7 +1435,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               {activeTab === "select" && panel.type === "bulk-picker" && (
                 <div className="p-4">
                   <p className="mb-3 text-xs text-[#6B6B5A]">
-                    Pick a plant — it&apos;ll be added to all {panel.cellIds.length} selected cells.
+                    Pick a plant. It&apos;ll be added to all {panel.cellIds.length} selected cells.
                   </p>
                   <PlantPicker
                     cellIds={panel.cellIds}

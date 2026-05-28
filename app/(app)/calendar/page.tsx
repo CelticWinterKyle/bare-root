@@ -237,7 +237,7 @@ export default async function CalendarPage() {
       {/* No frost date warning */}
       {hasNoFrostDate && gardens.length > 0 && (
         <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6B5A]">
-          Some gardens are missing frost dates — planting calendar events may be incomplete.{" "}
+          Some gardens are missing frost dates, so planting calendar events may be incomplete.{" "}
           <Link href={settingsHref} className="text-[#D4820A] hover:underline">
             Update garden settings →
           </Link>

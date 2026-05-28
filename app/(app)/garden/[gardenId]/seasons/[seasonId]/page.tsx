@@ -98,7 +98,7 @@ export default async function SeasonSummaryPage({
       <header className="mb-8">
         <p className="text-sm text-[#6B6B5A]">
           {season.startDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-          {season.endDate && ` — ${season.endDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
+          {season.endDate && ` to ${season.endDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
         </p>
 
         {/* Season stats */}

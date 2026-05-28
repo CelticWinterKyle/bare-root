@@ -13,7 +13,7 @@ export async function POST() {
     return Response.json(
       {
         error:
-          "Billing not configured — set NEXT_PUBLIC_APP_URL in Vercel env vars.",
+          "Billing not configured: set NEXT_PUBLIC_APP_URL in Vercel env vars.",
       },
       { status: 500 }
     );

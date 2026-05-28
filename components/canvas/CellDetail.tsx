@@ -10,8 +10,8 @@ const STATUSES: { value: PlantingStatus; label: string; color: string; hint: str
   { value: "SEEDS_STARTED", label: "Seeds started", color: "bg-[#D4A843] text-white", hint: "Sown indoors or in seed trays" },
   { value: "TRANSPLANTED",  label: "Transplanted",  color: "bg-[#7AB648] text-white", hint: "Moved out to this bed" },
   { value: "ACTIVE",        label: "Active",        color: "bg-[#3A6B20] text-white", hint: "Growing in the bed right now" },
-  { value: "HARVESTING",    label: "Harvesting",    color: "bg-[#D4820A] text-white", hint: "Ready to pick — log harvests below" },
-  { value: "HARVESTED",     label: "Harvested",     color: "bg-[#ADADAA] text-white", hint: "Done — kept for season records" },
+  { value: "HARVESTING",    label: "Harvesting",    color: "bg-[#D4820A] text-white", hint: "Ready to pick: log harvests below" },
+  { value: "HARVESTED",     label: "Harvested",     color: "bg-[#ADADAA] text-white", hint: "Done: kept for season records" },
   { value: "FAILED",        label: "Failed",        color: "bg-[#B85C3A] text-white", hint: "Didn't make it (pests, weather, etc.)" },
 ];
 
@@ -268,7 +268,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMov
                     fontSize: "9px", background: "#FDF2E0", color: "#D4820A",
                   }}>!</div>
                   <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
-                    {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                    {w.plantName}{w.notes ? `: ${w.notes}` : ""}
                   </span>
                 </div>
               ))}
@@ -280,7 +280,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMov
                     fontSize: "9px", background: "#E4F0D4", color: "#1C3D0A",
                   }}>✓</div>
                   <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
-                    {w.plantName}{w.notes ? ` — ${w.notes}` : ""}
+                    {w.plantName}{w.notes ? `: ${w.notes}` : ""}
                   </span>
                 </div>
               ))}

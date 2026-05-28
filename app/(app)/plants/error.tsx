@@ -13,7 +13,7 @@ export default function PlantsError({
         Couldn&apos;t load the plant library
       </p>
       <p className="text-sm text-[#6B6B5A] mb-8">
-        This is a temporary error — your library data is intact.
+        This is a temporary error. Your library data is intact.
       </p>
       <div className="flex items-center justify-center gap-3">
         <button

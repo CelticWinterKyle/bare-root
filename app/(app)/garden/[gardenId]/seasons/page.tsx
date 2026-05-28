@@ -127,7 +127,7 @@ export default async function SeasonsPage({
                         <p className="text-xs text-[#ADADAA] mt-0.5">
                           {season.startDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                           {season.endDate &&
-                            ` — ${season.endDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                            ` to ${season.endDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
                         </p>
                       </div>
                       <form action={setActiveSeason.bind(null, season.id)}>
