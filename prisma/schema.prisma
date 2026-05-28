@@ -115,6 +115,9 @@ model Garden {
   userId          String
   name            String
   description     String?
+  // Unused: weather/zone/frost all derive from locationZip, and the zip
+  // lookup returns no coordinates. Removal candidate in a future schema
+  // cleanup (kept for now — dropping columns is riskier than leaving them).
   locationLat     Float?
   locationLng     Float?
   locationZip     String?
