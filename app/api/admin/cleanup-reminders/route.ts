@@ -1,23 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ReminderType } from "@/lib/generated/prisma/enums";
+import { getCurrentUser } from "@/lib/auth";
+
+// The account allowed to trigger this from the browser (Clerk session).
+const OWNER_EMAIL = "kyle@celticwinter.com";
 
 /**
  * One-time cleanup for reminder cruft created before the per-cell dedupe
  * fix: collapses duplicate reminders (one per user/garden/type/title/day)
  * and deletes stale frost alerts whose 72h window has long passed.
- * Idempotent — safe to run more than once. Auth: x-admin-secret header.
+ * Idempotent — safe to run more than once.
  *
- * Run once:
- *   curl -X POST https://bareroot.garden/api/admin/cleanup-reminders \
- *        -H "x-admin-secret: $CRON_SECRET"
+ * Two ways to trigger:
+ *   - GET in a browser while signed in as the owner (no secret needed).
+ *   - POST with `x-admin-secret: $CRON_SECRET` (for scripted/cron use).
  */
-export async function POST(req: Request) {
-  const secret = req.headers.get("x-admin-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
+async function runCleanup() {
   // 1) Delete stale frost alerts — the forecast window they referenced is
   //    long gone, so they're just noise lingering on the dashboard.
   const frostCutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
@@ -69,10 +68,28 @@ export async function POST(req: Request) {
     duplicatesDeleted += res.count;
   }
 
-  return NextResponse.json({
+  return {
     ok: true,
     staleFrostDeleted: staleFrost.count,
     duplicatesDeleted,
     groupsScanned: groups.size,
-  });
+  };
+}
+
+export async function POST(req: Request) {
+  const secret = req.headers.get("x-admin-secret");
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+  return NextResponse.json(await runCleanup());
+}
+
+export async function GET() {
+  // Owner-only browser trigger — uses the Clerk session, so no secret is
+  // needed (the CRON_SECRET is a write-only Vercel var and can't be read back).
+  const user = await getCurrentUser();
+  if (!user || user.email.toLowerCase() !== OWNER_EMAIL) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+  return NextResponse.json(await runCleanup());
 }
