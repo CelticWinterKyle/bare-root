@@ -341,6 +341,12 @@ model PlantLibrary {
   // (e.g. an imported plant the source API had no grow-cycle data for),
   // so the UI can label them and a user edit can clear the flag.
   timingEstimated  Boolean       @default(false)
+  // Common pests/diseases for this plant. Persisted values come from
+  // Perenual enrichment (pest_susceptibility); the UI also merges in
+  // category-based defaults from lib/services/pest-data.ts, so these may
+  // be empty for curated/seed plants and still render useful info.
+  commonPests      String[]
+  commonDiseases   String[]
   customForUserId  String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
