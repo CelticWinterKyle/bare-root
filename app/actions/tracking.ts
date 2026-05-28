@@ -4,7 +4,17 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { put } from "@vercel/blob";
-import { checkCanUploadPhoto } from "@/lib/tier";
+import { checkCanUploadPhoto, isProFeature } from "@/lib/tier";
+
+// Parse a date-only input ("YYYY-MM-DD") as LOCAL midnight. `new Date(str)`
+// treats a bare date as UTC, which then displays as the previous day for
+// anyone west of UTC. Falls back to full parsing for anything else.
+function parseHarvestDate(s: string | undefined): Date {
+  if (!s) return new Date();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(s);
+}
 
 async function resolvePlanting(plantingId: string, userId: string) {
   const p = await db.planting.findFirst({
@@ -28,7 +38,7 @@ export async function addHarvestLog(
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
-  const harvestedAt = data.harvestedAt ? new Date(data.harvestedAt) : new Date();
+  const harvestedAt = parseHarvestDate(data.harvestedAt);
 
   await db.harvestLog.create({
     data: {
@@ -138,6 +148,7 @@ export async function upsertSeedInventory(data: {
   notes?: string;
 }) {
   const user = await requireUser();
+  if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
   await db.seedInventory.upsert({
     where: { userId_plantId_variety: { userId: user.id, plantId: data.plantId, variety: data.variety } },
     create: { userId: user.id, ...data, notes: data.notes || null },
@@ -148,6 +159,7 @@ export async function upsertSeedInventory(data: {
 
 export async function deleteSeedInventory(id: string) {
   const user = await requireUser();
+  if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
   await db.seedInventory.deleteMany({ where: { id, userId: user.id } });
   revalidatePath("/inventory");
 }

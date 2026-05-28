@@ -37,7 +37,7 @@ export default async function SeasonSummaryPage({
     category: string;
     beds: string[];
     totalHarvest: number;
-    unit: string;
+    totalsByUnit: Record<string, number>;
     logCount: number;
     rating: number | null;
     growAgain: boolean | null;
@@ -54,7 +54,7 @@ export default async function SeasonSummaryPage({
         category: p.plant.category,
         beds: [],
         totalHarvest: 0,
-        unit: p.harvestLogs[0]?.unit ?? "lbs",
+        totalsByUnit: {},
         logCount: 0,
         rating: p.rating,
         growAgain: p.growAgain,
@@ -65,6 +65,7 @@ export default async function SeasonSummaryPage({
     if (!byPlant[pid].beds.includes(bed)) byPlant[pid].beds.push(bed);
     for (const log of p.harvestLogs) {
       byPlant[pid].totalHarvest += log.quantity;
+      byPlant[pid].totalsByUnit[log.unit] = (byPlant[pid].totalsByUnit[log.unit] ?? 0) + log.quantity;
       byPlant[pid].logCount++;
     }
   }
@@ -141,7 +142,9 @@ export default async function SeasonSummaryPage({
                     <p className="text-xs text-[#ADADAA]">{s.beds.join(", ")}</p>
                   </div>
                   <span className="text-sm font-semibold text-[#D4820A]">
-                    {s.totalHarvest} {s.unit}
+                    {Object.entries(s.totalsByUnit)
+                      .map(([u, q]) => `${Number(q.toFixed(2))} ${u}`)
+                      .join(" · ")}
                   </span>
                 </div>
               ))}

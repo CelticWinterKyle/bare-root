@@ -45,18 +45,34 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
   });
   if (!garden) throw new Error("Garden not found");
 
-  // Check collaborator limit (5 per garden)
-  const existingCount = await db.gardenCollaborator.count({ where: { gardenId } });
-  if (existingCount >= 5) throw new Error("COLLABORATOR_LIMIT_REACHED");
+  const lowerEmail = email.toLowerCase();
 
   // Can't invite yourself
-  if (email.toLowerCase() === user.email.toLowerCase()) throw new Error("CANNOT_INVITE_SELF");
+  if (lowerEmail === user.email.toLowerCase()) throw new Error("CANNOT_INVITE_SELF");
+
+  const existingUser = await db.user.findUnique({ where: { email: lowerEmail } });
+  const alreadyMember = existingUser
+    ? await db.gardenCollaborator.findUnique({
+        where: { gardenId_userId: { gardenId, userId: existingUser.id } },
+      })
+    : null;
+
+  // Enforce the 5-per-garden limit against accepted collaborators PLUS
+  // outstanding pending invitations (excluding any re-invite of this same
+  // email), so the cap can't be exceeded by sending invites that all later
+  // accept. Skip the check when this person is already a collaborator.
+  if (!alreadyMember) {
+    const [collabCount, pendingCount] = await Promise.all([
+      db.gardenCollaborator.count({ where: { gardenId } }),
+      db.gardenInvitation.count({
+        where: { gardenId, email: { not: lowerEmail }, acceptedAt: null, expiresAt: { gt: new Date() } },
+      }),
+    ]);
+    if (collabCount + pendingCount >= 5) throw new Error("COLLABORATOR_LIMIT_REACHED");
+  }
 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  // If invitee already has an account, add them directly
-  const existingUser = await db.user.findUnique({ where: { email: email.toLowerCase() } });
 
   if (existingUser) {
     await db.gardenCollaborator.upsert({

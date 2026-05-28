@@ -125,6 +125,7 @@ export function DesktopSidebar({
             {section.items.map(({ href, Icon, label }) => {
               const isActive = pathname.startsWith(href);
               const badge = href === "/reminders" && unreadCount > 0 ? unreadCount : null;
+              const proLocked = href === "/inventory" && !isPro;
               return (
                 <Link key={href} href={href} style={navItemStyle(href)}>
                   <Icon
@@ -139,6 +140,16 @@ export function DesktopSidebar({
                       padding: "1px 6px", borderRadius: "100px", lineHeight: 1.5,
                     }}>
                       {badge}
+                    </span>
+                  )}
+                  {proLocked && (
+                    <span style={{
+                      marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: "8px",
+                      letterSpacing: "0.06em", textTransform: "uppercase",
+                      background: "#F4F4EC", color: "#ADADAA",
+                      padding: "1px 5px", borderRadius: "4px", lineHeight: 1.6,
+                    }}>
+                      Pro
                     </span>
                   )}
                 </Link>

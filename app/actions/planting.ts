@@ -48,16 +48,25 @@ async function resolveFootprint(args: {
   const spacing = spacingInches ?? bed.cellSizeIn;
   const sideCells = Math.max(1, Math.ceil(spacing / bed.cellSizeIn));
 
-  // Anchor at tap, extend LEFT + DOWN — anchor is the top-right corner.
-  // Rows: anchor.row .. anchor.row + sideCells - 1
-  // Cols: anchor.col - sideCells + 1 .. anchor.col
+  // The footprint is a sideCells×sideCells block. The tapped cell anchors it
+  // at the top-right (extends down + left). Shift the block to stay in-bounds
+  // so tapping near the top/left edge doesn't silently shrink the plant —
+  // the block slides to keep the tapped cell inside it. We only reduce the
+  // footprint when the bed itself is too small to hold it. The tapped cell
+  // always remains the primary (it must match Planting.cellId).
+  const rowStart = Math.max(0, Math.min(anchorCell.row, bed.gridRows - sideCells));
+  const colStart = Math.max(0, Math.min(anchorCell.col - sideCells + 1, bed.gridCols - sideCells));
   const desired: { row: number; col: number; isPrimary: boolean }[] = [];
   for (let dr = 0; dr < sideCells; dr++) {
     for (let dc = 0; dc < sideCells; dc++) {
-      const row = anchorCell.row + dr;
-      const col = anchorCell.col - dc;
-      if (row >= bed.gridRows || col < 0) continue;
-      desired.push({ row, col, isPrimary: dr === 0 && dc === 0 });
+      const row = rowStart + dr;
+      const col = colStart + dc;
+      if (row < 0 || row >= bed.gridRows || col < 0 || col >= bed.gridCols) continue;
+      desired.push({
+        row,
+        col,
+        isPrimary: row === anchorCell.row && col === anchorCell.col,
+      });
     }
   }
 
@@ -206,6 +215,8 @@ export async function assignPlant(
   );
 
   revalidatePath(`/garden/${cell.bed.gardenId}/beds/${cell.bedId}`);
+  revalidatePath(`/garden/${cell.bed.gardenId}`);
+  revalidatePath(`/dashboard`);
   return { spacingWarnings, footprintWarning };
 }
 
@@ -290,6 +301,8 @@ export async function movePlanting(
   });
 
   revalidatePath(`/garden/${newAnchor.bed.gardenId}/beds/${newAnchor.bedId}`);
+  revalidatePath(`/garden/${newAnchor.bed.gardenId}`);
+  revalidatePath(`/dashboard`);
 
   if (placement.footprintReduced) {
     const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
@@ -388,6 +401,8 @@ export async function removePlanting(plantingId: string) {
 
   await db.planting.delete({ where: { id: plantingId } });
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}`);
+  revalidatePath(`/dashboard`);
 }
 
 export async function updateCellSun(cellId: string, sunLevel: SunLevel) {

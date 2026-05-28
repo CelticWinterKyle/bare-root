@@ -102,13 +102,13 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
   const dimensionsChanged =
     nextGridCols !== bed.gridCols || nextGridRows !== bed.gridRows;
 
+  const cellSizeChanged = nextCellSizeIn !== bed.cellSizeIn;
+
   await db.$transaction(async (tx) => {
-    if (dimensionsChanged) {
-      // Cell layout is changing — wipe existing cells (cascades to plantings)
-      // and rebuild the grid from scratch. This is destructive but
-      // deterministic and avoids edge cases around mismatched cell-size
-      // resampling (e.g. 12" → 6" doubles density and old row/col coords
-      // no longer line up).
+    if (dimensionsChanged && cellSizeChanged) {
+      // Cell size changed — row/col coordinates change meaning (e.g. 12" → 6"
+      // doubles density), so old positions can't be remapped. Rebuild the
+      // grid from scratch; plantings in the bed are lost (the UI warns).
       await tx.cell.deleteMany({ where: { bedId } });
       const cells: { bedId: string; row: number; col: number }[] = [];
       for (let row = 0; row < nextGridRows; row++) {
@@ -118,6 +118,25 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
       }
       if (cells.length > 0) {
         await tx.cell.createMany({ data: cells });
+      }
+    } else if (dimensionsChanged) {
+      // Same cell size, only dimensions changed — preserve plantings whose
+      // cells still fit. Delete only out-of-bounds cells (cascading just the
+      // plantings/footprint cells that no longer fit) and add the new cells
+      // exposed by a larger bed.
+      await tx.cell.deleteMany({
+        where: { bedId, OR: [{ row: { gte: nextGridRows } }, { col: { gte: nextGridCols } }] },
+      });
+      const existing = await tx.cell.findMany({ where: { bedId }, select: { row: true, col: true } });
+      const have = new Set(existing.map((c) => `${c.row},${c.col}`));
+      const toAdd: { bedId: string; row: number; col: number }[] = [];
+      for (let row = 0; row < nextGridRows; row++) {
+        for (let col = 0; col < nextGridCols; col++) {
+          if (!have.has(`${row},${col}`)) toAdd.push({ bedId, row, col });
+        }
+      }
+      if (toAdd.length > 0) {
+        await tx.cell.createMany({ data: toAdd });
       }
     }
 

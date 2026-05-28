@@ -53,12 +53,16 @@ export function EditBedDialog({ bedId, gardenId, initial }: Props) {
     Number.isFinite(widthFt) && widthFt > 0 &&
     Number.isFinite(heightFt) && heightFt > 0;
 
-  const dimensionsChanged =
-    widthFt !== initial.widthFt ||
-    heightFt !== initial.heightFt ||
-    cellSizeIn !== initial.cellSizeIn;
-
-  const willResetGrid = dimensionsChanged && initial.plantingCount > 0;
+  // Mirror the server's grid math so the warning matches what actually
+  // happens: growing a bed preserves plantings; only shrinking (cutting off
+  // cells) or changing the cell size removes them.
+  const initialCols = Math.max(1, Math.floor(initial.widthFt * (12 / initial.cellSizeIn)));
+  const initialRows = Math.max(1, Math.floor(initial.heightFt * (12 / initial.cellSizeIn)));
+  const nextCols = Number.isFinite(widthFt) && widthFt > 0 ? Math.max(1, Math.floor(widthFt * (12 / cellSizeIn))) : initialCols;
+  const nextRows = Number.isFinite(heightFt) && heightFt > 0 ? Math.max(1, Math.floor(heightFt * (12 / cellSizeIn))) : initialRows;
+  const cellSizeChanged = cellSizeIn !== initial.cellSizeIn;
+  const shrinking = nextCols < initialCols || nextRows < initialRows;
+  const willLosePlantings = initial.plantingCount > 0 && (cellSizeChanged || shrinking);
 
   function handleSave() {
     if (!valid) return;
@@ -163,9 +167,12 @@ export function EditBedDialog({ bedId, gardenId, initial }: Props) {
             </div>
           </div>
 
-          {willResetGrid && (
+          {willLosePlantings && (
             <div className="p-3 rounded-lg border border-amber-200 bg-[#FFF8E7] text-xs text-[#7A4A0A]">
-              <strong>Heads up:</strong> Changing dimensions or cell size will rebuild the grid and remove all {initial.plantingCount} planting{initial.plantingCount === 1 ? "" : "s"} in this bed.
+              <strong>Heads up:</strong>{" "}
+              {cellSizeChanged
+                ? `Changing the cell size rebuilds the whole grid and removes all ${initial.plantingCount} planting${initial.plantingCount === 1 ? "" : "s"} in this bed.`
+                : "Shrinking the bed removes any plantings in the cells you cut off. Plants in the remaining area are kept."}
             </div>
           )}
 

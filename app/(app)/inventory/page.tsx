@@ -1,10 +1,36 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
+import { isProFeature } from "@/lib/tier";
 import { SeedInventoryClient } from "@/components/tracking/SeedInventoryClient";
 
 export default async function InventoryPage() {
   const user = await requireUser();
+
+  // Seed inventory is a Pro feature (also enforced server-side in the
+  // upsert/delete actions). Free users get an upsell instead of the tool.
+  if (!isProFeature(user.subscriptionTier)) {
+    return (
+      <div className="container-narrow">
+        <div className="px-[22px] md:px-8 py-16 text-center">
+          <h1 className="font-display text-2xl font-semibold text-[#111109] mb-2">
+            Seed inventory is a Pro feature
+          </h1>
+          <p className="text-sm text-[#6B6B5A] mb-6 max-w-md mx-auto">
+            Track your seed packets, quantities, and what you still need to buy. Upgrade to
+            Pro to unlock seed inventory.
+          </p>
+          <Link
+            href="/settings/billing"
+            className="inline-block bg-[#1C3D0A] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3A6B20] transition-colors"
+          >
+            Upgrade to Pro
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const [inventory, gardens] = await Promise.all([
     db.seedInventory.findMany({

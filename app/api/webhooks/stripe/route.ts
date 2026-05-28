@@ -39,7 +39,10 @@ export async function POST(req: Request) {
       if (userId && customerId) {
         await db.user.update({
           where: { id: userId },
-          data: { stripeCustomerId: customerId },
+          // Mark hadTrial on completion too: the trialing subscription event
+          // can lag or be missed, and without this a user who completes
+          // checkout (consuming their one free trial) could start another.
+          data: { stripeCustomerId: customerId, hadTrial: true },
         });
       }
       break;

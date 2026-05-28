@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
+import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
   const user = await requireUser();
@@ -28,9 +29,23 @@ export async function POST(req: Request) {
     );
   }
 
+  // Always check out against a known Stripe customer. Falling back to
+  // customer_email makes Stripe mint a *second* customer, which then
+  // orphans the original and can desync subscription state ("paid in
+  // Stripe, still Free in app"). Create + persist one if missing.
+  let customerId = user.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: user.name ?? undefined,
+      metadata: { clerkUserId: user.id },
+    });
+    customerId = customer.id;
+    await db.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+  }
+
   const session = await stripe.checkout.sessions.create({
-    customer: user.stripeCustomerId ?? undefined,
-    customer_email: user.stripeCustomerId ? undefined : user.email,
+    customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     mode: "subscription",
     ...(user.hadTrial ? {} : { subscription_data: { trial_period_days: 7 } }),

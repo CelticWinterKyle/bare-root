@@ -30,8 +30,16 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
 
-  const total = logs.reduce((s, l) => s + l.quantity, 0);
-  const unit0 = logs[0]?.unit ?? unit;
+  // Sum per unit — logs can mix units (lbs, count, bunches…), so a single
+  // total mislabeled with the first log's unit was nonsense ("3 lbs + 12
+  // count = 15 lbs"). Show each unit's subtotal.
+  const totalsByUnit = logs.reduce<Record<string, number>>((acc, l) => {
+    acc[l.unit] = (acc[l.unit] ?? 0) + l.quantity;
+    return acc;
+  }, {});
+  const totalLabel = Object.entries(totalsByUnit)
+    .map(([u, q]) => `${Number(q.toFixed(2))} ${u}`)
+    .join(" · ");
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +65,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg font-semibold text-[#111109]">Harvest log</h2>
         {logs.length > 0 && (
-          <span className="text-sm text-[#D4820A] font-medium">{total} {unit0} total</span>
+          <span className="text-sm text-[#D4820A] font-medium">{totalLabel} total</span>
         )}
       </div>
 
