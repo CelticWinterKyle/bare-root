@@ -9,6 +9,7 @@ import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { PwaInstallPrompt } from "@/components/layout/PwaInstallPrompt";
+import { TimezoneSync } from "@/components/layout/TimezoneSync";
 
 // Paths that bypass the onboarding gate. /onboarding hosts the wizard
 // itself; /invite/[token] handles collaborator joins (those users get
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (isOnboardingPath) {
     return (
       <div className="min-h-screen" style={{ background: "#FDFDF8" }}>
+        <TimezoneSync current={user.timezone} />
         {children}
         <PwaInstallPrompt />
       </div>
@@ -78,6 +80,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen" style={{ background: "#FDFDF8" }}>
+      <TimezoneSync current={user.timezone} />
       {trialDaysLeft !== null && trialDaysLeft <= 5 && (
         <TrialBanner daysLeft={trialDaysLeft} />
       )}

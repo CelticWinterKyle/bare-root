@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
+import { PlantTimingEditor } from "@/components/plants/PlantTimingEditor";
 import { gardenEditFilter } from "@/lib/permissions";
 
 const SUN_LABELS: Record<string, string> = {
@@ -174,8 +175,17 @@ export default async function PlantDetailPage({
         )}
       </div>
 
+      {/* Planting timing — editable, drives the calendar + reminders */}
+      <PlantTimingEditor
+        plantId={plant.id}
+        daysToMaturity={plant.daysToMaturity}
+        indoorStartWeeks={plant.indoorStartWeeks}
+        transplantWeeks={plant.transplantWeeks}
+        estimated={plant.timingEstimated}
+      />
+
       {/* Growing details */}
-      {(plant.plantFamily || plant.plantingSeasons?.length > 0 || plant.soilPhRange || plant.indoorStartWeeks) && (
+      {(plant.plantFamily || plant.plantingSeasons?.length > 0 || plant.soilPhRange || plant.harvestMonths?.length > 0) && (
         <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
           <h2 className="font-medium text-[#111109] mb-3">Growing details</h2>
           <dl className="space-y-2">
@@ -184,12 +194,6 @@ export default async function PlantDetailPage({
               <Detail label="Planting seasons" value={plant.plantingSeasons.join(", ")} />
             )}
             {plant.soilPhRange && <Detail label="Soil pH" value={plant.soilPhRange} />}
-            {plant.indoorStartWeeks && (
-              <Detail label="Start indoors" value={`${plant.indoorStartWeeks} weeks before last frost`} />
-            )}
-            {plant.transplantWeeks && (
-              <Detail label="Transplant" value={`${plant.transplantWeeks} weeks after last frost`} />
-            )}
             {plant.harvestMonths?.length > 0 && (
               <Detail label="Harvest season" value={plant.harvestMonths.join(", ")} />
             )}

@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
 import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
 
-function isLocalMorning(utcNow: Date, timezone: string): boolean {
+function isLocalSendWindow(utcNow: Date, timezone: string): boolean {
   try {
     const formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
@@ -10,7 +10,11 @@ function isLocalMorning(utcNow: Date, timezone: string): boolean {
       hour12: false,
     });
     const hour = parseInt(formatter.format(utcNow));
-    return hour >= 7 && hour < 9;
+    // Daytime window: 7am–9:59pm local. Batches system reminders into the
+    // day instead of pinging at 2am, but unlike a narrow 7–9 window a
+    // missed morning cron run still delivers later the same day rather
+    // than skipping the reminder forever.
+    return hour >= 7 && hour < 22;
   } catch {
     return false;
   }
@@ -69,7 +73,7 @@ export async function GET(req: Request) {
 
   for (const [, userReminders] of byUser) {
     const user = userReminders[0].user;
-    const inMorningWindow = isLocalMorning(now, user.timezone);
+    const inSendWindow = isLocalSendWindow(now, user.timezone);
 
     for (const reminder of userReminders) {
       // System reminders (start seeds, transplant, harvest, frost, etc.)
@@ -78,7 +82,7 @@ export async function GET(req: Request) {
       // time regardless of where it lands in the day — otherwise a
       // "remind me at 3pm" gets pushed to the next morning, which
       // defeats the point of letting users set their own time.
-      if (reminder.type !== "CUSTOM" && !inMorningWindow) continue;
+      if (reminder.type !== "CUSTOM" && !inSendWindow) continue;
       const pref = await db.notificationPreference.findUnique({
         where: { userId_type: { userId: user.id, type: reminder.type as never } },
       });

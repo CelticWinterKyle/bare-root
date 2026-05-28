@@ -1,8 +1,10 @@
 "use server";
 import { after } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
+import { applyEstimatedTiming } from "@/lib/services/plant-timing";
 import type { PlantCategory, SunLevel, WaterNeed } from "@/lib/generated/prisma/enums";
 
 function validImage(url: string | null | undefined): string | null {
@@ -128,6 +130,11 @@ export async function searchPlantsAction(
         });
         if (exists) continue;
         try {
+          const cat = inferCategoryFromName(item.common_name);
+          // Perenual gives no grow-cycle data, so fill category-based
+          // estimates and flag them — otherwise the plant produces no
+          // calendar events or reminders at all.
+          const { data: est, estimated } = applyEstimatedTiming(cat, {});
           await db.plantLibrary.create({
             data: {
               externalId: String(item.id),
@@ -135,10 +142,12 @@ export async function searchPlantsAction(
               name: item.common_name,
               scientificName: item.scientific_name?.[0] ?? null,
               commonNames: item.other_name ?? [],
-              category: inferCategoryFromName(item.common_name),
+              category: cat,
               sunRequirement: mapSunlight(item.sunlight ?? []),
               waterRequirement: mapWatering(item.watering),
               imageUrl: validImage(item.default_image?.medium_url),
+              ...est,
+              timingEstimated: estimated,
             },
           });
         } catch {
@@ -215,17 +224,31 @@ export async function getPlantAction(plantId: string) {
       if (!full) return;
       const perenualImg = validImage(full.default_image?.medium_url);
       const imageUrl = perenualImg ?? (!plant.imageUrl || badImageUrl ? await fetchWikipediaImage(plant.name) : plant.imageUrl);
+      const newCategory = mapCategory(full.type, full.edible_fruit, full.flowers);
+      // Backfill estimated timing for non-curated plants still missing it
+      // (curated "seed" plants keep their hand-entered, intentional data —
+      // e.g. direct-sown beans correctly have no indoor-start week).
+      const { data: est, estimated } =
+        plant.source === "seed"
+          ? { data: {}, estimated: false }
+          : applyEstimatedTiming(newCategory, {
+              daysToMaturity: plant.daysToMaturity,
+              indoorStartWeeks: plant.indoorStartWeeks,
+              transplantWeeks: plant.transplantWeeks,
+            });
       await db.plantLibrary.update({
         where: { id: plantId },
         data: {
           description: full.description ?? undefined,
           plantFamily: full.family ?? undefined,
-          category: mapCategory(full.type, full.edible_fruit, full.flowers),
+          category: newCategory,
           sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
           waterRequirement: mapWatering(full.watering) ?? undefined,
           spacingInches: full.spacing ?? undefined,
           imageUrl: imageUrl ?? undefined,
           harvestMonths: full.harvest_season ? [full.harvest_season] : [],
+          ...est,
+          ...(estimated ? { timingEstimated: true } : {}),
         },
       });
     });
@@ -268,4 +291,45 @@ export async function createCustomPlant(data: {
       source: "custom",
     },
   });
+}
+
+/**
+ * Update a plant's grow-cycle timing (drives the calendar + reminders).
+ * Used to correct category-based estimates. A manual edit clears the
+ * `timingEstimated` flag since the values are now authoritative. Editing a
+ * shared (global) plant updates it for everyone — acceptable as crowd
+ * correction; only plants the user can access can be edited.
+ */
+export async function updatePlantTiming(
+  plantId: string,
+  data: {
+    daysToMaturity?: number | null;
+    indoorStartWeeks?: number | null;
+    transplantWeeks?: number | null;
+  }
+) {
+  const user = await requireUser();
+  const plant = await db.plantLibrary.findFirst({
+    where: { id: plantId, OR: [{ customForUserId: null }, { customForUserId: user.id }] },
+    select: { id: true },
+  });
+  if (!plant) throw new Error("Plant not found");
+
+  const clampInt = (v: number | null | undefined, min: number, max: number) => {
+    if (v == null) return null;
+    const n = Math.round(v);
+    if (Number.isNaN(n) || n < min || n > max) throw new Error("Invalid timing value");
+    return n;
+  };
+
+  await db.plantLibrary.update({
+    where: { id: plantId },
+    data: {
+      daysToMaturity: clampInt(data.daysToMaturity, 1, 730),
+      indoorStartWeeks: clampInt(data.indoorStartWeeks, 0, 20),
+      transplantWeeks: clampInt(data.transplantWeeks, 0, 20),
+      timingEstimated: false,
+    },
+  });
+  revalidatePath(`/plants/${plantId}`);
 }
