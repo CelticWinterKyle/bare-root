@@ -1,7 +1,9 @@
 "use server";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
+import { assignPlant } from "@/app/actions/planting";
 import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-layout";
 
 export async function generateLayoutAction(
@@ -94,44 +96,54 @@ export async function acceptLayoutAssignments(
   bedId: string,
   seasonId: string,
   assignments: LayoutAssignment[]
-) {
+): Promise<{ planted: number }> {
   const user = await requireUser();
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
-    include: {
-      cells: {
-        include: {
-          plantings: { where: { seasonId }, select: { id: true } },
-        },
-      },
-    },
+    select: { id: true, gardenId: true },
   });
   if (!bed) throw new Error("Bed not found");
 
-  // Build cell map
-  const cellMap = new Map(bed.cells.map((c) => [`${c.row},${c.col}`, c]));
+  // Validate plantIds: only global plants or this user's own custom plants.
+  // The client supplies these, so without this check a user could inject
+  // another user's private custom plant into their bed.
+  const requestedIds = [...new Set(assignments.map((a) => a.plantId))];
+  const allowed = await db.plantLibrary.findMany({
+    where: {
+      id: { in: requestedIds },
+      OR: [{ customForUserId: null }, { customForUserId: user.id }],
+    },
+    select: { id: true },
+  });
+  const allowedIds = new Set(allowed.map((p) => p.id));
 
-  await db.$transaction(
-    assignments
-      .filter((a) => {
-        const cell = cellMap.get(`${a.row},${a.col}`);
-        return cell && cell.plantings.length === 0;
-      })
-      .map((a) => {
-        const cell = cellMap.get(`${a.row},${a.col}`)!;
-        return db.planting.create({
-          data: {
-            cellId: cell.id,
-            seasonId,
-            plantId: a.plantId,
-            status: "PLANNED",
-            quantityPerCell: 1,
-          },
-        });
-      })
-  );
+  // Resolve (row,col) → cell id for the assigned positions.
+  const cells = await db.cell.findMany({
+    where: { bedId, OR: assignments.map((a) => ({ row: a.row, col: a.col })) },
+    select: { id: true, row: true, col: true },
+  });
+  const cellByPos = new Map(cells.map((c) => [`${c.row},${c.col}`, c.id]));
 
-  const { revalidatePath } = await import("next/cache");
+  // Reuse the canonical assignPlant path so each plant gets its full
+  // footprint (PlantingCell rows) and reminders — the old code created
+  // bare Planting rows with no PlantingCell, so plants were invisible and
+  // their cells then rejected manual planting. Occupied cells are skipped.
+  let planted = 0;
+  for (const a of assignments) {
+    if (!allowedIds.has(a.plantId)) continue;
+    const cellId = cellByPos.get(`${a.row},${a.col}`);
+    if (!cellId) continue;
+    try {
+      await assignPlant(cellId, a.plantId, seasonId);
+      planted++;
+    } catch {
+      // Cell already occupied (footprint overlap or pre-existing) — skip.
+    }
+  }
+
   revalidatePath(`/garden/${bed.gardenId}/beds/${bedId}`);
+  revalidatePath(`/garden/${bed.gardenId}`);
+  revalidatePath(`/dashboard`);
+  return { planted };
 }

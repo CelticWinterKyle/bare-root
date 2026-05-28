@@ -1391,7 +1391,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       seasonId={seasonId}
                       userId={userId}
                       recentPlants={recentPlants}
-                      onAssignmentsAccepted={(a) => setPreviewAssignments(a)}
+                      onAssignmentsAccepted={() => setPreviewAssignments([])}
                       onClose={() => setActiveTab("plant")}
                       onHoverAssignment={setHoveredAssignment}
                     />
