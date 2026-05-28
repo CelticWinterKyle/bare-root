@@ -6,8 +6,12 @@ export type CalendarEvent = {
   type: "START_SEEDS" | "TRANSPLANT" | "HARVEST";
   plantName: string;
   plantId: string;
+  bedId: string;
   bedName: string;
+  gardenId: string;
   gardenName: string;
+  /** How many plantings of this plant share this event (deduped). */
+  count?: number;
 };
 
 type Props = {
@@ -129,9 +133,10 @@ export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
                         <Icon className="w-2.5 h-2.5 text-white" />
                       </div>
 
-                      {/* Card */}
-                      <div
-                        className="flex-1 rounded-xl border p-3.5 transition-shadow hover:shadow-sm"
+                      {/* Card — links to the bed so you can act on it */}
+                      <Link
+                        href={`/garden/${event.gardenId}/beds/${event.bedId}`}
+                        className="flex-1 block rounded-xl border p-3.5 transition-shadow hover:shadow-sm"
                         style={{ background: cfg.dotBg, borderColor: cfg.dot + "33" }}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -148,12 +153,10 @@ export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
                               </span>
                             </div>
                             <p className="text-sm font-semibold text-[#111109] truncate">
-                              <Link
-                                href={`/plants/${event.plantId}`}
-                                className="hover:text-[#1C3D0A] transition-colors"
-                              >
-                                {event.plantName}
-                              </Link>
+                              {event.plantName}
+                              {event.count && event.count > 1 ? (
+                                <span className="text-[#6B6B5A] font-normal"> ×{event.count}</span>
+                              ) : null}
                             </p>
                             <p className="text-xs text-[#ADADAA] mt-0.5">
                               {event.gardenName} · {event.bedName}
@@ -176,7 +179,7 @@ export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                   );
                 })}

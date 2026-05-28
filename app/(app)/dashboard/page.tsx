@@ -865,23 +865,35 @@ export default async function DashboardPage() {
               <div className={styles.seasonCard}>
                 <div className={styles.seasonName}>{activeSeason.name}</div>
                 <div className={styles.seasonDates}>{seasonDates}</div>
-                <div className={styles.seasonBar}>
-                  <div
-                    className={styles.seasonBarFill}
-                    style={{ width: `${seasonPct}%` }}
-                  />
-                  <div
-                    className={styles.seasonBarMarker}
-                    style={{ left: `${seasonPct}%` }}
-                  />
-                </div>
-                <div className={styles.seasonProgress}>
-                  <span>Start</span>
-                  <span>
-                    <strong>{Math.round(seasonPct)}%</strong> complete
-                  </span>
-                  <span>End</span>
-                </div>
+                {seasonTotalDays ? (
+                  <>
+                    <div className={styles.seasonBar}>
+                      <div
+                        className={styles.seasonBarFill}
+                        style={{ width: `${seasonPct}%` }}
+                      />
+                      <div
+                        className={styles.seasonBarMarker}
+                        style={{ left: `${seasonPct}%` }}
+                      />
+                    </div>
+                    <div className={styles.seasonProgress}>
+                      <span>Start</span>
+                      <span>
+                        <strong>{Math.round(seasonPct)}%</strong> complete
+                      </span>
+                      <span>End</span>
+                    </div>
+                  </>
+                ) : (
+                  // No end date set — a percentage would be meaningless (and
+                  // read as a stuck 0%), so show how far into the season it is.
+                  <div className={styles.seasonProgress}>
+                    <span>
+                      <strong>Day {seasonDayN}</strong> of the season
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

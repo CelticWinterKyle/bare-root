@@ -99,12 +99,25 @@ export default async function PlantingDetailPage({
         </div>
 
       <div className="space-y-8">
-        {/* Season rating */}
-        <RatingSection
-          plantingId={plantingId}
-          rating={planting.rating}
-          growAgain={planting.growAgain}
-        />
+        {/* Season rating — only meaningful once the plant has actually been
+            grown. Showing "how did it grow?" on a still-PLANNED plant is
+            confusing, so gate it on a grown status (or an existing rating). */}
+        {["HARVESTING", "HARVESTED", "FAILED"].includes(planting.status) ||
+        planting.rating != null ||
+        planting.growAgain != null ? (
+          <RatingSection
+            plantingId={plantingId}
+            rating={planting.rating}
+            growAgain={planting.growAgain}
+          />
+        ) : (
+          <section>
+            <h2 className="font-display text-lg font-semibold text-[#111109] mb-1">Season rating</h2>
+            <p className="text-sm text-[#ADADAA]">
+              You can rate this and decide whether to grow it again once it&apos;s harvested.
+            </p>
+          </section>
+        )}
 
         {/* Harvest logs */}
         <HarvestLogSection

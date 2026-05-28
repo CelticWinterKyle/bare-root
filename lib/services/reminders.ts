@@ -85,8 +85,30 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
     }
   }
 
-  if (reminders.length > 0) {
-    await db.reminder.createMany({ data: reminders });
+  // Dedupe: planting N cells of the same plant in a bed used to create N
+  // identical reminders (same plant, garden, type, and date). Only create a
+  // reminder if no equivalent one already exists for this user on that day.
+  const deduped: ReminderCreate[] = [];
+  for (const r of reminders) {
+    const dayStart = new Date(r.scheduledAt);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const exists = await db.reminder.findFirst({
+      where: {
+        userId: r.userId,
+        gardenId: r.gardenId,
+        type: r.type,
+        title: r.title,
+        scheduledAt: { gte: dayStart, lt: dayEnd },
+      },
+      select: { id: true },
+    });
+    if (!exists) deduped.push(r);
+  }
+
+  if (deduped.length > 0) {
+    await db.reminder.createMany({ data: deduped });
   }
 }
 

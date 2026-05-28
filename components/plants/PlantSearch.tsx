@@ -2,7 +2,6 @@
 import { useState, useTransition, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
@@ -200,13 +199,17 @@ export function PlantSearch({
                   style={{ height: "88px", background: "#F4F4EC", borderRadius: "10px 10px 0 0" }}
                 >
                   {plant.imageUrl && !failedImages.has(plant.id) ? (
-                    <Image
+                    // Plain <img> with no-referrer: Wikipedia/Perenual
+                    // hotlink-block requests that carry a referrer, which made
+                    // most library images fail to load. Same fix as the
+                    // bed-editor PlantLibrary.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={plant.imageUrl}
                       alt={plant.name}
-                      fill
-                      unoptimized
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, 33vw"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       onError={() => setFailedImages((prev) => new Set([...prev, plant.id]))}
                     />
                   ) : (

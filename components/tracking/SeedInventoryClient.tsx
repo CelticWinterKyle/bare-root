@@ -107,11 +107,18 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
 
   function handleShareShopping() {
     const unchecked = shoppingList.filter((s) => !s.inInventory && !checked.has(s.plantId));
+    if (unchecked.length === 0) {
+      toast.info("Nothing to share — your shopping list is empty.");
+      return;
+    }
     const text = unchecked.map((s) => `• ${s.plantName}`).join("\n");
     if (navigator.share) {
-      navigator.share({ title: "Seeds to buy", text });
+      navigator.share({ title: "Seeds to buy", text }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(text);
+      navigator.clipboard
+        .writeText(text)
+        .then(() => toast.success("Shopping list copied to clipboard"))
+        .catch(() => toast.error("Couldn't copy the list. Please try again."));
     }
   }
 

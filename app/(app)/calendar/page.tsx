@@ -91,11 +91,25 @@ export default async function CalendarPage() {
     }
   }
 
-  // Build calendar events from all active-season plantings
-  const events: CalendarEvent[] = [];
+  // Build calendar events from all active-season plantings, DEDUPED:
+  // multiple cells of the same plant in the same bed on the same date used
+  // to produce N identical rows. Aggregate by (type, plant, bed, day) and
+  // carry a count so the timeline can show "Basil ×5".
   const now = new Date();
   const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() + 12); // show next 12 months
+
+  const eventMap = new Map<string, CalendarEvent>();
+  function addEvent(e: CalendarEvent) {
+    const dayKey = e.date.toISOString().slice(0, 10);
+    const key = `${e.type}|${e.plantId}|${e.bedId}|${dayKey}`;
+    const existing = eventMap.get(key);
+    if (existing) {
+      existing.count = (existing.count ?? 1) + 1;
+    } else {
+      eventMap.set(key, { ...e, count: 1 });
+    }
+  }
 
   for (const garden of gardens) {
     if (!garden.lastFrostDate) continue;
@@ -104,19 +118,20 @@ export default async function CalendarPage() {
       for (const cell of bed.cells) {
         for (const planting of cell.plantings) {
           const { plant } = planting;
+          const base = {
+            plantName: plant.name,
+            plantId: plant.id,
+            bedId: bed.id,
+            bedName: bed.name,
+            gardenId: garden.id,
+            gardenName: garden.name,
+          };
 
           // Start seeds
           if (plant.indoorStartWeeks) {
             const d = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
             if (d >= now && d <= cutoff) {
-              events.push({
-                date: d,
-                type: "START_SEEDS",
-                plantName: plant.name,
-                plantId: plant.id,
-                bedName: bed.name,
-                gardenName: garden.name,
-              });
+              addEvent({ date: d, type: "START_SEEDS", ...base });
             }
           }
 
@@ -124,35 +139,21 @@ export default async function CalendarPage() {
           if (plant.transplantWeeks != null) {
             const d = calculateTransplantDate(garden.lastFrostDate, plant.transplantWeeks);
             if (d >= now && d <= cutoff) {
-              events.push({
-                date: d,
-                type: "TRANSPLANT",
-                plantName: plant.name,
-                plantId: plant.id,
-                bedName: bed.name,
-                gardenName: garden.name,
-              });
+              addEvent({ date: d, type: "TRANSPLANT", ...base });
             }
           }
 
           // Harvest — use stored expectedHarvestDate if set
           const harvestDate = planting.expectedHarvestDate;
           if (harvestDate && harvestDate >= now && harvestDate <= cutoff) {
-            events.push({
-              date: harvestDate,
-              type: "HARVEST",
-              plantName: plant.name,
-              plantId: plant.id,
-              bedName: bed.name,
-              gardenName: garden.name,
-            });
+            addEvent({ date: harvestDate, type: "HARVEST", ...base });
           }
         }
       }
     }
   }
 
-  events.sort((a, b) => +a.date - +b.date);
+  const events: CalendarEvent[] = Array.from(eventMap.values()).sort((a, b) => +a.date - +b.date);
 
   // Succession suggestions
   const allActivePlantings = gardens.flatMap((g) =>
