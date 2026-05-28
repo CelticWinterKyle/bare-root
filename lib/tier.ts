@@ -68,6 +68,41 @@ export function isProFeature(tier: Tier): boolean {
   return tier === "PRO";
 }
 
+/**
+ * Gardens a FREE user is over-limit on, locked read-only after a downgrade.
+ * Keeps the oldest `FREE.gardens` and locks the rest (by creation order).
+ * PRO users never have locked gardens.
+ */
+export async function getLockedGardenIds(
+  userId: string,
+  tier: Tier
+): Promise<string[]> {
+  if (tier === "PRO") return [];
+  const gardens = await db.garden.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  return gardens.slice(TIER_LIMITS.FREE.gardens).map((g) => g.id);
+}
+
+/**
+ * Beds in a garden a FREE user is over-limit on, locked read-only after a
+ * downgrade. Keeps the oldest `FREE.bedsPerGarden` and locks the rest.
+ */
+export async function getLockedBedIds(
+  gardenId: string,
+  tier: Tier
+): Promise<string[]> {
+  if (tier === "PRO") return [];
+  const beds = await db.bed.findMany({
+    where: { gardenId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  return beds.slice(TIER_LIMITS.FREE.bedsPerGarden).map((b) => b.id);
+}
+
 export function getBedCountForWarning(
   currentCount: number,
   tier: Tier

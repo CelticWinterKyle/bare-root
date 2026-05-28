@@ -337,6 +337,10 @@ model PlantLibrary {
   indoorStartWeeks Int?
   transplantWeeks  Int?
   harvestMonths    String[]
+  // True when timing fields were filled from category-based estimates
+  // (e.g. an imported plant the source API had no grow-cycle data for),
+  // so the UI can label them and a user edit can clear the flag.
+  timingEstimated  Boolean       @default(false)
   customForUserId  String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
