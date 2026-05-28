@@ -2,7 +2,8 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { Loader2, Trash2, X, Move } from "lucide-react";
-import type { PlantingStatus } from "@/lib/generated/prisma/enums";
+import type { PlantingStatus, PlantCategory } from "@/lib/generated/prisma/enums";
+import { pestInfoFor } from "@/lib/services/pest-data";
 import Link from "next/link";
 
 const STATUSES: { value: PlantingStatus; label: string; color: string; hint: string }[] = [
@@ -164,6 +165,17 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMov
 
       {/* Body */}
       <div style={{ padding: "12px 16px", background: "#FDFDF8", display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Watch-for: common pests for this plant (informational) */}
+        {(() => {
+          const pests = pestInfoFor(planting.plant.category as PlantCategory, planting.plant.name).pests.slice(0, 3);
+          if (pests.length === 0) return null;
+          return (
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", margin: 0 }}>
+              <span style={{ color: "#B85C3A", fontWeight: 600 }}>Watch for:</span> {pests.join(", ")}
+            </p>
+          );
+        })()}
 
         {/* Status buttons */}
         <div>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
 import { PlantTimingEditor } from "@/components/plants/PlantTimingEditor";
+import { pestInfoFor } from "@/lib/services/pest-data";
 import { gardenEditFilter } from "@/lib/permissions";
 
 const SUN_LABELS: Record<string, string> = {
@@ -200,6 +201,43 @@ export default async function PlantDetailPage({
           </dl>
         </div>
       )}
+
+      {/* Pests & diseases — informational; always has curated fallback */}
+      {(() => {
+        const { pests, diseases } = pestInfoFor(
+          plant.category,
+          plant.name,
+          plant.commonPests,
+          plant.commonDiseases
+        );
+        if (pests.length === 0 && diseases.length === 0) return null;
+        return (
+          <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
+            <h2 className="font-medium text-[#111109] mb-1">Pests &amp; diseases</h2>
+            <p className="text-xs text-[#ADADAA] mb-3">Common issues to watch for with this plant.</p>
+            {pests.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-[#B85C3A] uppercase tracking-wide mb-2">Common pests</p>
+                <div className="flex flex-wrap gap-2">
+                  {pests.map((p) => (
+                    <span key={p} className="px-2.5 py-1 bg-[#FBF0EE] text-[#7A2A18] text-sm rounded-full">{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {diseases.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-[#92700A] uppercase tracking-wide mb-2">Common diseases</p>
+                <div className="flex flex-wrap gap-2">
+                  {diseases.map((d) => (
+                    <span key={d} className="px-2.5 py-1 bg-[#FFF8E7] text-[#7A4A0A] text-sm rounded-full">{d}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Companion planting */}
       {(beneficial.length > 0 || harmful.length > 0) && (

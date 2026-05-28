@@ -214,6 +214,7 @@ export async function getPlantAction(plantId: string) {
             spacingInches: full.spacing ?? undefined,
             imageUrl: fullImg,
             harvestMonths: full.harvest_season ? [full.harvest_season] : [],
+            ...(full.pest_susceptibility?.length ? { commonPests: full.pest_susceptibility } : {}),
           },
         });
       }
@@ -249,6 +250,7 @@ export async function getPlantAction(plantId: string) {
           harvestMonths: full.harvest_season ? [full.harvest_season] : [],
           ...est,
           ...(estimated ? { timingEstimated: true } : {}),
+          ...(full.pest_susceptibility?.length ? { commonPests: full.pest_susceptibility } : {}),
         },
       });
     });
