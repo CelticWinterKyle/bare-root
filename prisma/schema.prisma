@@ -388,6 +388,7 @@ model Reminder {
   dismissed      Boolean      @default(false)
   recurring      Boolean      @default(false)
   recurrenceCron String?
+  sendAttempts   Int          @default(0)
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   planting Planting? @relation(fields: [plantingId], references: [id], onDelete: SetNull)
@@ -436,4 +437,14 @@ model SeedInventory {
   plant PlantLibrary @relation(fields: [plantId], references: [id])
 
   @@unique([userId, plantId, variety])
+}
+
+// Processed Stripe webhook events, keyed by Stripe's event id. The webhook
+// handler inserts a row before processing; a duplicate insert (Stripe retries
+// and can deliver the same event more than once) signals "already handled" so
+// we skip reprocessing.
+model WebhookEvent {
+  id          String   @id // Stripe event id (evt_...)
+  type        String
+  processedAt DateTime @default(now())
 }

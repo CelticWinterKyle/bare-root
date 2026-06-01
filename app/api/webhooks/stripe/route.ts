@@ -23,6 +23,16 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
+  // Idempotency: Stripe retries and can deliver the same event more than once.
+  // Record the event id before processing; a duplicate insert (unique PK
+  // violation) means we've already handled it, so ack and skip.
+  try {
+    await db.webhookEvent.create({ data: { id: event.id, type: event.type } });
+  } catch {
+    return new Response("Already processed", { status: 200 });
+  }
+
+  try {
   switch (event.type) {
     case "checkout.session.completed": {
       // Link the Stripe customer back to the user record. When checkout
@@ -99,6 +109,13 @@ export async function POST(req: Request) {
       });
       break;
     }
+  }
+  } catch (err) {
+    // Processing failed after we recorded the event — remove the dedup row so
+    // Stripe's retry can reprocess it instead of being skipped as "done".
+    await db.webhookEvent.delete({ where: { id: event.id } }).catch(() => {});
+    console.error("Stripe webhook processing error:", err);
+    return new Response("Processing error", { status: 500 });
   }
 
   return new Response("OK", { status: 200 });

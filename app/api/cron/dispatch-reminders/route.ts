@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
 import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
 
+// Give up on a reminder after this many failed send attempts so a
+// permanently-failing one (e.g. a dead email address) doesn't retry forever.
+const MAX_SEND_ATTEMPTS = 5;
+
 function isLocalSendWindow(utcNow: Date, timezone: string): boolean {
   try {
     const formatter = new Intl.DateTimeFormat("en-US", {
@@ -132,7 +136,20 @@ export async function GET(req: Request) {
       // dropping the reminder. If nothing was attempted (no enabled channel /
       // no push subs), fall through and mark it sent so it doesn't retry
       // forever.
-      if (attempted && !delivered) continue;
+      if (attempted && !delivered) {
+        // Bump the attempt counter and retry next run, but give up (dismiss)
+        // after MAX_SEND_ATTEMPTS so a permanently-failing reminder doesn't
+        // retry forever.
+        const attempts = reminder.sendAttempts + 1;
+        await db.reminder.update({
+          where: { id: reminder.id },
+          data:
+            attempts >= MAX_SEND_ATTEMPTS
+              ? { sendAttempts: attempts, dismissed: true }
+              : { sendAttempts: attempts },
+        });
+        continue;
+      }
 
       await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
       dispatched++;
