@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
+import { PlantThumb } from "@/components/plants/PlantThumb";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
 import { Search, Loader2, Leaf, Package } from "lucide-react";
 
@@ -60,7 +61,6 @@ export function PlantSearch({
   const [plants, setPlants] = useState<Plant[]>(initialPlants);
   const [isPending, startTransition] = useTransition();
   const [apiSearching, setApiSearching] = useState(false);
-  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const updateUrl = useCallback(
     (q: string, cat: PlantCategory | null) => {
@@ -198,36 +198,12 @@ export function PlantSearch({
                   className="relative overflow-hidden flex items-center justify-center"
                   style={{ height: "88px", background: "#F4F4EC", borderRadius: "10px 10px 0 0" }}
                 >
-                  {plant.imageUrl && !failedImages.has(plant.id) ? (
-                    // Plain <img> with no-referrer: Wikipedia/Perenual
-                    // hotlink-block requests that carry a referrer, which made
-                    // most library images fail to load. Same fix as the
-                    // bed-editor PlantLibrary.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={plant.imageUrl}
-                      alt={plant.name}
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={() => setFailedImages((prev) => new Set([...prev, plant.id]))}
-                    />
-                  ) : (
-                    <span
-                      className="select-none"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontStyle: "italic",
-                        fontWeight: 800,
-                        color: "#111109",
-                        opacity: 0.07,
-                        fontSize: "48px",
-                        fontVariationSettings: "'opsz' 72",
-                      }}
-                    >
-                      {plant.name[0].toUpperCase()}
-                    </span>
-                  )}
+                  <PlantThumb
+                    src={plant.imageUrl}
+                    category={plant.category}
+                    name={plant.name}
+                    className="transition-transform duration-500 group-hover:scale-105"
+                  />
                   <span
                     style={{
                       position: "absolute",

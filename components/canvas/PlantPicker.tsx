@@ -5,7 +5,7 @@ import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
 import { Search, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
+import { PlantThumb } from "@/components/plants/PlantThumb";
 import type { SpacingWarning } from "@/lib/services/spacing";
 
 type Plant = {
@@ -120,7 +120,7 @@ export function PlantPicker({
             <p className="text-xs font-medium text-yellow-800">Spacing conflict</p>
             {spacingWarnings.map((w, i) => (
               <p key={i} className="text-xs text-yellow-700">
-                Too close to {w.neighborPlantName} ({w.distanceIn}" apart, needs {w.requiredIn}")
+                Too close to {w.neighborPlantName} ({w.distanceIn}″ apart, needs {w.requiredIn}″)
               </p>
             ))}
           </div>
@@ -157,17 +157,9 @@ export function PlantPicker({
               disabled={isAssigning}
               className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#F4F4EC] transition-colors text-left disabled:opacity-50"
             >
-              {plant.imageUrl ? (
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F4F4EC] shrink-0 relative">
-                  <Image src={plant.imageUrl} alt={plant.name} fill className="object-cover" sizes="40px" />
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-[#F4F4EC] flex items-center justify-center shrink-0 border border-[#E4E4DC]">
-                  <span className="font-display text-base font-semibold text-[#ADADAA] select-none">
-                    {plant.name[0].toUpperCase()}
-                  </span>
-                </div>
-              )}
+              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative">
+                <PlantThumb src={plant.imageUrl} category={plant.category} name={plant.name} />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-[#111109] truncate">{plant.name}</p>
                 <p className="text-xs text-[#ADADAA]">

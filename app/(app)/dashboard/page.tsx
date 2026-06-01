@@ -5,7 +5,7 @@ import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weat
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { PolaroidImage } from "@/components/dashboard/PolaroidImage";
 import { Sprout } from "lucide-react";
 import styles from "./dashboard.module.css";
 
@@ -1055,20 +1055,14 @@ export default async function DashboardPage() {
                     href={`/garden/${gardens[0].id}`}
                     className={styles.polaroid}
                   >
-                    <div className={`${styles.polaroidImg} ${categoryGradient(plant.category)}`}>
-                      {plant.imageUrl ? (
-                        <Image
-                          src={plant.imageUrl}
-                          alt={plant.name}
-                          width={200}
-                          height={200}
-                        />
-                      ) : (
-                        <span className={styles.polaroidImgFallback}>
-                          {categoryEmoji(plant.category)}
-                        </span>
-                      )}
-                    </div>
+                    <PolaroidImage
+                      imageUrl={plant.imageUrl}
+                      name={plant.name}
+                      gradientClass={categoryGradient(plant.category)}
+                      emoji={categoryEmoji(plant.category)}
+                      imgWrapClass={styles.polaroidImg}
+                      fallbackClass={styles.polaroidImgFallback}
+                    />
                     <div className={styles.polaroidMeta}>
                       <span className={styles.polaroidStamp}>{stamp}</span>
                       {rating != null && rating > 0 && (

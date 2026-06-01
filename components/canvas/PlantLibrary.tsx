@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
+import { PlantThumb } from "@/components/plants/PlantThumb";
 import { Search, Loader2 } from "lucide-react";
 
 export type LibraryPlant = {
@@ -97,40 +98,10 @@ function DraggablePlantCard({
         style={{ width: 4, background: accent }}
       />
       <div
-        className="shrink-0 rounded-md overflow-hidden flex items-center justify-center relative"
-        style={{
-          width: 36,
-          height: 36,
-          background: plant.imageUrl ? "#F4F4EC" : "#E4F0D4",
-        }}
+        className="shrink-0 rounded-md overflow-hidden relative"
+        style={{ width: 36, height: 36 }}
       >
-        {plant.imageUrl ? (
-          // Plain <img> — bypass Next's image optimizer. The Wikipedia /
-          // Perenual URLs we store in PlantLibrary.imageUrl sometimes 404
-          // through Next's /_next/image proxy (rate limits, content-type
-          // sniffing) even when the URL loads fine in a browser tab. The
-          // dashboard polaroids hit the same issue. Plain <img> sidesteps
-          // it — slight bytes win for the optimizer, big reliability win.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={plant.imageUrl}
-            alt=""
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              // Hide the broken-image icon when the src 404s; the parent
-              // background reveals the green fallback well enough.
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <span style={{ fontSize: 18 }}>🌱</span>
-        )}
+        <PlantThumb src={plant.imageUrl} category={plant.category} name={plant.name} />
       </div>
       <div className="flex-1 min-w-0">
         <p

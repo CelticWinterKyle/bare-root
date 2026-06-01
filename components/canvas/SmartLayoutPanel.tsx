@@ -6,7 +6,7 @@ import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, Search, X, Loader2, Check, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { PlantThumb } from "@/components/plants/PlantThumb";
 import Link from "next/link";
 
 type Plant = {
@@ -203,15 +203,9 @@ export function SmartLayoutPanel({
                 selected ? "bg-[#1C3D0A]/10 border border-[#1C3D0A]/20" : "hover:bg-[#F4F4EC]"
               }`}
             >
-              {plant.imageUrl ? (
-                <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#F4F4EC] shrink-0 relative">
-                  <Image src={plant.imageUrl} alt={plant.name} fill className="object-cover" sizes="32px" />
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-[#F4F4EC] flex items-center justify-center shrink-0 text-[#ADADAA] text-xs">
-                  {plant.name[0]}
-                </div>
-              )}
+              <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 relative">
+                <PlantThumb src={plant.imageUrl} category={plant.category} name={plant.name} />
+              </div>
               <span className="text-sm text-[#111109] truncate flex-1">{plant.name}</span>
               {selected && <Check className="w-4 h-4 text-[#1C3D0A] shrink-0" />}
             </button>
