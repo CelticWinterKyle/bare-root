@@ -79,8 +79,22 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
   }
 
   // Explicit frost-date overrides (always win over zip-derived values).
-  if (input.lastFrostDate !== undefined) data.lastFrostDate = input.lastFrostDate;
-  if (input.firstFrostDate !== undefined) data.firstFrostDate = input.firstFrostDate;
+  // Validate the MM-DD format and real month/day ranges — an unchecked
+  // string like "13-99" silently rolls over into a wrong date downstream
+  // (JS Date overflow), producing plausible-but-wrong reminder timing.
+  const validFrost = (v: string | null | undefined): string | null => {
+    const t = (v ?? "").trim();
+    if (!t) return null;
+    const m = /^(\d{2})-(\d{2})$/.exec(t);
+    const month = m ? Number(m[1]) : 0;
+    const day = m ? Number(m[2]) : 0;
+    if (!m || month < 1 || month > 12 || day < 1 || day > 31) {
+      throw new Error("Frost date must be a valid MM-DD (e.g. 04-15)");
+    }
+    return t;
+  };
+  if (input.lastFrostDate !== undefined) data.lastFrostDate = validFrost(input.lastFrostDate);
+  if (input.firstFrostDate !== undefined) data.firstFrostDate = validFrost(input.firstFrostDate);
 
   await db.garden.update({ where: { id: gardenId }, data });
   revalidatePath(`/garden/${gardenId}`);

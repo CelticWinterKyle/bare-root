@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { CollabRole } from "@/lib/generated/prisma/enums";
 import { sendReminderEmail } from "@/lib/api/email";
+import { escapeHtml } from "@/lib/escape-html";
 import { randomBytes } from "crypto";
 
 function generateToken(): string {
@@ -23,7 +24,7 @@ function buildInviteEmailHtml(
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #E8E2D9;">
     <p style="font-size:22px;font-weight:600;color:#1C1C1A;margin:0 0 8px">You've been invited to a garden</p>
     <p style="color:#6B6560;font-size:15px;margin:0 0 24px">
-      ${inviterName} invited you to collaborate on <strong>${gardenName}</strong> as a ${role.toLowerCase()}.
+      ${escapeHtml(inviterName)} invited you to collaborate on <strong>${escapeHtml(gardenName)}</strong> as a ${escapeHtml(role.toLowerCase())}.
     </p>
     <a href="${acceptUrl}" style="display:inline-block;background:#2D5016;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500">Accept invitation →</a>
     <p style="margin-top:24px;font-size:12px;color:#9E9890">This invitation expires in 7 days. If you don't have a Bare Root account yet, you'll be asked to create one first.</p>
@@ -134,7 +135,10 @@ export async function cancelInvitation(gardenId: string, invitationId: string) {
   const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
   if (!garden) throw new Error("Garden not found");
 
-  await db.gardenInvitation.delete({ where: { id: invitationId } });
+  // Scope the delete to the owned garden so a caller can't pass an
+  // invitationId belonging to a different garden. deleteMany also makes a
+  // stale/already-removed row a graceful no-op instead of a P2025 throw.
+  await db.gardenInvitation.deleteMany({ where: { id: invitationId, gardenId } });
   revalidatePath(`/garden/${gardenId}/settings`);
 }
 

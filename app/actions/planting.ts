@@ -123,6 +123,16 @@ export async function assignPlant(
   const user = await requireUser();
   const cell = await resolveCell(cellId, user.id);
 
+  // The cell is access-checked above, but seasonId is client-supplied —
+  // verify it belongs to the same garden so a planting can't be attached
+  // to another garden's (or another user's) season. Also covers
+  // bulkAssignPlant and acceptLayoutAssignments, which funnel through here.
+  const season = await db.season.findFirst({
+    where: { id: seasonId, gardenId: cell.bed.gardenId },
+    select: { id: true },
+  });
+  if (!season) throw new Error("Season not found");
+
   await assertBedWritable(user.id, user.subscriptionTier, cell.bed.gardenId, cell.bedId);
 
   const plant = await db.plantLibrary.findUniqueOrThrow({

@@ -82,8 +82,15 @@ export async function POST(req: Request) {
           ? subscription.customer
           : subscription.customer.id;
 
+      // Scope the downgrade to the subscription actually on file. Stripe
+      // can deliver events out of order / more than once; without this, a
+      // stale "deleted" event for an OLD subscription would wipe a user who
+      // has since re-subscribed to a new (active) one.
       await db.user.updateMany({
-        where: { stripeCustomerId: customerId },
+        where: {
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscription.id,
+        },
         data: {
           subscriptionTier: "FREE",
           stripeSubscriptionId: null,

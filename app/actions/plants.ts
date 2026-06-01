@@ -101,11 +101,16 @@ function dedupePlantsByName<T extends { name: string; source: string | null }>(p
 export async function searchPlantsAction(
   query: string,
   category: PlantCategory | null,
-  userId: string
+  // Kept for call-site compatibility but intentionally ignored. The acting
+  // user is derived from the session below, so a client can't pass another
+  // user's id to enumerate their private custom plants (this is a public
+  // "use server" RPC endpoint).
+  _clientUserId?: string
 ) {
+  const user = await requireUser();
   const where = {
     AND: [
-      { OR: [{ customForUserId: null }, { customForUserId: userId }] },
+      { OR: [{ customForUserId: null }, { customForUserId: user.id }] },
       query ? { name: { contains: query, mode: "insensitive" as const } } : {},
       category ? { category } : {},
     ],
@@ -277,13 +282,22 @@ export async function createCustomPlant(data: {
 }) {
   const user = await requireUser();
 
+  // Validate client input: name is required and bounded; numeric fields are
+  // clamped to sane ranges so a negative/huge value can't poison the
+  // footprint/spacing math (spacingInches drives the bed-grid cell loop).
+  const name = data.name?.trim();
+  if (!name) throw new Error("Plant name is required");
+  if (name.length > 100) throw new Error("Plant name is too long");
+  const clampOpt = (n: number | undefined, min: number, max: number) =>
+    n === undefined || Number.isNaN(n) ? null : Math.min(max, Math.max(min, Math.round(n)));
+
   return db.plantLibrary.create({
     data: {
-      name: data.name,
+      name,
       category: data.category,
-      description: data.description ?? null,
-      daysToMaturity: data.daysToMaturity ?? null,
-      spacingInches: data.spacingInches ?? null,
+      description: data.description?.trim() || null,
+      daysToMaturity: clampOpt(data.daysToMaturity, 1, 3650),
+      spacingInches: clampOpt(data.spacingInches, 1, 120),
       sunRequirement: data.sunRequirement ?? null,
       waterRequirement: data.waterRequirement ?? null,
       commonNames: [],

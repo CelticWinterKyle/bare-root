@@ -70,20 +70,22 @@ export async function dismissReminder(reminderId: string) {
   revalidatePath("/reminders");
 }
 
-export async function getUnreadCount(userId: string): Promise<number> {
+export async function getUnreadCount(): Promise<number> {
+  const user = await requireUser();
   return db.reminder.count({
     where: {
-      userId,
+      userId: user.id,
       sentAt: { not: null },
       dismissed: false,
     },
   });
 }
 
-export async function getRecentReminders(userId: string) {
+export async function getRecentReminders() {
+  const user = await requireUser();
   return db.reminder.findMany({
     where: {
-      userId,
+      userId: user.id,
       dismissed: false,
     },
     orderBy: { scheduledAt: "desc" },

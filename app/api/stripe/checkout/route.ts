@@ -29,6 +29,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // Only the two real Pro prices are checkout-able. Without this, a client
+  // could submit any price ID in the Stripe account (a cheaper, test, or $0
+  // price) and still be granted PRO by the subscription webhook, which maps
+  // any active/trialing subscription to PRO regardless of price.
+  const allowedPriceIds = [
+    process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+    process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
+  ].filter(Boolean);
+  if (!allowedPriceIds.includes(priceId)) {
+    return Response.json({ error: "Invalid price." }, { status: 400 });
+  }
+
   // Always check out against a known Stripe customer. Falling back to
   // customer_email makes Stripe mint a *second* customer, which then
   // orphans the original and can desync subscription state ("paid in

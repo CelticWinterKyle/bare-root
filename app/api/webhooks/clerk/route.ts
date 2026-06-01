@@ -1,13 +1,22 @@
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { ensureDbUser } from "@/lib/ensure-user";
+import { db } from "@/lib/db";
 
-type ClerkUserCreatedEvent = {
-  type: "user.created";
-  data: { id: string };
+type ClerkEmailAddress = { id: string; email_address: string };
+type ClerkUserData = {
+  id: string;
+  email_addresses?: ClerkEmailAddress[];
+  primary_email_address_id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  image_url?: string | null;
 };
 
-type ClerkEvent = ClerkUserCreatedEvent;
+type ClerkEvent =
+  | { type: "user.created"; data: { id: string } }
+  | { type: "user.updated"; data: ClerkUserData }
+  | { type: "user.deleted"; data: { id: string; deleted?: boolean } };
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -38,10 +47,39 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  if (event.type === "user.created") {
-    // Single creation path shared with the lazy fallback in getCurrentUser:
-    // creates the DB row + Stripe customer and attaches pending invites.
-    await ensureDbUser(event.data.id);
+  switch (event.type) {
+    case "user.created":
+      // Single creation path shared with the lazy fallback in getCurrentUser:
+      // creates the DB row + Stripe customer and attaches pending invites.
+      await ensureDbUser(event.data.id);
+      break;
+
+    case "user.updated": {
+      // Keep email/name/avatar in sync with Clerk. updateMany is a no-op if
+      // the row doesn't exist yet (creation may not have landed).
+      const d = event.data;
+      const primaryEmail =
+        d.email_addresses?.find((e) => e.id === d.primary_email_address_id)?.email_address ??
+        d.email_addresses?.[0]?.email_address;
+      const name = [d.first_name, d.last_name].filter(Boolean).join(" ") || null;
+      await db.user.updateMany({
+        where: { id: d.id },
+        data: {
+          ...(primaryEmail ? { email: primaryEmail } : {}),
+          name,
+          avatarUrl: d.image_url || null,
+        },
+      });
+      break;
+    }
+
+    case "user.deleted":
+      // Cascade-deletes the user's gardens, reminders, push subscriptions,
+      // etc. (all relations are onDelete: Cascade). Without this, deleted
+      // Clerk users linger and keep receiving reminder emails/pushes.
+      // deleteMany is a graceful no-op if the row was never created.
+      await db.user.deleteMany({ where: { id: event.data.id } });
+      break;
   }
 
   return new Response("OK", { status: 200 });

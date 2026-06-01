@@ -21,10 +21,12 @@ function isLocalSendWindow(utcNow: Date, timezone: string): boolean {
 }
 
 export async function GET(req: Request) {
-  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+  // Bearer-only: Vercel auto-attaches `Authorization: Bearer $CRON_SECRET`
+  // to cron invocations. The `x-vercel-cron` header is a plain request
+  // header, not a security boundary, so don't accept it as auth.
   const authHeader = req.headers.get("authorization");
-  const hasBearer = authHeader === `Bearer ${process.env.CRON_SECRET}`;
-  if (!isVercelCron && !hasBearer) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -102,23 +104,35 @@ export async function GET(req: Request) {
         ? `${appUrl}/garden/${reminder.gardenId}`
         : `${appUrl}/reminders`;
 
+      let attempted = false;
+      let delivered = false;
+
       if (sendEmail) {
+        attempted = true;
         const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url);
-        await sendReminderEmail(user.email, reminder.title, html);
+        if (await sendReminderEmail(user.email, reminder.title, html)) delivered = true;
       }
 
       if (sendPush && user.pushSubscriptions.length > 0) {
+        attempted = true;
         const payload = { title: reminder.title, body: reminder.body ?? "", url };
         for (const sub of user.pushSubscriptions) {
           const ok = await sendPushNotification(
             { endpoint: sub.endpoint, p256dhKey: sub.p256dhKey, authKey: sub.authKey },
             payload
           );
-          if (!ok) {
-            await db.pushSubscription.delete({ where: { id: sub.id } });
-          }
+          if (ok) delivered = true;
+          else await db.pushSubscription.delete({ where: { id: sub.id } });
         }
       }
+
+      // Only mark sent when something was actually delivered. If a send was
+      // attempted but every channel failed (e.g. email provider down), leave
+      // sentAt null so the next hourly run retries instead of silently
+      // dropping the reminder. If nothing was attempted (no enabled channel /
+      // no push subs), fall through and mark it sent so it doesn't retry
+      // forever.
+      if (attempted && !delivered) continue;
 
       await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
       dispatched++;

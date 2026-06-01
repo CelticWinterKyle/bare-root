@@ -2,10 +2,12 @@ import { db } from "@/lib/db";
 import { fetchCurrentWeather, fetchForecast } from "@/lib/api/weather";
 
 export async function GET(req: Request) {
-  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+  // Bearer-only: Vercel auto-attaches `Authorization: Bearer $CRON_SECRET`
+  // to cron invocations. The `x-vercel-cron` header is a plain request
+  // header, not a security boundary, so don't accept it as auth.
   const authHeader = req.headers.get("authorization");
-  const hasBearer = authHeader === `Bearer ${process.env.CRON_SECRET}`;
-  if (!isVercelCron && !hasBearer) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
