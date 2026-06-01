@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
 import { applyEstimatedTiming } from "@/lib/services/plant-timing";
+import { rehostImageToBlob } from "@/lib/api/plant-images";
 import type { PlantCategory, SunLevel, WaterNeed } from "@/lib/generated/prisma/enums";
 
 function validImage(url: string | null | undefined): string | null {
@@ -140,7 +141,12 @@ export async function searchPlantsAction(
           // estimates and flag them — otherwise the plant produces no
           // calendar events or reminders at all.
           const { data: est, estimated } = applyEstimatedTiming(cat, {});
-          await db.plantLibrary.create({
+          // Perenual's medium_url is a 24h presigned S3 link — valid right now
+          // but dead tomorrow. Store it so the plant has an image immediately,
+          // then re-host a durable copy to Blob after the response so it
+          // doesn't rot (see lib/api/plant-images + the backfill route).
+          const perenualImg = validImage(item.default_image?.medium_url);
+          const created = await db.plantLibrary.create({
             data: {
               externalId: String(item.id),
               source: "perenual",
@@ -150,11 +156,22 @@ export async function searchPlantsAction(
               category: cat,
               sunRequirement: mapSunlight(item.sunlight ?? []),
               waterRequirement: mapWatering(item.watering),
-              imageUrl: validImage(item.default_image?.medium_url),
+              imageUrl: perenualImg,
               ...est,
               timingEstimated: estimated,
             },
           });
+          if (perenualImg) {
+            after(async () => {
+              const blobUrl = await rehostImageToBlob(perenualImg, created.id);
+              if (blobUrl) {
+                await db.plantLibrary.update({
+                  where: { id: created.id },
+                  data: { imageUrl: blobUrl },
+                });
+              }
+            });
+          }
         } catch {
           // ignore duplicate key on concurrent requests
         }
