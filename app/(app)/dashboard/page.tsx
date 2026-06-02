@@ -8,6 +8,8 @@ import Link from "next/link";
 import { PolaroidImage } from "@/components/dashboard/PolaroidImage";
 import { Sprout } from "lucide-react";
 import styles from "./dashboard.module.css";
+import { GardensOverview } from "@/components/dashboard/GardensOverview";
+import { TIER_LIMITS } from "@/lib/tier";
 
 export const dynamic = "force-dynamic";
 
@@ -483,6 +485,17 @@ export default async function DashboardPage() {
   const offsetX = (svgW - gardenW * scale) / 2;
   const offsetY = (svgH - gardenH * scale) / 2;
 
+  // Cross-garden overview cards ("Your gardens" section).
+  const gardensForOverview = gardens.map((g) => ({
+    id: g.id,
+    name: g.name,
+    usdaZone: g.usdaZone,
+    bedCount: g._count.beds,
+    activeSeasonName: g.seasons[0]?.name ?? null,
+  }));
+  const atGardenLimit =
+    user.subscriptionTier !== "PRO" && gardens.length >= TIER_LIMITS.FREE.gardens;
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={styles.dashboard}>
@@ -657,6 +670,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
+
+      {/* Your gardens — cross-garden overview */}
+      <GardensOverview gardens={gardensForOverview} atLimit={atGardenLimit} />
 
       {/* Garden + side widgets */}
       <section className={styles.dashboardGrid}>

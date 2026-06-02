@@ -3,9 +3,14 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { gardenEditFilter } from "@/lib/permissions";
+import { gardenEditFilter, gardenAccessFilter } from "@/lib/permissions";
 import { getLocationData } from "@/lib/data/location";
-import { assertGardenWritable, assertBedWritable } from "@/lib/tier";
+import { assertGardenWritable, assertBedWritable, checkCanCreateGarden } from "@/lib/tier";
+import {
+  writeActiveGarden,
+  clearActiveGarden,
+  getActiveGardenCookie,
+} from "@/lib/active-garden";
 
 export async function updateBedPosition(bedId: string, xPosition: number, yPosition: number) {
   const user = await requireUser();
@@ -113,7 +118,96 @@ export async function deleteGarden(gardenId: string): Promise<void> {
   if (!garden) throw new Error("Garden not found");
 
   await db.garden.delete({ where: { id: gardenId } });
+  // If the deleted garden was the active one, clear the cookie so the
+  // resolver falls back cleanly instead of pointing at a dead id.
+  if ((await getActiveGardenCookie()) === gardenId) {
+    await clearActiveGarden();
+  }
   revalidatePath("/dashboard");
   revalidatePath("/garden");
   redirect("/garden");
+}
+
+type CreateGardenInput = {
+  gardenName: string;
+  widthFt: number;
+  heightFt: number;
+  zip: string;
+  zone: string;
+  lastFrostDate: string | null;
+  firstFrostDate: string | null;
+};
+
+/**
+ * Create an additional garden + its first active season. Mirrors the garden
+ * setup in completeOnboarding (app/actions/onboarding.ts) minus the
+ * onboardingComplete flag and the optional first bed (beds are added in the
+ * editor afterward). Tier-gated: Free is capped at 1 garden. The new garden
+ * becomes the active one so the user lands in it.
+ */
+export async function createGarden(input: CreateGardenInput): Promise<string> {
+  const user = await requireUser();
+  await checkCanCreateGarden(user.id, user.subscriptionTier);
+
+  const name = input.gardenName.trim();
+  if (!name) throw new Error("Garden name is required");
+  if (!(input.widthFt > 0) || !(input.heightFt > 0)) {
+    throw new Error("Garden dimensions must be greater than 0");
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  let seasonName: string;
+  if (month >= 2 && month <= 4) seasonName = `Spring ${year}`;
+  else if (month >= 5 && month <= 7) seasonName = `Summer ${year}`;
+  else if (month >= 8 && month <= 10) seasonName = `Fall ${year}`;
+  else seasonName = `Winter ${year}`;
+
+  let gardenId = "";
+  await db.$transaction(async (tx) => {
+    const garden = await tx.garden.create({
+      data: {
+        userId: user.id,
+        name,
+        locationZip: input.zip || null,
+        locationDisplay: input.zone ? `Zone ${input.zone}` : null,
+        usdaZone: input.zone || null,
+        lastFrostDate: input.lastFrostDate,
+        firstFrostDate: input.firstFrostDate,
+        widthFt: input.widthFt,
+        heightFt: input.heightFt,
+      },
+    });
+    gardenId = garden.id;
+
+    await tx.season.create({
+      data: {
+        gardenId: garden.id,
+        name: seasonName,
+        startDate: new Date(year, 0, 1),
+        isActive: true,
+      },
+    });
+  });
+
+  await writeActiveGarden(gardenId);
+  revalidatePath("/dashboard");
+  revalidatePath("/garden");
+  return gardenId;
+}
+
+/**
+ * Switch which garden is "active" (drives the /garden map page). Validates the
+ * user can access the garden, then persists it to the active-garden cookie.
+ */
+export async function setActiveGarden(gardenId: string): Promise<void> {
+  const user = await requireUser();
+  const garden = await db.garden.findFirst({
+    where: { id: gardenId, ...gardenAccessFilter(user.id) },
+    select: { id: true },
+  });
+  if (!garden) throw new Error("Garden not found");
+  await writeActiveGarden(gardenId);
+  revalidatePath("/", "layout");
 }

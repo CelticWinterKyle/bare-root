@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { Settings } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { gardenAccessFilter } from "@/lib/permissions";
+import { resolveActiveGardenId } from "@/lib/active-garden";
+import { TIER_LIMITS } from "@/lib/tier";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -78,6 +81,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const userInitial = (user.name ?? user.email ?? "G")[0].toUpperCase();
   const unreadCount = bellReminders.length;
 
+  // Garden switcher data: every accessible garden + which one is active.
+  const gardenRows = await db.garden.findMany({
+    where: gardenAccessFilter(user.id),
+    select: {
+      id: true,
+      name: true,
+      usdaZone: true,
+      seasons: { where: { isActive: true }, take: 1, select: { name: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  const switcherGardens = gardenRows.map((g) => ({
+    id: g.id,
+    name: g.name,
+    subtitle: g.seasons[0]?.name ?? (g.usdaZone ? `Zone ${g.usdaZone}` : null),
+  }));
+  const activeGardenId = await resolveActiveGardenId(user.id);
+  const atGardenLimit = !isPro && switcherGardens.length >= TIER_LIMITS.FREE.gardens;
+
   return (
     <div className="min-h-screen" style={{ background: "#FDFDF8" }}>
       <TimezoneSync current={user.timezone} />
@@ -131,6 +153,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             userInitial={userInitial}
             isPro={isPro}
             unreadCount={unreadCount}
+            gardens={switcherGardens}
+            activeGardenId={activeGardenId}
+            atGardenLimit={atGardenLimit}
           />
         </div>
 

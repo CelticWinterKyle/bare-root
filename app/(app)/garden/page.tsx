@@ -1,16 +1,12 @@
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { gardenAccessFilter } from "@/lib/permissions";
+import { resolveActiveGardenId } from "@/lib/active-garden";
 import { redirect } from "next/navigation";
 
 export default async function GardenIndexPage() {
   const user = await requireUser();
 
-  const garden = await db.garden.findFirst({
-    where: gardenAccessFilter(user.id),
-    orderBy: { createdAt: "asc" },
-  });
+  const gardenId = await resolveActiveGardenId(user.id);
 
-  if (garden) redirect(`/garden/${garden.id}`);
+  if (gardenId) redirect(`/garden/${gardenId}`);
   redirect("/dashboard");
 }

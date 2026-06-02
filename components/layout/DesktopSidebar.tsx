@@ -5,6 +5,7 @@ import {
   LayoutDashboard, LayoutGrid, CalendarDays,
   BookOpen, Package, Bell, Settings,
 } from "lucide-react";
+import { GardenSwitcher, type GardenOption } from "@/components/garden/GardenSwitcher";
 
 const NAV_SECTIONS = [
   {
@@ -35,11 +36,17 @@ export function DesktopSidebar({
   userInitial,
   isPro,
   unreadCount,
+  gardens,
+  activeGardenId,
+  atGardenLimit,
 }: {
   userName: string | null;
   userInitial: string;
   isPro: boolean;
   unreadCount: number;
+  gardens: GardenOption[];
+  activeGardenId: string | null;
+  atGardenLimit: boolean;
 }) {
   const pathname = usePathname();
 
@@ -110,6 +117,9 @@ export function DesktopSidebar({
           </div>
         </div>
       </div>
+
+      {/* Garden switcher */}
+      <GardenSwitcher gardens={gardens} activeGardenId={activeGardenId} atLimit={atGardenLimit} />
 
       {/* Nav */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: "8px" }}>
