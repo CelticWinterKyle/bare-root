@@ -48,7 +48,13 @@ function hashIndex(seed: string, n: number): number {
   return h % n;
 }
 
-/** One Pexels search; returns the `large` src at `index` (clamped), or null. */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One Pexels search; returns the `large` src at `index` (clamped), or null.
+ * Retries on 429 — Pexels throttles bursts even when well under the hourly
+ * quota, so back off and retry rather than dropping the plant to no image.
+ */
 async function pexelsSearch(
   query: string,
   opts: { perPage?: number; index?: number } = {}
@@ -56,21 +62,28 @@ async function pexelsSearch(
   const key = process.env.PEXELS_API_KEY;
   if (!key) return null;
   const perPage = opts.perPage ?? 1;
-  try {
-    const res = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
-        `&per_page=${perPage}&orientation=landscape`,
-      { headers: { Authorization: key } }
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { photos?: { src?: { large?: string } }[] };
-    const photos = data.photos ?? [];
-    if (photos.length === 0) return null;
-    const i = Math.min(opts.index ?? 0, photos.length - 1);
-    return photos[i]?.src?.large ?? photos[0]?.src?.large ?? null;
-  } catch {
-    return null;
+  const url =
+    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
+    `&per_page=${perPage}&orientation=landscape`;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { Authorization: key } });
+      if (res.status === 429) {
+        await sleep(700 * (attempt + 1));
+        continue;
+      }
+      if (!res.ok) return null;
+      const data = (await res.json()) as { photos?: { src?: { large?: string } }[] };
+      const photos = data.photos ?? [];
+      if (photos.length === 0) return null;
+      const i = Math.min(opts.index ?? 0, photos.length - 1);
+      return photos[i]?.src?.large ?? photos[0]?.src?.large ?? null;
+    } catch {
+      return null;
+    }
   }
+  return null;
 }
 
 /**

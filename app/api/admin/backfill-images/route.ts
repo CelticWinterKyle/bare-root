@@ -51,8 +51,17 @@ async function runBackfill(startAfter: string, limit: number, reSource: boolean)
       break;
     }
 
+    let budgetHit = false;
     for (const p of plants) {
+      // Stop mid-batch if we're out of time — advance the cursor per plant so
+      // the next call resumes exactly where this left off (Pexels 429 retries
+      // can make a plant take a few seconds, so a fixed batch isn't safe).
+      if (Date.now() - start > BUDGET_MS) {
+        budgetHit = true;
+        break;
+      }
       processed++;
+      after = p.id;
       if (!reSource && isPexelsUrl(p.imageUrl)) {
         skipped++;
         continue;
@@ -69,9 +78,11 @@ async function runBackfill(startAfter: string, limit: number, reSource: boolean)
       } else {
         misses.push(p.name);
       }
+      // Throttle so we don't burst Pexels into a 429.
+      await new Promise((r) => setTimeout(r, 120));
     }
 
-    after = plants[plants.length - 1].id;
+    if (budgetHit) break;
     if (plants.length < limit) {
       exhausted = true;
       break;
