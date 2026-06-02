@@ -102,7 +102,7 @@ export async function searchPlantsAction(
   const cached = await db.plantLibrary.findMany({
     where,
     orderBy: [{ source: "desc" as const }, { name: "asc" as const }],
-    take: 96,
+    take: 300,
   });
 
   // Hit API if cache miss and we have a query
@@ -153,13 +153,13 @@ export async function searchPlantsAction(
       const refreshed = await db.plantLibrary.findMany({
         where,
         orderBy: [{ source: "desc" as const }, { name: "asc" as const }],
-        take: 96,
+        take: 300,
       });
-      return dedupePlantsByName(refreshed).slice(0, 48);
+      return dedupePlantsByName(refreshed).slice(0, 300);
     }
   }
 
-  return dedupePlantsByName(cached).slice(0, 48);
+  return dedupePlantsByName(cached).slice(0, 300);
 }
 
 export async function getPlantAction(plantId: string) {

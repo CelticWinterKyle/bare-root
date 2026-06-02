@@ -32,10 +32,9 @@ export default async function PlantsPage({
         ],
       },
       orderBy: [{ source: "desc" }, { name: "asc" }],
-      // Over-fetch so the dedupe below doesn't leave a sparse list when
-      // Perenual duplicates dominate (e.g. searching "tomato" returns
-      // 5 indistinguishable Perenual rows we'll collapse).
-      take: 96,
+      // Fetch the whole library; the client renders a windowed "Load more"
+      // grid over it. (Library is a few hundred plants — cheap to send.)
+      take: 1000,
     }),
     db.seedInventory.findMany({
       where: { userId: user.id },
@@ -53,7 +52,7 @@ export default async function PlantsPage({
       seen.set(key, p);
     }
   }
-  const plants = Array.from(seen.values()).slice(0, 48);
+  const plants = Array.from(seen.values());
 
   const inventoryByPlant = new Map<string, number>();
   for (const item of inventory) {

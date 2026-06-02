@@ -61,6 +61,10 @@ export function PlantSearch({
   const [plants, setPlants] = useState<Plant[]>(initialPlants);
   const [isPending, startTransition] = useTransition();
   const [apiSearching, setApiSearching] = useState(false);
+  // How many cards are shown; "Load more" reveals another page. Reset to the
+  // first page whenever the result set changes (search / category).
+  const PAGE = 48;
+  const [visibleCount, setVisibleCount] = useState(PAGE);
 
   const updateUrl = useCallback(
     (q: string, cat: PlantCategory | null) => {
@@ -75,6 +79,7 @@ export function PlantSearch({
   function handleCategoryClick(cat: PlantCategory | null) {
     const next = activeCategory === cat ? null : cat;
     setActiveCategory(next);
+    setVisibleCount(PAGE);
     updateUrl(query, next);
     startTransition(async () => {
       const results = await searchPlantsAction(query, next, userId);
@@ -84,6 +89,7 @@ export function PlantSearch({
 
   function handleSearch(q: string) {
     setQuery(q);
+    setVisibleCount(PAGE);
     updateUrl(q, activeCategory);
     if (q.length === 0) {
       startTransition(async () => {
@@ -177,7 +183,7 @@ export function PlantSearch({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {plants.map((plant) => {
+          {plants.slice(0, visibleCount).map((plant) => {
             const style = CATEGORY_STYLE[plant.category] ?? CATEGORY_STYLE.OTHER;
             const stockQty = inventoryByPlant[plant.id];
 
@@ -300,6 +306,32 @@ export function PlantSearch({
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {plants.length > visibleCount && (
+        <div className="flex justify-center mt-7">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((c) => c + PAGE)}
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#1C3D0A",
+              background: "transparent",
+              border: "1.5px solid #E4E4DC",
+              borderRadius: "100px",
+              padding: "9px 22px",
+              cursor: "pointer",
+              transition: "all 0.12s",
+            }}
+          >
+            Load more
+            <span style={{ color: "#ADADAA", fontWeight: 500 }}>
+              {" "}· {plants.length - visibleCount} more
+            </span>
+          </button>
         </div>
       )}
     </div>
