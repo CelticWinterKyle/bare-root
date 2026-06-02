@@ -1,40 +1,40 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { sourceAndRehostImage, isBlobUrl } from "@/lib/api/plant-images";
+import { findPexelsImageUrl, isPexelsUrl } from "@/lib/api/pexels";
 
 const OWNER_EMAIL = "kyle@celticwinter.com";
 
-// Image downloads + Blob uploads are slow; give the function room.
+// Pexels lookups are quick, but give the function room across a batch.
 export const maxDuration = 60;
 
 /**
- * Re-host plant images into Vercel Blob so they stop rotting. Stored Perenual
- * URLs are 24h presigned S3 links (now all expired) and stored Wikimedia
- * thumbnail URLs have gone stale — this fetches a fresh image per plant and
- * saves our own durable copy, then points imageUrl at it.
+ * Source plant images from Pexels — high-quality, relevant photos on a stable
+ * CDN (no expiry / hotlink issues, so we store the URL directly, no Blob).
  *
  * Cursor-paginated by id and time-budgeted, so a single call processes as many
- * plants as fit in ~50s and returns `nextCursor` for the rest. Idempotent: a
- * plant already on Blob is skipped, so re-runs are safe. A plant with no
- * findable image has its rotten URL cleared to null (the UI then shows the
- * category tile instead of a broken image).
+ * plants as fit in ~50s and returns `nextCursor` for the rest. Idempotent:
+ * a plant already on a Pexels URL is skipped. A plant Pexels has no match for
+ * has its imageUrl cleared to null (the UI then shows the category tile).
+ *
+ * Pass `?reSource=1` to re-source ALL plants (even ones already on Pexels) —
+ * use after improving the query, otherwise leave it off so re-runs are cheap.
  *
  * Triggers:
  *   - GET in a browser while signed in as the owner: `?after=<id>&limit=N`
- *   - POST with header `x-admin-secret: $CRON_SECRET` (scripted/cron use)
+ *   - POST with header `x-admin-secret: $CRON_SECRET`
  * Repeat with the returned `nextCursor` as `after` until `done` is true.
  */
-async function runBackfill(startAfter: string, limit: number) {
+async function runBackfill(startAfter: string, limit: number, reSource: boolean) {
   const BUDGET_MS = 50_000;
   const start = Date.now();
 
   let after = startAfter;
   let processed = 0;
-  let rehosted = 0;
+  let sourced = 0;
   let cleared = 0;
   let skipped = 0;
-  const failures: string[] = [];
+  const misses: string[] = [];
   let nextCursor: string | null = null;
   let exhausted = false;
 
@@ -43,7 +43,7 @@ async function runBackfill(startAfter: string, limit: number) {
       where: { id: { gt: after } },
       orderBy: { id: "asc" },
       take: limit,
-      select: { id: true, name: true, imageUrl: true },
+      select: { id: true, name: true, category: true, imageUrl: true },
     });
 
     if (plants.length === 0) {
@@ -53,22 +53,21 @@ async function runBackfill(startAfter: string, limit: number) {
 
     for (const p of plants) {
       processed++;
-      if (isBlobUrl(p.imageUrl)) {
+      if (!reSource && isPexelsUrl(p.imageUrl)) {
         skipped++;
         continue;
       }
-      const blobUrl = await sourceAndRehostImage(p.id, p.name);
-      if (blobUrl) {
-        await db.plantLibrary.update({ where: { id: p.id }, data: { imageUrl: blobUrl } });
-        rehosted++;
+      const url = await findPexelsImageUrl(p.name, p.category);
+      if (url) {
+        await db.plantLibrary.update({ where: { id: p.id }, data: { imageUrl: url } });
+        sourced++;
+      } else if (p.imageUrl) {
+        // No Pexels match — drop any stale URL so the UI shows the tile.
+        await db.plantLibrary.update({ where: { id: p.id }, data: { imageUrl: null } });
+        cleared++;
+        misses.push(p.name);
       } else {
-        // No durable image available — drop the rotten URL so the UI falls
-        // back to the category tile instead of attempting a dead image.
-        if (p.imageUrl) {
-          await db.plantLibrary.update({ where: { id: p.id }, data: { imageUrl: null } });
-          cleared++;
-        }
-        failures.push(p.name);
+        misses.push(p.name);
       }
     }
 
@@ -83,10 +82,10 @@ async function runBackfill(startAfter: string, limit: number) {
 
   return {
     processed,
-    rehosted,
+    sourced,
     cleared,
     skipped,
-    failures,
+    misses,
     nextCursor,
     done: nextCursor === null,
   };
@@ -95,8 +94,9 @@ async function runBackfill(startAfter: string, limit: number) {
 function parseParams(req: Request) {
   const { searchParams } = new URL(req.url);
   const after = searchParams.get("after") ?? "";
-  const limit = Math.min(40, Math.max(1, Number(searchParams.get("limit") ?? 15)));
-  return { after, limit };
+  const limit = Math.min(60, Math.max(1, Number(searchParams.get("limit") ?? 40)));
+  const reSource = searchParams.get("reSource") === "1";
+  return { after, limit, reSource };
 }
 
 export async function GET(req: Request) {
@@ -104,8 +104,8 @@ export async function GET(req: Request) {
   if (!user || user.email.toLowerCase() !== OWNER_EMAIL) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
-  const { after, limit } = parseParams(req);
-  return NextResponse.json(await runBackfill(after, limit));
+  const { after, limit, reSource } = parseParams(req);
+  return NextResponse.json(await runBackfill(after, limit, reSource));
 }
 
 export async function POST(req: Request) {
@@ -113,6 +113,6 @@ export async function POST(req: Request) {
   if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const { after, limit } = parseParams(req);
-  return NextResponse.json(await runBackfill(after, limit));
+  const { after, limit, reSource } = parseParams(req);
+  return NextResponse.json(await runBackfill(after, limit, reSource));
 }

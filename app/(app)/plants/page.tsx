@@ -81,6 +81,19 @@ export default async function PlantsPage({
         userId={user.id}
         inventoryByPlant={Object.fromEntries(inventoryByPlant)}
       />
+
+      <p className="px-[22px] md:px-8 py-6 text-xs text-[#ADADAA]">
+        Plant photos via{" "}
+        <a
+          href="https://www.pexels.com"
+          target="_blank"
+          rel="noreferrer"
+          className="underline hover:text-[#6B6B5A]"
+        >
+          Pexels
+        </a>
+        .
+      </p>
     </div>
   );
 }

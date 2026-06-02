@@ -5,29 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
 import { applyEstimatedTiming } from "@/lib/services/plant-timing";
-import { rehostImageToBlob } from "@/lib/api/plant-images";
+import { findPexelsImageUrl } from "@/lib/api/pexels";
 import type { PlantCategory, SunLevel, WaterNeed } from "@/lib/generated/prisma/enums";
-
-function validImage(url: string | null | undefined): string | null {
-  if (!url) return null;
-  if (url.includes("upgrade_access")) return null;
-  return url;
-}
-
-async function fetchWikipediaImage(name: string): Promise<string | null> {
-  try {
-    const slug = encodeURIComponent(name.replace(/\s+/g, "_"));
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`,
-      { headers: { "User-Agent": "BareRoot/1.0 (bareroot.app)" }, next: { revalidate: 86400 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return (data.thumbnail?.source as string | undefined) ?? null;
-  } catch {
-    return null;
-  }
-}
 
 function mapSunlight(sunlight: string[]): SunLevel | null {
   const s = (sunlight[0] ?? "").toLowerCase();
@@ -141,11 +120,6 @@ export async function searchPlantsAction(
           // estimates and flag them — otherwise the plant produces no
           // calendar events or reminders at all.
           const { data: est, estimated } = applyEstimatedTiming(cat, {});
-          // Perenual's medium_url is a 24h presigned S3 link — valid right now
-          // but dead tomorrow. Store it so the plant has an image immediately,
-          // then re-host a durable copy to Blob after the response so it
-          // doesn't rot (see lib/api/plant-images + the backfill route).
-          const perenualImg = validImage(item.default_image?.medium_url);
           const created = await db.plantLibrary.create({
             data: {
               externalId: String(item.id),
@@ -156,22 +130,22 @@ export async function searchPlantsAction(
               category: cat,
               sunRequirement: mapSunlight(item.sunlight ?? []),
               waterRequirement: mapWatering(item.watering),
-              imageUrl: perenualImg,
+              imageUrl: null,
               ...est,
               timingEstimated: estimated,
             },
           });
-          if (perenualImg) {
-            after(async () => {
-              const blobUrl = await rehostImageToBlob(perenualImg, created.id);
-              if (blobUrl) {
-                await db.plantLibrary.update({
-                  where: { id: created.id },
-                  data: { imageUrl: blobUrl },
-                });
-              }
-            });
-          }
+          // Fetch a quality Pexels image after the response so search isn't
+          // blocked; the plant shows its category tile until it lands.
+          after(async () => {
+            const img = await findPexelsImageUrl(item.common_name, cat);
+            if (img) {
+              await db.plantLibrary.update({
+                where: { id: created.id },
+                data: { imageUrl: img },
+              });
+            }
+          });
         } catch {
           // ignore duplicate key on concurrent requests
         }
@@ -215,16 +189,14 @@ export async function getPlantAction(plantId: string) {
       const result = await searchPerenual(plant.name);
       const match = result?.data?.[0];
       if (!match) return;
-      const perenualImg = validImage(match.default_image?.medium_url);
-      const imageUrl = perenualImg ?? await fetchWikipediaImage(plant.name);
+      const img = await findPexelsImageUrl(plant.name, plant.category);
       await db.plantLibrary.update({
         where: { id: plantId },
-        data: { externalId: String(match.id), imageUrl: imageUrl ?? undefined },
+        data: { externalId: String(match.id), ...(img ? { imageUrl: img } : {}) },
       });
       // Also fetch full details while we have the ID
       const full = await getPerenualPlant(match.id);
       if (full) {
-        const fullImg = validImage(full.default_image?.medium_url) ?? imageUrl ?? undefined;
         await db.plantLibrary.update({
           where: { id: plantId },
           data: {
@@ -234,7 +206,6 @@ export async function getPlantAction(plantId: string) {
             sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
             waterRequirement: mapWatering(full.watering) ?? undefined,
             spacingInches: full.spacing ?? undefined,
-            imageUrl: fullImg,
             harvestMonths: full.harvest_season ? [full.harvest_season] : [],
             ...(full.pest_susceptibility?.length ? { commonPests: full.pest_susceptibility } : {}),
           },
@@ -245,9 +216,11 @@ export async function getPlantAction(plantId: string) {
     after(async () => {
       const full = await getPerenualPlant(Number(plant.externalId));
       if (!full) return;
-      const perenualImg = validImage(full.default_image?.medium_url);
-      const imageUrl = perenualImg ?? (!plant.imageUrl || badImageUrl ? await fetchWikipediaImage(plant.name) : plant.imageUrl);
       const newCategory = mapCategory(full.type, full.edible_fruit, full.flowers);
+      const img =
+        !plant.imageUrl || badImageUrl
+          ? await findPexelsImageUrl(plant.name, newCategory)
+          : null;
       // Backfill estimated timing for non-curated plants still missing it
       // (curated "seed" plants keep their hand-entered, intentional data —
       // e.g. direct-sown beans correctly have no indoor-start week).
@@ -268,7 +241,7 @@ export async function getPlantAction(plantId: string) {
           sunRequirement: mapSunlight(full.sunlight ?? []) ?? undefined,
           waterRequirement: mapWatering(full.watering) ?? undefined,
           spacingInches: full.spacing ?? undefined,
-          imageUrl: imageUrl ?? undefined,
+          ...(img ? { imageUrl: img } : {}),
           harvestMonths: full.harvest_season ? [full.harvest_season] : [],
           ...est,
           ...(estimated ? { timingEstimated: true } : {}),
@@ -278,9 +251,9 @@ export async function getPlantAction(plantId: string) {
     });
   } else if (needsImageFix) {
     after(async () => {
-      const imageUrl = await fetchWikipediaImage(plant.name);
-      if (imageUrl) {
-        await db.plantLibrary.update({ where: { id: plantId }, data: { imageUrl } });
+      const img = await findPexelsImageUrl(plant.name, plant.category);
+      if (img) {
+        await db.plantLibrary.update({ where: { id: plantId }, data: { imageUrl: img } });
       }
     });
   }
