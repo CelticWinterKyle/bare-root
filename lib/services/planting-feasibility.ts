@@ -39,6 +39,10 @@ type FrostDates = {
 const DAY = 24 * 60 * 60 * 1000;
 const addDays = (date: Date, days: number) => new Date(date.getTime() + days * DAY);
 
+// Days a purchased start has already grown — i.e. the early-growth portion of a
+// direct-sow crop's days-to-maturity that you skip by buying a transplant.
+const START_HEAD_START_DAYS = 21;
+
 /** The next upcoming first-frost date relative to `today` (rolls to next year if past). */
 function resolveFirstFrost(mmdd: string, today: Date): Date {
   const [m, d] = mmdd.split("-").map(Number);
@@ -78,8 +82,12 @@ export function getStartOptions(
   const fits = (harvest: Date | null) =>
     harvest != null && (firstFrost == null || harvest <= firstFrost);
 
-  // BUY_START — a mature start goes in the ground today.
-  const buyHarvest = dtm != null ? addDays(today, dtm) : null;
+  // BUY_START — a transplant-ready start goes in the ground today. days-to-
+  // maturity counts from transplant for transplant crops (use it as-is), but
+  // from sowing for direct-sow crops — so subtract the early growth a bought
+  // start already has.
+  const buyDays = dtm != null ? Math.max(dtm - (isTransplantCrop ? 0 : START_HEAD_START_DAYS), 7) : null;
+  const buyHarvest = buyDays != null ? addDays(today, buyDays) : null;
   const buyStart: StartOption = {
     method: "BUY_START",
     feasibleThisSeason: fits(buyHarvest),
