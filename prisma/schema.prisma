@@ -57,6 +57,14 @@ enum PlantingStatus {
   FAILED
 }
 
+// How a planting gets into the ground — drives the calendar/reminder timing.
+// Null means "not chosen yet; use the recommended method for the season".
+enum PlantStartMethod {
+  SEED_INDOORS
+  DIRECT_SOW
+  BUY_START
+}
+
 enum ReminderType {
   START_SEEDS
   TRANSPLANT
@@ -237,7 +245,8 @@ model Planting {
   seasonId            String
   plantId             String
   variety             String?
-  status              PlantingStatus @default(PLANNED)
+  status              PlantingStatus    @default(PLANNED)
+  startMethod         PlantStartMethod?
   quantityPerCell     Int            @default(1)
   plantedDate         DateTime?
   transplantDate      DateTime?

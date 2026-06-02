@@ -4,9 +4,10 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { assertBedWritable } from "@/lib/tier";
-import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
+import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
 import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
+import { getStartOptions } from "@/lib/services/planting-feasibility";
 
 async function resolveCell(cellId: string, userId: string) {
   const cell = await db.cell.findFirst({
@@ -115,7 +116,8 @@ async function resolveFootprint(args: {
 export async function assignPlant(
   cellId: string,
   plantId: string,
-  seasonId: string
+  seasonId: string,
+  startMethod?: PlantStartMethod
 ): Promise<{
   spacingWarnings: SpacingWarning[];
   footprintWarning?: string;
@@ -148,8 +150,18 @@ export async function assignPlant(
 
   const garden = await db.garden.findUniqueOrThrow({
     where: { id: cell.bed.gardenId },
-    select: { lastFrostDate: true },
+    select: { lastFrostDate: true, firstFrostDate: true },
   });
+
+  // Guidance-first: a freshly placed plant defaults to the method we'd
+  // recommend for the season (e.g. "buy a start" in June), so the calendar
+  // and reminders are right from the start.
+  const method =
+    startMethod ??
+    getStartOptions(plant, {
+      lastFrostDate: garden.lastFrostDate,
+      firstFrostDate: garden.firstFrostDate,
+    }).recommended;
 
   const placement = await resolveFootprint({
     anchorCell: { id: cell.id, row: cell.row, col: cell.col, bedId: cell.bedId },
@@ -173,7 +185,7 @@ export async function assignPlant(
   // Create the planting + every footprint cell in one transaction.
   const planting = await db.$transaction(async (tx) => {
     const p = await tx.planting.create({
-      data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell: 1 },
+      data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell: 1, startMethod: method },
     });
     await tx.plantingCell.createMany({
       data: placement.cells.map((c) => ({
@@ -191,6 +203,7 @@ export async function assignPlant(
     userId: user.id,
     plant,
     garden,
+    startMethod: method,
   });
 
   // Footprint warning — fired when we couldn't fit the plant's full
@@ -439,6 +452,47 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
 
   await db.planting.update({ where: { id: plantingId }, data: { status } });
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+}
+
+export async function updatePlantingStartMethod(
+  plantingId: string,
+  startMethod: PlantStartMethod
+) {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
+    include: {
+      cell: { include: { bed: true } },
+      plant: {
+        select: { name: true, indoorStartWeeks: true, transplantWeeks: true, daysToMaturity: true },
+      },
+    },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  await db.planting.update({ where: { id: plantingId }, data: { startMethod } });
+
+  // Reminders depend on the method (no "start seeds" reminder for a bought
+  // start, etc.). Clear this planting's reminders and regenerate for the new
+  // method, preserving any planted date the user has already entered.
+  const garden = await db.garden.findUniqueOrThrow({
+    where: { id: planting.cell.bed.gardenId },
+    select: { lastFrostDate: true },
+  });
+  await db.reminder.deleteMany({ where: { plantingId } });
+  await createRemindersForPlanting({
+    plantingId,
+    gardenId: planting.cell.bed.gardenId,
+    userId: user.id,
+    plant: planting.plant,
+    garden,
+    plantedDate: planting.plantedDate,
+    startMethod,
+  });
+
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}/plantings/${plantingId}`);
 }
 
 export async function updatePlantingMeta(

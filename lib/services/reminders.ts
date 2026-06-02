@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ReminderType } from "@/lib/generated/prisma/enums";
+import { ReminderType, type PlantStartMethod } from "@/lib/generated/prisma/enums";
 import {
   calculateStartSeedsDate,
   calculateTransplantDate,
@@ -20,11 +20,18 @@ type ReminderInput = {
     lastFrostDate: string | null;
   };
   plantedDate?: Date | null;
+  startMethod?: PlantStartMethod | null;
 };
 
 export async function createRemindersForPlanting(input: ReminderInput): Promise<void> {
-  const { plantingId, gardenId, userId, plant, garden, plantedDate } = input;
+  const { plantingId, gardenId, userId, plant, garden, plantedDate, startMethod } = input;
   const now = new Date();
+
+  // Direct-sow and buy-a-start put the plant in the ground now, so the
+  // indoor-start and frost-relative transplant reminders don't apply — only
+  // the harvest reminder does. SEED_INDOORS (or an unset method) keeps the
+  // full spring schedule.
+  const inGroundNow = startMethod === "DIRECT_SOW" || startMethod === "BUY_START";
 
   type ReminderCreate = {
     userId: string;
@@ -38,7 +45,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
 
   const reminders: ReminderCreate[] = [];
 
-  if (garden.lastFrostDate) {
+  if (!inGroundNow && garden.lastFrostDate) {
     if (plant.indoorStartWeeks != null && plant.indoorStartWeeks > 0) {
       const startSeeds = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
       if (startSeeds > now) {

@@ -19,6 +19,9 @@ type Props = {
   /** Plantings in active seasons across all the user's gardens, so we can
    *  show a smarter empty state when the user has plants but no events. */
   activePlantingCount?: number;
+  /** Current year (passed from the server so we can flag next-season months
+   *  without an impure new Date() in render). */
+  currentYear?: number;
 };
 
 const EVENT_CONFIG = {
@@ -45,7 +48,7 @@ const EVENT_CONFIG = {
   },
 } as const;
 
-export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
+export function CalendarTimeline({ events, activePlantingCount = 0, currentYear }: Props) {
   if (events.length === 0) {
     // Two flavors of "empty":
     //  - No plantings at all → guide them to plant something
@@ -106,6 +109,11 @@ export function CalendarTimeline({ events, activePlantingCount = 0 }: Props) {
               <h3 className="font-display text-base font-semibold text-[#111109]">
                 {monthLabel}
               </h3>
+              {currentYear != null && year > currentYear && (
+                <span className="text-[10px] font-medium uppercase tracking-wide text-[#92700A] bg-[#FFF8E7] border border-[#F0D8A0] px-2 py-0.5 rounded-full">
+                  Next season
+                </span>
+              )}
               <div className="flex-1 h-px bg-[#E4E4DC]" />
               <span className="text-xs font-medium text-[#ADADAA] bg-[#F4F4EC] px-2 py-0.5 rounded-full">
                 {monthEvents.length} {monthEvents.length === 1 ? "event" : "events"}

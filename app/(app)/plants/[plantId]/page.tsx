@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PlantHeroImage } from "@/components/plants/PlantHeroImage";
 import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
 import { PlantTimingEditor } from "@/components/plants/PlantTimingEditor";
+import { PlantFeasibility } from "@/components/plants/PlantFeasibility";
 import { pestInfoFor } from "@/lib/services/pest-data";
 import { plantsPerArea } from "@/lib/services/spacing";
 import { gardenEditFilter } from "@/lib/permissions";
@@ -69,6 +70,8 @@ export default async function PlantDetailPage({
     select: {
       id: true,
       name: true,
+      lastFrostDate: true,
+      firstFrostDate: true,
       seasons: { where: { isActive: true }, select: { id: true } },
       beds: {
         orderBy: { createdAt: "asc" },
@@ -96,6 +99,14 @@ export default async function PlantDetailPage({
     },
     orderBy: { createdAt: "asc" },
   });
+
+  // Frost dates from the user's first garden that has them — powers the
+  // "how can I grow this now?" guidance.
+  const frostGarden = userGardens.find((g) => g.firstFrostDate || g.lastFrostDate);
+  const frost = {
+    lastFrostDate: frostGarden?.lastFrostDate ?? null,
+    firstFrostDate: frostGarden?.firstFrostDate ?? null,
+  };
 
   const gardensForPicker = userGardens.map((g) => ({
     id: g.id,
@@ -160,6 +171,9 @@ export default async function PlantDetailPage({
           </div>
         </div>
       </div>
+
+      {/* How can I grow this now? */}
+      <PlantFeasibility plant={plant} frost={frost} className="mb-4" />
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

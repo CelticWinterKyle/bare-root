@@ -11,6 +11,7 @@ import {
 import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
 import { getSuccessionSuggestions } from "@/lib/services/succession";
+import { getStartOptions } from "@/lib/services/planting-feasibility";
 import Link from "next/link";
 import { MapPin, Sprout } from "lucide-react";
 
@@ -172,6 +173,31 @@ export default async function CalendarPage() {
   const firstFrostDate = gardens.find((g) => g.firstFrostDate)?.firstFrostDate ?? null;
   const successionSuggestions = getSuccessionSuggestions(allActivePlantings, firstFrostDate);
 
+  // "What you can plant now" — for each distinct planned plant, the start
+  // method we'd recommend right now (anchored to today, not next spring).
+  const planNow: { plantId: string; plantName: string; summary: string; thisSeason: boolean }[] = [];
+  const seenPlant = new Set<string>();
+  for (const garden of gardens) {
+    const frost = { lastFrostDate: garden.lastFrostDate, firstFrostDate: garden.firstFrostDate };
+    for (const bed of garden.beds) {
+      for (const cell of bed.cells) {
+        for (const planting of cell.plantings) {
+          const p = planting.plant;
+          if (seenPlant.has(p.id) || p.daysToMaturity == null) continue;
+          seenPlant.add(p.id);
+          const f = getStartOptions(p, frost, now);
+          planNow.push({
+            plantId: p.id,
+            plantName: p.name,
+            summary: f.recommendedOption.summary,
+            thisSeason: f.recommendedThisSeason,
+          });
+        }
+      }
+    }
+  }
+  planNow.sort((a, b) => Number(b.thisSeason) - Number(a.thisSeason));
+
   // Active planting count for frost alert
   const activePlantingCount = gardens.reduce(
     (sum, g) =>
@@ -281,8 +307,42 @@ export default async function CalendarPage() {
         </div>
       )}
 
+      {/* What you can plant now */}
+      {planNow.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 pb-2 border-b border-[#E4E4DC]">
+            What you can plant now
+          </h2>
+          <div className="space-y-2">
+            {planNow.map((r) => (
+              <div
+                key={r.plantId}
+                className="flex items-center justify-between gap-3 p-3 bg-[#F4F4EC] rounded-xl border border-[#E4E4DC]"
+              >
+                <Link
+                  href={`/plants/${r.plantId}`}
+                  className="text-sm font-medium text-[#111109] hover:text-[#1C3D0A] transition-colors shrink-0"
+                >
+                  {r.plantName}
+                </Link>
+                <span
+                  className="text-xs text-right"
+                  style={{ color: r.thisSeason ? "#3A6B20" : "#ADADAA" }}
+                >
+                  {r.summary}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Timeline */}
-      <CalendarTimeline events={events} activePlantingCount={activePlantingCount} />
+      <CalendarTimeline
+        events={events}
+        activePlantingCount={activePlantingCount}
+        currentYear={now.getFullYear()}
+      />
       </div>
     </div>
   );
