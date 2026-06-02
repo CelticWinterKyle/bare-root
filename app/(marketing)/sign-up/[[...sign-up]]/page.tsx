@@ -66,7 +66,7 @@ export default function SignUpPage() {
               borderRadius: "10px",
             },
           }}
-          fallbackRedirectUrl="/onboarding"
+          fallbackRedirectUrl="/api/beta/redeem"
         />
         <p
           style={{
