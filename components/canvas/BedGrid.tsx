@@ -992,31 +992,33 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         plants read as one solid rounded block; the transparent
                         cells above just handle interaction + status/labels. */}
                     {!sunMode && (
-                      <div
-                        className="absolute inset-0 grid pointer-events-none"
-                        style={{
-                          gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
-                          gridTemplateRows: `repeat(${displayRows}, ${cellPx}px)`,
-                          gap: 0,
-                          padding: "14px 16px",
-                        }}
-                      >
+                      <div className="absolute inset-0 pointer-events-none">
                         {footprintBounds.map(([pid, b]) => {
                           const base = CATEGORY_COLOR[b.category] ?? "#A07640";
                           // Selecting a planting (detail panel open) highlights
                           // the WHOLE block, not a single cell — so a multi-cell
                           // plant never gets an interior outline cut into it.
                           const isSel = panel.type === "detail" && panel.planting.id === pid;
+                          // ONE absolutely-positioned div covering the footprint's
+                          // exact pixel rectangle (grid origin = 16px/14px padding,
+                          // then col/row × cellPx). Pixel coverage — not grid-span
+                          // trickery — guarantees a multi-cell plant is a single
+                          // solid block that can't be split into per-cell pieces.
+                          const cols = b.maxC - b.minC + 1;
+                          const rows = b.maxR - b.minR + 1;
                           return (
                             <div
                               key={pid}
                               style={{
-                                gridColumn: `${b.minC + 1} / ${b.maxC + 2}`,
-                                gridRow: `${b.minR + 1} / ${b.maxR + 2}`,
+                                position: "absolute",
+                                left: 16 + b.minC * cellPx,
+                                top: 14 + b.minR * cellPx,
+                                width: cols * cellPx,
+                                height: rows * cellPx,
                                 // Opaque so the dark soil lattice can't bleed
-                                // through as an interior seam; a defined dark
-                                // edge + raised-tile shadow separates adjacent
-                                // plants — even two of the same category color.
+                                // through; a defined dark edge + raised-tile
+                                // shadow separates adjacent plants — even two of
+                                // the same category color.
                                 background: base,
                                 borderRadius: 8,
                                 border: isSel
