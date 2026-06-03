@@ -197,14 +197,21 @@ export async function assignPlant(
     return p;
   });
 
-  await createRemindersForPlanting({
-    plantingId: planting.id,
-    gardenId: cell.bed.gardenId,
-    userId: user.id,
-    plant,
-    garden,
-    startMethod: method,
-  });
+  // Reminders are secondary. The planting is already committed above, so a
+  // transient failure here (e.g. a pooled-connection blip from the serverless
+  // → Neon path) must not 500 the whole placement — log and carry on.
+  try {
+    await createRemindersForPlanting({
+      plantingId: planting.id,
+      gardenId: cell.bed.gardenId,
+      userId: user.id,
+      plant,
+      garden,
+      startMethod: method,
+    });
+  } catch (err) {
+    console.error("createRemindersForPlanting failed (non-fatal):", err);
+  }
 
   // Footprint warning — fired when we couldn't fit the plant's full
   // recommended area (edge of bed or neighbors in the way).
@@ -475,21 +482,27 @@ export async function updatePlantingStartMethod(
 
   // Reminders depend on the method (no "start seeds" reminder for a bought
   // start, etc.). Clear this planting's reminders and regenerate for the new
-  // method, preserving any planted date the user has already entered.
-  const garden = await db.garden.findUniqueOrThrow({
-    where: { id: planting.cell.bed.gardenId },
-    select: { lastFrostDate: true },
-  });
-  await db.reminder.deleteMany({ where: { plantingId } });
-  await createRemindersForPlanting({
-    plantingId,
-    gardenId: planting.cell.bed.gardenId,
-    userId: user.id,
-    plant: planting.plant,
-    garden,
-    plantedDate: planting.plantedDate,
-    startMethod,
-  });
+  // method, preserving any planted date the user has already entered. The
+  // method change above is already committed, so a transient reminder failure
+  // must not 500 the action — regeneration is non-fatal.
+  try {
+    const garden = await db.garden.findUniqueOrThrow({
+      where: { id: planting.cell.bed.gardenId },
+      select: { lastFrostDate: true },
+    });
+    await db.reminder.deleteMany({ where: { plantingId } });
+    await createRemindersForPlanting({
+      plantingId,
+      gardenId: planting.cell.bed.gardenId,
+      userId: user.id,
+      plant: planting.plant,
+      garden,
+      plantedDate: planting.plantedDate,
+      startMethod,
+    });
+  } catch (err) {
+    console.error("reminder regeneration failed (non-fatal):", err);
+  }
 
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}/plantings/${plantingId}`);
