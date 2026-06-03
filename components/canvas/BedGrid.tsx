@@ -20,7 +20,7 @@ import { updateCellSun, assignPlant, bulkAssignPlant, movePlanting } from "@/app
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, MousePointer2 } from "lucide-react";
-import type { SunLevel, PlantingStatus } from "@/lib/generated/prisma/enums";
+import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
@@ -80,7 +80,7 @@ const SUN_BG: Record<string, string> = {
 // Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
 const FRAME_PAD = 52;
 
-type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null };
+type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null };
 type Planting = {
   id: string;
   status: PlantingStatus;
@@ -90,6 +90,7 @@ type Planting = {
   expectedHarvestDate: Date | null;
   variety: string | null;
   notes: string | null;
+  startMethod: PlantStartMethod | null;
 };
 type CellData = {
   id: string;
@@ -116,6 +117,9 @@ type Props = {
   recentPlants: Plant[];
   isPro?: boolean;
   prefillPlant?: Plant | null;
+  /** Garden frost dates ("MM-DD"), for the start-method guidance in the
+   *  cell detail panel. */
+  frost: { lastFrostDate: string | null; firstFrostDate: string | null };
 };
 type PanelState =
   | { type: "none" }
@@ -145,6 +149,7 @@ function CellTile({
   isHoveredByPlanner,
   hasHarmful,
   hasBeneficial,
+  category,
   mergeRight,
   mergeBottom,
   onClick,
@@ -165,6 +170,10 @@ function CellTile({
   isHoveredByPlanner: boolean;
   hasHarmful: boolean;
   hasBeneficial: boolean;
+  /** The plant category that colors this cell. Resolved by the parent from the
+   *  anchor cell so footprint cells (which carry no planting) tint to match
+   *  their anchor instead of falling back to the brown "OTHER" color. */
+  category: string;
   /** True when the cell to the right shares this planting. Used to make the
    *  inter-footprint border invisible so a multi-cell plant reads as one
    *  continuous tinted block instead of N separate cells. */
@@ -199,11 +208,12 @@ function CellTile({
   const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
   const badgePx = 13;
   const isOccupied = isAnchor || isFootprintOnly;
-  const category = cell.planting?.plant.category ?? "OTHER";
   // Planted cells render as a semi-opaque category-colored block. The
   // borders between cells of the same planting are made invisible (via
   // mergeRight / mergeBottom) so a 2×2 tomato reads as one continuous
-  // tinted block, with the plant name italic on the anchor cell only.
+  // tinted block. `category` comes from the parent (the anchor's plant)
+  // so every cell of a footprint tints the same — the plant name is drawn
+  // once, centered over the whole block, by the overlay layer in the grid.
   const footprintTint = (() => {
     if (!isOccupied) return null;
     const base = CATEGORY_COLOR[category] ?? "#A07640";
@@ -314,28 +324,9 @@ function CellTile({
           +
         </span>
       )}
-      {/* Anchor cell shows the plant name italic, centered, in paper-white
-          over the tint. Footprint cells inherit the tint with no label
-          (the label belongs to the anchor only). Matches the v5a mockup. */}
-      {isAnchor && cell.planting && !sunMode && (
-        <span
-          className="pointer-events-none px-1 text-center"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontWeight: 700,
-            fontSize: Math.max(9, Math.min(14, cellPx * 0.28)),
-            color: "#FDFDF8",
-            letterSpacing: "-0.005em",
-            textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 6px rgba(0,0,0,0.25)",
-            fontVariationSettings: "'opsz' 14",
-            lineHeight: 1.05,
-            zIndex: 2,
-          }}
-        >
-          {cell.planting.plant.name.split(" ")[0]}
-        </span>
-      )}
+      {/* Plant name is no longer drawn here — it's rendered once, centered
+          over the whole footprint, by the label overlay layer (see the grid
+          below) so multi-cell plants read as one block with a centered name. */}
       {/* Status indicator dot — small, top-right of anchor cell so the
           italic name stays clean and centered. */}
       {isAnchor && cell.planting && !sunMode && (
@@ -393,7 +384,7 @@ function CellTile({
   );
 }
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -416,6 +407,22 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Drives the "3 Cherry Tomatoes planted" banner subtitle and resets
   // whenever a new prefill starts (via plant change) or is dismissed.
   const [prefillPlacedCount, setPrefillPlacedCount] = useState(0);
+  // After a single deliberate placement (tapping an empty cell → picker, or
+  // dragging one plant from the library), auto-open the new planting's detail
+  // panel so the gardener can set status / variety / dates right away instead
+  // of placing a default and hunting for the menu. The new planting only
+  // appears in `cells` after the server revalidates, so we stash the target
+  // cell id and let an effect open the panel once its planting lands. NOT set
+  // by the prefill (rapid repeat) or bulk flows — those would be interrupted.
+  // The ref mirrors the state so the picker's onClose can tell "just planted"
+  // (don't snap back to none — the effect is about to open detail) from a
+  // plain dismiss, without waiting for a state flush.
+  const [pendingDetailCellId, setPendingDetailCellId] = useState<string | null>(null);
+  const pendingDetailRef = useRef<string | null>(null);
+  function queueAutoOpen(cellId: string) {
+    pendingDetailRef.current = cellId;
+    setPendingDetailCellId(cellId);
+  }
 
   function clearPrefill() {
     setPendingPlant(null);
@@ -668,6 +675,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     }, 200);
     return () => clearTimeout(t);
   }, [showPanel, isMobile, panel.type]);
+  // Auto-open detail for a just-placed planting once it shows up in `cells`.
+  useEffect(() => {
+    if (!pendingDetailCellId) return;
+    const c = cells.find((cell) => cell.id === pendingDetailCellId);
+    if (c?.planting) {
+      // Intentional: react to the new planting arriving in `cells` (after the
+      // server action revalidates) by opening its panel. The guard below
+      // clears the trigger so this runs once, not in a loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPanel({ type: "detail", planting: c.planting, cell: c });
+      setPendingDetailCellId(null);
+      pendingDetailRef.current = null;
+    }
+  }, [cells, pendingDetailCellId]);
+
   const canRotate = gridRows !== gridCols;
   const isEmpty = cells.every((c) => !c.planting);
 
@@ -729,6 +751,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         try {
           const result = await assignPlant(targetCell.id, plant.id, seasonId);
           handlePlanted(targetCell.id);
+          // Single drag-drop placement → open its detail panel once it lands.
+          queueAutoOpen(targetCell.id);
           if (result.footprintWarning) toast.warning(result.footprintWarning, { duration: 5000 });
           else toast.success(`Planted ${plant.name}`);
         } catch (err) {
@@ -1058,6 +1082,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   boxShadow:
                     "inset 0 0 0 2px rgba(122,75,40,0.4), 0 4px 18px -6px rgba(28,18,10,0.35)",
                   overflow: "hidden",
+                  position: "relative",
                 }}
               >
                   <div
@@ -1075,10 +1100,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       // same planting as me?" — used to merge interior
                       // borders of a multi-cell footprint into one block.
                       const ownerAt = new Map<string, string | null>();
+                      // plantingId → category, taken from the anchor cell so
+                      // footprint cells tint to match their anchor's plant
+                      // instead of the brown "OTHER" fallback.
+                      const categoryAt = new Map<string, string>();
                       for (const c of cells) {
                         const pid =
                           c.planting?.id ?? c.footprint?.plantingId ?? null;
                         ownerAt.set(`${c.row},${c.col}`, pid);
+                        if (c.planting) categoryAt.set(c.planting.id, c.planting.plant.category);
                       }
                       return displayCells.map((cell) => {
                         const planting = cell.planting;
@@ -1132,6 +1162,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                             }
                             hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
                             hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
+                            category={(ownPid && categoryAt.get(ownPid)) || "OTHER"}
                             mergeRight={mergeRight}
                             mergeBottom={mergeBottom}
                             onClick={() => handleCellClick(cell)}
@@ -1140,6 +1171,77 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       });
                     })()}
                   </div>
+                  {/* Centered plant-name overlay. One label per planting,
+                      placed in a grid identical to the cell grid so it spans
+                      the planting's whole footprint and centers the name over
+                      the merged block (not pinned to the anchor's corner). */}
+                  {!sunMode && (() => {
+                    const bounds = new Map<
+                      string,
+                      { minR: number; maxR: number; minC: number; maxC: number; name: string | null }
+                    >();
+                    displayCells.forEach((cell, i) => {
+                      const pid = cell.planting?.id ?? cell.footprint?.plantingId ?? null;
+                      if (!pid) return;
+                      const r = Math.floor(i / displayCols);
+                      const c = i % displayCols;
+                      const b =
+                        bounds.get(pid) ?? { minR: r, maxR: r, minC: c, maxC: c, name: null };
+                      b.minR = Math.min(b.minR, r);
+                      b.maxR = Math.max(b.maxR, r);
+                      b.minC = Math.min(b.minC, c);
+                      b.maxC = Math.max(b.maxC, c);
+                      if (cell.planting) b.name = cell.planting.plant.name;
+                      bounds.set(pid, b);
+                    });
+                    return (
+                      <div
+                        className="absolute inset-0 grid pointer-events-none"
+                        style={{
+                          gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
+                          gridTemplateRows: `repeat(${displayRows}, ${cellPx}px)`,
+                          gap: 0,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        {Array.from(bounds.entries()).map(([pid, b]) => {
+                          if (!b.name) return null;
+                          const span = Math.max(b.maxR - b.minR + 1, b.maxC - b.minC + 1);
+                          return (
+                            <div
+                              key={pid}
+                              style={{
+                                gridColumn: `${b.minC + 1} / ${b.maxC + 2}`,
+                                gridRow: `${b.minR + 1} / ${b.maxR + 2}`,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "0 3px",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <span
+                                className="text-center"
+                                style={{
+                                  fontFamily: "var(--font-display)",
+                                  fontStyle: "italic",
+                                  fontWeight: 700,
+                                  fontSize: Math.max(9, Math.min(span > 1 ? 20 : 14, cellPx * 0.28 * (span > 1 ? 1.35 : 1))),
+                                  color: "#FDFDF8",
+                                  letterSpacing: "-0.005em",
+                                  textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 6px rgba(0,0,0,0.25)",
+                                  fontVariationSettings: "'opsz' 14",
+                                  lineHeight: 1.05,
+                                }}
+                              >
+                                {b.name.split(" ")[0]}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
               </div>
             </div>
           </div>
@@ -1310,8 +1412,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     userId={userId}
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
-                    onClose={() => setPanel({ type: "none" })}
-                    onPlanted={(id) => handlePlanted(id)}
+                    onClose={() => {
+                      // Just planted into this cell? Don't snap back to none —
+                      // the auto-open effect is about to swap in the detail
+                      // panel. A plain dismiss (X / no plant) closes normally.
+                      if (pendingDetailRef.current) return;
+                      setPanel({ type: "none" });
+                    }}
+                    onPlanted={(id) => {
+                      handlePlanted(id);
+                      queueAutoOpen(id);
+                    }}
                   />
                 </div>
               )}
@@ -1321,6 +1432,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   warnings={panel.cell.warnings}
                   gardenId={gardenId}
                   bedId={bedId}
+                  frost={frost}
                   onClose={() => setPanel({ type: "none" })}
                   onMoveStart={(p) => setMovingPlanting(p)}
                 />

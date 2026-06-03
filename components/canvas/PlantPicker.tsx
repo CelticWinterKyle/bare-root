@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
@@ -60,6 +60,12 @@ export function PlantPicker({
   const [isAssigning, startAssign] = useTransition();
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [spacingWarnings, setSpacingWarnings] = useState<SpacingWarning[]>([]);
+  // The spacing-warning path closes the picker on a delay. Track that timer so
+  // it's cancelled if the picker unmounts first (e.g. BedGrid swaps in the
+  // detail panel after an auto-open) — otherwise a stale onClose would fire
+  // and snap the detail panel shut.
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
 
   function handleSearch(q: string) {
     setQuery(q);
@@ -104,7 +110,7 @@ export function PlantPicker({
         toast.warning(result.footprintWarning, { duration: 6000 });
       } else if (result.spacingWarnings.length > 0) {
         setSpacingWarnings(result.spacingWarnings);
-        setTimeout(onClose, 2500);
+        closeTimerRef.current = setTimeout(onClose, 2500);
         return;
       }
       onClose();

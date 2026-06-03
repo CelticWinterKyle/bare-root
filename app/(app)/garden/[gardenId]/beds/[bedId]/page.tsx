@@ -95,6 +95,8 @@ export default async function BedPage({
                       imageUrl: true,
                       daysToMaturity: true,
                       spacingInches: true,
+                      indoorStartWeeks: true,
+                      transplantWeeks: true,
                     },
                   },
                 },
@@ -173,7 +175,7 @@ export default async function BedPage({
     const isPrimary = occ?.isPrimary ?? false;
     const rawPlanting = occ && isPrimary ? occ.planting : null;
 
-    let warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[] = [];
+    const warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[] = [];
 
     if (rawPlanting) {
       const plantId = rawPlanting.plantId;
@@ -209,6 +211,7 @@ export default async function BedPage({
             expectedHarvestDate: rawPlanting.expectedHarvestDate,
             variety: rawPlanting.variety,
             notes: rawPlanting.notes,
+            startMethod: rawPlanting.startMethod,
           }
         : null,
       // Footprint info: when this cell is part of a multi-cell planting but
@@ -329,6 +332,7 @@ export default async function BedPage({
           userId={user.id}
           recentPlants={recentPlants}
           prefillPlant={prefillPlant}
+          frost={{ lastFrostDate: bed.garden.lastFrostDate, firstFrostDate: bed.garden.firstFrostDate }}
         />
       </div>
     </div>

@@ -2,8 +2,9 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { Loader2, Trash2, X, Move } from "lucide-react";
-import type { PlantingStatus, PlantCategory } from "@/lib/generated/prisma/enums";
+import type { PlantingStatus, PlantCategory, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import { pestInfoFor } from "@/lib/services/pest-data";
+import { StartMethodPicker } from "./StartMethodPicker";
 import Link from "next/link";
 
 const STATUSES: { value: PlantingStatus; label: string; color: string; hint: string }[] = [
@@ -26,17 +27,27 @@ type Props = {
   planting: {
     id: string;
     status: PlantingStatus;
-    plant: { id: string; name: string; category: string };
+    plant: {
+      id: string;
+      name: string;
+      category: string;
+      daysToMaturity?: number | null;
+      indoorStartWeeks?: number | null;
+      transplantWeeks?: number | null;
+    };
     cell: { row: number; col: number };
     plantedDate: Date | null;
     transplantDate: Date | null;
     expectedHarvestDate: Date | null;
     variety: string | null;
     notes: string | null;
+    startMethod: PlantStartMethod | null;
   };
   warnings: CompanionWarning[];
   gardenId: string;
   bedId: string;
+  /** Garden frost dates ("MM-DD") that drive the start-method guidance. */
+  frost: { lastFrostDate: string | null; firstFrostDate: string | null };
   onClose: () => void;
   /** When provided, the Move button is shown. Clicking it puts BedGrid
    *  into move mode — the next empty cell tap relocates this planting. */
@@ -48,7 +59,7 @@ function toInputDate(d: Date | null): string {
   return new Date(d).toISOString().split("T")[0];
 }
 
-export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMoveStart }: Props) {
+export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose, onMoveStart }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
@@ -176,6 +187,19 @@ export function CellDetail({ planting, warnings, gardenId, bedId, onClose, onMov
             </p>
           );
         })()}
+
+        {/* Start-method guidance — "how do I grow this right now?" Leads the
+            panel so a freshly placed plant comes with a recommended path. */}
+        <StartMethodPicker
+          plantingId={planting.id}
+          plant={{
+            daysToMaturity: planting.plant.daysToMaturity ?? null,
+            indoorStartWeeks: planting.plant.indoorStartWeeks ?? null,
+            transplantWeeks: planting.plant.transplantWeeks ?? null,
+          }}
+          frost={frost}
+          current={planting.startMethod}
+        />
 
         {/* Status buttons */}
         <div>
