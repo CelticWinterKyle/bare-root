@@ -887,156 +887,49 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start md:justify-center" style={{ marginTop: "20px" }}>
-        {/* Stats panel — fills the left whitespace with useful chrome. */}
-        {(() => {
-          const totalCells = gridCols * gridRows;
-          const filledCells = cells.filter((c) => c.planting || c.footprint).length;
-          const fillPct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
-          const plantSummary: Record<string, { name: string; category: string; count: number }> = {};
-          for (const c of cells) {
-            if (!c.planting) continue;
-            const key = c.planting.plant.id;
-            if (!plantSummary[key]) {
-              plantSummary[key] = {
-                name: c.planting.plant.name,
-                category: c.planting.plant.category,
-                count: 0,
-              };
+      <div className="flex flex-col md:flex-row gap-6 md:items-start" style={{ marginTop: "20px" }}>
+        {/* Bed column — the hero. Fills the available width and centers the
+            bed; the former left stats card is folded into a compact strip
+            above so the bed sits centered instead of pushed to one side. */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          {/* Compact stats strip (replaces the old left stats card) */}
+          {(() => {
+            const totalCells = gridCols * gridRows;
+            const filledCells = cells.filter((c) => c.planting || c.footprint).length;
+            const fillPct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
+            const plantSummary: Record<string, { name: string; category: string; count: number }> = {};
+            for (const c of cells) {
+              if (!c.planting) continue;
+              const key = c.planting.plant.id;
+              if (!plantSummary[key]) plantSummary[key] = { name: c.planting.plant.name, category: c.planting.plant.category, count: 0 };
+              plantSummary[key].count += 1;
             }
-            plantSummary[key].count += 1;
-          }
-          const plantList = Object.values(plantSummary).sort((a, b) => b.count - a.count);
-          return (
-            <aside className="w-full lg:w-[240px] lg:shrink-0 hidden lg:block">
-              <div
-                className="rounded-xl border shadow-sm"
-                style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}
-              >
-                <div className="px-5 pt-4 pb-3" style={{ borderBottom: "1px solid #F4F4EC" }}>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9,
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      color: "#7DA84E",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Bed stats
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: 32,
-                        fontWeight: 800,
-                        color: "#111109",
-                        letterSpacing: "-0.025em",
-                        lineHeight: 1,
-                      }}
-                    >
-                      {filledCells}
-                    </span>
-                    <span style={{ fontSize: 13, color: "#6B6B5A" }}>/ {totalCells} cells</span>
-                  </div>
-                  <div
-                    className="mt-3 rounded-full overflow-hidden"
-                    style={{ height: 6, background: "#F4F4EC" }}
-                  >
-                    <div
-                      style={{
-                        width: `${fillPct}%`,
-                        height: "100%",
-                        background: "linear-gradient(90deg, #3A6B20, #7DA84E)",
-                        transition: "width 0.4s",
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>
-                      {fillPct}% planted
-                    </span>
-                    {filledCells > 0 && (
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>
-                        {totalCells - filledCells} open
-                      </span>
-                    )}
-                  </div>
+            const plantList = Object.values(plantSummary).sort((a, b) => b.count - a.count);
+            return (
+              <div className="hidden md:flex self-center items-center flex-wrap justify-center gap-x-4 gap-y-2 px-5 py-2 rounded-full border shadow-sm" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
+                <div className="flex items-baseline gap-1.5">
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 800, color: "#111109", letterSpacing: "-0.02em", lineHeight: 1 }}>{filledCells}</span>
+                  <span style={{ fontSize: 12, color: "#6B6B5A" }}>/ {totalCells} cells</span>
                 </div>
-
-                <div className="px-5 py-4">
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9,
-                      letterSpacing: "0.16em",
-                      textTransform: "uppercase",
-                      color: "#ADADAA",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Planted
-                  </div>
-                  {plantList.length === 0 ? (
-                    <p style={{ fontSize: 12, color: "#ADADAA", fontStyle: "italic" }}>
-                      Drag a plant onto the bed to get started.
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {plantList.map((p) => (
-                        <div
-                          key={p.name}
-                          className="flex items-center gap-2"
-                        >
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              background: CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.OTHER,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: "var(--font-display)",
-                              fontWeight: 700,
-                              fontSize: 13,
-                              color: "#111109",
-                              flex: 1,
-                              minWidth: 0,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {p.name}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: "var(--font-mono)",
-                              fontSize: 10,
-                              color: "#6B6B5A",
-                              fontWeight: 500,
-                            }}
-                          >
-                            ×{p.count}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="rounded-full overflow-hidden" style={{ width: 90, height: 6, background: "#F4F4EC" }}>
+                  <div style={{ width: `${fillPct}%`, height: "100%", background: "linear-gradient(90deg, #3A6B20, #7DA84E)", transition: "width 0.4s" }} />
                 </div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>{fillPct}% planted</span>
+                {plantList.length > 0 && (
+                  <>
+                    <span style={{ width: 1, height: 14, background: "#E4E4DC" }} />
+                    {plantList.map((p) => (
+                      <div key={p.name} className="flex items-center gap-1.5">
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.OTHER, flexShrink: 0 }} />
+                        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "#111109" }}>{p.name}</span>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#6B6B5A", fontWeight: 500 }}>×{p.count}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
-            </aside>
-          );
-        })()}
-        {/* Bed column — size-to-content so the bed and sidebar sit as a
-            visually related pair instead of the bed floating in a wide
-            empty column. */}
-        <div className="flex flex-col gap-6 md:shrink-0">
+            );
+          })()}
           {/* Viewport: desktop caps height + scrolls; mobile flows naturally so page scrolls */}
           <div
             ref={viewportRef}
@@ -1295,11 +1188,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             mode-specific content, and contextual cell detail. */}
         <div
           ref={panelRef}
-          className="w-full md:w-[340px] md:shrink-0 flex flex-col"
+          className="w-full md:w-[360px] md:shrink-0 md:sticky md:top-4 md:self-start flex flex-col"
         >
           <div
             className="rounded-xl border shadow-md overflow-hidden flex flex-col"
-            style={{ background: "#FDFDF8", borderColor: "#E4E4DC", maxHeight: isMobile ? undefined : maxViewportH + 40 }}
+            style={{ background: "#FDFDF8", borderColor: "#E4E4DC", maxHeight: isMobile ? undefined : "calc(100vh - 96px)" }}
           >
             {/* Mode switcher — icon row */}
             <div
@@ -1360,7 +1253,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               })}
             </div>
 
-            <div className="flex-1 overflow-y-auto" style={{ maxHeight: 640 }}>
+            <div className="flex-1 overflow-y-auto">
               {/* PLANT MODE: always-visible library, plus detail panel when a cell with a planting is selected */}
               {activeTab === "plant" && panel.type !== "detail" && panel.type !== "picker" && (
                 <PlantLibrary
