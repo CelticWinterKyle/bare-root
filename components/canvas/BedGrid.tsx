@@ -150,6 +150,8 @@ function CellTile({
   hasHarmful,
   hasBeneficial,
   category,
+  mergeLeft,
+  mergeTop,
   mergeRight,
   mergeBottom,
   onClick,
@@ -174,11 +176,14 @@ function CellTile({
    *  anchor cell so footprint cells (which carry no planting) tint to match
    *  their anchor instead of falling back to the brown "OTHER" color. */
   category: string;
-  /** True when the cell to the right shares this planting. Used to make the
-   *  inter-footprint border invisible so a multi-cell plant reads as one
-   *  continuous tinted block instead of N separate cells. */
+  /** True when the adjacent cell on that side shares this planting. Used to
+   *  drop the shared border AND square the interior corner so a multi-cell
+   *  footprint reads as one continuous tinted block, not N separate cells.
+   *  All four sides are needed: dropping only right/bottom leaves the
+   *  neighbor's left/top border (and rounded corners) as visible seams. */
+  mergeLeft: boolean;
+  mergeTop: boolean;
   mergeRight: boolean;
-  /** Same idea for the cell below. */
   mergeBottom: boolean;
   onClick: () => void;
 }) {
@@ -255,19 +260,19 @@ function CellTile({
     ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
     : isOver
     ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
-    : isOccupied
-    ? "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(253,253,248,0.18)"
     : "none";
+    // Note: planted cells deliberately carry NO inset bevel — a per-cell
+    // inset outline would redraw interior seams across a merged footprint.
 
   const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
 
   // Footprints merge their internal borders so the block reads as one
-  // continuous tinted rectangle. Corners stay square between merged cells
-  // and rounded at the outer edges of the footprint.
-  const borderTopLeftRadius = !isOccupied ? 8 : 8;
-  const borderTopRightRadius = !isOccupied ? 8 : mergeRight ? 0 : 8;
-  const borderBottomRightRadius = !isOccupied ? 8 : (mergeRight || mergeBottom) ? 0 : 8;
-  const borderBottomLeftRadius = !isOccupied ? 8 : mergeBottom ? 0 : 8;
+  // continuous tinted rectangle. A corner is rounded only when it's an OUTER
+  // corner of the footprint — i.e. neither edge meeting there is merged.
+  const borderTopLeftRadius = !isOccupied ? 8 : (mergeTop || mergeLeft) ? 0 : 8;
+  const borderTopRightRadius = !isOccupied ? 8 : (mergeTop || mergeRight) ? 0 : 8;
+  const borderBottomRightRadius = !isOccupied ? 8 : (mergeBottom || mergeRight) ? 0 : 8;
+  const borderBottomLeftRadius = !isOccupied ? 8 : (mergeBottom || mergeLeft) ? 0 : 8;
 
   return (
     <div
@@ -281,8 +286,8 @@ function CellTile({
         width: cellPx,
         height: cellPx,
         background: cellBg,
-        borderTop: `1.5px solid ${baseBorder}`,
-        borderLeft: `1.5px solid ${baseBorder}`,
+        borderTop: mergeTop ? "none" : `1.5px solid ${baseBorder}`,
+        borderLeft: mergeLeft ? "none" : `1.5px solid ${baseBorder}`,
         borderRight: mergeRight ? "none" : `1.5px solid ${baseBorder}`,
         borderBottom: mergeBottom ? "none" : `1.5px solid ${baseBorder}`,
         borderStyle: preview && !isAnchor ? "dashed" : "solid",
@@ -1125,20 +1130,32 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         const ownPid =
                           planting?.id ?? cell.footprint?.plantingId ?? null;
 
-                        // Translate "visual right / visual below" into a
-                        // data (row,col) lookup that respects rotation.
-                        // Unrotated: right = col+1, below = row+1.
-                        // Rotated: right = row+1, below = col+1.
+                        // Translate the four visual directions into data
+                        // (row,col) lookups that respect rotation. Unrotated:
+                        // right = col+1, below = row+1. Rotated: right = row+1,
+                        // below = col+1 (and left/above are the inverse). All
+                        // four are needed so both sides of every interior edge
+                        // drop their border and square their corner.
                         const rightKey = rotated
                           ? `${cell.row + 1},${cell.col}`
                           : `${cell.row},${cell.col + 1}`;
                         const belowKey = rotated
                           ? `${cell.row},${cell.col + 1}`
                           : `${cell.row + 1},${cell.col}`;
+                        const leftKey = rotated
+                          ? `${cell.row - 1},${cell.col}`
+                          : `${cell.row},${cell.col - 1}`;
+                        const aboveKey = rotated
+                          ? `${cell.row},${cell.col - 1}`
+                          : `${cell.row - 1},${cell.col}`;
                         const mergeRight =
                           !!ownPid && ownerAt.get(rightKey) === ownPid;
                         const mergeBottom =
                           !!ownPid && ownerAt.get(belowKey) === ownPid;
+                        const mergeLeft =
+                          !!ownPid && ownerAt.get(leftKey) === ownPid;
+                        const mergeTop =
+                          !!ownPid && ownerAt.get(aboveKey) === ownPid;
 
                         return (
                           <CellTile
@@ -1163,6 +1180,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                             hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
                             hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
                             category={(ownPid && categoryAt.get(ownPid)) || "OTHER"}
+                            mergeLeft={mergeLeft}
+                            mergeTop={mergeTop}
                             mergeRight={mergeRight}
                             mergeBottom={mergeBottom}
                             onClick={() => handleCellClick(cell)}
