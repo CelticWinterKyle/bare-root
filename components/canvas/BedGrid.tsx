@@ -998,16 +998,20 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       >
                         {footprintBounds.map(([pid, b]) => {
                           const base = CATEGORY_COLOR[b.category] ?? "#A07640";
-                          const hex = base.replace("#", "");
-                          const rgb = `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`;
                           return (
                             <div
                               key={pid}
                               style={{
                                 gridColumn: `${b.minC + 1} / ${b.maxC + 2}`,
                                 gridRow: `${b.minR + 1} / ${b.maxR + 2}`,
-                                background: `rgba(${rgb},0.82)`,
+                                // Opaque so the dark soil lattice can't bleed
+                                // through as an interior seam; a defined dark
+                                // edge + raised-tile shadow separates adjacent
+                                // plants — even two of the same category color.
+                                background: base,
                                 borderRadius: 8,
+                                border: "1.5px solid rgba(28,18,10,0.45)",
+                                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(28,18,10,0.4)",
                               }}
                             />
                           );
