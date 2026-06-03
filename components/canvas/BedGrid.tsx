@@ -222,15 +222,20 @@ function CellTile({
     ? "#7DA84E"
     : "rgba(168,216,112,0.22)";
 
-  const cellBoxShadow = isHoveredByPlanner
+  // Occupied cells draw NOTHING of their own (the footprint block behind them
+  // is the fill, and its selection highlight is drawn on the block as a whole).
+  // A per-cell inset outline here would cut an interior line across a
+  // multi-cell block — e.g. the selected anchor's inner edges. Empty/preview
+  // cells still get their hover / select / drop chrome.
+  const cellBoxShadow = isOccupied
+    ? "none"
+    : isHoveredByPlanner
     ? "inset 0 0 0 2px #D4820A, 0 2px 8px rgba(196,121,10,0.3)"
     : isSelected
     ? "inset 0 0 0 2px #1C3D0A, 0 2px 8px rgba(28,61,10,0.15)"
     : isOver
     ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
     : "none";
-    // Note: planted cells deliberately carry NO inset bevel — a per-cell
-    // inset outline would redraw interior seams across a merged footprint.
 
   const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
 
@@ -998,6 +1003,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       >
                         {footprintBounds.map(([pid, b]) => {
                           const base = CATEGORY_COLOR[b.category] ?? "#A07640";
+                          // Selecting a planting (detail panel open) highlights
+                          // the WHOLE block, not a single cell — so a multi-cell
+                          // plant never gets an interior outline cut into it.
+                          const isSel = panel.type === "detail" && panel.planting.id === pid;
                           return (
                             <div
                               key={pid}
@@ -1010,8 +1019,12 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                 // plants — even two of the same category color.
                                 background: base,
                                 borderRadius: 8,
-                                border: "1.5px solid rgba(28,18,10,0.45)",
-                                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(28,18,10,0.4)",
+                                border: isSel
+                                  ? "2px solid #14260a"
+                                  : "1.5px solid rgba(28,18,10,0.45)",
+                                boxShadow: isSel
+                                  ? "0 0 0 3px rgba(28,61,10,0.35), inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 7px rgba(28,18,10,0.5)"
+                                  : "inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(28,18,10,0.4)",
                               }}
                             />
                           );
