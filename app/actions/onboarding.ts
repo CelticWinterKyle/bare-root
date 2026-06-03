@@ -23,6 +23,7 @@ type OnboardingInput = {
 };
 
 export async function completeOnboarding(input: OnboardingInput): Promise<string> {
+ try {
   const user = await requireUser();
   await checkCanCreateGarden(user.id, user.subscriptionTier);
 
@@ -100,4 +101,10 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
 
   revalidatePath("/dashboard");
   return gardenId;
+ } catch (err) {
+    // Surface the real cause in the server logs — production sanitizes the
+    // message before it reaches the client, so without this we're blind.
+    console.error("[completeOnboarding] failed | input:", JSON.stringify(input), "| error:", err);
+    throw err;
+ }
 }

@@ -51,6 +51,7 @@ export function WizardShell() {
     "idle" | "loading" | "found" | "not-found"
   >("idle");
   const [isPending, startTransition] = useTransition();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function set(field: keyof WizardData, value: string) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -75,25 +76,34 @@ export function WizardShell() {
   }
 
   function submit(skipBed: boolean) {
+    setSubmitError(null);
     startTransition(async () => {
-      const gardenId = await completeOnboarding({
-        gardenName: data.gardenName.trim(),
-        widthFt: parseFloat(data.widthFt),
-        heightFt: parseFloat(data.heightFt),
-        zip: data.zip,
-        zone: data.zone,
-        lastFrostDate: data.lastFrostDate,
-        firstFrostDate: data.firstFrostDate,
-        bed: skipBed
-          ? undefined
-          : {
-              name: data.bedName.trim() || "Bed 1",
-              widthFt: parseFloat(data.bedWidthFt),
-              heightFt: parseFloat(data.bedHeightFt),
-              cellSizeIn: parseInt(data.cellSizeIn) as 12 | 6,
-            },
-      });
-      router.push(`/garden/${gardenId}`);
+      try {
+        const gardenId = await completeOnboarding({
+          gardenName: data.gardenName.trim(),
+          widthFt: parseFloat(data.widthFt),
+          heightFt: parseFloat(data.heightFt),
+          zip: data.zip,
+          zone: data.zone,
+          lastFrostDate: data.lastFrostDate,
+          firstFrostDate: data.firstFrostDate,
+          bed: skipBed
+            ? undefined
+            : {
+                name: data.bedName.trim() || "Bed 1",
+                widthFt: parseFloat(data.bedWidthFt),
+                heightFt: parseFloat(data.bedHeightFt),
+                cellSizeIn: parseInt(data.cellSizeIn) as 12 | 6,
+              },
+        });
+        router.push(`/garden/${gardenId}`);
+      } catch (err) {
+        setSubmitError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Couldn't finish setting up your garden. Please try again."
+        );
+      }
     });
   }
 
@@ -387,6 +397,11 @@ export function WizardShell() {
               </div>
             </div>
 
+            {submitError && (
+              <p className="mt-6 text-sm text-[#B85C3A] bg-[#FDF2E0] border border-[rgba(184,92,58,0.25)] rounded-lg px-3 py-2">
+                {submitError}
+              </p>
+            )}
             <div className="mt-8 flex justify-between items-center">
               <Button variant="ghost" onClick={() => setStep(3)}>
                 ← Back
