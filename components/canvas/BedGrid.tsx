@@ -149,11 +149,6 @@ function CellTile({
   isHoveredByPlanner,
   hasHarmful,
   hasBeneficial,
-  category,
-  mergeLeft,
-  mergeTop,
-  mergeRight,
-  mergeBottom,
   onClick,
 }: {
   cell: CellData;
@@ -172,19 +167,6 @@ function CellTile({
   isHoveredByPlanner: boolean;
   hasHarmful: boolean;
   hasBeneficial: boolean;
-  /** The plant category that colors this cell. Resolved by the parent from the
-   *  anchor cell so footprint cells (which carry no planting) tint to match
-   *  their anchor instead of falling back to the brown "OTHER" color. */
-  category: string;
-  /** True when the adjacent cell on that side shares this planting. Used to
-   *  drop the shared border AND square the interior corner so a multi-cell
-   *  footprint reads as one continuous tinted block, not N separate cells.
-   *  All four sides are needed: dropping only right/bottom leaves the
-   *  neighbor's left/top border (and rounded corners) as visible seams. */
-  mergeLeft: boolean;
-  mergeTop: boolean;
-  mergeRight: boolean;
-  mergeBottom: boolean;
   onClick: () => void;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
@@ -213,29 +195,15 @@ function CellTile({
   const cellStyle = effectiveStatus ? CELL_STYLE[effectiveStatus] : null;
   const badgePx = 13;
   const isOccupied = isAnchor || isFootprintOnly;
-  // Planted cells render as a semi-opaque category-colored block. The
-  // borders between cells of the same planting are made invisible (via
-  // mergeRight / mergeBottom) so a 2×2 tomato reads as one continuous
-  // tinted block. `category` comes from the parent (the anchor's plant)
-  // so every cell of a footprint tints the same — the plant name is drawn
-  // once, centered over the whole block, by the overlay layer in the grid.
-  const footprintTint = (() => {
-    if (!isOccupied) return null;
-    const base = CATEGORY_COLOR[category] ?? "#A07640";
-    // Convert to rgba with opacity. Quick parse of #RRGGBB.
-    const hex = base.replace("#", "");
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r},${g},${b},0.82)`;
-  })();
-
-  // Empty cells: translucent paper. Preview: pale sage. Drop-hover: sage.
-  // Planted cells: category-tinted block (replaces the old disc).
+  // The category fill for a planting is drawn as ONE block BEHIND the cells
+  // (see the footprint overlay in the grid), so an occupied cell is itself
+  // transparent. This guarantees a multi-cell plant is a single seamless
+  // shape — no borders, rounded corners, or sub-pixel gaps between cells can
+  // let the soil show through as interior seams.
   const cellBg = sunMode
     ? SUN_BG[sun]
-    : footprintTint
-    ? footprintTint
+    : isOccupied
+    ? "transparent"
     : preview
     ? "rgba(228,240,212,0.6)"
     : isOver
@@ -266,13 +234,10 @@ function CellTile({
 
   const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
 
-  // Footprints merge their internal borders so the block reads as one
-  // continuous tinted rectangle. A corner is rounded only when it's an OUTER
-  // corner of the footprint — i.e. neither edge meeting there is merged.
-  const borderTopLeftRadius = !isOccupied ? 8 : (mergeTop || mergeLeft) ? 0 : 8;
-  const borderTopRightRadius = !isOccupied ? 8 : (mergeTop || mergeRight) ? 0 : 8;
-  const borderBottomRightRadius = !isOccupied ? 8 : (mergeBottom || mergeRight) ? 0 : 8;
-  const borderBottomLeftRadius = !isOccupied ? 8 : (mergeBottom || mergeLeft) ? 0 : 8;
+  // Occupied cells are transparent (the footprint block draws the fill), so
+  // their own border and radius are irrelevant — only empty/preview cells
+  // render their own chrome.
+  const cellRadius = isOccupied ? 0 : 8;
 
   return (
     <div
@@ -286,15 +251,9 @@ function CellTile({
         width: cellPx,
         height: cellPx,
         background: cellBg,
-        borderTop: mergeTop ? "none" : `1.5px solid ${baseBorder}`,
-        borderLeft: mergeLeft ? "none" : `1.5px solid ${baseBorder}`,
-        borderRight: mergeRight ? "none" : `1.5px solid ${baseBorder}`,
-        borderBottom: mergeBottom ? "none" : `1.5px solid ${baseBorder}`,
+        border: isOccupied ? "none" : `1.5px solid ${baseBorder}`,
         borderStyle: preview && !isAnchor ? "dashed" : "solid",
-        borderTopLeftRadius,
-        borderTopRightRadius,
-        borderBottomRightRadius,
-        borderBottomLeftRadius,
+        borderRadius: cellRadius,
         boxShadow: cellBoxShadow,
         opacity: drag.isDragging ? 0.35 : 1,
         cursor: isAnchor ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
@@ -505,6 +464,35 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const displayCells = rotated
     ? [...cells].sort((a, b) => a.col !== b.col ? a.col - b.col : a.row - b.row)
     : cells;
+
+  // Per-planting footprint bounds in DISPLAY (visual) grid coordinates, derived
+  // from each cell's index in displayCells (which is exactly how CSS Grid
+  // auto-places them — so this is rotation-proof). Drives BOTH the single
+  // category-colored block drawn behind the cells and the centered name label
+  // drawn on top, so a multi-cell plant reads as one seamless block.
+  const footprintBounds = (() => {
+    const m = new Map<
+      string,
+      { minR: number; maxR: number; minC: number; maxC: number; name: string | null; category: string }
+    >();
+    displayCells.forEach((cell, i) => {
+      const pid = cell.planting?.id ?? cell.footprint?.plantingId ?? null;
+      if (!pid) return;
+      const r = Math.floor(i / displayCols);
+      const c = i % displayCols;
+      const b = m.get(pid) ?? { minR: r, maxR: r, minC: c, maxC: c, name: null, category: "OTHER" };
+      b.minR = Math.min(b.minR, r);
+      b.maxR = Math.max(b.maxR, r);
+      b.minC = Math.min(b.minC, c);
+      b.maxC = Math.max(b.maxC, c);
+      if (cell.planting) {
+        b.name = cell.planting.plant.name;
+        b.category = cell.planting.plant.category;
+      }
+      m.set(pid, b);
+    });
+    return [...m.entries()];
+  })();
 
   // Auto-fit cell size:
   // Mobile: fit exactly to viewport width accounting for grid's actual horizontal padding
@@ -1093,127 +1081,19 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   <div
                     className="grid"
                     style={{
+                      position: "relative",
                       gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
                       gap: 0,
                       padding: "14px 16px",
                       background: "transparent",
                     }}
                   >
-                    {(() => {
-                      // Build a row,col → plantingId lookup so each cell
-                      // can ask its visual neighbors "are you part of the
-                      // same planting as me?" — used to merge interior
-                      // borders of a multi-cell footprint into one block.
-                      const ownerAt = new Map<string, string | null>();
-                      // plantingId → category, taken from the anchor cell so
-                      // footprint cells tint to match their anchor's plant
-                      // instead of the brown "OTHER" fallback.
-                      const categoryAt = new Map<string, string>();
-                      for (const c of cells) {
-                        const pid =
-                          c.planting?.id ?? c.footprint?.plantingId ?? null;
-                        ownerAt.set(`${c.row},${c.col}`, pid);
-                        if (c.planting) categoryAt.set(c.planting.id, c.planting.plant.category);
-                      }
-                      return displayCells.map((cell) => {
-                        const planting = cell.planting;
-                        const footprintStatus = cell.footprint?.status ?? null;
-                        const effectiveStatus = planting?.status ?? footprintStatus;
-                        const isFootprintOnly = !planting && !!footprintStatus;
-                        const isSelected =
-                          (panel.type === "picker" && panel.cellId === cell.id) ||
-                          (panel.type === "detail" && panel.cell.id === cell.id);
-                        const preview = previewAssignments.find(
-                          (a) => a.row === cell.row && a.col === cell.col
-                        );
-
-                        const ownPid =
-                          planting?.id ?? cell.footprint?.plantingId ?? null;
-
-                        // Translate the four visual directions into data
-                        // (row,col) lookups that respect rotation. Unrotated:
-                        // right = col+1, below = row+1. Rotated: right = row+1,
-                        // below = col+1 (and left/above are the inverse). All
-                        // four are needed so both sides of every interior edge
-                        // drop their border and square their corner.
-                        const rightKey = rotated
-                          ? `${cell.row + 1},${cell.col}`
-                          : `${cell.row},${cell.col + 1}`;
-                        const belowKey = rotated
-                          ? `${cell.row},${cell.col + 1}`
-                          : `${cell.row + 1},${cell.col}`;
-                        const leftKey = rotated
-                          ? `${cell.row - 1},${cell.col}`
-                          : `${cell.row},${cell.col - 1}`;
-                        const aboveKey = rotated
-                          ? `${cell.row},${cell.col - 1}`
-                          : `${cell.row - 1},${cell.col}`;
-                        const mergeRight =
-                          !!ownPid && ownerAt.get(rightKey) === ownPid;
-                        const mergeBottom =
-                          !!ownPid && ownerAt.get(belowKey) === ownPid;
-                        const mergeLeft =
-                          !!ownPid && ownerAt.get(leftKey) === ownPid;
-                        const mergeTop =
-                          !!ownPid && ownerAt.get(aboveKey) === ownPid;
-
-                        return (
-                          <CellTile
-                            key={cell.id}
-                            cell={cell}
-                            cellPx={cellPx}
-                            dense={dense}
-                            effectiveStatus={effectiveStatus}
-                            isAnchor={!!planting}
-                            isFootprintOnly={isFootprintOnly}
-                            sunMode={sunMode}
-                            sun={effectiveSun(cell)}
-                            selectMode={selectMode}
-                            isSelectedForBulk={selectedCells.has(cell.id)}
-                            preview={preview}
-                            isSelected={isSelected}
-                            isNew={justPlanted.has(cell.id)}
-                            isHoveredByPlanner={
-                              hoveredAssignment?.row === cell.row &&
-                              hoveredAssignment?.col === cell.col
-                            }
-                            hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
-                            hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
-                            category={(ownPid && categoryAt.get(ownPid)) || "OTHER"}
-                            mergeLeft={mergeLeft}
-                            mergeTop={mergeTop}
-                            mergeRight={mergeRight}
-                            mergeBottom={mergeBottom}
-                            onClick={() => handleCellClick(cell)}
-                          />
-                        );
-                      });
-                    })()}
-                  </div>
-                  {/* Centered plant-name overlay. One label per planting,
-                      placed in a grid identical to the cell grid so it spans
-                      the planting's whole footprint and centers the name over
-                      the merged block (not pinned to the anchor's corner). */}
-                  {!sunMode && (() => {
-                    const bounds = new Map<
-                      string,
-                      { minR: number; maxR: number; minC: number; maxC: number; name: string | null }
-                    >();
-                    displayCells.forEach((cell, i) => {
-                      const pid = cell.planting?.id ?? cell.footprint?.plantingId ?? null;
-                      if (!pid) return;
-                      const r = Math.floor(i / displayCols);
-                      const c = i % displayCols;
-                      const b =
-                        bounds.get(pid) ?? { minR: r, maxR: r, minC: c, maxC: c, name: null };
-                      b.minR = Math.min(b.minR, r);
-                      b.maxR = Math.max(b.maxR, r);
-                      b.minC = Math.min(b.minC, c);
-                      b.maxC = Math.max(b.maxC, c);
-                      if (cell.planting) b.name = cell.planting.plant.name;
-                      bounds.set(pid, b);
-                    });
-                    return (
+                    {/* Footprint fill — ONE category-colored block per planting,
+                        spanning its whole footprint, drawn BEHIND the cells. A
+                        single element can't have interior seams, so multi-cell
+                        plants read as one solid rounded block; the transparent
+                        cells above just handle interaction + status/labels. */}
+                    {!sunMode && (
                       <div
                         className="absolute inset-0 grid pointer-events-none"
                         style={{
@@ -1223,7 +1103,78 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           padding: "14px 16px",
                         }}
                       >
-                        {Array.from(bounds.entries()).map(([pid, b]) => {
+                        {footprintBounds.map(([pid, b]) => {
+                          const base = CATEGORY_COLOR[b.category] ?? "#A07640";
+                          const hex = base.replace("#", "");
+                          const rgb = `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`;
+                          return (
+                            <div
+                              key={pid}
+                              style={{
+                                gridColumn: `${b.minC + 1} / ${b.maxC + 2}`,
+                                gridRow: `${b.minR + 1} / ${b.maxR + 2}`,
+                                background: `rgba(${rgb},0.82)`,
+                                borderRadius: 8,
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                    {displayCells.map((cell) => {
+                      const planting = cell.planting;
+                      const footprintStatus = cell.footprint?.status ?? null;
+                      const effectiveStatus = planting?.status ?? footprintStatus;
+                      const isFootprintOnly = !planting && !!footprintStatus;
+                      const isSelected =
+                        (panel.type === "picker" && panel.cellId === cell.id) ||
+                        (panel.type === "detail" && panel.cell.id === cell.id);
+                      const preview = previewAssignments.find(
+                        (a) => a.row === cell.row && a.col === cell.col
+                      );
+
+                      return (
+                        <CellTile
+                          key={cell.id}
+                          cell={cell}
+                          cellPx={cellPx}
+                          dense={dense}
+                          effectiveStatus={effectiveStatus}
+                          isAnchor={!!planting}
+                          isFootprintOnly={isFootprintOnly}
+                          sunMode={sunMode}
+                          sun={effectiveSun(cell)}
+                          selectMode={selectMode}
+                          isSelectedForBulk={selectedCells.has(cell.id)}
+                          preview={preview}
+                          isSelected={isSelected}
+                          isNew={justPlanted.has(cell.id)}
+                          isHoveredByPlanner={
+                            hoveredAssignment?.row === cell.row &&
+                            hoveredAssignment?.col === cell.col
+                          }
+                          hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
+                          hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
+                          onClick={() => handleCellClick(cell)}
+                        />
+                      );
+                    })}
+                  </div>
+                  {/* Centered plant-name overlay. One label per planting,
+                      placed in a grid identical to the cell grid so it spans
+                      the planting's whole footprint and centers the name over
+                      the single block (not pinned to the anchor's corner). */}
+                  {!sunMode && (
+                      <div
+                        className="absolute inset-0 grid pointer-events-none"
+                        style={{
+                          gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
+                          gridTemplateRows: `repeat(${displayRows}, ${cellPx}px)`,
+                          gap: 0,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        {footprintBounds.map(([pid, b]) => {
                           if (!b.name) return null;
                           const span = Math.max(b.maxR - b.minR + 1, b.maxC - b.minC + 1);
                           return (
@@ -1259,8 +1210,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           );
                         })}
                       </div>
-                    );
-                  })()}
+                  )}
               </div>
             </div>
           </div>
