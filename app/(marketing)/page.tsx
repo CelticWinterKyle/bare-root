@@ -616,13 +616,21 @@ export default async function LandingPage() {
 
           <div className={styles.journalGrid}>
             {[
-              { cls: styles.polaroidImgTomato, stamp: "Aug 14", rating: "★★★★★", name: "Brandywine", yield: "12.4 lbs · 5 plants" },
-              { cls: styles.polaroidImgBasil, stamp: "Jul 02", rating: "★★★★☆", name: "Genovese basil", yield: "Pesto · 3 bunches" },
-              { cls: styles.polaroidImgPepper, stamp: "Sep 03", rating: "★★★★★", name: "Shishito pepper", yield: "Grow again · yes" },
-              { cls: styles.polaroidImgBed, stamp: "Jun 12", rating: "★★★★☆", name: "Bed A · early summer", yield: "Companion mix worked" },
+              { cls: styles.polaroidImgTomato, img: "https://images.pexels.com/photos/9209574/pexels-photo-9209574.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop", stamp: "Aug 14", rating: "★★★★★", name: "Brandywine", yield: "12.4 lbs · 5 plants" },
+              { cls: styles.polaroidImgBasil, img: "https://images.pexels.com/photos/5864225/pexels-photo-5864225.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop", stamp: "Jul 02", rating: "★★★★☆", name: "Genovese basil", yield: "Pesto · 3 bunches" },
+              { cls: styles.polaroidImgPepper, img: "https://images.pexels.com/photos/6879102/pexels-photo-6879102.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop", stamp: "Sep 03", rating: "★★★★★", name: "Shishito pepper", yield: "Grow again · yes" },
+              { cls: styles.polaroidImgBed, img: "https://images.pexels.com/photos/4390611/pexels-photo-4390611.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop", stamp: "Jun 12", rating: "★★★★☆", name: "Bed A · early summer", yield: "Companion mix worked" },
             ].map((p, i) => (
               <div key={i} className={styles.polaroid}>
-                <div className={`${styles.polaroidImg} ${p.cls}`} />
+                <div className={`${styles.polaroidImg} ${p.cls}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.img}
+                    alt={p.name}
+                    loading="lazy"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </div>
                 <div className={styles.polaroidMeta}>
                   <span className={styles.polaroidStamp}>{p.stamp}</span>
                   <span className={styles.polaroidRating}>{p.rating}</span>
