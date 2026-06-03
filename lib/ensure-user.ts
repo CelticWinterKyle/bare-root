@@ -21,6 +21,26 @@ export async function ensureDbUser(clerkUserId: string) {
   if (!primaryEmail) throw new Error("No primary email for user");
   const fullName = [cu.firstName, cu.lastName].filter(Boolean).join(" ") || null;
 
+  // Re-link: `email` is @unique and already belongs to a row under a DIFFERENT
+  // Clerk id — i.e. the same person authenticating under a new Clerk identity
+  // (a new sign-in method like Google, or an account first created on the dev
+  // Clerk instance). Creating a second row would hit the unique-email
+  // constraint and throw, which leaves the user bouncing in a /sign-in ↔ app
+  // redirect loop. Instead re-point the existing row to the current Clerk id;
+  // its FK rows (gardens, collaborators, reminders, inventory, …) follow via
+  // ON UPDATE CASCADE, so the account keeps all its data.
+  const byEmail = await db.user.findUnique({ where: { email: primaryEmail } });
+  if (byEmail && byEmail.id !== clerkUserId) {
+    return db.user.update({
+      where: { id: byEmail.id },
+      data: {
+        id: clerkUserId,
+        name: fullName ?? byEmail.name,
+        avatarUrl: cu.imageUrl || byEmail.avatarUrl,
+      },
+    });
+  }
+
   let stripeCustomerId: string | undefined;
   try {
     const customer = await stripe.customers.create({
