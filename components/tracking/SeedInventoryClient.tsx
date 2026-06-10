@@ -22,9 +22,15 @@ type InventoryItem = {
 type ShoppingItem = {
   plantId: string;
   plantName: string;
+  variety: string;
   inInventory: boolean;
   inventoryQty: number | null;
 };
+
+// plantId is a cuid (no spaces), so this composite key is unambiguous.
+const itemKey = (i: Pick<ShoppingItem, "plantId" | "variety">) => `${i.plantId} ${i.variety}`;
+const itemLabel = (i: Pick<ShoppingItem, "plantName" | "variety">) =>
+  i.variety ? `${i.plantName} · ${i.variety}` : i.plantName;
 
 type PlantResult = { id: string; name: string };
 
@@ -45,7 +51,11 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
   const [isAdding, startAdd] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
+  // Optimistic check-offs, keyed by plantId+variety. Checking creates the
+  // SeedInventory row server-side, so after revalidation the item reads as
+  // in-stock without this local state.
   const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [, startBuy] = useTransition();
 
   function handlePlantSearch(q: string) {
     setPlantQuery(q);
@@ -105,13 +115,57 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
     });
   }
 
+  function uncheck(key: string) {
+    setChecked((prev) => {
+      const n = new Set(prev);
+      n.delete(key);
+      return n;
+    });
+  }
+
+  // Checking a shopping item = "bought it": create the inventory row
+  // (1 packet) so the item is owned on the next render. Optimistic
+  // strikethrough, with Undo in the toast deleting the created row.
+  function handleBuy(item: ShoppingItem) {
+    const key = itemKey(item);
+    if (item.inInventory || checked.has(key)) return;
+    setChecked((prev) => new Set(prev).add(key));
+    startBuy(async () => {
+      try {
+        const { id } = await upsertSeedInventory({
+          plantId: item.plantId,
+          variety: item.variety,
+          quantity: 1,
+          unit: "packets",
+        });
+        toast.success(`Added to your seeds — ${itemLabel(item)}`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              deleteSeedInventory(id)
+                .then(() => uncheck(key))
+                .catch((err) => {
+                  console.error(err);
+                  toast.error("Couldn't undo. Remove it under Seeds on hand instead.");
+                });
+            },
+          },
+        });
+      } catch (err) {
+        console.error(err);
+        uncheck(key);
+        toast.error("Couldn't add to your seeds. Please try again.");
+      }
+    });
+  }
+
   function handleShareShopping() {
-    const unchecked = shoppingList.filter((s) => !s.inInventory && !checked.has(s.plantId));
+    const unchecked = shoppingList.filter((s) => !s.inInventory && !checked.has(itemKey(s)));
     if (unchecked.length === 0) {
       toast.info("Nothing to share — your shopping list is empty.");
       return;
     }
-    const text = unchecked.map((s) => `• ${s.plantName}`).join("\n");
+    const text = unchecked.map((s) => `• ${itemLabel(s)}`).join("\n");
     if (navigator.share) {
       navigator.share({ title: "Seeds to buy", text }).catch(() => {});
     } else {
@@ -321,45 +375,40 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
           ) : (
             <>
               <div className="space-y-2 mb-4">
-                {shoppingList.map((item) => (
-                  <div
-                    key={item.plantId}
-                    className={`flex items-center gap-3 p-3 rounded-xl border ${
-                      item.inInventory
-                        ? "bg-[#F4F4EC] border-[#E4E4DC] opacity-60"
-                        : checked.has(item.plantId)
-                        ? "bg-[#F4F4EC] border-[#E4E4DC]"
-                        : "bg-white border-[#E4E4DC]"
-                    }`}
-                  >
-                    <button
-                      onClick={() =>
-                        setChecked((prev) => {
-                          const n = new Set(prev);
-                          n.has(item.plantId) ? n.delete(item.plantId) : n.add(item.plantId);
-                          return n;
-                        })
-                      }
-                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${
-                        item.inInventory || checked.has(item.plantId)
-                          ? "bg-[#3A6B20] border-[#3A6B20]"
-                          : "border-[#E4E4DC]"
+                {shoppingList.map((item) => {
+                  const isChecked = item.inInventory || checked.has(itemKey(item));
+                  return (
+                    <div
+                      key={itemKey(item)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border ${
+                        item.inInventory
+                          ? "bg-[#F4F4EC] border-[#E4E4DC] opacity-60"
+                          : isChecked
+                          ? "bg-[#F4F4EC] border-[#E4E4DC]"
+                          : "bg-white border-[#E4E4DC]"
                       }`}
                     >
-                      {(item.inInventory || checked.has(item.plantId)) && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <p className={`text-sm font-medium ${item.inInventory || checked.has(item.plantId) ? "line-through text-[#ADADAA]" : "text-[#111109]"}`}>
-                        {item.plantName}
-                      </p>
-                      {item.inInventory && item.inventoryQty !== null && (
-                        <p className="text-xs text-[#7DA84E]">{item.inventoryQty} in stock</p>
-                      )}
+                      <button
+                        onClick={() => handleBuy(item)}
+                        disabled={isChecked}
+                        aria-label={`Mark ${itemLabel(item)} as bought`}
+                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${
+                          isChecked ? "bg-[#3A6B20] border-[#3A6B20]" : "border-[#E4E4DC]"
+                        }`}
+                      >
+                        {isChecked && <Check className="w-3 h-3 text-white" />}
+                      </button>
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${isChecked ? "line-through text-[#ADADAA]" : "text-[#111109]"}`}>
+                          {itemLabel(item)}
+                        </p>
+                        {item.inInventory && item.inventoryQty !== null && (
+                          <p className="text-xs text-[#7DA84E]">{item.inventoryQty} in stock</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {needToBuy.length > 0 && (
@@ -369,7 +418,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                   className="w-full border-[#1C3D0A] text-[#1C3D0A] hover:bg-[#F4F4EC]"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Share list ({needToBuy.filter((s) => !checked.has(s.plantId)).length} items)
+                  Share list ({needToBuy.filter((s) => !checked.has(itemKey(s))).length} items)
                 </Button>
               )}
             </>

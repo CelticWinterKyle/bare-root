@@ -142,6 +142,7 @@ model Garden {
   seasons       Season[]
   weatherCache  WeatherCache?
   reminders     Reminder[]
+  growthNotes   GrowthNote[]
 
   @@index([userId])
 }
@@ -304,15 +305,24 @@ model PlantingCell {
   @@index([cellId])
 }
 
+// A journal entry — either about one planting OR about the garden as a
+// whole ("aphids on the east bed").
+//
+// Exactly one of plantingId/gardenId is set. Prisma can't express that
+// XOR, so it's enforced in application code (addGrowthNote sets only
+// plantingId; addGardenNote sets only gardenId).
 model GrowthNote {
   id         String   @id @default(cuid())
-  plantingId String
+  plantingId String?
+  gardenId   String?
   body       String
   createdAt  DateTime @default(now())
 
-  planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+  planting Planting? @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+  garden   Garden?   @relation(fields: [gardenId], references: [id], onDelete: Cascade)
 
   @@index([plantingId])
+  @@index([gardenId])
 }
 
 model HarvestLog {

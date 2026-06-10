@@ -148,7 +148,10 @@ export async function deleteGrowthNote(noteId: string) {
   if (!note) throw new Error("Note not found");
 
   await db.growthNote.delete({ where: { id: noteId } });
-  revalidatePlanting(note.planting);
+  // The where clause above requires a planting relation, so this only skips
+  // for garden-level notes — which can't reach here. (planting is nullable
+  // in the type since GrowthNote gained garden-level rows.)
+  if (note.planting) revalidatePlanting(note.planting);
 }
 
 // ─── Seed Inventory ───────────────────────────────────────────────────────────
@@ -162,12 +165,15 @@ export async function upsertSeedInventory(data: {
 }) {
   const user = await requireUser();
   if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
-  await db.seedInventory.upsert({
+  const row = await db.seedInventory.upsert({
     where: { userId_plantId_variety: { userId: user.id, plantId: data.plantId, variety: data.variety } },
     create: { userId: user.id, ...data, notes: data.notes || null },
     update: { quantity: data.quantity, unit: data.unit, notes: data.notes || null },
   });
   revalidatePath("/inventory");
+  // Returned so callers (shopping-list check-off) can offer an Undo that
+  // deletes the row just created.
+  return { id: row.id };
 }
 
 export async function deleteSeedInventory(id: string) {

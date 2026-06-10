@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "perenual.com" },
       { protocol: "https", hostname: "*.perenual.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
+      // User-uploaded planting photos (PhotoGallery, journal thumbs) live in
+      // Vercel Blob; next/image rejects unlisted hosts at runtime.
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
 };

@@ -10,7 +10,8 @@ import { PlantTimingEditor } from "@/components/plants/PlantTimingEditor";
 import { PlantFeasibility } from "@/components/plants/PlantFeasibility";
 import { pestInfoFor } from "@/lib/services/pest-data";
 import { plantsPerArea } from "@/lib/services/spacing";
-import { gardenEditFilter } from "@/lib/permissions";
+import { gardenAccessFilter, gardenEditFilter } from "@/lib/permissions";
+import { Sprout } from "lucide-react";
 
 const SUN_LABELS: Record<string, string> = {
   FULL_SUN: "☀️ Full sun (6+ hours)",
@@ -65,7 +66,7 @@ export default async function PlantDetailPage({
   // can write to (owner or EDITOR collaborator) — viewers can't plant.
   // Includes bed sizes + empty cell counts so the picker can show
   // "All cells planted" inline.
-  const userGardens = await db.garden.findMany({
+  const userGardensQuery = db.garden.findMany({
     where: gardenEditFilter(user.id),
     select: {
       id: true,
@@ -99,6 +100,38 @@ export default async function PlantDetailPage({
     },
     orderBy: { createdAt: "asc" },
   });
+
+  // Where this plant is growing right now — active-season plantings across
+  // every garden the user can VIEW (viewers included). Bounded; powers the
+  // "In your garden" section.
+  const [userGardens, activePlantings] = await Promise.all([
+    userGardensQuery,
+    db.planting.findMany({
+      where: {
+        plantId,
+        season: { isActive: true },
+        cell: { bed: { garden: gardenAccessFilter(user.id) } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: {
+        id: true,
+        variety: true,
+        cell: {
+          select: {
+            bed: {
+              select: {
+                id: true,
+                name: true,
+                gardenId: true,
+                garden: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
   // Frost dates from the user's first garden that has them — powers the
   // "how can I grow this now?" guidance.
@@ -171,6 +204,40 @@ export default async function PlantDetailPage({
           </div>
         </div>
       </div>
+
+      {/* In your garden — where this plant is growing right now */}
+      {activePlantings.length > 0 && (
+        <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sprout className="w-4 h-4 text-[#7DA84E] shrink-0" />
+            <h2 className="font-medium text-[#111109]">
+              In your garden
+              <span className="text-[#6B6B5A] font-normal">
+                {" — "}{activePlantings.length} planted right now
+              </span>
+            </h2>
+          </div>
+          <div className="space-y-1.5">
+            {activePlantings.map((p) => (
+              <Link
+                key={p.id}
+                href={`/garden/${p.cell.bed.gardenId}/beds/${p.cell.bed.id}`}
+                className="flex items-baseline justify-between gap-3 rounded-lg border border-[#E4E4DC] bg-[#FDFDF8] px-3 py-2 hover:border-[#7DA84E] transition-colors no-underline"
+              >
+                <span className="text-sm font-medium text-[#1C3D0A] truncate">
+                  {p.cell.bed.name}
+                  {p.variety && (
+                    <span className="text-[#6B6B5A] font-normal"> · {p.variety}</span>
+                  )}
+                </span>
+                <span className="text-xs text-[#ADADAA] shrink-0">
+                  {p.cell.bed.garden.name} →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* How can I grow this now? */}
       <PlantFeasibility plant={plant} frost={frost} className="mb-4" />

@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Sprout } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
+import { QuickNoteButton } from "@/components/garden/QuickNoteButton";
 import { LeaveGardenButton } from "@/components/garden/LeaveGardenButton";
 import { GardenCanvasToggle } from "@/components/canvas/GardenCanvasToggle";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
@@ -230,6 +231,10 @@ export default async function GardenPage({
             <Link href={`/garden/${gardenId}/seasons`} style={btnGhost}>
               Seasons
             </Link>
+            <Link href={`/garden/${gardenId}/journal`} style={btnGhost}>
+              Journal
+            </Link>
+            {canEdit && <QuickNoteButton gardenId={garden.id} />}
             {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
           </div>
         </div>
@@ -277,6 +282,25 @@ export default async function GardenPage({
           >
             Seasons
           </Link>
+          <Link
+            href={`/garden/${gardenId}/journal`}
+            className="flex-1 flex items-center justify-center"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#3A3A30",
+              padding: "7px 10px",
+              borderRadius: "8px",
+              border: "1px solid #E4E4DC",
+              background: "#FDFDF8",
+              textDecoration: "none",
+            }}
+          >
+            Journal
+          </Link>
+          {canEdit && <QuickNoteButton gardenId={garden.id} variant="mobile" />}
         </div>
       </div>
 

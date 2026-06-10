@@ -396,6 +396,9 @@ export default async function DashboardPage() {
           include: {
             plant: { select: { name: true, category: true, imageUrl: true } },
             cell: { include: { bed: { select: { name: true } } } },
+            // The user's own most recent photo of this planting — the
+            // polaroid prefers it over the stock plant-library image.
+            photos: { orderBy: { takenAt: "desc" }, take: 1, select: { url: true } },
           },
         },
       },
@@ -1102,8 +1105,8 @@ export default async function DashboardPage() {
                 Recent <em>entries</em>.
               </div>
             </div>
-            <Link href="/calendar" className={styles.sectionAction}>
-              Full history →
+            <Link href={`/garden/${primaryGarden.id}/journal`} className={styles.sectionAction}>
+              Open journal →
             </Link>
           </div>
 
@@ -1111,6 +1114,9 @@ export default async function DashboardPage() {
             <div className={styles.journalGrid}>
               {recentHarvests.map((h) => {
                 const plant = h.planting.plant;
+                // Prefer the user's own photo of the planting (uploaded in
+                // the planting gallery) over the stock library image.
+                const ownPhoto = h.planting.photos[0]?.url ?? null;
                 const stamp = new Intl.DateTimeFormat("en-US", {
                   month: "short",
                   day: "2-digit",
@@ -1124,7 +1130,7 @@ export default async function DashboardPage() {
                     className={styles.polaroid}
                   >
                     <PolaroidImage
-                      imageUrl={plant.imageUrl}
+                      imageUrl={ownPhoto ?? plant.imageUrl}
                       name={plant.name}
                       gradientClass={categoryGradient(plant.category)}
                       emoji={categoryEmoji(plant.category)}

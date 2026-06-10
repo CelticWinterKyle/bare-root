@@ -86,6 +86,12 @@ export const successionReminderSchema = z.object({
   plantName: z.string().trim().min(1).max(200),
 });
 
+// Garden-level journal note ("aphids on the east bed") — see addGardenNote.
+export const gardenNoteSchema = z.object({
+  gardenId: z.string().min(1, "Garden is required"),
+  body: z.string().trim().min(1, "Write a note first").max(2000),
+});
+
 // Browser-renderable raster formats only (no SVG — scriptable; no HEIC —
 // won't render in <img>, and iOS transcodes to JPEG on web upload anyway).
 export const ALLOWED_PHOTO_TYPES: Record<string, string> = {
