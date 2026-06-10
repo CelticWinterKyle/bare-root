@@ -287,7 +287,7 @@ export default async function CalendarPage() {
           <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 pb-2 border-b border-[#E4E4DC]">
             Succession opportunities
           </h2>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start">
             {successionSuggestions.map((s, i) => (
               <div
                 key={i}
@@ -330,7 +330,7 @@ export default async function CalendarPage() {
           <h2 className="font-display text-lg font-semibold text-[#111109] mb-3 pb-2 border-b border-[#E4E4DC]">
             What you can plant now
           </h2>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start">
             {planNow.map((r) => (
               <div
                 key={r.plantId}

@@ -113,7 +113,7 @@ export default async function SeasonsPage({
               </Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:items-start">
               {pastSeasons.map((season) => {
                 const ratedCount = season.plantings.filter((p) => p.rating !== null).length;
                 const growAgainCount = season.plantings.filter((p) => p.growAgain).length;

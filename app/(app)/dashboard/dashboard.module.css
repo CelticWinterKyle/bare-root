@@ -1352,3 +1352,17 @@
   .seasonName { font-size: 18px; }
   .emptyState { padding: 48px 16px; }
 }
+
+/* Wide desktop (1536px+): let the fixed sidecars breathe a little more so
+   the 1fr columns don't dwarf them. Additive only — nothing below 1536
+   changes. */
+@media (min-width: 1536px) {
+  .hero {
+    grid-template-columns: 1fr 420px;
+    gap: 56px;
+  }
+  .dashboardGrid {
+    grid-template-columns: 1fr 380px;
+    gap: 36px;
+  }
+}
