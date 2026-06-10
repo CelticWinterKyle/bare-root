@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useLayoutEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -79,8 +79,11 @@ const SUN_BG: Record<string, string> = {
   FULL_SUN: "#FEF9C3", PARTIAL_SUN: "#FEF3C7", PARTIAL_SHADE: "#E0F2FE", FULL_SHADE: "#F1F5F9",
 };
 
-// Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
-const FRAME_PAD = 52;
+// Frame overhead between the viewport edge and the cell grid.
+// Vertical: grid padding top+bottom (28px) + centering py-3 (24px) + wood border 6px×2 = 64px
+// Horizontal: grid padding left+right (32px) + wood border 6px×2 + 4px sub-pixel safety = 48px
+const FRAME_PAD_H = 64;
+const FRAME_PAD_W = 48;
 
 // One-line descriptor for the active mode tab — always visible under the
 // tab row so the 9px icon labels never have to carry the explanation alone.
@@ -491,14 +494,16 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const [zoom, setZoom] = useState(1);
 
   // Measure the scrollable viewport width for horizontal cell fitting.
-  // Start at 360 (conservative mobile estimate) so the first render is close to
-  // the real size and ResizeObserver only makes one small correction.
+  // Desktop sizing depends on this, so read it synchronously before first
+  // paint (useLayoutEffect + clientWidth) — otherwise the bed flashes at the
+  // 360px mobile-conservative initial estimate for a frame.
   const viewportRef = useRef<HTMLDivElement>(null);
   const [vpW, setVpW] = useState(360);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
+    setVpW(el.clientWidth);
     const ro = new ResizeObserver(([e]) => setVpW(e.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
@@ -516,20 +521,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Height constraint derived from window height. We deliberately let this
-  // grow up to ~640px on tall monitors so dense beds (e.g. a 4×16 grid)
-  // don't get squeezed into 19px cells. Cells stay click-friendly via the
-  // minimum/target clamp below — for shorter beds the bed just doesn't
-  // fill the available height.
+  // Height constraint for the desktop canvas. Measured, not guessed: take the
+  // viewport element's actual document offset and give the canvas everything
+  // from there to the bottom of the window minus a small breathing reserve.
+  // Capped at 900 so ultra-tall monitors don't produce a towering bed; floor
+  // 360 keeps dense beds usable on short windows (the canvas scrolls).
   const [maxViewportH, setMaxViewportH] = useState(560);
   const [mobileViewportH, setMobileViewportH] = useState(600);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    // header h-14 (56) + main pb-24 (96) + pt-10 (40) + page-header+mb-6 (68)
-    // + toolbar (40) + gap-6×2 (48) + legend (20) + pb-4 (16) = 384px → use 396 for safety
     const update = () => {
       const mobile = window.innerWidth < 768;
-      setMaxViewportH(Math.max(360, Math.min(window.innerHeight - 240, 720)));
+      const el = viewportRef.current;
+      const top = el ? Math.max(0, el.getBoundingClientRect().top + window.scrollY) : 280;
+      const BOTTOM_RESERVE = 48;
+      setMaxViewportH(Math.max(360, Math.min(window.innerHeight - top - BOTTOM_RESERVE, 900)));
       setMobileViewportH(Math.max(200, window.innerHeight - 300));
       setIsMobile(mobile);
     };
@@ -586,30 +592,31 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Auto-fit cell size:
   // Mobile: fit exactly to viewport width accounting for grid's actual horizontal padding
   //   (16px left + 16px right = 32px) + gaps ((cols-1) × 4px). No height cap — page scrolls.
-  // Desktop: cells size to a height target. With the bed column now sizing
-  //   to its content, measuring viewport width creates a feedback loop
-  //   (cell size depends on width which depends on cell size). Height target
-  //   sidesteps that — the bed grows to whatever the viewport height allows.
+  // Desktop: fit BOTH the measured viewport width (vpW) and the height budget,
+  //   take the smaller, so the bed fills the canvas instead of clamping at a
+  //   thumbnail. The bed column is flex-1 min-w-0, so its width comes from the
+  //   container — measuring it can't feed back into cell size (the one loop
+  //   vector, scrollbar appearance at zoom > 1, is killed by the stable
+  //   scrollbar gutter on the viewport).
   // Grid gap is 0 (cells share borders so multi-cell footprints can merge
   // into one tinted block without 4px gaps cutting through them).
   const rowGaps = 0;
   const colGaps = 0;
-  const fitByH = Math.floor((maxViewportH - FRAME_PAD - rowGaps) / displayRows);
+  const fitByW = Math.floor((vpW - FRAME_PAD_W - colGaps) / displayCols);
+  const fitByH = Math.floor((maxViewportH - FRAME_PAD_H - rowGaps) / displayRows);
   const mobileFitByW = Math.floor((vpW - 32 - colGaps) / displayCols);
   // 52 = grid padding 28px (14px top + 14px bottom) + flex centering py-3 (24px)
   const mobileFitByH = Math.floor((mobileViewportH - 52) / displayRows);
 
-  // Desktop cell size: keep cells in the 32–56px range so they stay
-  // click-friendly even on dense (16-row) beds. Below 32 the cells
-  // become unreadable; above 56 wastes screen on short beds. If the
-  // viewport-height fit lands inside the band, use it; otherwise clamp.
-  // The viewport itself scrolls (overflow-auto + maxHeight) when the
-  // bed runs taller than the available space.
+  // Desktop cell size: clamp to 32–128px. Below 32 cells become unreadable on
+  // dense (16-row) beds — the viewport scrolls instead. The 128 ceiling only
+  // binds for tiny beds (a 2×2 caps at ~300px square rather than ballooning);
+  // typical beds fill the column from the width fit well before reaching it.
   const DESKTOP_CELL_MIN = 32;
-  const DESKTOP_CELL_MAX = 56;
+  const DESKTOP_CELL_MAX = 128;
   const desktopCellPx = Math.max(
     DESKTOP_CELL_MIN,
-    Math.min(DESKTOP_CELL_MAX, fitByH)
+    Math.min(DESKTOP_CELL_MAX, Math.min(fitByW, fitByH))
   );
   const baseCellPx = isMobile
     ? Math.max(28, Math.min(mobileFitByW, mobileFitByH))
@@ -1053,11 +1060,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               </div>
             );
           })()}
-          {/* Viewport: desktop caps height + scrolls; mobile flows naturally so page scrolls */}
+          {/* Viewport: desktop takes the full height budget (bed centers inside,
+              scrolls when taller); mobile flows naturally so page scrolls.
+              scrollbarGutter keeps a scrollbar appearing at zoom > 1 from
+              shrinking the measured width and re-triggering the fit. */}
           <div
             ref={viewportRef}
             className={`rounded-2xl relative ${isMobile ? "overflow-hidden" : "overflow-auto"}`}
-            style={isMobile ? {} : { maxHeight: maxViewportH }}
+            style={isMobile ? {} : { height: maxViewportH, scrollbarGutter: "stable" }}
           >
             {/* Empty bed hint — shown until the first plant is added */}
             {isEmpty && !sunMode && panel.type === "none" && (
