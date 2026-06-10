@@ -1,10 +1,18 @@
 import webpush from "web-push";
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_CONTACT_EMAIL ?? "hello@bareroot.garden"}`,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// VAPID init is lazy (first send) rather than module-scope: Next evaluates
+// route modules at build time while collecting page data, and builds without
+// the push secrets (e.g. preview deploys) would fail before serving a byte.
+let vapidReady = false;
+function ensureVapid() {
+  if (vapidReady) return;
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_CONTACT_EMAIL ?? "hello@bareroot.garden"}`,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+  vapidReady = true;
+}
 
 export type PushPayload = {
   title: string;
@@ -23,6 +31,7 @@ export async function sendPushNotification(
   payload: PushPayload
 ): Promise<PushSendResult> {
   try {
+    ensureVapid();
     await webpush.sendNotification(
       {
         endpoint: subscription.endpoint,
