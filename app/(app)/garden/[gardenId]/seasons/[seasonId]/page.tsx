@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { estimateYieldLbs } from "@/lib/services/yield";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
 import { PolaroidImage } from "@/components/dashboard/PolaroidImage";
@@ -229,8 +230,9 @@ export default async function SeasonSummaryPage({
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
           <Link
             href={`/garden/${gardenId}/seasons`}
-            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
-          >‹</Link>
+            aria-label="Back to seasons"
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#6B6B5A", flexShrink: 0, textDecoration: "none" }}
+          ><ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" /></Link>
           <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
             {season.garden.name} · Seasons
           </span>
@@ -239,7 +241,7 @@ export default async function SeasonSummaryPage({
           {season.name}
         </h1>
       </div>
-      <div className={`px-[22px] md:px-8 py-6 ${styles.retro}`}>
+      <div className={`px-[22px] md:px-8 py-6 animate-fade-rise ${styles.retro}`}>
 
       {/* Hero — the season's headline */}
       <header className={styles.hero}>

@@ -44,6 +44,9 @@ export function SmartLayoutPanel({
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Plant[]>(recentPlants);
   const [assignments, setAssignments] = useState<LayoutAssignment[]>([]);
+  // Indices the user has UNchecked in the results list — everything is
+  // selected by default, so we track the exceptions.
+  const [excluded, setExcluded] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [isSearching, startSearch] = useTransition();
   const [isAccepting, startAccept] = useTransition();
@@ -79,6 +82,7 @@ export function SmartLayoutPanel({
         setStep("wishlist");
       } else {
         setAssignments(result.assignments);
+        setExcluded(new Set());
         setStep("results");
       }
     } catch {
@@ -87,11 +91,22 @@ export function SmartLayoutPanel({
     }
   }
 
+  function toggleExcluded(index: number) {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
   function handleAccept() {
+    const chosen = assignments.filter((_, i) => !excluded.has(i));
+    if (chosen.length === 0) return;
     startAccept(async () => {
       try {
-        await acceptLayoutAssignments(bedId, seasonId, assignments);
-        onAssignmentsAccepted(assignments);
+        await acceptLayoutAssignments(bedId, seasonId, chosen);
+        onAssignmentsAccepted(chosen);
         onClose();
       } catch {
         toast.error("Couldn't apply the layout. Please try again.");
@@ -102,6 +117,7 @@ export function SmartLayoutPanel({
   function handleRegenerate() {
     setStep("wishlist");
     setAssignments([]);
+    setExcluded(new Set());
   }
 
   if (step === "generating") {
@@ -117,6 +133,7 @@ export function SmartLayoutPanel({
   }
 
   if (step === "results") {
+    const selectedCount = assignments.length - excluded.size;
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -124,35 +141,54 @@ export function SmartLayoutPanel({
           <span className="font-display text-sm font-semibold text-[#111109]">
             {assignments.length} plant{assignments.length !== 1 ? "s" : ""} placed
           </span>
+          <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-[#ADADAA]">
+            {selectedCount} of {assignments.length} selected
+          </span>
         </div>
 
         <div className="space-y-2 max-h-[280px] overflow-y-auto">
-          {assignments.map((a, i) => (
-            <div
-              key={i}
-              className="p-2.5 bg-[#F4F4EC] rounded-lg border border-[#E4E4DC] cursor-default"
-              onMouseEnter={() => onHoverAssignment?.({ row: a.row, col: a.col })}
-              onMouseLeave={() => onHoverAssignment?.(null)}
-            >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-sm font-medium text-[#111109]">{a.plantName}</span>
-                <span className="text-xs text-[#ADADAA]">
-                  Row {a.row + 1}, Col {a.col + 1}
-                </span>
-              </div>
-              <p className="text-xs text-[#6B6B5A]">{a.reasoning}</p>
-            </div>
-          ))}
+          {assignments.map((a, i) => {
+            const checked = !excluded.has(i);
+            return (
+              <label
+                key={i}
+                className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                  checked
+                    ? "bg-[#F4F4EC] border-[#E4E4DC]"
+                    : "bg-white border-[#E4E4DC] opacity-55"
+                }`}
+                onMouseEnter={() => onHoverAssignment?.({ row: a.row, col: a.col })}
+                onMouseLeave={() => onHoverAssignment?.(null)}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleExcluded(i)}
+                  className="mt-0.5 w-4 h-4 shrink-0 accent-[#1C3D0A]"
+                  aria-label={`Include ${a.plantName} at row ${a.row + 1}, column ${a.col + 1}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-sm font-medium text-[#111109]">{a.plantName}</span>
+                    <span className="text-xs text-[#ADADAA]">
+                      Row {a.row + 1}, Col {a.col + 1}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6B6B5A]">{a.reasoning}</p>
+                </div>
+              </label>
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-2">
           <Button
             onClick={handleAccept}
-            disabled={isAccepting}
-            className="w-full bg-[#1C3D0A] hover:bg-[#3A6B20] text-white"
+            disabled={isAccepting || selectedCount === 0}
+            className="w-full bg-[#1C3D0A] hover:bg-[#3A6B20] text-white disabled:opacity-40"
           >
             {isAccepting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
-            Accept layout
+            Apply {selectedCount} plant{selectedCount !== 1 ? "s" : ""}
           </Button>
           <Button variant="ghost" onClick={handleRegenerate} className="w-full text-[#6B6B5A]">
             <RotateCcw className="w-4 h-4 mr-2" />

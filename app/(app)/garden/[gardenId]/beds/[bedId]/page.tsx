@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { RotateCcw } from "lucide-react";
+import { ChevronLeft, RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { EditBedDialog } from "@/components/garden/EditBedDialog";
@@ -290,9 +290,8 @@ export default async function BedPage({
             <span style={{
               width: "22px", height: "22px", borderRadius: "6px",
               background: "#F4F4EC", display: "inline-flex", alignItems: "center",
-              justifyContent: "center", fontSize: "13px", color: "#6B6B5A",
-              fontWeight: 600, lineHeight: 1,
-            }} aria-hidden="true">‹</span>
+              justifyContent: "center", color: "#6B6B5A",
+            }} aria-hidden="true"><ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} /></span>
           </Link>
           <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
             {bed.garden.name}

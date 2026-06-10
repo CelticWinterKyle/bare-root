@@ -6,6 +6,7 @@ import {
   BookOpen, Package, Bell, Settings,
 } from "lucide-react";
 import { GardenSwitcher, type GardenOption } from "@/components/garden/GardenSwitcher";
+import { HelpButton } from "@/components/help/HelpButton";
 
 const NAV_SECTIONS = [
   {
@@ -205,6 +206,7 @@ export function DesktopSidebar({
         }}>
           {userName ?? "Gardener"}
         </span>
+        <HelpButton />
         {isPro && (
           <span style={{
             fontFamily: "var(--font-mono)", fontSize: "8px",

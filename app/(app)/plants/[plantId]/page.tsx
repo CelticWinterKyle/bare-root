@@ -11,19 +11,20 @@ import { PlantFeasibility } from "@/components/plants/PlantFeasibility";
 import { pestInfoFor } from "@/lib/services/pest-data";
 import { plantsPerArea } from "@/lib/services/spacing";
 import { gardenAccessFilter, gardenEditFilter } from "@/lib/permissions";
-import { Sprout } from "lucide-react";
+import { ChevronLeft, Clock, Droplets, Grid3x3, Ruler, Sprout, Sun } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const SUN_LABELS: Record<string, string> = {
-  FULL_SUN: "☀️ Full sun (6+ hours)",
-  PARTIAL_SUN: "⛅ Part sun (3–6 hours)",
-  PARTIAL_SHADE: "🌥️ Part shade",
-  FULL_SHADE: "☁️ Full shade",
+  FULL_SUN: "Full sun (6+ hours)",
+  PARTIAL_SUN: "Part sun (3–6 hours)",
+  PARTIAL_SHADE: "Part shade",
+  FULL_SHADE: "Full shade",
 };
 
 const WATER_LABELS: Record<string, string> = {
-  LOW: "💧 Low",
-  MODERATE: "💧💧 Moderate",
-  HIGH: "💧💧💧 High",
+  LOW: "Low",
+  MODERATE: "Moderate",
+  HIGH: "High",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -161,8 +162,9 @@ export default async function PlantDetailPage({
         <div className="max-w-3xl mx-auto" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Link
             href="/plants"
-            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
-          >‹</Link>
+            aria-label="Back to plant library"
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#6B6B5A", flexShrink: 0, textDecoration: "none" }}
+          ><ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" /></Link>
           <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>Plant Library</span>
         </div>
       </div>
@@ -245,16 +247,16 @@ export default async function PlantDetailPage({
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {plant.daysToMaturity && (
-          <Stat label="Days to maturity" value={`${plant.daysToMaturity} days`} />
+          <Stat icon={Clock} label="Days to maturity" value={`${plant.daysToMaturity} days`} />
         )}
         {plant.spacingInches && (
-          <Stat label="Spacing" value={`${plant.spacingInches}"`} />
+          <Stat icon={Ruler} label="Spacing" value={`${plant.spacingInches}"`} />
         )}
         {plant.sunRequirement && (
-          <Stat label="Sun" value={SUN_LABELS[plant.sunRequirement] ?? plant.sunRequirement} />
+          <Stat icon={Sun} label="Sun" value={SUN_LABELS[plant.sunRequirement] ?? plant.sunRequirement} />
         )}
         {plant.waterRequirement && (
-          <Stat label="Water" value={WATER_LABELS[plant.waterRequirement] ?? plant.waterRequirement} />
+          <Stat icon={Droplets} label="Water" value={WATER_LABELS[plant.waterRequirement] ?? plant.waterRequirement} />
         )}
         {(() => {
           if (!plant.spacingInches) return null;
@@ -267,6 +269,7 @@ export default async function PlantDetailPage({
           if (count <= 0) return null;
           return (
             <Stat
+              icon={Grid3x3}
               label="Fits per bed"
               value={`~${count} in ${w}×${h} ft`}
             />
@@ -385,10 +388,13 @@ export default async function PlantDetailPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: string }) {
   return (
     <div className="bg-[#F4F4EC] rounded-xl p-3 border border-[#E4E4DC]">
-      <p className="text-xs text-[#ADADAA] mb-0.5">{label}</p>
+      <p className="flex items-center gap-1 text-xs text-[#ADADAA] mb-0.5">
+        {Icon && <Icon className="w-3 h-3 shrink-0 text-[#6B6B5A]" aria-hidden="true" />}
+        {label}
+      </p>
       <p className="text-sm font-medium text-[#111109]">{value}</p>
     </div>
   );

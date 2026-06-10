@@ -117,7 +117,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px, 4vw, 28px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 28" }}>
           Notifications
         </h1>
-        <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "14px" }}>Choose what you get notified about and how.</p>
+        <p className="mt-2" style={{ color: "#6B6B5A", fontSize: "14px" }}>Frost warnings, harvest windows, watering nudges — pick what reaches you, and where.</p>
       </div>
       <div className="px-[22px] md:px-8 py-5">
 

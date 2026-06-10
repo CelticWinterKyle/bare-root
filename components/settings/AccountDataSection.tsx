@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Download, Loader2, Trash2 } from "lucide-react";
+import { Download, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
 import { deleteMyAccount } from "@/app/actions/account";
 
 export function AccountDataSection() {
@@ -39,6 +39,23 @@ export function AccountDataSection() {
           </span>
         </span>
         <span className="text-xs text-[#6B6B5A]">ZIP</span>
+      </a>
+
+      {/* Harvest logs only, as a spreadsheet — /api/export/harvests. */}
+      <a
+        href="/api/export/harvests"
+        className="flex items-center gap-3 p-4 w-full bg-white border border-[#E4E4DC] rounded-xl hover:border-[#7DA84E] transition-colors text-left"
+      >
+        <span className="text-[#6B6B5A]">
+          <FileSpreadsheet className="w-4 h-4" />
+        </span>
+        <span className="flex-1 text-sm font-medium text-[#111109]">
+          Export harvests (CSV)
+          <span className="block text-xs font-normal text-[#6B6B5A]">
+            Every harvest log, ready for a spreadsheet
+          </span>
+        </span>
+        <span className="text-xs text-[#6B6B5A]">CSV</span>
       </a>
 
       <div className="p-4 bg-white border border-[rgba(122,42,24,0.2)] rounded-xl">

@@ -11,7 +11,9 @@ import { Sprout } from "lucide-react";
 import styles from "./dashboard.module.css";
 import { GardensOverview } from "@/components/dashboard/GardensOverview";
 import { TaskDoneButton } from "@/components/dashboard/TaskDoneButton";
+import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
 import { TIER_LIMITS } from "@/lib/tier";
+import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -325,6 +327,8 @@ export default async function DashboardPage() {
     ratings,
     gardenPlantings,
     allBeds,
+    notifSetup,
+    firstMemory,
   ] = await Promise.all([
     db.reminder.findMany({
       where: {
@@ -436,6 +440,23 @@ export default async function DashboardPage() {
       select: { id: true, name: true, xPosition: true, yPosition: true, widthFt: true, heightFt: true },
       orderBy: { createdAt: "asc" },
     }),
+    // Getting-started checklist: has the user set up ANY notification
+    // channel? One query covers both prefs and push subscriptions.
+    db.user.findUnique({
+      where: { id: user.id },
+      select: {
+        _count: { select: { notificationPrefs: true, pushSubscriptions: true } },
+      },
+    }),
+    // Getting-started checklist: any planting with a photo or growth note,
+    // anywhere the user can see — existence only.
+    db.planting.findFirst({
+      where: {
+        cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+        OR: [{ photos: { some: {} } }, { growthNotes: { some: {} } }],
+      },
+      select: { id: true },
+    }),
   ]);
 
   const yieldLbs = (harvestThisYear._sum.quantity ?? 0) as number;
@@ -485,6 +506,178 @@ export default async function DashboardPage() {
   } else if (activePlantingCount > 0) {
     heroSub = `${activePlantingCount} planting${activePlantingCount === 1 ? "" : "s"} growing across the season. A good time to walk the beds.`;
   }
+
+  // ── §04 "Worth doing" suggestion (data-driven, first match wins) ───────────
+  const todayYmdTz = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const overdueCount = todayReminders.filter(
+    (r) => r.scheduledAt.toISOString().slice(0, 10) < todayYmdTz
+  ).length;
+  const monthNum = parseInt(
+    new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "numeric" }).format(now)
+  );
+  const metSeason: "winter" | "spring" | "summer" | "fall" =
+    monthNum === 12 || monthNum <= 2
+      ? "winter"
+      : monthNum <= 5
+      ? "spring"
+      : monthNum <= 8
+      ? "summer"
+      : "fall";
+  const weekOfYear = Math.floor(Math.max(0, daysBetween(yearStart, today)) / 7);
+
+  type Suggestion = { eyebrow: string; title: ReactNode; body: string; href: string; cta: string };
+
+  // Fallback tips — two per meteorological season, alternating by week of
+  // year so the card doesn't fossilize between visits.
+  const SEASONAL_TIPS: Record<typeof metSeason, Suggestion[]> = {
+    winter: [
+      {
+        eyebrow: "Quiet season",
+        title: <>A good time to <em>review and reorder</em>.</>,
+        body: "The beds are resting. Look back over what grew well, rate what you'd grow again, and get the seed order in before spring catches you off guard.",
+        href: `/garden/${primaryGarden.id}/seasons`,
+        cta: "Review the season",
+      },
+      {
+        eyebrow: "Dreaming ahead",
+        title: <>Plan next season from the <em>armchair</em>.</>,
+        body: "Winter is for graph paper and good intentions. Browse the plant library, sketch the spring layout, and let something new earn a spot in the beds.",
+        href: "/plants",
+        cta: "Browse the library",
+      },
+    ],
+    spring: [
+      {
+        eyebrow: "Succession sowing",
+        title: <>Keep something always <em>coming up</em>.</>,
+        body: "A second sowing of greens or radishes every couple of weeks keeps the harvest steady instead of arriving all at once.",
+        href: "/plants",
+        cta: "Open plant library",
+      },
+      {
+        eyebrow: "Hardening off",
+        title: <>Ease the seedlings <em>outdoors</em>.</>,
+        body: "Indoor starts want a week of short outdoor visits before transplanting — a little sun and breeze at a time, so the move to the bed isn't a shock.",
+        href: "/calendar",
+        cta: "Check the calendar",
+      },
+    ],
+    summer: [
+      {
+        eyebrow: "Deep watering",
+        title: <>Water <em>deeply</em>, not often.</>,
+        body: "A long soak a couple of times a week beats a daily sprinkle — roots chase the water down, and the plants ride out hot spells far better.",
+        href: `/garden/${primaryGarden.id}`,
+        cta: "Walk the beds",
+      },
+      {
+        eyebrow: "Keep picking",
+        title: <>Harvest often to <em>keep them producing</em>.</>,
+        body: "Beans, zucchini, and cucumbers slow down when fruit hangs too long. Pick a little every day or two and log it — the plants will keep the pace.",
+        href: `/garden/${primaryGarden.id}/journal`,
+        cta: "Open the journal",
+      },
+    ],
+    fall: [
+      {
+        eyebrow: "Fall window",
+        title: <>There&apos;s still time for <em>one more sowing</em>.</>,
+        body: "Cool-weather crops — spinach, radishes, garlic — actually prefer this end of the year. Check what fits before the first frost closes the window.",
+        href: "/calendar",
+        cta: "See what fits",
+      },
+      {
+        eyebrow: "Putting it to bed",
+        title: <>Tuck the garden in for <em>winter</em>.</>,
+        body: "Clear the spent plantings, note what thrived, and rate the season while it's fresh. Next spring's plan writes itself from a good record.",
+        href: `/garden/${primaryGarden.id}/seasons`,
+        cta: "Review the season",
+      },
+    ],
+  };
+
+  let suggestion: Suggestion;
+  if (frostRisk && frostDay) {
+    suggestion = {
+      eyebrow: "Frost watch",
+      title: <>Cold night coming — <em>cover the tender plants</em>.</>,
+      body: `The forecast dips to ${Math.round(frostDay.minTemp)}°F. Drape row cover or old sheets over anything tender before dusk, and check the morning forecast before you uncover.`,
+      href: `/garden/${primaryGarden.id}`,
+      cta: "Open the garden",
+    };
+  } else if (allBeds.length === 0) {
+    suggestion = {
+      eyebrow: "First things first",
+      title: <>Your garden has <em>no beds</em> yet.</>,
+      body: "Every planting needs a place to live. Add your first bed to the canvas — even a small 4×4 is plenty to get growing.",
+      href: `/garden/${primaryGarden.id}`,
+      cta: "Add a bed",
+    };
+  } else if (activePlantingCount === 0) {
+    suggestion = {
+      eyebrow: "Time to plant",
+      title: <>The beds are <em>empty</em> — see what you can plant right now.</>,
+      body: "The calendar knows your zone and frost dates, so it can tell you exactly what's in its window this week. Pick something quick to get the season moving.",
+      href: "/calendar",
+      cta: "Open the calendar",
+    };
+  } else if (overdueCount >= 2) {
+    suggestion = {
+      eyebrow: "Catching up",
+      title: <>{overdueCount} tasks are <em>waiting</em> — knock them out.</>,
+      body: "A few reminders slipped past their day. Most take five minutes in the garden, and marking them done keeps each planting's story straight.",
+      href: "/reminders",
+      cta: "See the list",
+    };
+  } else if (
+    recentHarvests.length === 0 &&
+    activePlantingCount > 0 &&
+    (metSeason === "summer" || metSeason === "fall")
+  ) {
+    suggestion = {
+      eyebrow: "First harvest",
+      title: <>Plants are growing — <em>log the first harvest</em> when it comes in.</>,
+      body: "Logged harvests build the journal and the year's tally. When something's ready, weigh it (roughly is fine) and write it down — future-you will love the record.",
+      href: `/garden/${primaryGarden.id}`,
+      cta: "Walk the beds",
+    };
+  } else {
+    const tips = SEASONAL_TIPS[metSeason];
+    suggestion = tips[weekOfYear % tips.length];
+  }
+
+  // ── Getting-started checklist (young, incomplete accounts) ─────────────────
+  const accountAgeDays = daysBetween(startOfDay(user.createdAt), today);
+  const checklistSteps = [
+    {
+      label: "Plant your first bed",
+      done: activePlantingCount > 0,
+      href: `/garden/${primaryGarden.id}`,
+    },
+    {
+      label: "Set your frost dates",
+      done: !!primaryGarden.lastFrostDate,
+      href: `/garden/${primaryGarden.id}/settings`,
+    },
+    {
+      label: "Turn on notifications",
+      done:
+        (notifSetup?._count.notificationPrefs ?? 0) > 0 ||
+        (notifSetup?._count.pushSubscriptions ?? 0) > 0,
+      href: "/settings/notifications",
+    },
+    {
+      label: "Add a photo or note",
+      done: !!firstMemory,
+      href: `/garden/${primaryGarden.id}`,
+    },
+  ];
+  const showChecklist = accountAgeDays < 30 && checklistSteps.some((s) => !s.done);
 
   // ── Bed tile mini-grid (first 8 cells; the query is already bounded) ──────
   const plantCountByBed = new Map<string, number>();
@@ -642,6 +835,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
+
+      {/* Getting-started checklist — young accounts with steps left */}
+      {showChecklist && <GettingStartedCard steps={checklistSteps} />}
 
       {/* Today's tasks */}
       <section className={styles.todaySection}>
@@ -1179,17 +1375,11 @@ export default async function DashboardPage() {
         </div>
         <div className={styles.suggestCard}>
           <div>
-            <div className={styles.suggestEyebrow}>Succession planting</div>
-            <div className={styles.suggestTitle}>
-              Browse the <em>plant library</em> for what to sow next.
-            </div>
-            <p className={styles.suggestBody}>
-              The garden does best when something&apos;s always coming up. Look through your
-              library and start a second sowing of greens, beans, or anything that
-              matures quickly, so your harvests will stay continuous.
-            </p>
-            <Link href="/plants" className={styles.suggestCta}>
-              Open plant library
+            <div className={styles.suggestEyebrow}>{suggestion.eyebrow}</div>
+            <div className={styles.suggestTitle}>{suggestion.title}</div>
+            <p className={styles.suggestBody}>{suggestion.body}</p>
+            <Link href={suggestion.href} className={styles.suggestCta}>
+              {suggestion.cta}
               <span className={styles.suggestCtaArrow}>→</span>
             </Link>
           </div>

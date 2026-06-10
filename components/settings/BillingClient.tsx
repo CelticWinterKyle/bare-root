@@ -95,7 +95,7 @@ export function BillingClient({
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "28px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", marginBottom: "8px" }}>
           Welcome to Pro!
         </h1>
-        <p className="text-[#6B6B5A] mb-8">All Pro features are now unlocked. Happy growing.</p>
+        <p className="text-[#6B6B5A] mb-8">Everything Pro is unlocked and ready. Happy growing.</p>
         <Link href="/dashboard" className="inline-flex bg-[#1C3D0A] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#3A6B20] transition-colors">
           Go to your garden →
         </Link>
@@ -131,7 +131,7 @@ export function BillingClient({
             <Sprout className="w-5 h-5 text-[#1C3D0A]" />
             <div>
               <p className="text-sm font-semibold text-[#111109]">Bare Root Pro</p>
-              <p className="text-xs text-[#6B6B5A]">All features unlocked</p>
+              <p className="text-xs text-[#6B6B5A]">Everything&rsquo;s unlocked — the whole toolshed is yours.</p>
             </div>
           </div>
           {hasStripeCustomer ? (
@@ -146,14 +146,14 @@ export function BillingClient({
             </Button>
           ) : (
             <p className="text-xs text-[#6B6B5A] text-center">
-              Subscription is being set up. Refresh in a moment to manage billing.
+              Your subscription is still settling in. Refresh in a moment to manage billing.
             </p>
           )}
         </div>
       ) : (
         <>
           <p className="text-[#6B6B5A] mb-8">
-            {hadTrial ? "Upgrade to unlock all Pro features." : "Start a 7-day free trial. No charge until it ends."}
+            {hadTrial ? "Upgrade to pick up where your trial left off." : "Try Pro free for 7 days — no charge until the trial ends."}
           </p>
 
           {/* Billing toggle */}

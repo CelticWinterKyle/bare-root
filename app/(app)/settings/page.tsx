@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import Link from "next/link";
-import { Bell, CreditCard, Package, ChevronRight, LogOut } from "lucide-react";
+import { Bell, CreditCard, Package, ChevronRight, LogOut, User } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { AccountDataSection } from "@/components/settings/AccountDataSection";
 
@@ -30,6 +30,12 @@ export default async function SettingsPage() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[#111109] truncate">{user.name ?? "—"}</p>
           <p className="text-xs text-[#ADADAA] truncate">{user.email}</p>
+          {/* user.timezone is kept in sync by TimezoneSync — surface it so
+              reminder/dashboard times aren't a mystery. No override needed. */}
+          <p className="text-[11px] text-[#ADADAA] truncate mt-0.5">
+            Times shown in: {user.timezone}{" "}
+            <span className="text-[#C6C6BD]">(detected from this device)</span>
+          </p>
         </div>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isPro ? "bg-[#1C3D0A] text-white" : "bg-[#F4F4EC] text-[#6B6B5A]"}`}>
           {isPro ? "Pro" : "Free"}
@@ -38,6 +44,12 @@ export default async function SettingsPage() {
 
       {/* Settings links */}
       <div className="space-y-2">
+        <SettingsLink
+          href="/settings/account"
+          icon={<User className="w-4 h-4" />}
+          label="Account"
+          sublabel="Name, email, password, sign-in methods"
+        />
         <SettingsLink href="/settings/notifications" icon={<Bell className="w-4 h-4" />} label="Notifications" />
         <SettingsLink href="/inventory" icon={<Package className="w-4 h-4" />} label="Seed inventory" />
         <SettingsLink href="/settings/billing" icon={<CreditCard className="w-4 h-4" />} label="Billing & plan" />
@@ -58,11 +70,26 @@ export default async function SettingsPage() {
   );
 }
 
-function SettingsLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function SettingsLink({
+  href,
+  icon,
+  label,
+  sublabel,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  sublabel?: string;
+}) {
   return (
     <Link href={href} className="flex items-center gap-3 p-4 bg-white border border-[#E4E4DC] rounded-xl hover:border-[#7DA84E] transition-colors group">
       <span className="text-[#6B6B5A] group-hover:text-[#1C3D0A] transition-colors">{icon}</span>
-      <span className="flex-1 text-sm font-medium text-[#111109]">{label}</span>
+      <span className="flex-1 text-sm font-medium text-[#111109]">
+        {label}
+        {sublabel && (
+          <span className="block text-xs font-normal text-[#6B6B5A]">{sublabel}</span>
+        )}
+      </span>
       <ChevronRight className="w-4 h-4 text-[#ADADAA]" />
     </Link>
   );

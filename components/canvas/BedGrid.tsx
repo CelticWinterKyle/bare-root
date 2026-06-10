@@ -24,6 +24,7 @@ import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import type { BedFamilyHistory } from "@/lib/services/crop-rotation";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { HelpSheet } from "@/components/help/HelpSheet";
 
 // Status → light cell fill + border color + label
 const STATUS_STYLES: Record<string, { from: string; to: string; label: string }> = {
@@ -80,6 +81,24 @@ const SUN_BG: Record<string, string> = {
 
 // Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
 const FRAME_PAD = 52;
+
+// One-line descriptor for the active mode tab — always visible under the
+// tab row so the 9px icon labels never have to carry the explanation alone.
+const MODE_DESC_EDIT: Record<string, string> = {
+  plant: "Tap an empty cell to plant it; tap a planting for its details.",
+  sun: "Tap cells to cycle their sun level and map the bed's light.",
+  companions: "Shows which neighbors help or harm each planting.",
+  smart: "Give the AI a wishlist and it lays out the bed for you.",
+  select: "Tap empty cells, then plant one crop in all of them at once.",
+};
+const MODE_DESC_VIEW: Record<string, string> = {
+  plant: "Tap any planting to see its details.",
+  sun: "Each cell's mapped sun exposure.",
+  companions: "Shows which neighbors help or harm each planting.",
+};
+
+// First-visit coach mark flag — set once per browser when dismissed.
+const INTRO_SEEN_KEY = "bareroot:bedEditorIntroSeen";
 
 type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null; plantFamily?: string | null };
 type Planting = {
@@ -435,6 +454,32 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     setPendingPlant(null);
     setPrefillPlacedCount(0);
     router.replace(pathname, { scroll: false });
+  }
+
+  // First-visit coach mark for the mode tabs (editors only — the copy
+  // describes the five edit tools) + the help sheet it links to.
+  const [showIntro, setShowIntro] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  useEffect(() => {
+    if (!canEdit) return;
+    try {
+      if (!localStorage.getItem(INTRO_SEEN_KEY)) {
+        // Intentional: localStorage is only readable client-side, so the
+        // first-visit check has to run in an effect.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShowIntro(true);
+      }
+    } catch {
+      // Private mode / storage blocked — skip the coach mark.
+    }
+  }, [canEdit]);
+  function dismissIntro() {
+    try {
+      localStorage.setItem(INTRO_SEEN_KEY, "1");
+    } catch {
+      // Storage blocked — still hide it for this page view.
+    }
+    setShowIntro(false);
   }
 
   // Auto-rotate tall beds on desktop so the long axis runs horizontal —
@@ -1348,6 +1393,37 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 </span>
               </div>
             )}
+            {/* First-visit coach mark — explains the mode tabs once, then
+                lives in localStorage. "Learn more" opens the field guide. */}
+            {canEdit && showIntro && (
+              <div
+                className="px-4 py-3 border-b shrink-0"
+                style={{ background: "#E4F0D4", borderColor: "#D4E8BE" }}
+              >
+                <p className="text-xs leading-relaxed" style={{ color: "#1C3D0A" }}>
+                  <span className="font-semibold">New here?</span> Five tools: Plant fills
+                  cells, Sun maps light, Pairs shows good neighbors, AI plans the bed,
+                  Select plants many cells at once.
+                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={dismissIntro}
+                    className="px-3 py-1 text-xs font-semibold rounded-md bg-[#1C3D0A] text-white hover:bg-[#3d6b1e] transition-colors"
+                  >
+                    Got it
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHelpOpen(true)}
+                    className="text-xs font-medium underline underline-offset-2"
+                    style={{ color: "#3A6B20" }}
+                  >
+                    Learn more
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Mode switcher — icon row. Viewers keep the read modes (plant
                 detail, sun map, companion pairs) and lose the edit modes
                 (AI layout, bulk select). */}
@@ -1413,6 +1489,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   </button>
                 );
               })}
+            </div>
+
+            {/* Active-mode descriptor — one persistent line so every mode is
+                explained, not just the ones with a dedicated sidebar panel. */}
+            <div
+              className="px-4 py-1.5 border-b shrink-0"
+              style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}
+            >
+              <p style={{ fontSize: 11, color: "#6B6B5A", lineHeight: 1.45 }}>
+                {(canEdit ? MODE_DESC_EDIT : MODE_DESC_VIEW)[activeTab]}
+              </p>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -1663,6 +1750,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         </div>
       ) : null}
     </DragOverlay>
+    <HelpSheet open={helpOpen} onOpenChange={setHelpOpen} />
     </DndContext>
   );
 }

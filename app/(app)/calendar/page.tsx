@@ -243,7 +243,7 @@ export default async function CalendarPage() {
         </h1>
       </div>
 
-      <div className="px-[22px] md:px-8 py-5">
+      <div className="px-[22px] md:px-8 py-5 animate-fade-rise">
       <div className="space-y-4 mb-8">
         {/* Frost alert */}
         {hasFrost && forecast && (

@@ -5,7 +5,7 @@ import { gardenAccessFilter } from "@/lib/permissions";
 import { getLockedGardenIds } from "@/lib/tier";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Sprout } from "lucide-react";
+import { Printer, Sprout } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { QuickNoteButton } from "@/components/garden/QuickNoteButton";
 import { LeaveGardenButton } from "@/components/garden/LeaveGardenButton";
@@ -234,6 +234,14 @@ export default async function GardenPage({
             <Link href={`/garden/${gardenId}/journal`} style={btnGhost}>
               Journal
             </Link>
+            <Link
+              href={`/garden/${gardenId}/print`}
+              aria-label="Print garden plan"
+              title="Print garden plan"
+              style={{ ...btnGhost, padding: "7px 10px" }}
+            >
+              <Printer style={{ width: 14, height: 14 }} strokeWidth={1.8} />
+            </Link>
             {canEdit && <QuickNoteButton gardenId={garden.id} />}
             {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
           </div>
@@ -299,6 +307,21 @@ export default async function GardenPage({
             }}
           >
             Journal
+          </Link>
+          <Link
+            href={`/garden/${gardenId}/print`}
+            aria-label="Print garden plan"
+            className="flex items-center justify-center"
+            style={{
+              width: "36px",
+              flexShrink: 0,
+              color: "#3A3A30",
+              borderRadius: "8px",
+              border: "1px solid #E4E4DC",
+              background: "#FDFDF8",
+            }}
+          >
+            <Printer style={{ width: 14, height: 14 }} strokeWidth={1.8} />
           </Link>
           {canEdit && <QuickNoteButton gardenId={garden.id} variant="mobile" />}
         </div>

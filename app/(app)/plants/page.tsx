@@ -4,13 +4,13 @@ import { getSharedPlantLibrary, plantCardSelect } from "@/lib/plant-library";
 import { PlantSearch } from "@/components/plants/PlantSearch";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
 
-const CATEGORIES: { value: PlantCategory; label: string; emoji: string }[] = [
-  { value: "VEGETABLE", label: "Vegetables", emoji: "🥦" },
-  { value: "FRUIT", label: "Fruits", emoji: "🍓" },
-  { value: "HERB", label: "Herbs", emoji: "🌿" },
-  { value: "FLOWER", label: "Flowers", emoji: "🌸" },
-  { value: "TREE", label: "Trees", emoji: "🌳" },
-  { value: "SHRUB", label: "Shrubs", emoji: "🌾" },
+const CATEGORIES: { value: PlantCategory; label: string }[] = [
+  { value: "VEGETABLE", label: "Vegetables" },
+  { value: "FRUIT", label: "Fruits" },
+  { value: "HERB", label: "Herbs" },
+  { value: "FLOWER", label: "Flowers" },
+  { value: "TREE", label: "Trees" },
+  { value: "SHRUB", label: "Shrubs" },
 ];
 
 export default async function PlantsPage({

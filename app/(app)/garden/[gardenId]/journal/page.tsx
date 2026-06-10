@@ -5,7 +5,7 @@ import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { StickyNote, Scissors, Camera } from "lucide-react";
+import { ChevronLeft, StickyNote, Scissors, Camera } from "lucide-react";
 
 // Per-type query bound. Each source is capped, then the merged timeline is
 // capped again at MERGED_CAP — keeps the page bounded no matter how busy a
@@ -175,9 +175,10 @@ export default async function GardenJournalPage({
           <Link
             href={`/garden/${gardenId}`}
             className="shrink-0"
-            style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 600, padding: "7px 16px", borderRadius: "8px", border: "1.5px solid #E4E4DC", color: "#3A3A30", textDecoration: "none", lineHeight: 1.2 }}
+            style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 600, padding: "7px 16px 7px 12px", borderRadius: "8px", border: "1.5px solid #E4E4DC", color: "#3A3A30", textDecoration: "none", lineHeight: 1.2, display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
-            ‹ Back to garden
+            <ChevronLeft className="w-3.5 h-3.5" style={{ color: "#6B6B5A" }} aria-hidden="true" />
+            Back to garden
           </Link>
         </div>
       </div>
@@ -196,7 +197,7 @@ export default async function GardenJournalPage({
           </div>
         ) : (
           <>
-            <div className="space-y-2">
+            <div className="space-y-2 stagger-rise">
               {timeline.map((e) => {
                 const meta = KIND_META[e.kind];
                 const Icon = e.kind === "note" ? StickyNote : e.kind === "harvest" ? Scissors : Camera;

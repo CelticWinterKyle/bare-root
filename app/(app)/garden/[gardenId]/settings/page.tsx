@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { ChevronLeft, Lock } from "lucide-react";
 import { CollaboratorsClient } from "@/components/collaborators/CollaboratorsClient";
 import { GardenSettingsForm } from "@/components/garden/GardenSettingsForm";
 
@@ -39,8 +39,9 @@ export default async function GardenSettingsPage({
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
           <Link
             href={`/garden/${gardenId}`}
-            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
-          >‹</Link>
+            aria-label={`Back to ${garden.name}`}
+            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#6B6B5A", flexShrink: 0, textDecoration: "none" }}
+          ><ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" /></Link>
           <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
             {garden.name}
           </span>
@@ -71,7 +72,7 @@ export default async function GardenSettingsPage({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-medium text-[#111109]">Collaborators</h2>
-            <p className="text-xs text-[#ADADAA] mt-0.5">Share this garden with others</p>
+            <p className="text-xs text-[#ADADAA] mt-0.5">A garden&rsquo;s better with more hands in it — invite up to 5.</p>
           </div>
           {!isPro && (
             <Link

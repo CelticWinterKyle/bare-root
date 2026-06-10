@@ -314,7 +314,7 @@ export function RemindersClient({
           <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
             Upcoming
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2 stagger-rise">
             {pending.map((r) => (
               <ReminderCard key={r.id} r={r} />
             ))}

@@ -2,10 +2,27 @@
 
 import { useState, useTransition } from "react";
 import { inviteCollaborator, removeCollaborator, updateCollaboratorRole, cancelInvitation } from "@/app/actions/collaborators";
-import { UserPlus, X, Clock, Loader2, ChevronDown } from "lucide-react";
+import { UserPlus, X, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Image from "next/image";
+
+const ROLE_ITEMS: { value: "EDITOR" | "VIEWER"; label: string }[] = [
+  { value: "EDITOR", label: "Editor" },
+  { value: "VIEWER", label: "Viewer" },
+];
+
+const INVITE_ROLE_ITEMS: { value: "EDITOR" | "VIEWER"; label: string }[] = [
+  { value: "EDITOR", label: "Editor — can plant & edit" },
+  { value: "VIEWER", label: "Viewer — read only" },
+];
 
 type Collaborator = {
   id: string;
@@ -50,8 +67,8 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
       } catch (err: unknown) {
         if (err instanceof Error) {
           if (err.message === "COLLABORATOR_LIMIT_REACHED") setError("You've reached the 5-collaborator limit.");
-          else if (err.message === "CANNOT_INVITE_SELF") setError("You can't invite yourself.");
-          else setError("Something went wrong. Try again.");
+          else if (err.message === "CANNOT_INVITE_SELF") setError("You're already here — no need to invite yourself.");
+          else setError("That invite didn't go through. Give it another try.");
         }
       }
     });
@@ -95,17 +112,26 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
             {c.name && <p className="text-xs text-[#ADADAA] truncate">{c.email}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="relative">
-              <select
-                value={c.role}
-                onChange={(e) => handleRoleChange(c.userId, e.target.value)}
-                className="appearance-none text-xs text-[#6B6B5A] bg-[#F4F4EC] border border-[#E4E4DC] rounded-lg pl-2 pr-6 py-1 focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
+            <Select
+              items={ROLE_ITEMS}
+              value={(c.role === "VIEWER" ? "VIEWER" : "EDITOR") as "EDITOR" | "VIEWER"}
+              onValueChange={(v) => v && handleRoleChange(c.userId, v)}
+            >
+              <SelectTrigger
+                size="sm"
+                aria-label="Collaborator role"
+                className="text-xs text-[#6B6B5A] bg-[#F4F4EC] border-[#E4E4DC] rounded-lg"
               >
-                <option value="EDITOR">Editor</option>
-                <option value="VIEWER">Viewer</option>
-              </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#ADADAA] pointer-events-none" />
-            </div>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               onClick={() => handleRemove(c.userId, c.id)}
               disabled={removingId === c.id}
@@ -138,12 +164,12 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
       ))}
 
       {total === 0 && !showInvite && (
-        <p className="text-sm text-[#ADADAA] text-center py-4">No collaborators yet.</p>
+        <p className="text-sm text-[#ADADAA] text-center py-4">Just you out here so far.</p>
       )}
 
       {showInvite ? (
         <form onSubmit={handleInvite} className="bg-white border border-[#E4E4DC] rounded-xl p-4 space-y-3">
-          <p className="text-sm font-medium text-[#111109]">Invite someone</p>
+          <p className="text-sm font-medium text-[#111109]">Invite someone in</p>
           <Input
             type="email"
             placeholder="Email address"
@@ -152,16 +178,22 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
             required
             autoFocus
           />
-          <div className="flex gap-2">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "EDITOR" | "VIEWER")}
-              className="border border-[#E4E4DC] rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A]"
-            >
-              <option value="EDITOR">Editor: can plan &amp; edit</option>
-              <option value="VIEWER">Viewer: read only</option>
-            </select>
-          </div>
+          <Select
+            items={INVITE_ROLE_ITEMS}
+            value={role}
+            onValueChange={(v) => v && setRole(v)}
+          >
+            <SelectTrigger className="w-full" aria-label="Invite role">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INVITE_ROLE_ITEMS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {error && <p className="text-xs text-[#B85C3A]">{error}</p>}
           <div className="flex gap-2">
             <Button type="submit" disabled={isInviting} className="bg-[#1C3D0A] hover:bg-[#3A6B20] text-white">

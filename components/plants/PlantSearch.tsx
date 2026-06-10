@@ -20,7 +20,7 @@ type Plant = {
   daysToMaturity: number | null;
 };
 
-type Category = { value: PlantCategory; label: string; emoji: string };
+type Category = { value: PlantCategory; label: string };
 
 const CATEGORY_STYLE: Record<string, { accent: string; border: string; bg: string; label: string }> = {
   VEGETABLE: { accent: "#1C3D0A", border: "#D4E8BE", bg: "#E4F0D4", label: "Vegetable" },
@@ -194,7 +194,7 @@ export function PlantSearch({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-fade-rise">
           {plants.slice(0, visibleCount).map((plant) => {
             const style = CATEGORY_STYLE[plant.category] ?? CATEGORY_STYLE.OTHER;
             const stockQty = inventoryByPlant[plant.id];
