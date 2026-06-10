@@ -4,49 +4,8 @@ import { db } from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
 import { cleanupBeforeUserDelete } from "@/lib/account-cleanup";
 
-/**
- * Export everything the user owns as a JSON-serializable object. Backs the
- * "Export my data" right promised in the privacy policy.
- */
-export async function exportMyData() {
-  const user = await requireUser();
-
-  const gardens = await db.garden.findMany({
-    where: { userId: user.id },
-    include: {
-      beds: { include: { cells: true } },
-      seasons: {
-        include: {
-          plantings: {
-            include: {
-              plant: { select: { name: true, category: true } },
-              harvestLogs: true,
-              photos: true,
-              growthNotes: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const seedInventory = await db.seedInventory.findMany({
-    where: { userId: user.id },
-    include: { plant: { select: { name: true } } },
-  });
-
-  return {
-    exportedAt: new Date().toISOString(),
-    account: {
-      email: user.email,
-      name: user.name,
-      tier: user.subscriptionTier,
-      createdAt: user.createdAt,
-    },
-    gardens,
-    seedInventory,
-  };
-}
+// Data export lives at GET /api/export (a zip of data.json + photo files,
+// streamed) — the gather logic is shared via lib/export-data.ts.
 
 /**
  * Permanently delete the user's account: removes all app data (cascades

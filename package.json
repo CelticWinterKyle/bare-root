@@ -26,6 +26,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.3.3",
     "@vercel/speed-insights": "^2.0.0",
+    "archiver": "^8.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -51,6 +52,7 @@
   "devDependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@tailwindcss/postcss": "^4",
+    "@types/archiver": "^8.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

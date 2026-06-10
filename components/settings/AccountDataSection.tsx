@@ -2,29 +2,11 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Download, Loader2, Trash2 } from "lucide-react";
-import { exportMyData, deleteMyAccount } from "@/app/actions/account";
+import { deleteMyAccount } from "@/app/actions/account";
 
 export function AccountDataSection() {
   const [confirm, setConfirm] = useState("");
-  const [exporting, startExport] = useTransition();
   const [deleting, startDelete] = useTransition();
-
-  function handleExport() {
-    startExport(async () => {
-      try {
-        const data = await exportMyData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `bare-root-export-${new Date().toISOString().split("T")[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch {
-        toast.error("Couldn't export your data. Please try again.");
-      }
-    });
-  }
 
   function handleDelete() {
     if (confirm !== "DELETE") return;
@@ -42,17 +24,22 @@ export function AccountDataSection() {
     <div className="mt-8 space-y-3">
       <h2 className="text-sm font-semibold text-[#111109]">Your data</h2>
 
-      <button
-        onClick={handleExport}
-        disabled={exporting}
-        className="flex items-center gap-3 p-4 w-full bg-white border border-[#E4E4DC] rounded-xl hover:border-[#7DA84E] transition-colors text-left disabled:opacity-60"
+      {/* Streams a zip of data.json + every photo file from /api/export. */}
+      <a
+        href="/api/export"
+        className="flex items-center gap-3 p-4 w-full bg-white border border-[#E4E4DC] rounded-xl hover:border-[#7DA84E] transition-colors text-left"
       >
         <span className="text-[#6B6B5A]">
-          {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          <Download className="w-4 h-4" />
         </span>
-        <span className="flex-1 text-sm font-medium text-[#111109]">Export my data</span>
-        <span className="text-xs text-[#ADADAA]">JSON</span>
-      </button>
+        <span className="flex-1 text-sm font-medium text-[#111109]">
+          Export my data
+          <span className="block text-xs font-normal text-[#6B6B5A]">
+            Gardens, plantings, harvests, and all photos
+          </span>
+        </span>
+        <span className="text-xs text-[#6B6B5A]">ZIP</span>
+      </a>
 
       <div className="p-4 bg-white border border-[rgba(122,42,24,0.2)] rounded-xl">
         <div className="flex items-center gap-2 mb-2">
