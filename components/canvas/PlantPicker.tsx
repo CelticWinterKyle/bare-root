@@ -3,7 +3,7 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
-import { Search, Loader2, AlertTriangle } from "lucide-react";
+import { Search, Loader2, AlertTriangle, Package } from "lucide-react";
 import { toast } from "sonner";
 import { PlantThumb } from "@/components/plants/PlantThumb";
 import type { SpacingWarning } from "@/lib/services/spacing";
@@ -36,6 +36,7 @@ export function PlantPicker({
   userId,
   cellSizeIn,
   recentPlants,
+  seedInventory = [],
   onClose,
   onPlanted,
 }: {
@@ -48,12 +49,27 @@ export function PlantPicker({
   userId: string;
   cellSizeIn: number;
   recentPlants: Plant[];
+  /** The user's seed inventory — drives the "have seeds" badge on plant
+   *  rows so the picker answers "do I already own seeds for this?" */
+  seedInventory?: { plantId: string; variety: string; quantity: number; unit: string }[];
   onClose: () => void;
   /** Fired once per planted cell so BedGrid can run its placement
    *  animation. In bulk mode it's invoked per anchor. */
   onPlanted?: (cellId: string) => void;
 }) {
   const isBulk = !!cellIds && cellIds.length > 0;
+  // Per-plant inventory summary: total quantity (summed across rows), the
+  // first row's unit, and the first named variety ("Sungold · 2 packets").
+  const invByPlant = new Map<string, { total: number; unit: string; variety: string | null }>();
+  for (const row of seedInventory) {
+    const cur = invByPlant.get(row.plantId);
+    if (cur) {
+      cur.total += row.quantity;
+      if (!cur.variety && row.variety) cur.variety = row.variety;
+    } else {
+      invByPlant.set(row.plantId, { total: row.quantity, unit: row.unit, variety: row.variety || null });
+    }
+  }
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Plant[]>(recentPlants);
   const [isSearching, startSearch] = useTransition();
@@ -176,6 +192,33 @@ export function PlantPicker({
                   })()}
                 </p>
               </div>
+              {/* Seed-inventory badge — green pill matching the library page's
+                  stock indicator. "Sungold · 2 packets" when a variety is on file. */}
+              {(() => {
+                const inv = invByPlant.get(plant.id);
+                if (!inv || inv.total <= 0) return null;
+                return (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-1 max-w-[120px]"
+                    title="In your seed inventory"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "8px",
+                      letterSpacing: "0.03em",
+                      color: "#3A6B20",
+                      background: "#E4F0D4",
+                      border: "1px solid #D4E8BE",
+                      padding: "2px 6px",
+                      borderRadius: "100px",
+                    }}
+                  >
+                    <Package className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate">
+                      {inv.variety ? `${inv.variety} · ` : ""}{inv.total} {inv.unit}
+                    </span>
+                  </span>
+                );
+              })()}
               {isAssigning && assigningId === plant.id && (
                 <Loader2 className="w-4 h-4 animate-spin text-[#7DA84E] shrink-0" />
               )}

@@ -185,6 +185,13 @@ export default async function BedPage({
   });
   const recentPlants = recentPlantings.map((p) => p.plant);
 
+  // The user's seed inventory — the plant picker badges plants the user
+  // already has seeds for ("Sungold · 2 packets").
+  const seedInventory = await db.seedInventory.findMany({
+    where: { userId: user.id },
+    select: { plantId: true, variety: true, quantity: true, unit: true },
+  });
+
   // Build cell data with companion warnings. Per cell, occupiedBy is at
   // most one entry for the viewing season (enforced in app code by
   // assignPlant). That entry tells us whether this cell is the anchor
@@ -362,6 +369,7 @@ export default async function BedPage({
           canEdit={canEdit}
           userId={user.id}
           recentPlants={recentPlants}
+          seedInventory={seedInventory}
           prefillPlant={prefillPlant}
           frost={{ lastFrostDate: bed.garden.lastFrostDate, firstFrostDate: bed.garden.firstFrostDate }}
         />

@@ -227,14 +227,21 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit
             <X className="w-3 h-3" />
           </span>
         </button>
-        {/* Plant name */}
+        {/* Plant name — variety inline ("Tomato · Sungold"), lighter and
+            smaller. Reads from local state so it live-updates as the
+            variety input below is edited. */}
         <div style={{
           fontFamily: "var(--font-display)", fontStyle: "italic",
           fontSize: "20px", fontWeight: 800, color: "#fff",
-          letterSpacing: "-0.02em", position: "relative", zIndex: 1, lineHeight: 1,
+          letterSpacing: "-0.02em", position: "relative", zIndex: 1, lineHeight: 1.1,
           fontVariationSettings: "'opsz' 22", paddingRight: "28px",
         }}>
           {planting.plant.name}
+          {variety && (
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,0.65)" }}>
+              {" · "}{variety}
+            </span>
+          )}
         </div>
         {/* Category sub */}
         <div style={{

@@ -5,6 +5,9 @@ export type CalendarEvent = {
   date: Date;
   type: "START_SEEDS" | "TRANSPLANT" | "HARVEST";
   plantName: string;
+  /** Planting variety ("Sungold") — null when the deduped group mixes
+   *  varieties, so the label never misattributes one variety to all. */
+  variety?: string | null;
   plantId: string;
   bedId: string;
   bedName: string;
@@ -163,6 +166,9 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
                             </div>
                             <p className="text-sm font-semibold text-[#111109] truncate">
                               {event.plantName}
+                              {event.variety ? (
+                                <span className="text-[#6B6B5A] font-normal"> · {event.variety}</span>
+                              ) : null}
                               {event.count && event.count > 1 ? (
                                 <span className="text-[#6B6B5A] font-normal"> ×{event.count}</span>
                               ) : null}

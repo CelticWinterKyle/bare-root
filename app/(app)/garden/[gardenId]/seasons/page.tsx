@@ -156,9 +156,12 @@ export default async function SeasonsPage({
                     </div>
                     {season.plantings.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
-                        {[...new Map(season.plantings.map((p) => [p.plant.id, p.plant])).values()].slice(0, 8).map((plant) => (
-                          <span key={plant.id} className="text-[11px] bg-[#F4F4EC] text-[#6B6B5A] px-2 py-0.5 rounded-full">
-                            {plant.name}
+                        {[...new Map(season.plantings.map((p) => [
+                          `${p.plant.id}|${p.variety ?? ""}`,
+                          { key: `${p.plant.id}|${p.variety ?? ""}`, label: p.variety ? `${p.plant.name} · ${p.variety}` : p.plant.name },
+                        ])).values()].slice(0, 8).map((plant) => (
+                          <span key={plant.key} className="text-[11px] bg-[#F4F4EC] text-[#6B6B5A] px-2 py-0.5 rounded-full">
+                            {plant.label}
                           </span>
                         ))}
                         {season.plantings.length > 8 && (
@@ -184,16 +187,25 @@ export default async function SeasonsPage({
   );
 }
 
-function PlantingsSummary({ plantings }: { plantings: { plant: { id: string; name: string }; status: string }[] }) {
+function PlantingsSummary({ plantings }: { plantings: { plant: { id: string; name: string }; variety: string | null; status: string }[] }) {
   if (plantings.length === 0) {
     return <p className="text-xs text-[#ADADAA]">No plants assigned yet.</p>;
   }
-  const unique = [...new Map(plantings.map((p) => [p.plant.id, p.plant])).values()];
+  // Dedupe by plant + variety so "Tomato · Sungold" and "Tomato · Roma"
+  // both get a chip instead of collapsing into one bare "Tomato".
+  const unique = [
+    ...new Map(
+      plantings.map((p) => [
+        `${p.plant.id}|${p.variety ?? ""}`,
+        { key: `${p.plant.id}|${p.variety ?? ""}`, label: p.variety ? `${p.plant.name} · ${p.variety}` : p.plant.name },
+      ])
+    ).values(),
+  ];
   return (
     <div className="flex flex-wrap gap-1">
       {unique.slice(0, 10).map((plant) => (
-        <span key={plant.id} className="text-[11px] bg-[#F4F4EC] text-[#6B6B5A] px-2 py-0.5 rounded-full">
-          {plant.name}
+        <span key={plant.key} className="text-[11px] bg-[#F4F4EC] text-[#6B6B5A] px-2 py-0.5 rounded-full">
+          {plant.label}
         </span>
       ))}
       {unique.length > 10 && (

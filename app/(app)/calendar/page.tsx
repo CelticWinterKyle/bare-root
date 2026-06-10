@@ -36,6 +36,7 @@ export default async function CalendarPage() {
       select: {
         plantedDate: true,
         expectedHarvestDate: true,
+        variety: true,
         plant: {
           select: {
             id: true,
@@ -79,10 +80,14 @@ export default async function CalendarPage() {
   const eventMap = new Map<string, CalendarEvent>();
   function addEvent(e: CalendarEvent) {
     const dayKey = e.date.toISOString().slice(0, 10);
+    // Variety is deliberately NOT part of the dedupe key — grouping stays by
+    // plant so the list doesn't explode. The variety label survives only if
+    // every planting in the group shares it; mixed groups drop it.
     const key = `${e.type}|${e.plantId}|${e.bedId}|${dayKey}`;
     const existing = eventMap.get(key);
     if (existing) {
       existing.count = (existing.count ?? 1) + 1;
+      if (existing.variety !== e.variety) existing.variety = null;
     } else {
       eventMap.set(key, { ...e, count: 1 });
     }
@@ -96,6 +101,7 @@ export default async function CalendarPage() {
     const { plant } = planting;
     const base = {
       plantName: plant.name,
+      variety: planting.variety || null,
       plantId: plant.id,
       bedId: bed.id,
       bedName: bed.name,

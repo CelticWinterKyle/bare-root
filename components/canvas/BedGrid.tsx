@@ -127,7 +127,11 @@ type Props = {
    *  picker, no drag-to-move, no sun/bulk/AI editing. Defaults to true so
    *  existing call sites are unchanged. */
   canEdit?: boolean;
+  /** The user's seed inventory rows, threaded into the plant picker so each
+   *  plant row can show a "have seeds" badge ("Sungold · 2 packets"). */
+  seedInventory?: SeedInventoryRow[];
 };
+type SeedInventoryRow = { plantId: string; variety: string; quantity: number; unit: string };
 type PanelState =
   | { type: "none" }
   | { type: "picker"; cellId: string }
@@ -376,7 +380,7 @@ function CellTile({
   );
 }
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true, seedInventory = [] }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -503,20 +507,21 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const footprintBounds = (() => {
     const m = new Map<
       string,
-      { minR: number; maxR: number; minC: number; maxC: number; name: string | null; category: string }
+      { minR: number; maxR: number; minC: number; maxC: number; name: string | null; variety: string | null; category: string }
     >();
     displayCells.forEach((cell, i) => {
       const pid = cell.planting?.id ?? cell.footprint?.plantingId ?? null;
       if (!pid) return;
       const r = Math.floor(i / displayCols);
       const c = i % displayCols;
-      const b = m.get(pid) ?? { minR: r, maxR: r, minC: c, maxC: c, name: null, category: "OTHER" };
+      const b = m.get(pid) ?? { minR: r, maxR: r, minC: c, maxC: c, name: null, variety: null, category: "OTHER" };
       b.minR = Math.min(b.minR, r);
       b.maxR = Math.max(b.maxR, r);
       b.minC = Math.min(b.minC, c);
       b.maxC = Math.max(b.maxC, c);
       if (cell.planting) {
         b.name = cell.planting.plant.name;
+        b.variety = cell.planting.variety;
         b.category = cell.planting.plant.category;
       }
       m.set(pid, b);
@@ -1097,12 +1102,16 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       // Accessible name: position (logical row/col, 1-based) +
                       // occupant + state. Footprint cells borrow the anchor's
                       // plant name so every cell of a multi-cell planting
-                      // announces what's growing there.
-                      const occupantName =
-                        planting?.plant.name ??
+                      // announces what's growing there. Variety is included
+                      // ("Tomato Sungold, active") when set.
+                      const anchorPlanting =
+                        planting ??
                         (cell.footprint
-                          ? cells.find((c) => c.id === cell.footprint!.primaryCellId)?.planting?.plant.name ?? null
+                          ? cells.find((c) => c.id === cell.footprint!.primaryCellId)?.planting ?? null
                           : null);
+                      const occupantName = anchorPlanting
+                        ? `${anchorPlanting.plant.name}${anchorPlanting.variety ? ` ${anchorPlanting.variety}` : ""}`
+                        : null;
                       const statusLabel = effectiveStatus ? STATUS_STYLES[effectiveStatus]?.label.toLowerCase() : null;
                       const cellContent = sunMode
                         ? `sun level ${effectiveSun(cell).replace(/_/g, " ").toLowerCase()}`
@@ -1158,6 +1167,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         {footprintBounds.map(([pid, b]) => {
                           if (!b.name) return null;
                           const span = Math.max(b.maxR - b.minR + 1, b.maxC - b.minC + 1);
+                          // Variety second line — only when there's room for it:
+                          // a footprint at least 2 cells wide, or a comfortably
+                          // large single cell (≥44px). Tiny zoomed-out cells
+                          // (<28px) never get it, so labels degrade gracefully.
+                          const fpCols = b.maxC - b.minC + 1;
+                          const showVariety =
+                            !!b.variety && cellPx >= 28 && (fpCols >= 2 || cellPx >= 44);
                           return (
                             <div
                               key={pid}
@@ -1165,6 +1181,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                 gridColumn: `${b.minC + 1} / ${b.maxC + 2}`,
                                 gridRow: `${b.minR + 1} / ${b.maxR + 2}`,
                                 display: "flex",
+                                flexDirection: "column",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 padding: "0 3px",
@@ -1187,6 +1204,23 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                               >
                                 {b.name.split(" ")[0]}
                               </span>
+                              {showVariety && (
+                                <span
+                                  className="text-center max-w-full truncate"
+                                  style={{
+                                    fontFamily: "var(--font-body)",
+                                    fontStyle: "italic",
+                                    fontWeight: 500,
+                                    fontSize: Math.max(8, Math.min(11, cellPx * 0.2)),
+                                    color: "rgba(253,253,248,0.85)",
+                                    textShadow: "0 1px 2px rgba(0,0,0,0.45)",
+                                    lineHeight: 1.1,
+                                    marginTop: 1,
+                                  }}
+                                >
+                                  {b.variety}
+                                </span>
+                              )}
                             </div>
                           );
                         })}
@@ -1399,6 +1433,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     userId={userId}
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
+                    seedInventory={seedInventory}
                     onClose={() => {
                       // Just planted into this cell? Don't snap back to none —
                       // the auto-open effect is about to swap in the detail
@@ -1558,6 +1593,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     userId={userId}
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
+                    seedInventory={seedInventory}
                     onClose={() => {
                       setPanel({ type: "none" });
                       setSelectedCells(new Set());

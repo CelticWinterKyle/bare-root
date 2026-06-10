@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
+import { PLANT_ENRICHMENT } from "../lib/data/plant-enrichment";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -333,6 +334,20 @@ async function main() {
       where: { name: p.name, customForUserId: null },
     });
 
+    // Curated horticultural enrichment (description, scientific name, depth,
+    // pH, seasons, months) keyed by exact seed name. The PLANTS row stays
+    // authoritative for the fields it defines; enrichment only fills the
+    // fields PLANTS never carried.
+    const e = PLANT_ENRICHMENT[p.name];
+    const enrichmentData = {
+      description: e?.description ?? null,
+      scientificName: e?.scientificName ?? null,
+      plantingDepthIn: e?.plantingDepthIn ?? null,
+      soilPhRange: e?.soilPhRange ?? null,
+      plantingSeasons: e?.plantingSeasons ?? [],
+      harvestMonths: e?.harvestMonths ?? [],
+    };
+
     let id: string;
     if (existing) {
       id = existing.id;
@@ -348,8 +363,7 @@ async function main() {
           indoorStartWeeks: "indoorStart" in p ? (p as any).indoorStart : null,
           transplantWeeks: "transplant" in p ? (p as any).transplant : null,
           commonNames: [],
-          plantingSeasons: [],
-          harvestMonths: [],
+          ...enrichmentData,
         },
       });
     } else {
@@ -365,9 +379,8 @@ async function main() {
           indoorStartWeeks: "indoorStart" in p ? (p as any).indoorStart : null,
           transplantWeeks: "transplant" in p ? (p as any).transplant : null,
           commonNames: [],
-          plantingSeasons: [],
-          harvestMonths: [],
           source: "seed",
+          ...enrichmentData,
         },
       });
       id = created.id;

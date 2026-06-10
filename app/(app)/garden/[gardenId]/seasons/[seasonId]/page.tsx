@@ -37,6 +37,8 @@ export default async function SeasonSummaryPage({
   type PlantSummary = {
     plantId: string;
     plantName: string;
+    /** Distinct varieties grown ("Sungold, Roma") — shown after the name. */
+    varieties: string[];
     category: string;
     beds: string[];
     totalHarvest: number;
@@ -55,6 +57,7 @@ export default async function SeasonSummaryPage({
       byPlant[pid] = {
         plantId: pid,
         plantName: p.plant.name,
+        varieties: [],
         category: p.plant.category,
         beds: [],
         totalHarvest: 0,
@@ -68,6 +71,7 @@ export default async function SeasonSummaryPage({
     }
     const bed = p.cell.bed.name;
     if (!byPlant[pid].beds.includes(bed)) byPlant[pid].beds.push(bed);
+    if (p.variety && !byPlant[pid].varieties.includes(p.variety)) byPlant[pid].varieties.push(p.variety);
     const est = estimateYieldLbs(p.plant.category as PlantCategory, p._count.cells || 1, p.cell.bed.cellSizeIn);
     if (est != null) byPlant[pid].estYieldLbs += est;
     for (const log of p.harvestLogs) {
@@ -146,6 +150,9 @@ export default async function SeasonSummaryPage({
                     <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#111109] hover:text-[#1C3D0A]">
                       {s.plantName}
                     </Link>
+                    {s.varieties.length > 0 && (
+                      <span className="text-xs text-[#6B6B5A]"> · {s.varieties.join(", ")}</span>
+                    )}
                     <p className="text-xs text-[#ADADAA]">{s.beds.join(", ")}</p>
                   </div>
                   <span className="text-sm font-semibold text-[#D4820A] text-right">
@@ -177,6 +184,9 @@ export default async function SeasonSummaryPage({
                 <Link href={`/plants/${s.plantId}`} className="text-sm font-medium text-[#111109] hover:text-[#1C3D0A]">
                   {s.plantName}
                 </Link>
+                {s.varieties.length > 0 && (
+                  <span className="text-xs text-[#6B6B5A]"> · {s.varieties.join(", ")}</span>
+                )}
                 <p className="text-xs text-[#ADADAA]">
                   {s.status.replace(/_/g, " ").toLowerCase()} · {s.beds.join(", ")}
                 </p>
