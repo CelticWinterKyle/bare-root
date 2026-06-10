@@ -302,9 +302,15 @@ export async function createCustomPlant(data: {
 /**
  * Update a plant's grow-cycle timing (drives the calendar + reminders).
  * Used to correct category-based estimates. A manual edit clears the
- * `timingEstimated` flag since the values are now authoritative. Editing a
- * shared (global) plant updates it for everyone — acceptable as crowd
- * correction; only plants the user can access can be edited.
+ * `timingEstimated` flag since the values are now authoritative.
+ *
+ * Own custom plants are edited in place. GLOBAL plants are forked-on-edit:
+ * a personal copy gets the new timing and the user's plantings/inventory
+ * are repointed at it. Mutating the shared row would let any user rewrite
+ * every other user's calendar math (data poisoning at scale).
+ *
+ * Returns the plant id the edit landed on — the fork's id when one was
+ * created, so the UI can navigate to the user's copy.
  */
 export async function updatePlantTiming(
   plantId: string,
@@ -313,11 +319,10 @@ export async function updatePlantTiming(
     indoorStartWeeks?: number | null;
     transplantWeeks?: number | null;
   }
-) {
+): Promise<{ plantId: string }> {
   const user = await requireUser();
   const plant = await db.plantLibrary.findFirst({
     where: { id: plantId, OR: [{ customForUserId: null }, { customForUserId: user.id }] },
-    select: { id: true },
   });
   if (!plant) throw new Error("Plant not found");
 
@@ -328,14 +333,78 @@ export async function updatePlantTiming(
     return n;
   };
 
-  await db.plantLibrary.update({
-    where: { id: plantId },
-    data: {
-      daysToMaturity: clampInt(data.daysToMaturity, 1, 730),
-      indoorStartWeeks: clampInt(data.indoorStartWeeks, 0, 20),
-      transplantWeeks: clampInt(data.transplantWeeks, 0, 20),
-      timingEstimated: false,
-    },
+  const timing = {
+    daysToMaturity: clampInt(data.daysToMaturity, 1, 730),
+    indoorStartWeeks: clampInt(data.indoorStartWeeks, 0, 20),
+    transplantWeeks: clampInt(data.transplantWeeks, 0, 20),
+    timingEstimated: false,
+  };
+
+  // Own custom plant: edit in place.
+  if (plant.customForUserId === user.id) {
+    await db.plantLibrary.update({ where: { id: plantId }, data: timing });
+    revalidatePath(`/plants/${plantId}`);
+    revalidatePath("/calendar");
+    return { plantId };
+  }
+
+  // Global plant: fork-on-edit. Reuse the user's existing fork of this
+  // plant (matched by name) so repeat edits don't pile up copies.
+  const existingFork = await db.plantLibrary.findFirst({
+    where: { customForUserId: user.id, name: plant.name },
+    select: { id: true },
   });
-  revalidatePath(`/plants/${plantId}`);
+
+  let forkId: string;
+  if (existingFork) {
+    await db.plantLibrary.update({ where: { id: existingFork.id }, data: timing });
+    forkId = existingFork.id;
+  } else {
+    forkId = await db.$transaction(async (tx) => {
+      // Copy everything except identity/unique fields (externalId is
+      // @unique and belongs to the canonical row).
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, externalId: _externalId, createdAt: _createdAt, updatedAt: _updatedAt, ...copy } = plant;
+      const fork = await tx.plantLibrary.create({
+        data: { ...copy, ...timing, customForUserId: user.id, source: "custom" },
+      });
+      // Carry companion data over so companion warnings keep working for
+      // plantings that get repointed to the fork.
+      const rels = await tx.companionRelation.findMany({ where: { plantId: plant.id } });
+      if (rels.length > 0) {
+        await tx.companionRelation.createMany({
+          data: rels.map((r) => ({
+            plantId: fork.id,
+            relatedId: r.relatedId,
+            type: r.type,
+            notes: r.notes,
+          })),
+        });
+      }
+      return fork.id;
+    });
+  }
+
+  // Repoint the user's OWN data at the fork so their calendar/reminders
+  // reflect the edit. Owned gardens only — pointing another owner's
+  // plantings at a private fork would 404 their plant pages.
+  await db.planting.updateMany({
+    where: { plantId: plant.id, cell: { bed: { garden: { userId: user.id } } } },
+    data: { plantId: forkId },
+  });
+  try {
+    await db.seedInventory.updateMany({
+      where: { plantId: plant.id, userId: user.id },
+      data: { plantId: forkId },
+    });
+  } catch {
+    // Unique (userId, plantId, …) collision when inventory rows exist for
+    // both the global plant and the fork — keep the originals, non-fatal.
+  }
+
+  revalidatePath(`/plants/${forkId}`);
+  revalidatePath(`/plants/${plant.id}`);
+  revalidatePath("/plants");
+  revalidatePath("/calendar");
+  return { plantId: forkId };
 }

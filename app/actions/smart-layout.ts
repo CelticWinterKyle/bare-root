@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { assignPlant } from "@/app/actions/planting";
 import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-layout";
+import { MAX_BULK_CELLS } from "@/lib/validation";
 
 export async function generateLayoutAction(
   bedId: string,
@@ -98,6 +99,12 @@ export async function acceptLayoutAssignments(
   assignments: LayoutAssignment[]
 ): Promise<{ planted: number }> {
   const user = await requireUser();
+
+  // Client-supplied list; each accepted assignment runs the full
+  // assignPlant path (queries + transaction + reminders) serially.
+  if (assignments.length > MAX_BULK_CELLS) {
+    throw new Error(`Too many assignments (max ${MAX_BULK_CELLS})`);
+  }
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { checkCanCreateGarden } from "@/lib/tier";
+import { validateBedDimensions, validateGardenDimensions } from "@/lib/validation";
 
 type BedInput = {
   name: string;
@@ -26,6 +27,9 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
  try {
   const user = await requireUser();
   await checkCanCreateGarden(user.id, user.subscriptionTier);
+
+  validateGardenDimensions(input);
+  if (!input.gardenName.trim()) throw new Error("Garden name is required");
 
   const now = new Date();
   const year = now.getFullYear();
@@ -65,8 +69,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
 
     if (input.bed) {
       const { name, widthFt, heightFt, cellSizeIn } = input.bed;
-      const gridCols = Math.max(1, Math.floor(widthFt * (12 / cellSizeIn)));
-      const gridRows = Math.max(1, Math.floor(heightFt * (12 / cellSizeIn)));
+      const { gridCols, gridRows } = validateBedDimensions(input.bed);
 
       const bed = await tx.bed.create({
         data: {
@@ -104,7 +107,14 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
  } catch (err) {
     // Surface the real cause in the server logs — production sanitizes the
     // message before it reaches the client, so without this we're blind.
-    console.error("[completeOnboarding] failed | input:", JSON.stringify(input), "| error:", err);
+    // Log only the shape-relevant fields, not the full input (it carries
+    // the user's zip and would sit in Vercel/Sentry logs).
+    console.error(
+      `[completeOnboarding] failed | garden ${input.widthFt}x${input.heightFt} | bed: ${
+        input.bed ? `${input.bed.widthFt}x${input.bed.heightFt}@${input.bed.cellSizeIn}"` : "none"
+      } | error:`,
+      err
+    );
     throw err;
  }
 }

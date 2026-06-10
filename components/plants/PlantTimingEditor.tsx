@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updatePlantTiming } from "@/app/actions/plants";
 
@@ -23,19 +24,27 @@ export function PlantTimingEditor({
   const [indoor, setIndoor] = useState(indoorStartWeeks?.toString() ?? "");
   const [transplant, setTransplant] = useState(transplantWeeks?.toString() ?? "");
   const [pending, start] = useTransition();
+  const router = useRouter();
 
   const parse = (s: string) => (s.trim() === "" ? null : Number(s));
 
   function save() {
     start(async () => {
       try {
-        await updatePlantTiming(plantId, {
+        const result = await updatePlantTiming(plantId, {
           daysToMaturity: parse(days),
           indoorStartWeeks: parse(indoor),
           transplantWeeks: parse(transplant),
         });
-        toast.success("Planting timing updated");
         setEditing(false);
+        if (result.plantId !== plantId) {
+          // Editing a shared plant saves to a personal copy — follow it so
+          // the page reflects the values that drive this user's calendar.
+          toast.success("Saved to your copy of this plant");
+          router.replace(`/plants/${result.plantId}`);
+        } else {
+          toast.success("Planting timing updated");
+        }
       } catch {
         toast.error("Couldn't save timing. Check the values and try again.");
       }

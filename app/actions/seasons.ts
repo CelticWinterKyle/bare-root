@@ -3,12 +3,19 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
+import { seasonInputSchema } from "@/lib/validation";
 
 export async function createSeason(
   gardenId: string,
-  data: { name: string; startDate: string; endDate?: string; setActive: boolean }
+  input: { name: string; startDate: string; endDate?: string; setActive: boolean }
 ) {
   const user = await requireUser();
+
+  const parsed = seasonInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid season");
+  }
+  const data = parsed.data;
 
   const garden = await db.garden.findFirst({
     where: { id: gardenId, ...gardenEditFilter(user.id) },

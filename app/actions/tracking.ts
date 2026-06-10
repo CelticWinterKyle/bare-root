@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { put } from "@vercel/blob";
 import { checkCanUploadPhoto, isProFeature } from "@/lib/tier";
+import { validatePhotoUpload } from "@/lib/validation";
 
 // Parse a date-only input ("YYYY-MM-DD") as LOCAL midnight. `new Date(str)`
 // treats a bare date as UTC, which then displays as the previous day for
@@ -98,7 +99,10 @@ export async function uploadPhoto(plantingId: string, formData: FormData) {
   const file = formData.get("file") as File;
   if (!file || file.size === 0) throw new Error("No file provided");
 
-  const ext = file.name.split(".").pop() ?? "jpg";
+  // Type/size gate: blobs are PUBLIC, so without this anything (SVG with
+  // scripts, HTML, arbitrary files) gets hosted under our store. Extension
+  // comes from the validated MIME type, never the client filename.
+  const ext = validatePhotoUpload(file);
   const blob = await put(`plantings/${plantingId}/${Date.now()}.${ext}`, file, {
     access: "public",
   });

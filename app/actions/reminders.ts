@@ -4,8 +4,9 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ReminderType } from "@/lib/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
+import { customReminderSchema } from "@/lib/validation";
 
-export async function createCustomReminder(data: {
+export async function createCustomReminder(input: {
   title: string;
   body?: string;
   scheduledAt: string; // ISO datetime
@@ -14,13 +15,14 @@ export async function createCustomReminder(data: {
 }) {
   const user = await requireUser();
 
-  const title = data.title.trim();
-  if (!title) throw new Error("Title is required");
+  const parsed = customReminderSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid reminder");
+  }
+  const data = parsed.data;
+  const title = data.title;
 
   const when = new Date(data.scheduledAt);
-  if (Number.isNaN(when.getTime())) {
-    throw new Error("Invalid date");
-  }
   if (when.getTime() < Date.now()) {
     throw new Error("Reminder time must be in the future");
   }

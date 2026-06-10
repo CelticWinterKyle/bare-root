@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { checkCanCreateBed, assertGardenWritable, assertBedWritable } from "@/lib/tier";
+import { validateBedDimensions } from "@/lib/validation";
 
 type CreateBedInput = {
   gardenId: string;
@@ -24,8 +25,7 @@ export async function createBed(input: CreateBedInput): Promise<string> {
   await assertGardenWritable(user.id, user.subscriptionTier, input.gardenId);
   await checkCanCreateBed(input.gardenId, user.subscriptionTier);
 
-  const gridCols = Math.max(1, Math.floor(input.widthFt * (12 / input.cellSizeIn)));
-  const gridRows = Math.max(1, Math.floor(input.heightFt * (12 / input.cellSizeIn)));
+  const { gridCols, gridRows } = validateBedDimensions(input);
 
   const existingCount = await db.bed.count({ where: { gardenId: input.gardenId } });
 
@@ -93,14 +93,13 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
 
   const nextWidthFt = input.widthFt ?? bed.widthFt;
   const nextHeightFt = input.heightFt ?? bed.heightFt;
-  const nextCellSizeIn = input.cellSizeIn ?? bed.cellSizeIn;
+  const nextCellSizeIn = (input.cellSizeIn ?? bed.cellSizeIn) as 12 | 6;
 
-  if (nextWidthFt <= 0 || nextHeightFt <= 0) {
-    throw new Error("Dimensions must be greater than 0");
-  }
-
-  const nextGridCols = Math.max(1, Math.floor(nextWidthFt * (12 / nextCellSizeIn)));
-  const nextGridRows = Math.max(1, Math.floor(nextHeightFt * (12 / nextCellSizeIn)));
+  const { gridCols: nextGridCols, gridRows: nextGridRows } = validateBedDimensions({
+    widthFt: nextWidthFt,
+    heightFt: nextHeightFt,
+    cellSizeIn: nextCellSizeIn,
+  });
 
   const dimensionsChanged =
     nextGridCols !== bed.gridCols || nextGridRows !== bed.gridRows;

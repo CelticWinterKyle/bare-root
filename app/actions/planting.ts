@@ -8,6 +8,7 @@ import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
 import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
 import { getStartOptions } from "@/lib/services/planting-feasibility";
+import { MAX_BULK_CELLS } from "@/lib/validation";
 
 async function resolveCell(cellId: string, userId: string) {
   const cell = await db.cell.findFirst({
@@ -373,6 +374,12 @@ export async function bulkAssignPlant(
   reduced: number;
 }> {
   if (cellIds.length === 0) return { planted: 0, skipped: 0, reduced: 0 };
+  // Each cell is several queries + a transaction, run serially — an
+  // unbounded list is a resource-exhaustion vector. The UI can't select
+  // more cells than the bed has, and beds cap well below this.
+  if (cellIds.length > MAX_BULK_CELLS) {
+    throw new Error(`Too many cells selected (max ${MAX_BULK_CELLS})`);
+  }
 
   let planted = 0;
   let skipped = 0;

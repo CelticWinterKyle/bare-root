@@ -11,6 +11,7 @@ import {
   clearActiveGarden,
   getActiveGardenCookie,
 } from "@/lib/active-garden";
+import { validateGardenDimensions } from "@/lib/validation";
 
 export async function updateBedPosition(bedId: string, xPosition: number, yPosition: number) {
   const user = await requireUser();
@@ -46,12 +47,10 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
 
   await assertGardenWritable(user.id, user.subscriptionTier, gardenId);
 
-  if (input.widthFt !== undefined && input.widthFt <= 0) {
-    throw new Error("Width must be greater than 0");
-  }
-  if (input.heightFt !== undefined && input.heightFt <= 0) {
-    throw new Error("Height must be greater than 0");
-  }
+  validateGardenDimensions({
+    widthFt: input.widthFt ?? garden.widthFt,
+    heightFt: input.heightFt ?? garden.heightFt,
+  });
 
   const data: Record<string, unknown> = {};
 
@@ -151,9 +150,7 @@ export async function createGarden(input: CreateGardenInput): Promise<string> {
 
   const name = input.gardenName.trim();
   if (!name) throw new Error("Garden name is required");
-  if (!(input.widthFt > 0) || !(input.heightFt > 0)) {
-    throw new Error("Garden dimensions must be greater than 0");
-  }
+  validateGardenDimensions(input);
 
   const now = new Date();
   const year = now.getFullYear();
