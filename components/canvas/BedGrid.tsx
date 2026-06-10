@@ -19,7 +19,7 @@ import { PlantLibrary, type LibraryPlant } from "./PlantLibrary";
 import { updateCellSun, assignPlant, bulkAssignPlant, movePlanting } from "@/app/actions/planting";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, MousePointer2 } from "lucide-react";
+import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, MousePointer2, Eye } from "lucide-react";
 import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
@@ -91,6 +91,9 @@ type Planting = {
   variety: string | null;
   notes: string | null;
   startMethod: PlantStartMethod | null;
+  /** History counts (harvests/photos/notes) — drives the "removing also
+   *  deletes its history" warning in CellDetail's remove confirm. */
+  _count?: { harvestLogs: number; photos: number; growthNotes: number };
 };
 type CellData = {
   id: string;
@@ -120,6 +123,10 @@ type Props = {
   /** Garden frost dates ("MM-DD"), for the start-method guidance in the
    *  cell detail panel. */
   frost: { lastFrostDate: string | null; firstFrostDate: string | null };
+  /** False for VIEWER collaborators — renders the grid read-only: no plant
+   *  picker, no drag-to-move, no sun/bulk/AI editing. Defaults to true so
+   *  existing call sites are unchanged. */
+  canEdit?: boolean;
 };
 type PanelState =
   | { type: "none" }
@@ -150,6 +157,7 @@ function CellTile({
   hasHarmful,
   hasBeneficial,
   ariaLabel,
+  canEdit,
   onClick,
 }: {
   cell: CellData;
@@ -169,12 +177,13 @@ function CellTile({
   hasHarmful: boolean;
   hasBeneficial: boolean;
   ariaLabel: string;
+  canEdit: boolean;
   onClick: () => void;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `drop:${cell.id}`,
     data: { kind: "cell", cell },
-    disabled: !!cell.planting || !!cell.footprint,
+    disabled: !canEdit || !!cell.planting || !!cell.footprint,
   });
   const drag = useDraggable({
     id: `drag:${cell.id}`,
@@ -186,7 +195,7 @@ function CellTile({
           fromCellId: cell.id,
         }
       : undefined,
-    disabled: !cell.planting,
+    disabled: !canEdit || !cell.planting,
   });
 
   function setRef(node: HTMLDivElement | null) {
@@ -239,7 +248,7 @@ function CellTile({
     ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
     : "none";
 
-  const dragProps = isAnchor ? { ...drag.attributes, ...drag.listeners } : {};
+  const dragProps = isAnchor && canEdit ? { ...drag.attributes, ...drag.listeners } : {};
 
   // Occupied cells are transparent (the footprint block draws the fill), so
   // their own border and radius are irrelevant — only empty/preview cells
@@ -273,7 +282,7 @@ function CellTile({
         borderRadius: cellRadius,
         boxShadow: cellBoxShadow,
         opacity: drag.isDragging ? 0.35 : 1,
-        cursor: isAnchor ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
+        cursor: isAnchor && canEdit ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
       }}
     >
       {sunMode && (
@@ -297,7 +306,9 @@ function CellTile({
           </span>
         </span>
       )}
-      {!isOccupied && !preview && !sunMode && (
+      {/* "+" plantability hint — editors only; for viewers an empty cell
+          isn't an invitation to plant. */}
+      {canEdit && !isOccupied && !preview && !sunMode && (
         <span
           className="absolute inset-0 flex items-center justify-center leading-none select-none pointer-events-none"
           style={{ fontSize: Math.max(14, cellPx * 0.32), color: "rgba(168,216,112,0.45)" }}
@@ -365,7 +376,7 @@ function CellTile({
   );
 }
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -383,7 +394,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const [pendingSun, setPendingSun] = useState<Record<string, SunLevel>>({});
   const [previewAssignments, setPreviewAssignments] = useState<LayoutAssignment[]>([]);
   const [justPlanted, setJustPlanted] = useState<Set<string>>(new Set());
-  const [pendingPlant, setPendingPlant] = useState<Plant | null>(prefillPlant ?? null);
+  // Viewers never get a prefill session — arriving with ?plant=ID in a
+  // shared garden must not arm the "tap to plant" flow.
+  const [pendingPlant, setPendingPlant] = useState<Plant | null>(canEdit ? prefillPlant ?? null : null);
   // How many plantings have been placed during this prefill session.
   // Drives the "3 Cherry Tomatoes planted" banner subtitle and resets
   // whenever a new prefill starts (via plant change) or is dismissed.
@@ -548,6 +561,26 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const dense = cellPx < 36;
 
   function handleCellClick(cell: CellData) {
+    // Read-only mode: viewing a planting is the point, everything else is
+    // off the table. Planted/footprint cells open the (read-only) detail
+    // panel; empty cells get a consistent "view only" toast; sun-map taps
+    // are silent no-ops (the overlay itself is still viewable).
+    if (!canEdit) {
+      if (sunMode) return;
+      if (cell.planting) {
+        setPanel({ type: "detail", planting: cell.planting, cell });
+        return;
+      }
+      if (cell.footprint) {
+        const anchor = cells.find((c) => c.id === cell.footprint!.primaryCellId);
+        if (anchor?.planting) {
+          setPanel({ type: "detail", planting: anchor.planting, cell: anchor });
+        }
+        return;
+      }
+      toast.info("View only — ask the garden owner for editor access to plant", { duration: 2000 });
+      return;
+    }
     // Move flow takes precedence over everything else — the user has
     // committed to relocating this planting, so don't sidetrack into
     // pickers or selection toggles.
@@ -742,6 +775,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   function onDragEnd(e: DragEndEvent) {
     const source = dragSource;
     setDragSource(null);
+    // Belt-and-braces: drag sources/targets are already disabled when
+    // read-only, but never mutate from a drag in view-only mode.
+    if (!canEdit) return;
     if (!source || !e.over) return;
     const overData = e.over.data.current;
     if (!overData || overData.kind !== "cell") return;
@@ -957,8 +993,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             {isEmpty && !sunMode && panel.type === "none" && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="backdrop-blur-sm rounded-xl px-4 py-3 shadow-md text-center" style={{ background: "rgba(253,253,248,0.92)", border: "1px solid #E4E4DC" }}>
-                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>Tap any cell</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#6B6B5A" }}>to assign a plant</p>
+                  <p className="text-sm font-semibold" style={{ color: "#111109" }}>{canEdit ? "Tap any cell" : "Nothing planted yet"}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#6B6B5A" }}>{canEdit ? "to assign a plant" : "this bed is still empty"}</p>
                 </div>
               </div>
             )}
@@ -1099,6 +1135,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
                           hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
                           ariaLabel={ariaLabel}
+                          canEdit={canEdit}
                           onClick={() => handleCellClick(cell)}
                         />
                       );
@@ -1206,7 +1243,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           {!sunMode && !selectMode && (
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
               {presentStatuses.size === 0 && !hasAnyWarnings ? (
-                <span className="text-xs text-[#6B6B5A]">Tap any cell to add a plant</span>
+                <span className="text-xs text-[#6B6B5A]">{canEdit ? "Tap any cell to add a plant" : "No plants in this bed yet"}</span>
               ) : (
                 <>
                   {Object.entries(STATUS_STYLES)
@@ -1245,14 +1282,31 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             className="rounded-xl border shadow-md overflow-hidden flex flex-col"
             style={{ background: "#FDFDF8", borderColor: "#E4E4DC", maxHeight: isMobile ? undefined : "calc(100vh - 96px)" }}
           >
-            {/* Mode switcher — icon row */}
+            {/* Read-only eyebrow — tells collaborators why edit modes are gone */}
+            {!canEdit && (
+              <div
+                className="flex items-center justify-center gap-1.5 py-1.5 border-b shrink-0"
+                style={{ background: "#F4F4EC", borderColor: "#E4E4DC" }}
+              >
+                <Eye className="w-3 h-3" style={{ color: "#6B6B5A" }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#6B6B5A" }}>
+                  Viewing — read only
+                </span>
+              </div>
+            )}
+            {/* Mode switcher — icon row. Viewers keep the read modes (plant
+                detail, sun map, companion pairs) and lose the edit modes
+                (AI layout, bulk select). */}
             <div
               className="flex items-stretch border-b shrink-0"
               role="tablist"
               aria-label="Editor mode"
               style={{ background: "#F8F8F2", borderColor: "#E4E4DC" }}
             >
-              {(["plant", "sun", "companions", "smart", "select"] as const).map((tab) => {
+              {(canEdit
+                ? (["plant", "sun", "companions", "smart", "select"] as const)
+                : (["plant", "sun", "companions"] as const)
+              ).map((tab) => {
                 const ICON: Record<string, React.ReactNode> = {
                   plant: <Leaf className="w-4 h-4" />,
                   sun: <Sun className="w-4 h-4" />,
@@ -1310,15 +1364,32 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             <div className="flex-1 overflow-y-auto">
               {/* PLANT MODE: always-visible library, plus detail panel when a cell with a planting is selected */}
               {activeTab === "plant" && panel.type !== "detail" && panel.type !== "picker" && (
-                <PlantLibrary
-                  recentPlants={recentPlants}
-                  cellSizeIn={cellSizeIn}
-                  gridCols={gridCols}
-                  gridRows={gridRows}
-                  userId={userId}
-                  onCardClick={(p) => setPendingPlant(p)}
-                  selectedPlantId={pendingPlant?.id ?? null}
-                />
+                canEdit ? (
+                  <PlantLibrary
+                    recentPlants={recentPlants}
+                    cellSizeIn={cellSizeIn}
+                    gridCols={gridCols}
+                    gridRows={gridRows}
+                    userId={userId}
+                    onCardClick={(p) => setPendingPlant(p)}
+                    selectedPlantId={pendingPlant?.id ?? null}
+                  />
+                ) : (
+                  /* Viewers don't get the plant library (it exists to place
+                     plants) — explain what they CAN do instead. */
+                  <div className="p-5 space-y-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: "#F4F4EC" }}
+                    >
+                      <Eye className="w-5 h-5" style={{ color: "#6B6B5A" }} />
+                    </div>
+                    <p className="text-sm font-semibold" style={{ color: "#111109" }}>Viewing this bed</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
+                      Tap any planted cell to see its details — status, dates, variety, and companions. You have view-only access; ask the garden owner for editor access to make changes.
+                    </p>
+                  </div>
+                )
               )}
               {activeTab === "plant" && panel.type === "picker" && (
                 <div className="p-4">
@@ -1349,8 +1420,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   gardenId={gardenId}
                   bedId={bedId}
                   frost={frost}
+                  canEdit={canEdit}
                   onClose={() => setPanel({ type: "none" })}
-                  onMoveStart={(p) => setMovingPlanting(p)}
+                  onMoveStart={canEdit ? (p) => setMovingPlanting(p) : undefined}
                 />
               )}
 
@@ -1365,7 +1437,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   </div>
                   <p className="text-sm font-semibold" style={{ color: "#111109" }}>Sun map</p>
                   <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                    Tap any cell to cycle its sun level. Use this to map shadows from fences, trees, or the house so plant suggestions match each spot&apos;s reality.
+                    {canEdit
+                      ? "Tap any cell to cycle its sun level. Use this to map shadows from fences, trees, or the house so plant suggestions match each spot's reality."
+                      : "Shows each cell's mapped sun exposure — shadows from fences, trees, or the house."}
                   </p>
                   <div className="space-y-1.5 pt-2">
                     {Object.entries(SUN_LABEL).map(([key, emoji]) => (

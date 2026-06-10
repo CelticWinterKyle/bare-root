@@ -68,6 +68,7 @@ export default async function BedPage({
         select: {
           id: true,
           name: true,
+          userId: true,
           usdaZone: true,
           lastFrostDate: true,
           firstFrostDate: true,
@@ -99,6 +100,11 @@ export default async function BedPage({
                       transplantWeeks: true,
                     },
                   },
+                  // History counts so the remove-confirm in CellDetail can
+                  // warn that deleting the planting cascades these away.
+                  _count: {
+                    select: { harvestLogs: true, photos: true, growthNotes: true },
+                  },
                 },
               },
             },
@@ -110,6 +116,20 @@ export default async function BedPage({
   });
 
   if (!bed) notFound();
+
+  // Resolve whether the viewer can edit. Mirrors the role lookup on the
+  // garden page (lib/permissions.ts holds shared query filters, not per-page
+  // role resolution, so this small lookup lives locally). Missing
+  // collaborator row defaults to view-only — safest assumption.
+  const isOwner = bed.garden.userId === user.id;
+  const canEdit =
+    isOwner ||
+    (
+      await db.gardenCollaborator.findUnique({
+        where: { gardenId_userId: { gardenId, userId: user.id } },
+        select: { role: true },
+      })
+    )?.role === "EDITOR";
 
   // Crop rotation warnings for this bed
   const rotationWarnings = viewingSeason
@@ -212,6 +232,7 @@ export default async function BedPage({
             variety: rawPlanting.variety,
             notes: rawPlanting.notes,
             startMethod: rawPlanting.startMethod,
+            _count: rawPlanting._count,
           }
         : null,
       // Footprint info: when this cell is part of a multi-cell planting but
@@ -284,7 +305,7 @@ export default async function BedPage({
             <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>{bedNameFirst}</em>
             {bedNameRest ? ` ${bedNameRest}` : null}
           </h1>
-          <EditBedDialog
+          {canEdit && <EditBedDialog
             bedId={bed.id}
             gardenId={gardenId}
             initial={{
@@ -300,7 +321,7 @@ export default async function BedPage({
                 )
               ).size,
             }}
-          />
+          />}
         </div>
         {/* Sub — mono meta */}
         <p style={{
@@ -338,6 +359,7 @@ export default async function BedPage({
           cells={cells}
           seasonId={viewingSeason?.id ?? ""}
           isPro={isPro}
+          canEdit={canEdit}
           userId={user.id}
           recentPlants={recentPlants}
           prefillPlant={prefillPlant}

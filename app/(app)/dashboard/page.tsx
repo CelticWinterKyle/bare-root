@@ -334,7 +334,7 @@ export default async function DashboardPage() {
       orderBy: { scheduledAt: "asc" },
       take: 4,
       include: {
-        planting: { include: { plant: { select: { name: true } }, cell: { include: { bed: { select: { name: true, gardenId: true } } } } } },
+        planting: { include: { plant: { select: { name: true } }, cell: { include: { bed: { select: { id: true, name: true, gardenId: true } } } } } },
         garden: { select: { name: true } },
       },
     }),
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
       orderBy: { scheduledAt: "asc" },
       take: 3,
       include: {
-        planting: { include: { plant: { select: { name: true } }, cell: { include: { bed: { select: { name: true, gardenId: true } } } } } },
+        planting: { include: { plant: { select: { name: true } }, cell: { include: { bed: { select: { id: true, name: true, gardenId: true } } } } } },
         garden: { select: { name: true } },
       },
     }),
@@ -686,8 +686,10 @@ export default async function DashboardPage() {
                 : isToday
                 ? styles.taskWhenNow
                 : "";
+              // Deep-link to the bed (matches the bell + reminders page) — the
+              // garden canvas was an extra hop in the daily loop.
               const href = r.planting?.cell.bed.gardenId
-                ? `/garden/${r.planting.cell.bed.gardenId}`
+                ? `/garden/${r.planting.cell.bed.gardenId}/beds/${r.planting.cell.bed.id}`
                 : "/reminders";
               return (
                 <Link key={r.id} href={href} className={styles.taskCard}>
@@ -1013,7 +1015,7 @@ export default async function DashboardPage() {
                       ? `Bed ${r.planting.cell.bed.name}`
                       : r.garden?.name ?? "";
                   const href = r.planting?.cell.bed.gardenId
-                    ? `/garden/${r.planting.cell.bed.gardenId}`
+                    ? `/garden/${r.planting.cell.bed.gardenId}/beds/${r.planting.cell.bed.id}`
                     : "/reminders";
                   return (
                     <Link key={r.id} href={href} className={styles.upcomingItem}>

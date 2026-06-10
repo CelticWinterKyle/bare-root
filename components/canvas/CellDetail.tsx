@@ -43,12 +43,18 @@ type Props = {
     variety: string | null;
     notes: string | null;
     startMethod: PlantStartMethod | null;
+    /** History counts — when present and non-zero, the remove confirm warns
+     *  that removal also deletes these records (hard delete cascades). */
+    _count?: { harvestLogs: number; photos: number; growthNotes: number };
   };
   warnings: CompanionWarning[];
   gardenId: string;
   bedId: string;
   /** Garden frost dates ("MM-DD") that drive the start-method guidance. */
   frost: { lastFrostDate: string | null; firstFrostDate: string | null };
+  /** False for VIEWER collaborators — everything renders read-only:
+   *  static status chip, plain-text dates/variety/notes, no Move/Remove. */
+  canEdit?: boolean;
   onClose: () => void;
   /** When provided, the Move button is shown. Clicking it puts BedGrid
    *  into move mode — the next empty cell tap relocates this planting. */
@@ -60,7 +66,20 @@ function toInputDate(d: Date | null): string {
   return new Date(d).toISOString().split("T")[0];
 }
 
-export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose, onMoveStart }: Props) {
+// timeZone UTC for the same reason as the est. harvest display below —
+// dates are stored as UTC midnight, so local formatting can shift a day.
+function toDisplayDate(d: Date | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+
+const START_METHOD_LABEL: Record<PlantStartMethod, string> = {
+  SEED_INDOORS: "Seeds started indoors",
+  DIRECT_SOW: "Direct sown",
+  BUY_START: "Bought as a start",
+};
+
+export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit = true, onClose, onMoveStart }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
@@ -141,6 +160,18 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
   }
 
   const statusInfo = STATUSES.find((s) => s.value === status);
+
+  // History that a remove would cascade-delete (removePlanting hard-deletes
+  // the planting AND its harvest logs / photos / growth notes). Zero-count
+  // parts are skipped so the warning only mentions what actually exists.
+  const counts = planting._count;
+  const historyParts = counts
+    ? [
+        counts.harvestLogs > 0 ? `${counts.harvestLogs} harvest${counts.harvestLogs === 1 ? "" : "s"}` : null,
+        counts.photos > 0 ? `${counts.photos} photo${counts.photos === 1 ? "" : "s"}` : null,
+        counts.growthNotes > 0 ? `${counts.growthNotes} note${counts.growthNotes === 1 ? "" : "s"}` : null,
+      ].filter((p): p is string => p !== null)
+    : [];
 
   return (
     <div>
@@ -223,38 +254,56 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
         })()}
 
         {/* Start-method guidance — "how do I grow this right now?" Leads the
-            panel so a freshly placed plant comes with a recommended path. */}
-        <StartMethodPicker
-          plantingId={planting.id}
-          plant={{
-            daysToMaturity: planting.plant.daysToMaturity ?? null,
-            indoorStartWeeks: planting.plant.indoorStartWeeks ?? null,
-            transplantWeeks: planting.plant.transplantWeeks ?? null,
-          }}
-          frost={frost}
-          current={planting.startMethod}
-        />
+            panel so a freshly placed plant comes with a recommended path.
+            Viewers get a static line instead of the picker. */}
+        {canEdit ? (
+          <StartMethodPicker
+            plantingId={planting.id}
+            plant={{
+              daysToMaturity: planting.plant.daysToMaturity ?? null,
+              indoorStartWeeks: planting.plant.indoorStartWeeks ?? null,
+              transplantWeeks: planting.plant.transplantWeeks ?? null,
+            }}
+            frost={frost}
+            current={planting.startMethod}
+          />
+        ) : planting.startMethod ? (
+          <div>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "6px" }}>Start method</p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30" }}>
+              {START_METHOD_LABEL[planting.startMethod]}
+            </p>
+          </div>
+        ) : null}
 
-        {/* Status buttons */}
+        {/* Status — buttons for editors, a static chip for viewers */}
         <div>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Status</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {STATUSES.map((s) => (
-              <button
-                key={s.value}
-                onClick={() => handleStatusChange(s.value)}
-                disabled={isUpdating}
-                title={s.hint}
-                className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
-                  status === s.value
-                    ? `${s.color} ring-2 ring-inset ring-white/30`
-                    : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE]"
-                } disabled:opacity-50`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          {canEdit ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              {STATUSES.map((s) => (
+                <button
+                  key={s.value}
+                  onClick={() => handleStatusChange(s.value)}
+                  disabled={isUpdating}
+                  title={s.hint}
+                  className={`text-xs px-3 py-2.5 rounded-lg font-medium transition-all text-left ${
+                    status === s.value
+                      ? `${s.color} ring-2 ring-inset ring-white/30`
+                      : "bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE]"
+                  } disabled:opacity-50`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            statusInfo && (
+              <span className={`inline-block text-xs px-3 py-1.5 rounded-lg font-medium ${statusInfo.color}`}>
+                {statusInfo.label}
+              </span>
+            )
+          )}
           {/* Hint for the currently-selected status — visible on mobile where
               title= tooltips don't fire. */}
           {statusInfo && (
@@ -265,54 +314,79 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
           )}
         </div>
 
-        {/* Variety + Notes */}
+        {/* Variety + Notes — inputs for editors, plain text for viewers */}
         <div>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Details</p>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Variety (e.g. Sungold, Roma)"
-              value={variety}
-              onChange={(e) => setVariety(e.target.value)}
-              onBlur={(e) => handleMetaBlur("variety", e.target.value)}
-              className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
-            />
-            <textarea
-              placeholder="Notes (optional)"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              onBlur={(e) => handleMetaBlur("notes", e.target.value)}
-              rows={2}
-              className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA] resize-none"
-            />
-          </div>
+          {canEdit ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Variety (e.g. Sungold, Roma)"
+                value={variety}
+                onChange={(e) => setVariety(e.target.value)}
+                onBlur={(e) => handleMetaBlur("variety", e.target.value)}
+                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+              />
+              <textarea
+                placeholder="Notes (optional)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                onBlur={(e) => handleMetaBlur("notes", e.target.value)}
+                rows={2}
+                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA] resize-none"
+              />
+            </div>
+          ) : planting.variety || planting.notes ? (
+            <div className="space-y-1.5">
+              {planting.variety && (
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30" }}>
+                  <span style={{ color: "#6B6B5A" }}>Variety:</span> {planting.variety}
+                </p>
+              )}
+              {planting.notes && (
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                  {planting.notes}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#ADADAA" }}>No variety or notes yet</p>
+          )}
         </div>
 
-        {/* Dates */}
+        {/* Dates — date inputs for editors, plain text for viewers */}
         <div>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Dates</p>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Planted</label>
-              <input
-                type="date"
-                value={plantedDate}
-                onChange={(e) => setPlantedDate(e.target.value)}
-                onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
-                disabled={isDating}
-                className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
-              />
+              {canEdit ? (
+                <input
+                  type="date"
+                  value={plantedDate}
+                  onChange={(e) => setPlantedDate(e.target.value)}
+                  onBlur={(e) => handleDateBlur("plantedDate", e.target.value)}
+                  disabled={isDating}
+                  className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
+                />
+              ) : (
+                <span style={{ fontSize: "12px", color: "#3A3A30" }}>{toDisplayDate(planting.plantedDate)}</span>
+              )}
             </div>
             <div className="flex items-center justify-between gap-2">
               <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Transplanted</label>
-              <input
-                type="date"
-                value={transplantDate}
-                onChange={(e) => setTransplantDate(e.target.value)}
-                onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
-                disabled={isDating}
-                className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
-              />
+              {canEdit ? (
+                <input
+                  type="date"
+                  value={transplantDate}
+                  onChange={(e) => setTransplantDate(e.target.value)}
+                  onBlur={(e) => handleDateBlur("transplantDate", e.target.value)}
+                  disabled={isDating}
+                  className="text-xs border border-[#E4E4DC] rounded-md px-2 py-1 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] disabled:opacity-50"
+                />
+              ) : (
+                <span style={{ fontSize: "12px", color: "#3A3A30" }}>{toDisplayDate(planting.transplantDate)}</span>
+              )}
             </div>
             {expectedHarvest && (
               <div className="flex items-center justify-between gap-2">
@@ -361,6 +435,22 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
         )}
       </div>
 
+      {/* History warning — shown while the remove button is armed, when the
+          planting has records that the hard delete would take with it. */}
+      {canEdit && removeConfirm && historyParts.length > 0 && (
+        <div style={{
+          padding: "8px 16px",
+          background: "#FBF0EE",
+          borderTop: "1px solid rgba(122,42,24,0.15)",
+          fontFamily: "var(--font-body)",
+          fontSize: "11px",
+          color: "#7A2A18",
+          lineHeight: 1.45,
+        }}>
+          Removing also deletes its history — {historyParts.join(", ")}. Finished plants can be marked <strong>Harvested</strong> instead.
+        </div>
+      )}
+
       {/* Actions footer — plant-panel-actions */}
       <div style={{
         display: "flex", gap: "6px",
@@ -382,7 +472,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
         >
           Open
         </Link>
-        {onMoveStart && (
+        {canEdit && onMoveStart && (
           <button
             onClick={() => {
               onMoveStart({ id: planting.id, plantName: planting.plant.name });
@@ -401,7 +491,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
             Move
           </button>
         )}
-        <button
+        {canEdit && <button
           onClick={handleRemoveClick}
           disabled={isRemoving}
           style={{
@@ -417,7 +507,7 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
         >
           {isRemoving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
           {removeConfirm ? "Confirm" : "Remove"}
-        </button>
+        </button>}
       </div>
     </div>
   );

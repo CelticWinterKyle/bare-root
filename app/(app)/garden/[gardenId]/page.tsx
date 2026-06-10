@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Sprout } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
+import { LeaveGardenButton } from "@/components/garden/LeaveGardenButton";
 import { GardenCanvasToggle } from "@/components/canvas/GardenCanvasToggle";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 import { hasFrostRisk } from "@/lib/api/weather";
@@ -83,6 +84,19 @@ export default async function GardenPage({
         select: { subscriptionTier: true },
       }))?.subscriptionTier ?? "FREE";
   const atBedLimit = ownerTier === "FREE" && bedCount >= 3;
+
+  // Resolve the viewer's role so the UI can hide edit affordances from
+  // VIEWER collaborators (every edit would just fail server-side anyway).
+  // Missing row defaults to VIEWER — safest assumption.
+  const role: "OWNER" | "EDITOR" | "VIEWER" = isOwner
+    ? "OWNER"
+    : (
+        await db.gardenCollaborator.findUnique({
+          where: { gardenId_userId: { gardenId, userId: user.id } },
+          select: { role: true },
+        })
+      )?.role ?? "VIEWER";
+  const canEdit = role !== "VIEWER";
 
   // Stale-while-revalidate: only the first-ever view blocks on OpenWeather.
   let weatherCurrent: CurrentWeather | null = null;
@@ -188,6 +202,11 @@ export default async function GardenPage({
             </h1>
             {/* Tag pills */}
             <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap", alignItems: "center" }}>
+              {!isOwner && (
+                <span style={role === "EDITOR" ? tagGreen : tagAmber}>
+                  {role === "EDITOR" ? "Editor" : "Viewer"}
+                </span>
+              )}
               {garden.usdaZone && <span style={tagGreen}>Zone {garden.usdaZone}</span>}
               {activeSeason && <span style={tagAmber}>{activeSeason.name}</span>}
               <span style={tagGhost}>{garden.widthFt} × {garden.heightFt} ft</span>
@@ -197,38 +216,49 @@ export default async function GardenPage({
             </div>
           </div>
 
-          {/* Action buttons — desktop only */}
+          {/* Action buttons — desktop only. Settings is owner-only (the
+              settings page 404s for collaborators); collaborators get a
+              Leave-garden affordance instead. */}
           <div className="hidden md:flex items-start gap-2" style={{ paddingTop: "2px", flexShrink: 0 }}>
-            <Link href={`/garden/${gardenId}/settings`} style={btnGhost}>
-              ⚙ Settings
-            </Link>
+            {isOwner ? (
+              <Link href={`/garden/${gardenId}/settings`} style={btnGhost}>
+                ⚙ Settings
+              </Link>
+            ) : (
+              <LeaveGardenButton gardenId={gardenId} />
+            )}
             <Link href={`/garden/${gardenId}/seasons`} style={btnGhost}>
               Seasons
             </Link>
-            {!atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
+            {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
           </div>
         </div>
 
-        {/* Mobile-only secondary action row */}
+        {/* Mobile-only secondary action row — same owner/collaborator split
+            as the desktop buttons above. */}
         <div className="md:hidden flex gap-2 px-[22px] pb-4" style={{ marginTop: "-4px" }}>
-          <Link
-            href={`/garden/${gardenId}/settings`}
-            className="flex-1 flex items-center justify-center gap-1.5"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#3A3A30",
-              padding: "7px 10px",
-              borderRadius: "8px",
-              border: "1px solid #E4E4DC",
-              background: "#FDFDF8",
-              textDecoration: "none",
-            }}
-          >
-            ⚙ Settings
-          </Link>
+          {isOwner ? (
+            <Link
+              href={`/garden/${gardenId}/settings`}
+              className="flex-1 flex items-center justify-center gap-1.5"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#3A3A30",
+                padding: "7px 10px",
+                borderRadius: "8px",
+                border: "1px solid #E4E4DC",
+                background: "#FDFDF8",
+                textDecoration: "none",
+              }}
+            >
+              ⚙ Settings
+            </Link>
+          ) : (
+            <LeaveGardenButton gardenId={gardenId} variant="mobile" />
+          )}
           <Link
             href={`/garden/${gardenId}/seasons`}
             className="flex-1 flex items-center justify-center"
@@ -281,7 +311,7 @@ export default async function GardenPage({
               <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>
                 {garden.locationZip ? "Weather unavailable" : "No location set"}
               </div>
-              {!garden.locationZip && (
+              {!garden.locationZip && isOwner && (
                 <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#A8D870", textDecoration: "none", marginTop: "2px", display: "block" }}>
                   Add zip code →
                 </Link>
@@ -300,9 +330,9 @@ export default async function GardenPage({
               No beds yet
             </p>
             <p style={{ fontSize: "14px", color: "#6B6B5A", marginBottom: "16px" }}>
-              Add your first raised bed to start planning.
+              {canEdit ? "Add your first raised bed to start planning." : "Nothing has been planned here yet."}
             </p>
-            <AddBedDialog gardenId={garden.id} />
+            {canEdit && <AddBedDialog gardenId={garden.id} />}
           </div>
         </div>
       ) : (
@@ -361,7 +391,7 @@ export default async function GardenPage({
             {/* Mobile section header */}
             <div className="md:hidden flex items-center justify-between px-[22px] pt-4 pb-2">
               <h2 style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: 700, color: "#111109", letterSpacing: "-0.02em" }}>Beds</h2>
-              {!atBedLimit && <AddBedDialog gardenId={garden.id} />}
+              {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} />}
             </div>
 
             {/* Responsive bed list/grid */}
@@ -408,7 +438,7 @@ export default async function GardenPage({
               ))}
 
               {/* Add Bed tile — desktop only */}
-              {!atBedLimit && (
+              {canEdit && !atBedLimit && (
                 <div className="hidden md:block">
                   <AddBedDialog gardenId={garden.id} asTile />
                 </div>
@@ -428,7 +458,7 @@ export default async function GardenPage({
                 Seasons track your plantings across a growing period (e.g. Spring 2026). Create one to start assigning plants to your beds.
               </p>
             </div>
-            <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />
+            {canEdit && <CreateSeasonDialog gardenId={garden.id} hasActiveSeason={false} />}
           </div>
         )}
 

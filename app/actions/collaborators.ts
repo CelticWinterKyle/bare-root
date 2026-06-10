@@ -170,7 +170,28 @@ export async function acceptInvitation(token: string): Promise<{ gardenId: strin
       where: { id: invitation.id },
       data: { acceptedAt: new Date() },
     }),
+    // A collaborator's "onboarding" IS accepting the invite — without this
+    // the (app) layout gate bounces them into the create-YOUR-garden wizard
+    // before they ever see the garden they came to help with.
+    db.user.update({
+      where: { id: user.id },
+      data: { onboardingComplete: true },
+    }),
   ]);
 
   return { gardenId: invitation.gardenId };
+}
+
+/**
+ * A collaborator removing THEMSELVES from a garden. Distinct from
+ * removeCollaborator (owner-only): scoped to the caller's own membership,
+ * so it can't be used to remove anyone else.
+ */
+export async function leaveGarden(gardenId: string): Promise<void> {
+  const user = await requireUser();
+  await db.gardenCollaborator.deleteMany({
+    where: { gardenId, userId: user.id },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/garden");
 }
