@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { createBed } from "@/app/actions/bed";
 import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; asTile?: boolean; primary?: boolean }) {
   const router = useRouter();
@@ -36,15 +37,19 @@ export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; 
 
   function handleSubmit() {
     startTransition(async () => {
-      const bedId = await createBed({
-        gardenId,
-        name: form.name.trim(),
-        widthFt: parseFloat(form.widthFt),
-        heightFt: parseFloat(form.heightFt),
-        cellSizeIn: parseInt(form.cellSizeIn) as 12 | 6,
-      });
-      setOpen(false);
-      router.push(`/garden/${gardenId}/beds/${bedId}`);
+      try {
+        const bedId = await createBed({
+          gardenId,
+          name: form.name.trim(),
+          widthFt: parseFloat(form.widthFt),
+          heightFt: parseFloat(form.heightFt),
+          cellSizeIn: parseInt(form.cellSizeIn) as 12 | 6,
+        });
+        setOpen(false);
+        router.push(`/garden/${gardenId}/beds/${bedId}`);
+      } catch {
+        toast.error("Couldn't add the bed. Please try again.");
+      }
     });
   }
 

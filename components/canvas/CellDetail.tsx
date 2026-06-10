@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { Loader2, Trash2, X, Move } from "lucide-react";
 import type { PlantingStatus, PlantCategory, PlantStartMethod } from "@/lib/generated/prisma/enums";
@@ -77,7 +78,14 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
     const current = field === "variety" ? planting.variety ?? "" : planting.notes ?? "";
     if (value === current) return;
     startMeta(async () => {
-      await updatePlantingMeta(planting.id, { [field]: value });
+      try {
+        await updatePlantingMeta(planting.id, { [field]: value });
+      } catch {
+        // Roll the field back — without this a failed save looks saved.
+        if (field === "variety") setVariety(planting.variety ?? "");
+        else setNotes(planting.notes ?? "");
+        toast.error("Couldn't save. Please try again.");
+      }
     });
   }
 
@@ -87,16 +95,30 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
   const harmful = warnings.filter((w) => w.type === "HARMFUL");
 
   function handleStatusChange(s: PlantingStatus) {
+    const previous = status;
     setStatus(s);
     startUpdate(async () => {
-      await updatePlantingStatus(planting.id, s);
+      try {
+        await updatePlantingStatus(planting.id, s);
+      } catch {
+        // Roll the optimistic chip back — without this a failed save
+        // shows as succeeded.
+        setStatus(previous);
+        toast.error("Couldn't update the status. Please try again.");
+      }
     });
   }
 
   function handleDateBlur(field: "plantedDate" | "transplantDate", value: string) {
     startDate(async () => {
-      await updatePlantingDates(planting.id, { [field]: value || null });
-      if (field === "plantedDate" && !value) setExpectedHarvest("");
+      try {
+        await updatePlantingDates(planting.id, { [field]: value || null });
+        if (field === "plantedDate" && !value) setExpectedHarvest("");
+      } catch {
+        if (field === "plantedDate") setPlantedDate(toInputDate(planting.plantedDate));
+        else setTransplantDate(toInputDate(planting.transplantDate));
+        toast.error("Couldn't save the date. Please try again.");
+      }
     });
   }
 
@@ -108,8 +130,13 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
     }
     if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
     startRemove(async () => {
-      await removePlanting(planting.id);
-      onClose();
+      try {
+        await removePlanting(planting.id);
+        onClose();
+      } catch {
+        setRemoveConfirm(false);
+        toast.error("Couldn't remove the plant. Please try again.");
+      }
     });
   }
 

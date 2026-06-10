@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { archiveSeason, ratePlanting } from "@/app/actions/seasons";
 import { Loader2, Star } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 type PlantingRow = {
@@ -38,15 +39,19 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
 
   function handleSubmit() {
     startArchive(async () => {
-      // Save all ratings in parallel, then archive
-      await Promise.all(
-        plantings.map((p) =>
-          ratePlanting(p.id, { rating: ratings[p.id]?.rating ?? null, growAgain: ratings[p.id]?.growAgain ?? false })
-        )
-      );
-      await archiveSeason(seasonId);
-      setOpen(false);
-      router.refresh();
+      try {
+        // Save all ratings in parallel, then archive
+        await Promise.all(
+          plantings.map((p) =>
+            ratePlanting(p.id, { rating: ratings[p.id]?.rating ?? null, growAgain: ratings[p.id]?.growAgain ?? false })
+          )
+        );
+        await archiveSeason(seasonId);
+        setOpen(false);
+        router.refresh();
+      } catch {
+        toast.error("Couldn't archive the season. Please try again.");
+      }
     });
   }
 

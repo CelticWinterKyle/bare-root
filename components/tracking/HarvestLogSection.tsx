@@ -4,6 +4,7 @@ import { addHarvestLog, deleteHarvestLog } from "@/app/actions/tracking";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
 
@@ -45,18 +46,27 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
     e.preventDefault();
     if (!quantity || Number(quantity) <= 0) return;
     startAdd(async () => {
-      await addHarvestLog(plantingId, { quantity: Number(quantity), unit, notes: notes || undefined, harvestedAt: date });
-      setQuantity("");
-      setNotes("");
-      setOpen(false);
+      try {
+        await addHarvestLog(plantingId, { quantity: Number(quantity), unit, notes: notes || undefined, harvestedAt: date });
+        setQuantity("");
+        setNotes("");
+        setOpen(false);
+      } catch {
+        toast.error("Couldn't log the harvest. Please try again.");
+      }
     });
   }
 
   function handleDelete(id: string) {
     setDeletingId(id);
     startDelete(async () => {
-      await deleteHarvestLog(id);
-      setDeletingId(null);
+      try {
+        await deleteHarvestLog(id);
+      } catch {
+        toast.error("Couldn't delete the harvest entry. Please try again.");
+      } finally {
+        setDeletingId(null);
+      }
     });
   }
 

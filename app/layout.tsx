@@ -54,7 +54,7 @@ export default function RootLayout({
       >
         <body className="min-h-full flex flex-col bg-[#FDFDF8] text-[#111109]">
           {children}
-          <Toaster position="bottom-center" />
+          <Toaster position="bottom-center" mobileOffset={{ bottom: 88 }} />
           <ServiceWorkerRegistration />
           <Analytics />
           <SpeedInsights />

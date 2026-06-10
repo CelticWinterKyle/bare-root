@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSeason } from "@/app/actions/seasons";
 import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -22,9 +23,13 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      await createSeason(gardenId, { name, startDate, setActive });
-      setOpen(false);
-      router.refresh();
+      try {
+        await createSeason(gardenId, { name, startDate, setActive });
+        setOpen(false);
+        router.refresh();
+      } catch {
+        toast.error("Couldn't create the season. Please try again.");
+      }
     });
   }
 

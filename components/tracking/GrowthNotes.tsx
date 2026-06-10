@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { addGrowthNote, deleteGrowthNote } from "@/app/actions/tracking";
 import { Plus, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Note = { id: string; body: string; createdAt: Date };
 
@@ -17,16 +18,25 @@ export function GrowthNotes({ plantingId, notes }: Props) {
     e.preventDefault();
     if (!body.trim()) return;
     startAdd(async () => {
-      await addGrowthNote(plantingId, body.trim());
-      setBody("");
+      try {
+        await addGrowthNote(plantingId, body.trim());
+        setBody("");
+      } catch {
+        toast.error("Couldn't add the note. Please try again.");
+      }
     });
   }
 
   function handleDelete(id: string) {
     setDeletingId(id);
     startDelete(async () => {
-      await deleteGrowthNote(id);
-      setDeletingId(null);
+      try {
+        await deleteGrowthNote(id);
+      } catch {
+        toast.error("Couldn't delete the note. Please try again.");
+      } finally {
+        setDeletingId(null);
+      }
     });
   }
 

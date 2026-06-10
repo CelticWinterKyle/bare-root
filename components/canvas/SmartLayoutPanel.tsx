@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlantThumb } from "@/components/plants/PlantThumb";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type Plant = {
   id: string;
@@ -51,8 +52,12 @@ export function SmartLayoutPanel({
     setQuery(q);
     if (q.length < 2) { setSearchResults(recentPlants); return; }
     startSearch(async () => {
-      const found = await searchPlantsAction(q, null, userId);
-      setSearchResults(found);
+      try {
+        const found = await searchPlantsAction(q, null, userId);
+        setSearchResults(found);
+      } catch {
+        toast.error("Couldn't search plants. Please try again.");
+      }
     });
   }
 
@@ -67,21 +72,30 @@ export function SmartLayoutPanel({
   async function handleGenerate() {
     setStep("generating");
     setError(null);
-    const result = await generateLayoutAction(bedId, seasonId, wishlist.map((p) => p.id));
-    if (result.error) {
-      setError(result.error);
+    try {
+      const result = await generateLayoutAction(bedId, seasonId, wishlist.map((p) => p.id));
+      if (result.error) {
+        setError(result.error);
+        setStep("wishlist");
+      } else {
+        setAssignments(result.assignments);
+        setStep("results");
+      }
+    } catch {
+      setError("Couldn't plan the bed. Please try again.");
       setStep("wishlist");
-    } else {
-      setAssignments(result.assignments);
-      setStep("results");
     }
   }
 
   function handleAccept() {
     startAccept(async () => {
-      await acceptLayoutAssignments(bedId, seasonId, assignments);
-      onAssignmentsAccepted(assignments);
-      onClose();
+      try {
+        await acceptLayoutAssignments(bedId, seasonId, assignments);
+        onAssignmentsAccepted(assignments);
+        onClose();
+      } catch {
+        toast.error("Couldn't apply the layout. Please try again.");
+      }
     });
   }
 

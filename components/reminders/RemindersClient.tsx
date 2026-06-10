@@ -5,6 +5,7 @@ import { dismissReminder } from "@/app/actions/reminders";
 import { CreateReminderDialog } from "@/components/reminders/CreateReminderDialog";
 import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
   START_SEEDS:       { icon: <Sprout className="w-4 h-4" />,          accent: "#D4A843", bg: "#FFF8E7" },
@@ -54,7 +55,13 @@ export function RemindersClient({
   const [, startTransition] = useTransition();
 
   function handleDismiss(id: string) {
-    startTransition(() => dismissReminder(id));
+    startTransition(async () => {
+      try {
+        await dismissReminder(id);
+      } catch {
+        toast.error("Couldn't dismiss the reminder. Please try again.");
+      }
+    });
   }
 
   const pending = reminders.filter((r) => !r.sentAt);
