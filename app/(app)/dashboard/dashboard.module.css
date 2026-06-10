@@ -26,8 +26,10 @@
   /* Editorial bleed: backgrounds run full-width while content centers at
      the narrow container. The padding adapts to viewport width — under
      1244px (1200 + 44 default gutter) it stays at 22px, then grows to
-     keep content centered on the 1200-wide track. */
-  --x-pad: max(22px, calc((100vw - var(--container-narrow)) / 2));
+     keep content centered on the 1200-wide track. Must be % (not vw):
+     the page sits beside the 210px fixed sidebar, and vw overshoots by
+     that amount, squeezing content to ~990px on every desktop. */
+  --x-pad: max(22px, calc((100% - var(--container-narrow)) / 2));
 
   background: var(--white);
   color: var(--ink);
