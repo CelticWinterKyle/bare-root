@@ -173,6 +173,8 @@ type PanelState =
 function CellTile({
   cell,
   cellPx,
+  dotPx,
+  dotOffset,
   dense,
   effectiveStatus,
   isAnchor,
@@ -193,6 +195,8 @@ function CellTile({
 }: {
   cell: CellData;
   cellPx: number;
+  dotPx: number;
+  dotOffset: number;
   dense: boolean;
   effectiveStatus: PlantingStatus | null;
   isAnchor: boolean;
@@ -357,10 +361,10 @@ function CellTile({
           aria-hidden
           className="absolute pointer-events-none"
           style={{
-            top: 4,
-            right: 4,
-            width: 6,
-            height: 6,
+            top: dotOffset,
+            right: dotOffset,
+            width: dotPx,
+            height: dotPx,
             borderRadius: "50%",
             background: STATUS_DOT_COLOR[cell.planting.status] ?? "#ADADAA",
             boxShadow: "0 0 0 1.5px rgba(253,253,248,0.7)",
@@ -626,6 +630,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Dense mode: hide labels when cells are too small to read them
   const dense = cellPx < 36;
 
+  // Status dot scales gently with desktop cell size (6px is invisible in a
+  // 128px cell); mobile keeps the original fixed 6px at 4px offset.
+  const dotPx = isMobile ? 6 : Math.max(6, Math.min(11, Math.round(cellPx * 0.085)));
+  const dotOffset = isMobile ? 4 : Math.max(4, Math.min(9, Math.round(cellPx * 0.06)));
+
   function handleCellClick(cell: CellData) {
     // Read-only mode: viewing a planting is the point, everything else is
     // off the table. Planted/footprint cells open the (read-only) detail
@@ -818,6 +827,35 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     cells.map((c) => c.planting?.status).filter(Boolean) as PlantingStatus[]
   );
   const hasAnyWarnings = cells.some((c) => c.warnings.length > 0);
+
+  // Legend items (statuses present in this bed + companion markers).
+  // Rendered twice: below the grid on mobile, inside the stats strip on
+  // desktop — so nothing floats in dead space under the canvas.
+  const legendItems =
+    presentStatuses.size === 0 && !hasAnyWarnings ? null : (
+      <>
+        {Object.entries(STATUS_STYLES)
+          .filter(([key]) => presentStatuses.has(key as PlantingStatus))
+          .map(([key, s]) => (
+            <div key={key} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: CELL_STYLE[key]?.bg ?? s.from, border: `1px solid ${CELL_STYLE[key]?.border ?? "transparent"}` }} />
+              <span className="text-xs text-[#6B6B5A]">{s.label}</span>
+            </div>
+          ))}
+        {hasAnyWarnings && (
+          <>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#B85C3A" }} />
+              <span className="text-xs text-[#6B6B5A]">Conflict</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#3A6B20" }} />
+              <span className="text-xs text-[#6B6B5A]">Beneficial</span>
+            </div>
+          </>
+        )}
+      </>
+    );
   const [hoveredAssignment, setHoveredAssignment] = useState<{ row: number; col: number } | null>(null);
 
   const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 bg-[#F4F4EC] text-[#6B6B5A] hover:bg-[#EAEADE] hover:text-[#111109]";
@@ -986,7 +1024,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       {/* Canvas toolbar — zoom/rotate only. Tabs moved into the sidebar. */}
       <div style={{ borderBottom: "1px solid #E4E4DC", background: "#FDFDF8" }}>
         <div className="flex items-center justify-end gap-1 px-[22px] md:px-8 py-2">
+          {/* Grid meta — mobile only; the page header carries it on desktop */}
           <span
+            className="md:hidden"
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: 9,
@@ -1009,11 +1049,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.35))} title="Zoom out (−)" className={btnBase}>
             <ZoomOut className="w-3.5 h-3.5" />
             </button>
-          {zoom !== 1 && (
-            <button onClick={() => setZoom(1)} title="Fit" className={btnBase}>
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button
+            onClick={() => setZoom(1)}
+            title="Fit (0)"
+            disabled={zoom === 1}
+            className={`${btnBase} disabled:opacity-35 disabled:cursor-default`}
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -1036,26 +1079,32 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             }
             const plantList = Object.values(plantSummary).sort((a, b) => b.count - a.count);
             return (
-              <div className="hidden md:flex self-center items-center flex-wrap justify-center gap-x-4 gap-y-2 px-5 py-2 rounded-full border shadow-sm" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
-                <div className="flex items-baseline gap-1.5">
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 800, color: "#111109", letterSpacing: "-0.02em", lineHeight: 1 }}>{filledCells}</span>
-                  <span style={{ fontSize: 12, color: "#6B6B5A" }}>/ {totalCells} cells</span>
+              <div className="hidden md:flex items-center flex-wrap justify-between gap-x-4 gap-y-2 px-5 py-2 rounded-xl border shadow-sm" style={{ background: "#FDFDF8", borderColor: "#E4E4DC" }}>
+                <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 800, color: "#111109", letterSpacing: "-0.02em", lineHeight: 1 }}>{filledCells}</span>
+                    <span style={{ fontSize: 12, color: "#6B6B5A" }}>/ {totalCells} cells</span>
+                  </div>
+                  <div className="rounded-full overflow-hidden" style={{ width: 90, height: 6, background: "#F4F4EC" }}>
+                    <div style={{ width: `${fillPct}%`, height: "100%", background: "linear-gradient(90deg, #3A6B20, #7DA84E)", transition: "width 0.4s" }} />
+                  </div>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#6B6B5A" }}>{fillPct}% planted</span>
+                  {plantList.length > 0 && (
+                    <>
+                      <span style={{ width: 1, height: 14, background: "#E4E4DC" }} />
+                      {plantList.map((p) => (
+                        <div key={p.name} className="flex items-center gap-1.5">
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.OTHER, flexShrink: 0 }} />
+                          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "#111109" }}>{p.name}</span>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#6B6B5A", fontWeight: 500 }}>×{p.count}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
-                <div className="rounded-full overflow-hidden" style={{ width: 90, height: 6, background: "#F4F4EC" }}>
-                  <div style={{ width: `${fillPct}%`, height: "100%", background: "linear-gradient(90deg, #3A6B20, #7DA84E)", transition: "width 0.4s" }} />
-                </div>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#6B6B5A" }}>{fillPct}% planted</span>
-                {plantList.length > 0 && (
-                  <>
-                    <span style={{ width: 1, height: 14, background: "#E4E4DC" }} />
-                    {plantList.map((p) => (
-                      <div key={p.name} className="flex items-center gap-1.5">
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.OTHER, flexShrink: 0 }} />
-                        <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "#111109" }}>{p.name}</span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#6B6B5A", fontWeight: 500 }}>×{p.count}</span>
-                      </div>
-                    ))}
-                  </>
+                {/* Legend — desktop home; mobile keeps it below the grid */}
+                {!sunMode && !selectMode && legendItems && (
+                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5">{legendItems}</div>
                 )}
               </div>
             );
@@ -1201,6 +1250,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           key={cell.id}
                           cell={cell}
                           cellPx={cellPx}
+                          dotPx={dotPx}
+                          dotOffset={dotOffset}
                           dense={dense}
                           effectiveStatus={effectiveStatus}
                           isAnchor={!!planting}
@@ -1269,7 +1320,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                   fontFamily: "var(--font-display)",
                                   fontStyle: "italic",
                                   fontWeight: 700,
-                                  fontSize: Math.max(9, Math.min(span > 1 ? 20 : 14, cellPx * 0.28 * (span > 1 ? 1.35 : 1))),
+                                  // Caps are higher on desktop, where fit-to-canvas
+                                  // cells reach 128px — keep ~the same text:cell
+                                  // ratio as the old 14-in-56px look.
+                                  fontSize: Math.max(9, Math.min(span > 1 ? (isMobile ? 20 : 34) : (isMobile ? 14 : 26), cellPx * 0.28 * (span > 1 ? 1.35 : 1))),
                                   color: "#FDFDF8",
                                   letterSpacing: "-0.005em",
                                   textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 6px rgba(0,0,0,0.25)",
@@ -1286,7 +1340,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                     fontFamily: "var(--font-body)",
                                     fontStyle: "italic",
                                     fontWeight: 500,
-                                    fontSize: Math.max(8, Math.min(11, cellPx * 0.2)),
+                                    fontSize: Math.max(8, Math.min(isMobile ? 11 : 18, cellPx * 0.2)),
                                     color: "rgba(253,253,248,0.85)",
                                     textShadow: "0 1px 2px rgba(0,0,0,0.45)",
                                     lineHeight: 1.1,
@@ -1348,34 +1402,11 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             </div>
           ) : null}
 
-          {/* Legend — only show statuses present in this bed */}
+          {/* Legend — mobile only; on desktop it lives in the stats strip */}
           {!sunMode && !selectMode && (
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
-              {presentStatuses.size === 0 && !hasAnyWarnings ? (
+            <div className="md:hidden flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
+              {legendItems ?? (
                 <span className="text-xs text-[#6B6B5A]">{canEdit ? "Tap any cell to add a plant" : "No plants in this bed yet"}</span>
-              ) : (
-                <>
-                  {Object.entries(STATUS_STYLES)
-                    .filter(([key]) => presentStatuses.has(key as PlantingStatus))
-                    .map(([key, s]) => (
-                      <div key={key} className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm" style={{ background: CELL_STYLE[key]?.bg ?? s.from, border: `1px solid ${CELL_STYLE[key]?.border ?? "transparent"}` }} />
-                        <span className="text-xs text-[#6B6B5A]">{s.label}</span>
-                      </div>
-                    ))}
-                  {hasAnyWarnings && (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#B85C3A" }} />
-                        <span className="text-xs text-[#6B6B5A]">Conflict</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#3A6B20" }} />
-                        <span className="text-xs text-[#6B6B5A]">Beneficial</span>
-                      </div>
-                    </>
-                  )}
-                </>
               )}
             </div>
           )}
