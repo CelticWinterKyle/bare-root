@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Sprout, X as CloseIcon, Check, CheckSquare, Move, Sun, Leaf, MousePointer2, Eye } from "lucide-react";
 import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import type { LayoutAssignment } from "@/lib/services/smart-layout";
+import type { BedFamilyHistory } from "@/lib/services/crop-rotation";
 import { Sparkles, X, RotateCw, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 // Status → light cell fill + border color + label
@@ -80,7 +81,7 @@ const SUN_BG: Record<string, string> = {
 // Vertical overhead: grid padding top+bottom (28px) + centering py-3 top+bottom (24px) = 52px
 const FRAME_PAD = 52;
 
-type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null };
+type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null; plantFamily?: string | null };
 type Planting = {
   id: string;
   status: PlantingStatus;
@@ -130,6 +131,10 @@ type Props = {
   /** The user's seed inventory rows, threaded into the plant picker so each
    *  plant row can show a "have seeds" badge ("Sungold · 2 packets"). */
   seedInventory?: SeedInventoryRow[];
+  /** Plant families that grew in this bed in recent past seasons — drives
+   *  the placement-time crop-rotation hint (picker row + prefill toast).
+   *  Warn-only; never blocks planting. */
+  familyHistory?: BedFamilyHistory[];
 };
 type SeedInventoryRow = { plantId: string; variety: string; quantity: number; unit: string };
 type PanelState =
@@ -380,7 +385,7 @@ function CellTile({
   );
 }
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true, seedInventory = [] }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true, seedInventory = [], familyHistory = [] }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -401,6 +406,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Viewers never get a prefill session — arriving with ?plant=ID in a
   // shared garden must not arm the "tap to plant" flow.
   const [pendingPlant, setPendingPlant] = useState<Plant | null>(canEdit ? prefillPlant ?? null : null);
+  // Crop-rotation toast dedupe for the prefill/library placement path (which
+  // bypasses PlantPicker's inline hint): warn once per plant per page view,
+  // not on every cell tap while painting the same plant.
+  const rotationWarnedRef = useRef<Set<string>>(new Set());
   // How many plantings have been placed during this prefill session.
   // Drives the "3 Cherry Tomatoes planted" banner subtitle and resets
   // whenever a new prefill starts (via plant change) or is dismissed.
@@ -683,6 +692,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             toast.warning(result.footprintWarning, { duration: 5000 });
           } else {
             toast.success(`Planted ${plant.name}`);
+          }
+          // Placement-time rotation hint — warn, never block.
+          const hist = plant.plantFamily
+            ? familyHistory.find((h) => h.family === plant.plantFamily)
+            : undefined;
+          if (hist && !rotationWarnedRef.current.has(plant.id)) {
+            rotationWarnedRef.current.add(plant.id);
+            toast.warning(
+              `Crop rotation: ${hist.family} (${hist.plantNames.join(", ")}) grew in this bed in ${hist.seasonName}. Consider a different family to prevent disease buildup.`,
+              { duration: 6000 }
+            );
           }
         } catch (err) {
           console.error(err);
@@ -1434,6 +1454,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
                     seedInventory={seedInventory}
+                    familyHistory={familyHistory}
                     onClose={() => {
                       // Just planted into this cell? Don't snap back to none —
                       // the auto-open effect is about to swap in the detail
@@ -1594,6 +1615,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
                     seedInventory={seedInventory}
+                    familyHistory={familyHistory}
                     onClose={() => {
                       setPanel({ type: "none" });
                       setSelectedCells(new Set());

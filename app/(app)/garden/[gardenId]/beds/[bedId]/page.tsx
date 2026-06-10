@@ -8,7 +8,7 @@ import { RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { EditBedDialog } from "@/components/garden/EditBedDialog";
-import { getCropRotationWarnings } from "@/lib/services/crop-rotation";
+import { getCropRotationWarnings, getBedFamilyHistory } from "@/lib/services/crop-rotation";
 import { gardenAccessFilter } from "@/lib/permissions";
 
 export async function generateMetadata({
@@ -46,7 +46,7 @@ export default async function BedPage({
           id: plantParam,
           OR: [{ customForUserId: null }, { customForUserId: user.id }],
         },
-        select: { id: true, name: true, category: true, imageUrl: true, daysToMaturity: true, spacingInches: true },
+        select: { id: true, name: true, category: true, imageUrl: true, daysToMaturity: true, spacingInches: true, plantFamily: true },
       })
     : null;
 
@@ -138,6 +138,12 @@ export default async function BedPage({
       )
     : [];
 
+  // Plant families that grew here in recent past seasons — the plant picker
+  // shows a placement-time rotation hint for matching plants (same threading
+  // pattern as seedInventory). Editors only: viewers can't place plants.
+  const familyHistory =
+    viewingSeason && canEdit ? await getBedFamilyHistory(gardenId, bedId, viewingSeason.id) : [];
+
   // All plant IDs in this bed for the viewing season (for companion lookup).
   // Pull from occupiedBy so multi-cell plants count once and footprint cells
   // contribute too.
@@ -176,6 +182,7 @@ export default async function BedPage({
           imageUrl: true,
           daysToMaturity: true,
           spacingInches: true,
+          plantFamily: true,
         },
       },
     },
@@ -370,6 +377,7 @@ export default async function BedPage({
           userId={user.id}
           recentPlants={recentPlants}
           seedInventory={seedInventory}
+          familyHistory={familyHistory}
           prefillPlant={prefillPlant}
           frost={{ lastFrostDate: bed.garden.lastFrostDate, firstFrostDate: bed.garden.firstFrostDate }}
         />

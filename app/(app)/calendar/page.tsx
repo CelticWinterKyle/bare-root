@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { gardenAccessFilter } from "@/lib/permissions";
+import { gardenAccessFilter, gardenEditFilter } from "@/lib/permissions";
+import { SuccessionActions } from "@/components/calendar/SuccessionActions";
+import { AddToBedDialog } from "@/components/plants/AddToBedDialog";
 import { CalendarTimeline, type CalendarEvent } from "@/components/calendar/CalendarTimeline";
 import { WeatherWidget } from "@/components/calendar/WeatherWidget";
 import { FrostAlert } from "@/components/calendar/FrostAlert";
@@ -22,7 +24,7 @@ export default async function CalendarPage() {
   // Gardens (for weather/frost settings) + active-season plantings queried
   // directly — the old garden→beds→cells→plantings include shipped the whole
   // tree just to extract plantings.
-  const [gardens, plantings] = await Promise.all([
+  const [gardens, plantings, editableGardens] = await Promise.all([
     db.garden.findMany({
       where: gardenAccessFilter(user.id),
       include: { weatherCache: true },
@@ -52,8 +54,52 @@ export default async function CalendarPage() {
       // (planNow) resolve against the same garden.
       orderBy: { cell: { bed: { garden: { createdAt: "asc" } } } },
     }),
+    // Writable gardens + beds for the "Plant it" bed-choice dialog on the
+    // suggestion cards (same shape as the plant detail page's picker query —
+    // occupiedBy so footprint cells of multi-cell plants count as occupied).
+    db.garden.findMany({
+      where: gardenEditFilter(user.id),
+      select: {
+        id: true,
+        name: true,
+        seasons: { where: { isActive: true }, select: { id: true } },
+        beds: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            name: true,
+            widthFt: true,
+            heightFt: true,
+            cells: {
+              select: {
+                id: true,
+                occupiedBy: {
+                  where: { planting: { season: { isActive: true } } },
+                  select: { plantingId: true },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
   const gardenById = new Map(gardens.map((g) => [g.id, g]));
+
+  const gardensForPicker = editableGardens.map((g) => ({
+    id: g.id,
+    name: g.name,
+    hasActiveSeason: g.seasons.length > 0,
+    beds: g.beds.map((b) => ({
+      id: b.id,
+      name: b.name,
+      widthFt: b.widthFt,
+      heightFt: b.heightFt,
+      emptyCellCount: b.cells.filter((c) => c.occupiedBy.length === 0).length,
+    })),
+  }));
 
   // Use the first garden with a zip for weather (stale-while-revalidate:
   // only the first-ever view blocks on the OpenWeather fetch).
@@ -140,6 +186,7 @@ export default async function CalendarPage() {
     plantedDate: p.plantedDate,
     expectedHarvestDate: p.expectedHarvestDate,
     bedName: p.cell.bed.name,
+    gardenId: p.cell.bed.gardenId,
     gardenName: gardenById.get(p.cell.bed.gardenId)?.name ?? "",
   }));
   const firstFrostDate = gardens.find((g) => g.firstFrostDate)?.firstFrostDate ?? null;
@@ -263,6 +310,13 @@ export default async function CalendarPage() {
                     → harvest{" "}
                     {s.estimatedHarvest.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </p>
+                  <SuccessionActions
+                    plantId={s.plantId}
+                    plantName={s.plantName}
+                    gardenId={s.gardenId}
+                    suggestedDate={s.suggestedPlantDate}
+                    gardens={gardensForPicker}
+                  />
                 </div>
               </div>
             ))}
@@ -289,11 +343,19 @@ export default async function CalendarPage() {
                   {r.plantName}
                 </Link>
                 <span
-                  className="text-xs text-right"
+                  className="flex-1 text-xs text-right"
                   style={{ color: r.thisSeason ? "#3A6B20" : "#ADADAA" }}
                 >
                   {r.summary}
                 </span>
+                <div className="shrink-0">
+                  <AddToBedDialog
+                    compact
+                    plantId={r.plantId}
+                    plantName={r.plantName}
+                    gardens={gardensForPicker}
+                  />
+                </div>
               </div>
             ))}
           </div>

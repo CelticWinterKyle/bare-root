@@ -19,7 +19,7 @@ type Bed = {
   emptyCellCount: number;
 };
 
-type Garden = {
+export type PickerGarden = {
   id: string;
   name: string;
   hasActiveSeason: boolean;
@@ -29,10 +29,13 @@ type Garden = {
 type Props = {
   plantId: string;
   plantName: string;
-  gardens: Garden[];
+  gardens: PickerGarden[];
+  /** Compact renders a small outline "Plant it" trigger for inline use on
+   *  suggestion rows (calendar); default is the plant page's large CTA. */
+  compact?: boolean;
 };
 
-export function AddToBedDialog({ plantId, plantName, gardens }: Props) {
+export function AddToBedDialog({ plantId, plantName, gardens, compact = false }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -48,14 +51,22 @@ export function AddToBedDialog({ plantId, plantName, gardens }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button
-            size="lg"
-            className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
-          />
+          compact ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2.5 text-xs border-[#E4E4DC] text-[#1C3D0A] hover:border-[#1C3D0A] hover:text-[#1C3D0A]"
+            />
+          ) : (
+            <Button
+              size="lg"
+              className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
+            />
+          )
         }
       >
-        <Sprout className="w-4 h-4 mr-2" />
-        Add to a bed
+        <Sprout className={compact ? "w-3.5 h-3.5 mr-1.5" : "w-4 h-4 mr-2"} />
+        {compact ? "Plant it" : "Add to a bed"}
       </DialogTrigger>
 
       <DialogContent className="max-w-md">
@@ -68,7 +79,7 @@ export function AddToBedDialog({ plantId, plantName, gardens }: Props) {
         <div className="mt-2">
           {totalBeds === 0 ? (
             <div className="text-center py-8 text-sm text-[#6B6B5A]">
-              <p className="mb-2">You don't have any beds yet.</p>
+              <p className="mb-2">You don&apos;t have any beds yet.</p>
               <Button
                 onClick={() => { setOpen(false); router.push("/garden"); }}
                 variant="outline"

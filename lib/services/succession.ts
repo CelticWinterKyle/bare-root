@@ -4,6 +4,7 @@ export type SuccessionSuggestion = {
   plantName: string;
   plantId: string;
   bedName: string;
+  gardenId: string;
   gardenName: string;
   daysToMaturity: number;
   suggestedPlantDate: Date;
@@ -23,6 +24,7 @@ type ActivePlanting = {
   plantedDate: Date | null;
   expectedHarvestDate: Date | null;
   bedName: string;
+  gardenId: string;
   gardenName: string;
 };
 
@@ -75,6 +77,7 @@ export function getSuccessionSuggestions(
       plantName: plant.name,
       plantId: plant.id,
       bedName: p.bedName,
+      gardenId: p.gardenId,
       gardenName: p.gardenName,
       daysToMaturity: plant.daysToMaturity,
       suggestedPlantDate,

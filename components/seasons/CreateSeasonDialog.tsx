@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createSeason } from "@/app/actions/seasons";
+import { createSeason, createSeasonWithCarryOver } from "@/app/actions/seasons";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,17 @@ import { Input } from "@/components/ui/input";
 type Props = {
   gardenId: string;
   hasActiveSeason: boolean;
+  /** Grow-again plantings in the most recent season — enables the
+   *  "start from last season" opt-in when > 0. */
+  growAgainCount?: number;
 };
 
-export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
+export function CreateSeasonDialog({ gardenId, hasActiveSeason, growAgainCount = 0 }: Props) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(suggestSeasonName());
   const [startDate, setStartDate] = useState(toInputDate(new Date()));
   const [setActive, setSetActive] = useState(!hasActiveSeason);
+  const [carryOver, setCarryOver] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -24,7 +28,21 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
     e.preventDefault();
     startTransition(async () => {
       try {
-        await createSeason(gardenId, { name, startDate, setActive });
+        if (carryOver && growAgainCount > 0) {
+          const { carried, skipped } = await createSeasonWithCarryOver(gardenId, {
+            name,
+            startDate,
+            setActive,
+          });
+          toast.success(
+            `Carried ${carried} planting${carried === 1 ? "" : "s"} over` +
+              (skipped > 0
+                ? `; ${skipped} spot${skipped === 1 ? " was" : "s were"} taken.`
+                : ".")
+          );
+        } else {
+          await createSeason(gardenId, { name, startDate, setActive });
+        }
         setOpen(false);
         router.refresh();
       } catch {
@@ -81,6 +99,23 @@ export function CreateSeasonDialog({ gardenId, hasActiveSeason }: Props) {
             />
             <span className="text-sm text-[#111109]">Set as active season</span>
           </label>
+          {growAgainCount > 0 && (
+            <label className="flex items-start gap-2 cursor-pointer rounded-xl border border-[#E4E4DC] bg-[#F4F4EC] p-3">
+              <input
+                type="checkbox"
+                checked={carryOver}
+                onChange={(e) => setCarryOver(e.target.checked)}
+                className="w-4 h-4 mt-0.5 accent-[#1C3D0A]"
+              />
+              <span className="text-sm text-[#111109]">
+                Start from last season
+                <span className="block text-xs text-[#6B6B5A] mt-0.5">
+                  Replant your {growAgainCount} grow-again pick{growAgainCount === 1 ? "" : "s"} in
+                  their old spots, as Planned.
+                </span>
+              </span>
+            </label>
+          )}
           <div className="flex gap-2 pt-1">
             <Button type="submit" disabled={isPending} className="flex-1 bg-[#1C3D0A] hover:bg-[#3A6B20] text-white">
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create season"}

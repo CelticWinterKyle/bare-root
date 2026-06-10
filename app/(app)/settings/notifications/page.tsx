@@ -7,8 +7,10 @@ const REMINDER_TYPES = [
   { type: "TRANSPLANT", label: "Transplant outdoors", description: "When seedlings are ready to move outside" },
   { type: "HARVEST", label: "Harvest reminders", description: "When plants are expected to be ready to harvest" },
   { type: "FROST_ALERT", label: "Frost alerts", description: "When freezing temperatures are forecast in the next 72 hours" },
-  { type: "WATER", label: "Watering reminders", description: "Periodic reminders to water plants" },
-  { type: "FERTILIZE", label: "Fertilizing reminders", description: "When to feed your plants" },
+  // WATER and FERTILIZE are deliberately NOT listed: no code ever creates
+  // reminders of those types, so showing toggles for them would be a facade.
+  // The enum values stay (cheap, and themed in TYPE_CONFIG) — re-add rows
+  // here if/when a producer ships.
   { type: "SUCCESSION_PLANTING", label: "Succession planting", description: "Suggestions for follow-on crops" },
   { type: "CUSTOM", label: "Custom reminders", description: "Your own custom reminders" },
 ] as const;

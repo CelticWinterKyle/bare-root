@@ -12,6 +12,9 @@ export const MAX_BED_FT = 100;
 export const MAX_BED_CELLS = 5000;
 export const MAX_GARDEN_FT = 1000;
 export const MAX_BULK_CELLS = 500;
+// Carry-over replants run the full assignPlant path (several queries + a
+// transaction each, serially) — bound it like bulk assign.
+export const MAX_CARRY_OVER_PLANTINGS = 100;
 
 const bedDimensionsSchema = z.object({
   widthFt: z.number().finite().positive().max(MAX_BED_FT),
@@ -72,6 +75,15 @@ export const customReminderSchema = z.object({
   scheduledAt: isoDate,
   gardenId: z.string().optional(),
   repeat: z.enum(["weekly", "monthly"]).optional(),
+});
+
+// "Remind me" on a calendar succession suggestion. plantName is only a
+// display fallback — the action re-reads the canonical name from the DB.
+export const successionReminderSchema = z.object({
+  plantId: z.string().min(1, "Plant is required"),
+  gardenId: z.string().min(1, "Garden is required"),
+  suggestedDate: isoDate,
+  plantName: z.string().trim().min(1).max(200),
 });
 
 // Browser-renderable raster formats only (no SVG — scriptable; no HEIC —

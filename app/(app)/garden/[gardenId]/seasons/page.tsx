@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Leaf, Star, Lock } from "lucide-react";
+import { Leaf, Star, Lock } from "lucide-react";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 import { EndSeasonDialog } from "@/components/seasons/EndSeasonDialog";
 import { setActiveSeason } from "@/app/actions/seasons";
@@ -38,6 +38,10 @@ export default async function SeasonsPage({
   const isPro = user.subscriptionTier === "PRO";
   const activeSeason = garden.seasons.find((s) => s.isActive);
   const pastSeasons = garden.seasons.filter((s) => !s.isActive);
+  // Grow-again picks in the most recent season — mirrors the "previous
+  // season" createSeasonWithCarryOver resolves (seasons sort startDate desc).
+  const growAgainCount =
+    garden.seasons[0]?.plantings.filter((p) => p.growAgain).length ?? 0;
 
   return (
     <div>
@@ -51,7 +55,7 @@ export default async function SeasonsPage({
             {garden.name}
           </span>
           <div style={{ marginLeft: "auto" }}>
-            <CreateSeasonDialog gardenId={gardenId} hasActiveSeason={!!activeSeason} />
+            <CreateSeasonDialog gardenId={gardenId} hasActiveSeason={!!activeSeason} growAgainCount={growAgainCount} />
           </div>
         </div>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 26" }}>

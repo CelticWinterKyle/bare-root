@@ -9,6 +9,56 @@ export type RotationWarning = {
   seasonName: string;
 };
 
+export type BedFamilyHistory = {
+  family: string;
+  plantNames: string[];
+  /** Most recent past season in which the family grew in this bed. */
+  seasonName: string;
+};
+
+/**
+ * Plant families that grew in a bed during its 2 most recent past seasons —
+ * powers the PLACEMENT-TIME rotation hint in the plant picker (warn before
+ * planting), whereas getCropRotationWarnings only flags conflicts that
+ * already exist among current plantings.
+ */
+export async function getBedFamilyHistory(
+  gardenId: string,
+  bedId: string,
+  currentSeasonId: string
+): Promise<BedFamilyHistory[]> {
+  const pastSeasons = await db.season.findMany({
+    where: { gardenId, id: { not: currentSeasonId }, isActive: false },
+    orderBy: { startDate: "desc" },
+    take: 2,
+    select: {
+      name: true,
+      plantings: {
+        where: { cell: { bedId } },
+        select: { plant: { select: { name: true, plantFamily: true } } },
+      },
+    },
+  });
+
+  // Most-recent season first, so the first hit per family wins seasonName.
+  const byFamily = new Map<string, { names: Set<string>; seasonName: string }>();
+  for (const season of pastSeasons) {
+    for (const p of season.plantings) {
+      const family = p.plant.plantFamily;
+      if (!family) continue;
+      const cur = byFamily.get(family);
+      if (cur) cur.names.add(p.plant.name);
+      else byFamily.set(family, { names: new Set([p.plant.name]), seasonName: season.name });
+    }
+  }
+
+  return [...byFamily.entries()].map(([family, v]) => ({
+    family,
+    plantNames: [...v.names],
+    seasonName: v.seasonName,
+  }));
+}
+
 export async function getCropRotationWarnings(
   gardenId: string,
   currentSeasonId: string

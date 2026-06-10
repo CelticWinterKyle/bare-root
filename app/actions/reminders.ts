@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ReminderType, type PlantingStatus } from "@/lib/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
-import { customReminderSchema } from "@/lib/validation";
+import { customReminderSchema, successionReminderSchema } from "@/lib/validation";
 import { syncRemindersToStatus } from "@/lib/services/reminders";
 
 export async function createCustomReminder(input: {
@@ -58,6 +58,68 @@ export async function createCustomReminder(input: {
       // Store a simple interval token (not a real cron) — the dispatcher
       // reads this to schedule the next occurrence.
       recurrenceCron: recurring ? data.repeat! : null,
+    },
+  });
+
+  revalidatePath("/reminders");
+}
+
+/**
+ * "Remind me" on a calendar succession suggestion — the only producer of
+ * SUCCESSION_PLANTING reminders (which makes the prefs toggle for that type
+ * actually mean something). Fires once at the suggested plant-by date.
+ */
+export async function createSuccessionReminder(
+  plantId: string,
+  gardenId: string,
+  suggestedDate: string, // ISO datetime
+  plantName: string
+) {
+  const user = await requireUser();
+
+  const parsed = successionReminderSchema.safeParse({ plantId, gardenId, suggestedDate, plantName });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid reminder");
+  }
+
+  const when = new Date(parsed.data.suggestedDate);
+  if (when.getTime() < Date.now()) {
+    throw new Error("That suggested date has already passed");
+  }
+
+  // Same access pattern as createCustomReminder: view access is enough —
+  // the reminder is personal, not a change to the garden.
+  const garden = await db.garden.findFirst({
+    where: {
+      id: parsed.data.gardenId,
+      OR: [
+        { userId: user.id },
+        { collaborators: { some: { userId: user.id, acceptedAt: { not: null } } } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (!garden) throw new Error("Garden not found");
+
+  // Use the canonical plant name from the DB (the client-supplied name is
+  // just a fallback for validation messages).
+  const plant = await db.plantLibrary.findFirst({
+    where: {
+      id: parsed.data.plantId,
+      OR: [{ customForUserId: null }, { customForUserId: user.id }],
+    },
+    select: { name: true },
+  });
+  if (!plant) throw new Error("Plant not found");
+
+  await db.reminder.create({
+    data: {
+      userId: user.id,
+      gardenId: garden.id,
+      type: ReminderType.SUCCESSION_PLANTING,
+      title: `Succession: plant another round of ${plant.name}`,
+      body: `Your current ${plant.name} should be wrapping up its expected harvest by now — sow a follow-on round to keep the harvest going.`,
+      scheduledAt: when,
     },
   });
 

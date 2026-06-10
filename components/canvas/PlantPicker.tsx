@@ -3,10 +3,11 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
-import { Search, Loader2, AlertTriangle, Package } from "lucide-react";
+import { Search, Loader2, AlertTriangle, Package, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PlantThumb } from "@/components/plants/PlantThumb";
 import type { SpacingWarning } from "@/lib/services/spacing";
+import type { BedFamilyHistory } from "@/lib/services/crop-rotation";
 
 type Plant = {
   id: string;
@@ -15,6 +16,7 @@ type Plant = {
   imageUrl: string | null;
   daysToMaturity: number | null;
   spacingInches: number | null;
+  plantFamily?: string | null;
 };
 
 /**
@@ -37,6 +39,7 @@ export function PlantPicker({
   cellSizeIn,
   recentPlants,
   seedInventory = [],
+  familyHistory = [],
   onClose,
   onPlanted,
 }: {
@@ -52,6 +55,9 @@ export function PlantPicker({
   /** The user's seed inventory — drives the "have seeds" badge on plant
    *  rows so the picker answers "do I already own seeds for this?" */
   seedInventory?: { plantId: string; variety: string; quantity: number; unit: string }[];
+  /** Plant families that grew in this bed in recent past seasons — rows for
+   *  matching plants get a compact crop-rotation hint (warn, never block). */
+  familyHistory?: BedFamilyHistory[];
   onClose: () => void;
   /** Fired once per planted cell so BedGrid can run its placement
    *  animation. In bulk mode it's invoked per anchor. */
@@ -70,6 +76,7 @@ export function PlantPicker({
       invByPlant.set(row.plantId, { total: row.quantity, unit: row.unit, variety: row.variety || null });
     }
   }
+  const historyByFamily = new Map(familyHistory.map((h) => [h.family, h]));
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Plant[]>(recentPlants);
   const [isSearching, startSearch] = useTransition();
@@ -191,6 +198,25 @@ export function PlantPicker({
                     return hint ? <span className="text-[#3A6B20] font-medium"> · {hint}</span> : null;
                   })()}
                 </p>
+                {/* Placement-time crop-rotation hint: same family grew in
+                    this bed in a recent past season. Informational only —
+                    the plant stays pickable. */}
+                {(() => {
+                  const hist = plant.plantFamily ? historyByFamily.get(plant.plantFamily) : undefined;
+                  if (!hist) return null;
+                  return (
+                    <p
+                      className="mt-0.5 flex items-center gap-1 text-[10px]"
+                      style={{ color: "#A06010" }}
+                      title={`${hist.plantNames.join(", ")} grew here in ${hist.seasonName} — rotating families helps prevent disease buildup`}
+                    >
+                      <RotateCcw className="w-2.5 h-2.5 shrink-0" />
+                      <span className="truncate">
+                        {hist.family} grew here in {hist.seasonName} — consider rotating
+                      </span>
+                    </p>
+                  );
+                })()}
               </div>
               {/* Seed-inventory badge — green pill matching the library page's
                   stock indicator. "Sungold · 2 packets" when a variety is on file. */}
