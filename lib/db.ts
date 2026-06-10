@@ -15,6 +15,11 @@ import { PrismaClient } from "@/lib/generated/prisma/client";
 // `ws` polyfill explicitly so it works on every runtime version.
 neonConfig.webSocketConstructor = ws;
 
+// Route single (non-transactional) queries over HTTP fetch instead of
+// opening a WebSocket — lower latency on cold starts. Interactive
+// transactions still use the WebSocket path above.
+neonConfig.poolQueryViaFetch = true;
+
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {

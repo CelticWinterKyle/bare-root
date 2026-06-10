@@ -43,42 +43,51 @@ export async function GET(req: Request) {
   });
 
   const now = new Date();
-  let alertsCreated = 0;
 
-  for (const cache of caches) {
+  const frosty = caches.filter((cache) => {
     const forecast = cache.forecast as ForecastDay[] | null;
-    if (!forecast || !hasFrostInWindow(forecast)) continue;
+    return forecast != null && hasFrostInWindow(forecast);
+  });
 
-    // Don't create duplicate active frost alerts for same garden
-    const existing = await db.reminder.findFirst({
-      where: {
-        gardenId: cache.gardenId,
-        type: ReminderType.FROST_ALERT,
-        dismissed: false,
-        scheduledAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-      },
-    });
-    if (existing) continue;
+  // One batched dup-check for all frost-risk gardens (was a findFirst per
+  // garden): skip any garden that already has an active alert from the
+  // last 24h.
+  const existing = frosty.length
+    ? await db.reminder.findMany({
+        where: {
+          gardenId: { in: frosty.map((c) => c.gardenId) },
+          type: ReminderType.FROST_ALERT,
+          dismissed: false,
+          scheduledAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+        },
+        select: { gardenId: true },
+      })
+    : [];
+  const alreadyAlerted = new Set(existing.map((e) => e.gardenId));
 
-    const recipients = [
-      cache.garden.userId,
-      ...cache.garden.collaborators.map((c) => c.userId),
-    ];
-
-    for (const userId of recipients) {
-      await db.reminder.create({
-        data: {
+  const rows = frosty
+    .filter((cache) => !alreadyAlerted.has(cache.gardenId))
+    .flatMap((cache) =>
+      [cache.garden.userId, ...cache.garden.collaborators.map((c) => c.userId)].map(
+        (userId) => ({
           userId,
           gardenId: cache.gardenId,
           type: ReminderType.FROST_ALERT,
           title: `Frost risk at ${cache.garden.name}`,
           body: "Temperatures near or below freezing are forecast in the next 72 hours. Consider protecting sensitive plants.",
           scheduledAt: now,
-        },
-      });
-      alertsCreated++;
-    }
-  }
+        })
+      )
+    );
 
-  return Response.json({ ok: true, alertsCreated });
+  const created = rows.length ? await db.reminder.createMany({ data: rows }) : { count: 0 };
+
+  // Daily housekeeping piggybacked on this cron: processed Stripe webhook
+  // event rows only matter for retry-window dedup; prune anything old so
+  // the table doesn't grow forever.
+  const pruned = await db.webhookEvent.deleteMany({
+    where: { processedAt: { lt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000) } },
+  });
+
+  return Response.json({ ok: true, alertsCreated: created.count, webhookEventsPruned: pruned.count });
 }

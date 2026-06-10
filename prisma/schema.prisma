@@ -114,6 +114,8 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Garden ───────────────────────────────────────────────────────────────────
@@ -123,11 +125,6 @@ model Garden {
   userId          String
   name            String
   description     String?
-  // Unused: weather/zone/frost all derive from locationZip, and the zip
-  // lookup returns no coordinates. Removal candidate in a future schema
-  // cleanup (kept for now — dropping columns is riskier than leaving them).
-  locationLat     Float?
-  locationLng     Float?
   locationZip     String?
   locationDisplay String?
   usdaZone        String?
@@ -145,6 +142,8 @@ model Garden {
   seasons       Season[]
   weatherCache  WeatherCache?
   reminders     Reminder[]
+
+  @@index([userId])
 }
 
 model GardenCollaborator {
@@ -159,6 +158,9 @@ model GardenCollaborator {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([gardenId, userId])
+  // gardenAccessFilter runs a collaborators.some({userId}) subquery on
+  // nearly every request; the unique above has the wrong leading column.
+  @@index([userId])
 }
 
 model GardenInvitation {
@@ -195,6 +197,8 @@ model Bed {
 
   garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
   cells  Cell[]
+
+  @@index([gardenId])
 }
 
 model Cell {
@@ -230,6 +234,8 @@ model Season {
 
   garden    Garden     @relation(fields: [gardenId], references: [id], onDelete: Cascade)
   plantings Planting[]
+
+  @@index([gardenId, isActive])
 }
 
 // ─── Planting — central hub entity ───────────────────────────────────────────
@@ -271,6 +277,8 @@ model Planting {
   reminders   Reminder[]
 
   @@unique([cellId, seasonId])
+  @@index([seasonId])
+  @@index([plantId])
 }
 
 // Join table linking a Planting to every Cell in its footprint.
@@ -303,6 +311,8 @@ model GrowthNote {
   createdAt  DateTime @default(now())
 
   planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+
+  @@index([plantingId])
 }
 
 model HarvestLog {
@@ -314,6 +324,8 @@ model HarvestLog {
   notes       String?
 
   planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+
+  @@index([plantingId, harvestedAt])
 }
 
 model PlantingPhoto {
@@ -324,6 +336,8 @@ model PlantingPhoto {
   takenAt    DateTime @default(now())
 
   planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
+
+  @@index([plantingId])
 }
 
 // ─── Plant Library ────────────────────────────────────────────────────────────
@@ -367,6 +381,9 @@ model PlantLibrary {
   antagonists    CompanionRelation[] @relation("PlantAntagonists")
   plantings      Planting[]
   seedInventory  SeedInventory[]
+
+  @@index([customForUserId])
+  @@index([category])
 }
 
 model CompanionRelation {
@@ -380,6 +397,7 @@ model CompanionRelation {
   related PlantLibrary @relation("PlantAntagonists", fields: [relatedId], references: [id], onDelete: Cascade)
 
   @@unique([plantId, relatedId, type])
+  @@index([relatedId])
 }
 
 // ─── Reminders & Notifications ────────────────────────────────────────────────
@@ -402,6 +420,14 @@ model Reminder {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   planting Planting? @relation(fields: [plantingId], references: [id], onDelete: SetNull)
   garden   Garden?   @relation(fields: [gardenId], references: [id], onDelete: SetNull)
+
+  // Bell + reminders page: filtered by user/dismissed, ordered by scheduledAt.
+  @@index([userId, dismissed, scheduledAt])
+  // Hourly cron scan: sentAt IS NULL AND scheduledAt <= now.
+  @@index([sentAt, scheduledAt])
+  // Per-planting dedupe/cleanup and frost-alert dup checks.
+  @@index([plantingId])
+  @@index([gardenId])
 }
 
 model NotificationPreference {
@@ -446,6 +472,7 @@ model SeedInventory {
   plant PlantLibrary @relation(fields: [plantId], references: [id])
 
   @@unique([userId, plantId, variety])
+  @@index([plantId])
 }
 
 // Processed Stripe webhook events, keyed by Stripe's event id. The webhook

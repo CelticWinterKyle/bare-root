@@ -2,9 +2,22 @@ import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
 import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
 
+// Allow the full Fluid-compute window — email/push sends are network-bound.
+export const maxDuration = 300;
+
 // Give up on a reminder after this many failed send attempts so a
 // permanently-failing one (e.g. a dead email address) doesn't retry forever.
 const MAX_SEND_ATTEMPTS = 5;
+
+// Per-run batch cap. Reminders cluster seasonally (everyone's START_SEEDS
+// lands the same weeks); an unbounded run at ~0.3-1s per send blows the
+// function timeout. Oldest-first batches + the hourly cadence drain any
+// backlog within a few runs.
+const BATCH_SIZE = 200;
+
+// Users dispatched concurrently. Each user's reminders stay serial (their
+// recurrence rollovers and attempt counters touch the same rows).
+const USER_CONCURRENCY = 10;
 
 function isLocalSendWindow(utcNow: Date, timezone: string): boolean {
   try {
@@ -50,6 +63,8 @@ export async function GET(req: Request) {
       sentAt: null,
       dismissed: false,
     },
+    orderBy: { scheduledAt: "asc" },
+    take: BATCH_SIZE,
     include: {
       user: {
         select: {
@@ -75,9 +90,15 @@ export async function GET(req: Request) {
     byUser.set(r.userId, arr);
   }
 
-  let dispatched = 0;
+  // All preferences for this batch in one query (was a findUnique per
+  // reminder — the N+1 dominated the run at scale).
+  const prefRows = await db.notificationPreference.findMany({
+    where: { userId: { in: [...byUser.keys()] } },
+  });
+  const prefByUserType = new Map(prefRows.map((p) => [`${p.userId}:${p.type}`, p]));
 
-  for (const [, userReminders] of byUser) {
+  async function dispatchForUser(userReminders: typeof reminders): Promise<number> {
+    let sent = 0;
     const user = userReminders[0].user;
     const inSendWindow = isLocalSendWindow(now, user.timezone);
 
@@ -89,9 +110,7 @@ export async function GET(req: Request) {
       // "remind me at 3pm" gets pushed to the next morning, which
       // defeats the point of letting users set their own time.
       if (reminder.type !== "CUSTOM" && !inSendWindow) continue;
-      const pref = await db.notificationPreference.findUnique({
-        where: { userId_type: { userId: user.id, type: reminder.type as never } },
-      });
+      const pref = prefByUserType.get(`${user.id}:${reminder.type}`);
 
       const sendEmail = pref?.channelEmail ?? true;
       const sendPush = pref?.channelPush ?? true;
@@ -156,7 +175,7 @@ export async function GET(req: Request) {
       }
 
       await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
-      dispatched++;
+      sent++;
 
       // Recurring reminders: schedule the SINGLE next occurrence as a fresh
       // row (the just-sent one stays in history). recurrenceCron holds a
@@ -186,7 +205,22 @@ export async function GET(req: Request) {
         });
       }
     }
+    return sent;
   }
 
-  return Response.json({ ok: true, dispatched });
+  // Dispatch users in concurrent chunks; one user failing doesn't stop
+  // the rest (their reminders simply retry next run via sendAttempts).
+  let dispatched = 0;
+  const userGroups = [...byUser.values()];
+  for (let i = 0; i < userGroups.length; i += USER_CONCURRENCY) {
+    const results = await Promise.allSettled(
+      userGroups.slice(i, i + USER_CONCURRENCY).map((group) => dispatchForUser(group))
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") dispatched += r.value;
+      else console.error("Reminder dispatch failed for a user:", r.reason);
+    }
+  }
+
+  return Response.json({ ok: true, dispatched, batchFull: reminders.length === BATCH_SIZE });
 }
