@@ -2,9 +2,12 @@
 import { useEffect } from "react";
 
 /**
- * Registers the push service worker on app load. Required for the
- * browser to treat Bare Root as a PWA (install prompt, offline shell,
- * push delivery). Idempotent — safe to mount on every render.
+ * Registers the service worker on app load. The SW handles push
+ * delivery, notification clicks, and falls back to a precached
+ * /offline.html for navigations when the network is unreachable
+ * (no app pages or API responses are cached). Registration is also
+ * what lets the browser treat Bare Root as installable. Idempotent —
+ * safe to mount on every render.
  */
 export function ServiceWorkerRegistration() {
   useEffect(() => {

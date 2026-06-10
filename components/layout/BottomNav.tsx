@@ -17,11 +17,11 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50"
       style={{
         background: "#FDFDF8",
         borderTop: "1px solid #E4E4DC",
-        padding: "8px 16px 12px",
+        padding: "8px 16px calc(12px + env(safe-area-inset-bottom, 0px))",
         display: "flex",
         justifyContent: "center",
       }}
@@ -43,24 +43,25 @@ export function BottomNav() {
               href={href}
               className="flex flex-col items-center gap-0.5 transition-colors"
               style={{
-                padding: "6px 12px",
+                padding: "9px 12px",
                 borderRadius: 100,
                 minWidth: 52,
+                minHeight: 44,
                 background: isActive ? "#1C3D0A" : "transparent",
               }}
             >
               <Icon
                 className="w-4 h-4"
                 strokeWidth={isActive ? 2 : 1.5}
-                style={{ color: isActive ? "#A8D870" : "rgba(255,255,255,0.3)" }}
+                style={{ color: isActive ? "#A8D870" : "rgba(255,255,255,0.6)" }}
               />
               <span
                 className="font-mono leading-none"
                 style={{
-                  fontSize: 7,
+                  fontSize: 9,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
-                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)",
+                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
                 }}
               >
                 {label}

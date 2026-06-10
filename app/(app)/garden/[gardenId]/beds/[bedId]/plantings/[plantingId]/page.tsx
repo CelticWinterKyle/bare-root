@@ -55,8 +55,12 @@ export default async function PlantingDetailPage({
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
           <Link
             href={`/garden/${gardenId}/beds/${bedId}`}
-            style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1, flexShrink: 0, textDecoration: "none" }}
-          >‹</Link>
+            aria-label={`Back to ${planting.cell.bed.name}`}
+            // 22px visual box, padded out to a 40px hit area; negative margin keeps the layout/alignment identical.
+            style={{ padding: "9px", margin: "-9px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, textDecoration: "none" }}
+          >
+            <span style={{ width: "22px", height: "22px", borderRadius: "6px", background: "#F4F4EC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#6B6B5A", fontWeight: 600, lineHeight: 1 }} aria-hidden="true">‹</span>
+          </Link>
           <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 500, color: "#6B6B5A" }}>
             {planting.cell.bed.name}
           </span>

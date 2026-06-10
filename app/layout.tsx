@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
@@ -33,12 +33,22 @@ export const metadata: Metadata = {
   description:
     "Plan your garden. Grow with confidence. Bare Root is the visual garden planner that knows your climate, your beds, and what grows well together.",
   manifest: "/manifest.json",
-  themeColor: "#1C3D0A",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Bare Root",
   },
+};
+
+// viewportFit: "cover" is required for env(safe-area-inset-*) to resolve
+// to non-zero on iOS — without it the bottom nav sits under the home
+// indicator in the installed PWA. themeColor lives here, not in metadata
+// (deprecated there in this Next version).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1C3D0A",
 };
 
 export default function RootLayout({

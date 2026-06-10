@@ -8,6 +8,7 @@ import { gardenAccessFilter } from "@/lib/permissions";
 import { resolveActiveGardenId } from "@/lib/active-garden";
 import { TIER_LIMITS } from "@/lib/tier";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { GardenSwitcher } from "@/components/garden/GardenSwitcher";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { TrialBanner } from "@/components/layout/TrialBanner";
@@ -136,6 +137,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
         </div>
+        {/* Garden switcher strip — only when there's more than one garden to switch between */}
+        {switcherGardens.length > 1 && (
+          <GardenSwitcher
+            gardens={switcherGardens}
+            activeGardenId={activeGardenId}
+            atLimit={atGardenLimit}
+            style={{ borderBottom: "none", borderTop: "1px solid #E4E4DC", padding: "8px 12px 10px" }}
+          />
+        )}
         {/* Green gradient accent line */}
         <div style={{
           position: "absolute", bottom: 0, left: 0, right: 0, height: "2px",

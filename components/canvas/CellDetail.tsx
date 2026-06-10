@@ -155,19 +155,26 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
           width: "80px", height: "80px", background: "#3A6B20",
           borderRadius: "50%", opacity: 0.4,
         }} />
-        {/* Close button */}
+        {/* Close button — 44px hit target around the 22px visual circle */}
         <button
           onClick={onClose}
+          aria-label="Close plant details"
           style={{
-            position: "absolute", top: "10px", right: "10px",
+            position: "absolute", top: "0px", right: "0px",
+            width: "44px", height: "44px", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            background: "none", zIndex: 2, cursor: "pointer", border: "none",
+            padding: 0,
+          }}
+        >
+          <span aria-hidden style={{
             width: "22px", height: "22px", borderRadius: "50%",
             background: "rgba(255,255,255,0.15)", display: "flex",
             alignItems: "center", justifyContent: "center",
-            color: "rgba(255,255,255,0.7)", zIndex: 2, cursor: "pointer",
-            border: "none",
-          }}
-        >
-          <X className="w-3 h-3" />
+            color: "rgba(255,255,255,0.7)",
+          }}>
+            <X className="w-3 h-3" />
+          </span>
         </button>
         {/* Plant name */}
         <div style={{
@@ -311,7 +318,9 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, onClose
               <div className="flex items-center justify-between gap-2">
                 <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Est. harvest</label>
                 <span style={{ fontSize: "12px", color: "#3A6B20", fontWeight: 600 }}>
-                  {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {/* timeZone UTC: "YYYY-MM-DD" parses as UTC midnight, so
+                      local formatting would show the previous day in the US */}
+                  {new Date(expectedHarvest).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
                 </span>
               </div>
             )}

@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import Link from "next/link";
-import { Bell, CreditCard, ChevronRight, LogOut } from "lucide-react";
+import { Bell, CreditCard, Package, ChevronRight, LogOut } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { AccountDataSection } from "@/components/settings/AccountDataSection";
 
@@ -39,6 +39,7 @@ export default async function SettingsPage() {
       {/* Settings links */}
       <div className="space-y-2">
         <SettingsLink href="/settings/notifications" icon={<Bell className="w-4 h-4" />} label="Notifications" />
+        <SettingsLink href="/inventory" icon={<Package className="w-4 h-4" />} label="Seed inventory" />
         <SettingsLink href="/settings/billing" icon={<CreditCard className="w-4 h-4" />} label="Billing & plan" />
       </div>
 

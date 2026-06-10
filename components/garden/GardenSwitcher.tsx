@@ -17,10 +17,13 @@ export function GardenSwitcher({
   gardens,
   activeGardenId,
   atLimit,
+  style,
 }: {
   gardens: GardenOption[];
   activeGardenId: string | null;
   atLimit: boolean;
+  /** Optional overrides for the outer wrapper (e.g. border tweaks in the mobile header). */
+  style?: React.CSSProperties;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -41,7 +44,7 @@ export function GardenSwitcher({
   }
 
   return (
-    <div style={{ position: "relative", padding: "10px 12px", borderBottom: "1px solid #E4E4DC", flexShrink: 0 }}>
+    <div style={{ position: "relative", padding: "10px 12px", borderBottom: "1px solid #E4E4DC", flexShrink: 0, ...style }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

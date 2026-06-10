@@ -316,17 +316,10 @@ export default async function GardenPage({
               >
                 {/* Frosted topbar — mobile only */}
                 <div
-                  className="md:hidden absolute top-0 left-0 right-0 z-[2] flex items-center justify-between"
+                  className="md:hidden absolute top-0 left-0 right-0 z-[2] flex items-center"
                   style={{ height: "28px", background: "rgba(253,253,248,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "0 10px", borderBottom: "1px solid rgba(228,228,220,0.8)" }}
                 >
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#6B6B5A" }}>Garden Canvas</span>
-                  <div style={{ display: "flex", gap: "3px" }}>
-                    {(["⊕", "⊖", "⟳"] as const).map((icon) => (
-                      <div key={icon} style={{ width: "20px", height: "20px", borderRadius: "4px", background: "rgba(244,244,236,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#6B6B5A" }}>
-                        {icon}
-                      </div>
-                    ))}
-                  </div>
                 </div>
                 <GardenCanvasToggle
                   garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}

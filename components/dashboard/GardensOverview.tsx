@@ -1,5 +1,10 @@
+"use client";
+
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { setActiveGarden } from "@/app/actions/garden";
 import { CreateGardenDialog } from "@/components/garden/CreateGardenDialog";
 
 export type GardenCard = {
@@ -35,6 +40,26 @@ export function GardensOverview({
   gardens: GardenCard[];
   atLimit: boolean;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  // Set the active-garden cookie before navigating so the bottom-nav
+  // "Garden" tab follows the card the user tapped. Navigation must never
+  // be blocked by the cookie write — on error we just navigate anyway.
+  function openGarden(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    setPendingId(id);
+    startTransition(async () => {
+      try {
+        await setActiveGarden(id);
+      } catch {
+        // ignore — navigate regardless
+      }
+      router.push(`/garden/${id}`);
+    });
+  }
+
   return (
     <section style={{ padding: "40px var(--x-pad) 4px" }}>
       <div style={{ marginBottom: "16px" }}>
@@ -80,6 +105,7 @@ export function GardensOverview({
           <Link
             key={g.id}
             href={`/garden/${g.id}`}
+            onClick={(e) => openGarden(e, g.id)}
             style={{
               display: "flex",
               flexDirection: "column",
@@ -91,6 +117,8 @@ export function GardensOverview({
               textDecoration: "none",
               boxShadow: "0 1px 4px rgba(28,61,10,0.04)",
               minHeight: "92px",
+              opacity: isPending && pendingId === g.id ? 0.6 : 1,
+              transition: "opacity 0.15s ease",
             }}
           >
             <div

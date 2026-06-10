@@ -5,6 +5,10 @@
 //      by the dispatch-reminders cron via web-push.
 //   2. Handle `notificationclick` — open or focus the deep-link URL
 //      carried in the push payload.
+//   3. Serve a branded offline fallback (/offline.html) for navigation
+//      requests when the network is unreachable. App pages and API
+//      responses are deliberately NOT cached — the app is auth-sensitive
+//      and force-dynamic, so only the precached fallback is served.
 //
 // Notes:
 //   - Kept dependency-free so it works in any browser that supports
@@ -12,13 +16,51 @@
 //   - skipWaiting + clients.claim let activated workers take over open
 //     tabs immediately on first install, so the next push doesn't have
 //     to wait for the user to reload.
+//   - Bump OFFLINE_CACHE when offline.html changes so activate cleans
+//     up the stale copy.
+
+const OFFLINE_CACHE = "bareroot-offline-v1";
+const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(OFFLINE_CACHE);
+      // `cache: "reload"` bypasses the HTTP cache so each new SW version
+      // precaches a fresh copy of the fallback page.
+      await cache.add(new Request(OFFLINE_URL, { cache: "reload" }));
+      await self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.filter((key) => key !== OFFLINE_CACHE).map((key) => caches.delete(key))
+      );
+      await self.clients.claim();
+    })()
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  // Only intercept top-level navigations; everything else (API calls,
+  // assets) goes straight to the network untouched.
+  if (event.request.mode !== "navigate") return;
+
+  event.respondWith(
+    (async () => {
+      try {
+        return await fetch(event.request);
+      } catch {
+        const cached = await caches.match(OFFLINE_URL);
+        return cached || Response.error();
+      }
+    })()
+  );
 });
 
 self.addEventListener("push", (event) => {

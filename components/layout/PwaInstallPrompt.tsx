@@ -3,9 +3,35 @@
 import { useEffect, useState } from "react";
 import { X, Smartphone } from "lucide-react";
 
+// Chromium fires this before showing its install UI; capturing it lets us
+// trigger the real install dialog from our own CTA. Not in lib.dom.d.ts.
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 export function PwaInstallPrompt() {
   const [show, setShow] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    function onBeforeInstallPrompt(event: Event) {
+      // Suppress the browser's mini-infobar; we surface our own card.
+      event.preventDefault();
+      setInstallEvent(event as BeforeInstallPromptEvent);
+    }
+    function onAppInstalled() {
+      setInstallEvent(null);
+      setShow(false);
+    }
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -32,6 +58,15 @@ export function PwaInstallPrompt() {
     setShow(false);
   }
 
+  async function install() {
+    if (!installEvent) return;
+    await installEvent.prompt();
+    // The captured event is single-use; if the user accepted, appinstalled
+    // hides the card too. Either way, don't re-prompt this page load.
+    setInstallEvent(null);
+    setShow(false);
+  }
+
   if (!show) return null;
 
   return (
@@ -46,9 +81,19 @@ export function PwaInstallPrompt() {
             Tap the Share button <span className="font-medium">↑</span> then &quot;Add to Home Screen&quot;
           </p>
         ) : (
-          <p className="text-xs text-[#6B6B5A] mt-0.5">
-            Add to your home screen for a faster, app-like experience.
-          </p>
+          <>
+            <p className="text-xs text-[#6B6B5A] mt-0.5">
+              Add to your home screen for a faster, app-like experience.
+            </p>
+            {installEvent && (
+              <button
+                onClick={install}
+                className="mt-2 text-xs font-medium text-white bg-[#1C3D0A] hover:bg-[#2A5212] rounded-lg px-3 py-1.5"
+              >
+                Install
+              </button>
+            )}
+          </>
         )}
       </div>
       <button onClick={dismiss} className="shrink-0 text-[#ADADAA] hover:text-[#111109]" aria-label="Dismiss">
