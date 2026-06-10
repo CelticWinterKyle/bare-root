@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getSharedPlantLibrary, plantCardSelect } from "@/lib/plant-library";
 import { PlantSearch } from "@/components/plants/PlantSearch";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
 
@@ -20,20 +21,22 @@ export default async function PlantsPage({
   const user = await requireUser();
   const { q, category } = await searchParams;
 
-  const [rawPlants, inventory] = await Promise.all([
+  // Shared library comes from a cross-request cache (cached unfiltered, so
+  // q/category are applied in JS below); the user's own custom plants stay
+  // per-request fresh and are layered on top. The client renders a windowed
+  // "Load more" grid over the merged set.
+  const [shared, custom, inventory] = await Promise.all([
+    getSharedPlantLibrary(),
     db.plantLibrary.findMany({
       where: {
         AND: [
-          {
-            OR: [{ customForUserId: null }, { customForUserId: user.id }],
-          },
+          { customForUserId: user.id },
           q ? { name: { contains: q, mode: "insensitive" } } : {},
           category ? { category: category as PlantCategory } : {},
         ],
       },
+      select: plantCardSelect,
       orderBy: [{ source: "desc" }, { name: "asc" }],
-      // Fetch the whole library; the client renders a windowed "Load more"
-      // grid over it. (Library is a few hundred plants — cheap to send.)
       take: 1000,
     }),
     db.seedInventory.findMany({
@@ -41,6 +44,19 @@ export default async function PlantsPage({
       select: { plantId: true, quantity: true },
     }),
   ]);
+
+  const qLower = q?.toLowerCase();
+  const rawPlants = [
+    ...shared.filter(
+      (p) =>
+        (!qLower || p.name.toLowerCase().includes(qLower)) &&
+        (!category || p.category === category)
+    ),
+    ...custom,
+  ].sort(
+    (a, b) =>
+      (b.source ?? "").localeCompare(a.source ?? "") || a.name.localeCompare(b.name)
+  );
 
   // Collapse Perenual duplicates against seed entries with the same
   // lowercase name. Same rule as searchPlantsAction.

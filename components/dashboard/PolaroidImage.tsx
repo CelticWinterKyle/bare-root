@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { pexelsThumb } from "@/lib/pexels-thumb";
 
 /**
  * Dashboard journal polaroid image. Keeps the bespoke polaroid look (category
@@ -30,7 +31,8 @@ export function PolaroidImage({
       {imageUrl && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={imageUrl}
+          // Polaroids render ~250px wide (4-col journal grid) — 600 covers 2x.
+          src={pexelsThumb(imageUrl, 600)}
           alt={name}
           referrerPolicy="no-referrer"
           loading="lazy"

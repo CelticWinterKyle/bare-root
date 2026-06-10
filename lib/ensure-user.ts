@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
@@ -52,19 +53,6 @@ export async function ensureDbUser(clerkUserId: string) {
     });
   }
 
-  let stripeCustomerId: string | undefined;
-  try {
-    const customer = await stripe.customers.create({
-      email: primaryEmail,
-      name: fullName ?? undefined,
-      metadata: { clerkUserId },
-    });
-    stripeCustomerId = customer.id;
-  } catch {
-    // Non-fatal: the app still works without billing wired up, and the
-    // billing page self-heals by looking the customer up by email.
-  }
-
   const user = await db.user.upsert({
     where: { id: clerkUserId },
     create: {
@@ -72,9 +60,28 @@ export async function ensureDbUser(clerkUserId: string) {
       email: primaryEmail,
       name: fullName,
       avatarUrl: cu.imageUrl || null,
-      stripeCustomerId,
     },
     update: {},
+  });
+
+  // Create the Stripe customer after the response — it adds ~300ms to first
+  // sign-in and is subject to Stripe rate limits during a signup spike.
+  // Non-fatal if it never lands: checkout/portal self-heal by looking the
+  // customer up by email.
+  after(async () => {
+    try {
+      const customer = await stripe.customers.create({
+        email: primaryEmail,
+        name: fullName ?? undefined,
+        metadata: { clerkUserId },
+      });
+      await db.user.updateMany({
+        where: { id: clerkUserId, stripeCustomerId: null },
+        data: { stripeCustomerId: customer.id },
+      });
+    } catch {
+      // Non-fatal: the app still works without billing wired up.
+    }
   });
 
   // Attach any pending garden invitations addressed to this email.

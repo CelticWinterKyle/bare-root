@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
@@ -5,7 +6,10 @@ import { ensureDbUser } from "@/lib/ensure-user";
 import { BETA_COOKIE, isValidBetaCode } from "@/lib/beta";
 import { redirect } from "next/navigation";
 
-export async function getCurrentUser() {
+// React.cache: the layout AND every page call this independently, so
+// without per-request memoization each navigation pays 2+ identical user
+// lookups.
+export const getCurrentUser = cache(async () => {
   const { userId } = await auth();
   if (!userId) return null;
 
@@ -40,7 +44,7 @@ export async function getCurrentUser() {
   }
 
   return user;
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

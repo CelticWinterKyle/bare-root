@@ -1,8 +1,9 @@
 "use server";
 import { after } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { PLANT_LIBRARY_TAG } from "@/lib/plant-library";
 import { searchPerenual, getPerenualPlant } from "@/lib/api/perenual";
 import { applyEstimatedTiming } from "@/lib/services/plant-timing";
 import { findPexelsImageUrl } from "@/lib/api/pexels";
@@ -109,46 +110,59 @@ export async function searchPlantsAction(
   if (query.length >= 2 && cached.length < 5 && !category) {
     const result = await searchPerenual(query);
     if (result?.data?.length) {
-      for (const item of result.data.slice(0, 20)) {
-        const exists = await db.plantLibrary.findUnique({
-          where: { externalId: String(item.id) },
-        });
-        if (exists) continue;
-        try {
+      const items = result.data.slice(0, 20);
+      const existing = await db.plantLibrary.findMany({
+        where: { externalId: { in: items.map((i) => String(i.id)) } },
+        select: { externalId: true },
+      });
+      const existingIds = new Set(existing.map((e) => e.externalId));
+      const rows = items
+        .filter((item) => !existingIds.has(String(item.id)))
+        .map((item) => {
           const cat = inferCategoryFromName(item.common_name);
           // Perenual gives no grow-cycle data, so fill category-based
           // estimates and flag them — otherwise the plant produces no
           // calendar events or reminders at all.
           const { data: est, estimated } = applyEstimatedTiming(cat, {});
-          const created = await db.plantLibrary.create({
-            data: {
-              externalId: String(item.id),
-              source: "perenual",
-              name: item.common_name,
-              scientificName: item.scientific_name?.[0] ?? null,
-              commonNames: item.other_name ?? [],
-              category: cat,
-              sunRequirement: mapSunlight(item.sunlight ?? []),
-              waterRequirement: mapWatering(item.watering),
+          return {
+            externalId: String(item.id),
+            source: "perenual",
+            name: item.common_name,
+            scientificName: item.scientific_name?.[0] ?? null,
+            commonNames: item.other_name ?? [],
+            category: cat,
+            sunRequirement: mapSunlight(item.sunlight ?? []),
+            waterRequirement: mapWatering(item.watering),
+            imageUrl: null,
+            ...est,
+            timingEstimated: estimated,
+          };
+        });
+      if (rows.length > 0) {
+        // skipDuplicates covers concurrent requests racing the same import.
+        await db.plantLibrary.createMany({ data: rows, skipDuplicates: true });
+        revalidateTag(PLANT_LIBRARY_TAG, "max");
+        // Fetch quality Pexels images after the response so search isn't
+        // blocked; plants show their category tile until images land.
+        // (createMany returns no ids, so re-query by externalId.)
+        after(async () => {
+          const created = await db.plantLibrary.findMany({
+            where: {
+              externalId: { in: rows.map((r) => r.externalId) },
               imageUrl: null,
-              ...est,
-              timingEstimated: estimated,
             },
+            select: { id: true, name: true, category: true },
           });
-          // Fetch a quality Pexels image after the response so search isn't
-          // blocked; the plant shows its category tile until it lands.
-          after(async () => {
-            const img = await findPexelsImageUrl(item.common_name, cat);
+          for (const plant of created) {
+            const img = await findPexelsImageUrl(plant.name, plant.category);
             if (img) {
               await db.plantLibrary.update({
-                where: { id: created.id },
+                where: { id: plant.id },
                 data: { imageUrl: img },
               });
             }
-          });
-        } catch {
-          // ignore duplicate key on concurrent requests
-        }
+          }
+        });
       }
       const refreshed = await db.plantLibrary.findMany({
         where,
@@ -406,5 +420,6 @@ export async function updatePlantTiming(
   revalidatePath(`/plants/${plant.id}`);
   revalidatePath("/plants");
   revalidatePath("/calendar");
+  revalidateTag(PLANT_LIBRARY_TAG, "max");
   return { plantId: forkId };
 }

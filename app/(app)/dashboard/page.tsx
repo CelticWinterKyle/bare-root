@@ -1,8 +1,9 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
-import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
-import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
+import { hasFrostRisk } from "@/lib/api/weather";
+import { getGardenWeather } from "@/lib/services/garden-weather";
+import { resolveActiveGardenId } from "@/lib/active-garden";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PolaroidImage } from "@/components/dashboard/PolaroidImage";
@@ -14,9 +15,14 @@ import { TIER_LIMITS } from "@/lib/tier";
 export const dynamic = "force-dynamic";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// All "now"-derived display and day boundaries use the USER's timezone
+// (user.timezone, synced by TimezoneSync) — the server runs in UTC, where
+// 7pm CDT is already tomorrow morning.
 
-function timeOfDay(d: Date): "morning" | "afternoon" | "evening" {
-  const h = d.getHours();
+function timeOfDay(d: Date, tz: string): "morning" | "afternoon" | "evening" {
+  const h = parseInt(
+    new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hour12: false }).format(d)
+  );
   if (h < 12) return "morning";
   if (h < 17) return "afternoon";
   return "evening";
@@ -28,9 +34,10 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function fmtDay(d: Date): string {
+function fmtDay(d: Date, tz: string): string {
   // "Friday · May 15, 2026"
   const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -43,21 +50,45 @@ function fmtDay(d: Date): string {
   return `${weekday} · ${month} ${day}, ${year}`;
 }
 
-function fmtHeroDate(d: Date): string {
+function fmtHeroDate(d: Date, tz: string): string {
   // "Friday morning · the 15th of May"
-  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(d);
-  const month = new Intl.DateTimeFormat("en-US", { month: "long" }).format(d);
-  return `${weekday} ${timeOfDay(d)} · the ${ordinal(d.getDate())} of ${month}`;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).formatToParts(d);
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const month = parts.find((p) => p.type === "month")?.value ?? "";
+  const day = parseInt(parts.find((p) => p.type === "day")?.value ?? "1");
+  return `${weekday} ${timeOfDay(d, tz)} · the ${ordinal(day)} of ${month}`;
 }
 
+/** UTC midnight of the calendar day `d` falls on — for STORED date-only values. */
 function startOfDay(d: Date): Date {
   const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
+  x.setUTCHours(0, 0, 0, 0);
   return x;
 }
 
+/** The instant the user's calendar day began — for "today/tomorrow" boundaries. */
+function startOfDayInTz(d: Date, tz: string): Date {
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d); // "2026-06-09"
+  const utcMidnight = new Date(`${ymd}T00:00:00Z`);
+  // Shift by the tz's offset at that moment (toLocaleString round-trip).
+  const tzClock = new Date(utcMidnight.toLocaleString("en-US", { timeZone: tz }));
+  return new Date(utcMidnight.getTime() - (tzClock.getTime() - utcMidnight.getTime()));
+}
+
+// Round, not floor: the operands mix tz-local and UTC midnights, which can
+// differ by the tz offset without changing the calendar-day distance.
 function daysBetween(a: Date, b: Date): number {
-  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 const REMINDER_LABEL: Record<string, string> = {
@@ -173,19 +204,24 @@ export default async function DashboardPage() {
   if (!user.onboardingComplete) redirect("/onboarding");
 
   const firstName = user.name?.split(" ")[0];
+  const tz = user.timezone || "UTC";
   const now = new Date();
-  const today = startOfDay(now);
+  const today = startOfDayInTz(now, tz);
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
   const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const gardens = await db.garden.findMany({
-    where: gardenAccessFilter(user.id),
-    include: {
-      _count: { select: { beds: true } },
-      seasons: { where: { isActive: true }, take: 1 },
-    },
-    orderBy: { createdAt: "asc" },
-  });
+  const [gardens, activeGardenId] = await Promise.all([
+    db.garden.findMany({
+      where: gardenAccessFilter(user.id),
+      include: {
+        _count: { select: { beds: true } },
+        seasons: { where: { isActive: true }, take: 1 },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    // The switcher's choice — the featured garden must follow it.
+    resolveActiveGardenId(user.id),
+  ]);
 
   // ── No gardens → empty state ───────────────────────────────────────────────
   if (gardens.length === 0) {
@@ -193,7 +229,7 @@ export default async function DashboardPage() {
       <div className={styles.dashboard}>
         <div className={styles.topbar}>
           <div className={styles.topbarMeta}>
-            <span className={styles.topbarDate}>{fmtDay(now)}</span>
+            <span className={styles.topbarDate}>{fmtDay(now, tz)}</span>
           </div>
         </div>
         <div className={styles.emptyState}>
@@ -219,13 +255,18 @@ export default async function DashboardPage() {
     );
   }
 
-  // ── Primary garden — load detail + weather ─────────────────────────────────
+  // ── Featured garden (the active one) — bounded detail + weather ───────────
+  // The micro-grids render only the first 3 beds × 8 cells, so load exactly
+  // that instead of every cell of every bed (a 10-bed Pro garden was pulling
+  // thousands of rows per view).
   const primaryGarden = await db.garden.findFirst({
-    where: { id: gardens[0].id },
+    where: { id: activeGardenId ?? gardens[0].id },
     include: {
       beds: {
+        take: 3,
         include: {
           cells: {
+            take: 8,
             orderBy: [{ row: "asc" }, { col: "asc" }],
             include: {
               occupiedBy: {
@@ -249,35 +290,10 @@ export default async function DashboardPage() {
 
   const activeSeason = primaryGarden.seasons[0] ?? null;
 
-  // Weather (refresh if cache older than 3 hours)
-  let weatherCurrent: CurrentWeather | null = null;
-  let weatherForecast: ForecastDay[] | null = null;
-  if (primaryGarden.locationZip) {
-    const THREE_HOURS = 3 * 60 * 60 * 1000;
-    const cacheAge = primaryGarden.weatherCache
-      ? Date.now() - new Date(primaryGarden.weatherCache.updatedAt).getTime()
-      : Infinity;
-
-    if (cacheAge > THREE_HOURS) {
-      const [c, f] = await Promise.all([
-        fetchCurrentWeather(primaryGarden.locationZip),
-        fetchForecast(primaryGarden.locationZip),
-      ]);
-      weatherCurrent = c;
-      weatherForecast = f;
-      if (c || f) {
-        await db.weatherCache.upsert({
-          where: { gardenId: primaryGarden.id },
-          create: { gardenId: primaryGarden.id, current: c ?? {}, forecast: f ?? [] },
-          update: { current: c ?? {}, forecast: f ?? [] },
-        });
-      }
-    } else {
-      weatherCurrent = primaryGarden.weatherCache?.current as CurrentWeather | null;
-      const raw = primaryGarden.weatherCache?.forecast;
-      weatherForecast = Array.isArray(raw) ? (raw as ForecastDay[]) : null;
-    }
-  }
+  // Weather: cached value, stale-refresh via after() (never blocks render).
+  const { current: weatherCurrent, forecast: weatherForecast } = primaryGarden.locationZip
+    ? await getGardenWeather(primaryGarden.id, primaryGarden.locationZip, primaryGarden.weatherCache)
+    : { current: null, forecast: null };
   const frostRisk = weatherForecast ? hasFrostRisk(weatherForecast) : false;
   const frostDay = frostRisk
     ? weatherForecast?.find((d) => d.minTemp <= 35) ?? null
@@ -291,8 +307,24 @@ export default async function DashboardPage() {
     null
   ) ?? null;
 
-  // ── Reminders ──────────────────────────────────────────────────────────────
-  const [todayReminders, upcomingReminders, alertReminders] = await Promise.all([
+  // ── Reminders + cross-garden stats (independent — one round-trip wave) ────
+  const accessibleGardenIds = gardens.map((g) => g.id);
+  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+
+  const [
+    todayReminders,
+    upcomingReminders,
+    alertReminders,
+    totalActiveReminders,
+    remindersThisWeek,
+    harvestThisYear,
+    recentHarvests,
+    activePlantingCount,
+    nextHarvestPlanting,
+    ratings,
+    gardenPlantings,
+    allBeds,
+  ] = await Promise.all([
     db.reminder.findMany({
       where: {
         userId: user.id,
@@ -331,78 +363,81 @@ export default async function DashboardPage() {
         planting: { include: { plant: { select: { name: true } } } },
       },
     }),
-  ]);
-
-  const totalActiveReminders = await db.reminder.count({
-    where: { userId: user.id, dismissed: false },
-  });
-  const remindersThisWeek = await db.reminder.count({
-    where: {
-      userId: user.id,
-      dismissed: false,
-      scheduledAt: { lte: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) },
-    },
-  });
-
-  // ── Aggregate stats across user's gardens ─────────────────────────────────
-  const accessibleGardenIds = gardens.map((g) => g.id);
-
-  const yearStart = new Date(today.getFullYear(), 0, 1);
-  const harvestThisYear = await db.harvestLog.aggregate({
-    _sum: { quantity: true },
-    where: {
-      planting: {
-        cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+    db.reminder.count({
+      where: { userId: user.id, dismissed: false },
+    }),
+    db.reminder.count({
+      where: {
+        userId: user.id,
+        dismissed: false,
+        scheduledAt: { lte: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) },
       },
-      harvestedAt: { gte: yearStart },
-    },
-  });
-  const yieldLbs = (harvestThisYear._sum.quantity ?? 0) as number;
-
-  const recentHarvests = await db.harvestLog.findMany({
-    where: {
-      planting: {
-        cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+    }),
+    db.harvestLog.aggregate({
+      _sum: { quantity: true },
+      where: {
+        planting: {
+          cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+        },
+        harvestedAt: { gte: yearStart },
       },
-    },
-    orderBy: { harvestedAt: "desc" },
-    take: 4,
-    include: {
-      planting: {
-        include: {
-          plant: { select: { name: true, category: true, imageUrl: true } },
-          cell: { include: { bed: { select: { name: true } } } },
+    }),
+    db.harvestLog.findMany({
+      where: {
+        planting: {
+          cell: { bed: { gardenId: { in: accessibleGardenIds } } },
         },
       },
-    },
-  });
+      orderBy: { harvestedAt: "desc" },
+      take: 4,
+      include: {
+        planting: {
+          include: {
+            plant: { select: { name: true, category: true, imageUrl: true } },
+            cell: { include: { bed: { select: { name: true } } } },
+          },
+        },
+      },
+    }),
+    activeSeason
+      ? db.planting.count({ where: { seasonId: activeSeason.id } })
+      : Promise.resolve(0),
+    // Next harvest = earliest expectedHarvestDate in future for accessible gardens
+    db.planting.findFirst({
+      where: {
+        expectedHarvestDate: { gte: now },
+        actualHarvestDate: null,
+        cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+      },
+      orderBy: { expectedHarvestDate: "asc" },
+      include: { plant: { select: { name: true } } },
+    }),
+    db.planting.findMany({
+      where: {
+        rating: { not: null },
+        cell: { bed: { gardenId: { in: accessibleGardenIds } } },
+      },
+      select: { rating: true },
+    }),
+    // Per-bed plant counts (micro-grid tiles + SVG labels) in one query —
+    // the bed include above is truncated, so counts come from plantings.
+    db.planting.findMany({
+      where: { season: { isActive: true }, cell: { bed: { gardenId: primaryGarden.id } } },
+      select: { id: true, cell: { select: { bedId: true } } },
+    }),
+    // All beds (scalars only) for the SVG overview; the heavy cells include
+    // above is capped to the 3 micro-grid beds.
+    db.bed.findMany({
+      where: { gardenId: primaryGarden.id },
+      select: { id: true, name: true, xPosition: true, yPosition: true, widthFt: true, heightFt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
-  const activePlantingCount = activeSeason
-    ? await db.planting.count({ where: { seasonId: activeSeason.id } })
-    : 0;
-
-  // Next harvest = earliest expectedHarvestDate in future for accessible gardens
-  const nextHarvestPlanting = await db.planting.findFirst({
-    where: {
-      expectedHarvestDate: { gte: now },
-      actualHarvestDate: null,
-      cell: { bed: { gardenId: { in: accessibleGardenIds } } },
-    },
-    orderBy: { expectedHarvestDate: "asc" },
-    include: { plant: { select: { name: true } } },
-  });
+  const yieldLbs = (harvestThisYear._sum.quantity ?? 0) as number;
   const daysToNextHarvest = nextHarvestPlanting?.expectedHarvestDate
     ? Math.max(0, daysBetween(today, startOfDay(nextHarvestPlanting.expectedHarvestDate)))
     : null;
-
-  // Average rating
-  const ratings = await db.planting.findMany({
-    where: {
-      rating: { not: null },
-      cell: { bed: { gardenId: { in: accessibleGardenIds } } },
-    },
-    select: { rating: true },
-  });
   const avgRating = ratings.length > 0
     ? ratings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / ratings.length
     : null;
@@ -447,8 +482,12 @@ export default async function DashboardPage() {
     heroSub = `${activePlantingCount} planting${activePlantingCount === 1 ? "" : "s"} growing across the season. A good time to walk the beds.`;
   }
 
-  // ── Bed tile mini-grid (first 8 cells) ─────────────────────────────────────
-  const bedTilesData = primaryGarden.beds.slice(0, 3).map((bed) => {
+  // ── Bed tile mini-grid (first 8 cells; the query is already bounded) ──────
+  const plantCountByBed = new Map<string, number>();
+  for (const p of gardenPlantings) {
+    plantCountByBed.set(p.cell.bedId, (plantCountByBed.get(p.cell.bedId) ?? 0) + 1);
+  }
+  const bedTilesData = primaryGarden.beds.map((bed) => {
     const microCells = bed.cells.slice(0, 8);
     while (microCells.length < 8) {
       microCells.push({
@@ -461,14 +500,11 @@ export default async function DashboardPage() {
         occupiedBy: [],
       });
     }
-    const plantCount = new Set(
-      bed.cells.flatMap((c) => c.occupiedBy.map((o) => o.plantingId))
-    ).size;
     return {
       id: bed.id,
       name: bed.name,
       sizeFt: `${bed.widthFt} × ${bed.heightFt} ft`,
-      plantCount,
+      plantCount: plantCountByBed.get(bed.id) ?? 0,
       cells: microCells,
     };
   });
@@ -502,7 +538,7 @@ export default async function DashboardPage() {
       {/* Top bar */}
       <div className={styles.topbar}>
         <div className={styles.topbarMeta}>
-          <span className={styles.topbarDate}>{fmtDay(now)}</span>
+          <span className={styles.topbarDate}>{fmtDay(now, tz)}</span>
           {activeSeason && seasonDayN !== null && (
             <span className={styles.topbarEdition}>
               The garden · <em>Day {seasonDayN}</em> of {activeSeason.name}
@@ -515,9 +551,9 @@ export default async function DashboardPage() {
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
           <span className={styles.eyebrow}>Today&apos;s edition</span>
-          <div className={styles.heroDate}>{fmtHeroDate(now)}</div>
+          <div className={styles.heroDate}>{fmtHeroDate(now, tz)}</div>
           <h1 className={styles.heroGreeting}>
-            Good {timeOfDay(now)},<br />
+            Good {timeOfDay(now, tz)},<br />
             <em>{firstName ?? "gardener"}.</em>
           </h1>
           <p className={styles.heroSub}>{heroSub}</p>
@@ -627,8 +663,19 @@ export default async function DashboardPage() {
               const plantName = r.planting?.plant.name ?? r.title;
               const bedName = r.planting?.cell.bed.name;
               const due = r.scheduledAt;
-              const overdue = due < today;
-              const isToday = due >= today && due < tomorrow;
+              // System reminders are stored as UTC midnights of the intended
+              // calendar day — classify by calendar day (reminder's UTC day
+              // vs the user's tz day), not by instant, or a "today" reminder
+              // reads as overdue for any user west of UTC.
+              const dueYmd = due.toISOString().slice(0, 10);
+              const todayYmd = new Intl.DateTimeFormat("en-CA", {
+                timeZone: tz,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).format(now);
+              const overdue = dueYmd < todayYmd;
+              const isToday = dueYmd === todayYmd;
               const whenLabel = overdue
                 ? `↗ Overdue · ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(due)}`
                 : isToday
@@ -702,7 +749,7 @@ export default async function DashboardPage() {
                     )}
                     {activeSeason && <span className={styles.tag}>{activeSeason.name}</span>}
                     <span className={styles.tag}>
-                      {primaryGarden.beds.length} bed{primaryGarden.beds.length === 1 ? "" : "s"}
+                      {allBeds.length} bed{allBeds.length === 1 ? "" : "s"}
                     </span>
                   </div>
                 </div>
@@ -740,14 +787,12 @@ export default async function DashboardPage() {
                   fill="url(#dashGrass)"
                   rx={8}
                 />
-                {primaryGarden.beds.map((bed) => {
+                {allBeds.map((bed) => {
                   const bx = offsetX + bed.xPosition * scale;
                   const by = offsetY + bed.yPosition * scale;
                   const bw = bed.widthFt * scale;
                   const bh = bed.heightFt * scale;
-                  const plantCount = new Set(
-                    bed.cells.flatMap((c) => c.occupiedBy.map((o) => o.plantingId))
-                  ).size;
+                  const plantCount = plantCountByBed.get(bed.id) ?? 0;
                   return (
                     <g key={bed.id} filter="url(#dashDs)">
                       <rect x={bx} y={by} width={bw} height={bh} fill="#7D5630" rx={3} />
@@ -793,7 +838,7 @@ export default async function DashboardPage() {
                   <em>{activePlantingCount}</em>
                 </div>
                 <div className="valueSub">
-                  across {primaryGarden.beds.length} bed{primaryGarden.beds.length === 1 ? "" : "s"}
+                  across {allBeds.length} bed{allBeds.length === 1 ? "" : "s"}
                 </div>
               </div>
               <div className={styles.gardenStat}>

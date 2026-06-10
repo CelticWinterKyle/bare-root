@@ -9,8 +9,9 @@ import { Sprout } from "lucide-react";
 import { AddBedDialog } from "@/components/garden/AddBedDialog";
 import { GardenCanvasToggle } from "@/components/canvas/GardenCanvasToggle";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
-import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
+import { hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
+import { getGardenWeather } from "@/lib/services/garden-weather";
 
 export async function generateMetadata({
   params,
@@ -83,33 +84,15 @@ export default async function GardenPage({
       }))?.subscriptionTier ?? "FREE";
   const atBedLimit = ownerTier === "FREE" && bedCount >= 3;
 
+  // Stale-while-revalidate: only the first-ever view blocks on OpenWeather.
   let weatherCurrent: CurrentWeather | null = null;
   let weatherForecast: ForecastDay[] | null = null;
   if (garden.locationZip) {
-    const THREE_HOURS = 3 * 60 * 60 * 1000;
-    const cacheAge = garden.weatherCache
-      ? Date.now() - new Date(garden.weatherCache.updatedAt).getTime()
-      : Infinity;
-
-    if (cacheAge > THREE_HOURS) {
-      const [c, f] = await Promise.all([
-        fetchCurrentWeather(garden.locationZip),
-        fetchForecast(garden.locationZip),
-      ]);
-      weatherCurrent = c;
-      weatherForecast = f;
-      if (c || f) {
-        await db.weatherCache.upsert({
-          where: { gardenId: garden.id },
-          create: { gardenId: garden.id, current: c ?? {}, forecast: f ?? [] },
-          update: { current: c ?? {}, forecast: f ?? [] },
-        });
-      }
-    } else {
-      weatherCurrent = garden.weatherCache?.current as CurrentWeather | null;
-      const raw = garden.weatherCache?.forecast;
-      weatherForecast = Array.isArray(raw) ? (raw as ForecastDay[]) : null;
-    }
+    ({ current: weatherCurrent, forecast: weatherForecast } = await getGardenWeather(
+      garden.id,
+      garden.locationZip,
+      garden.weatherCache
+    ));
   }
   const frostRisk = weatherForecast ? hasFrostRisk(weatherForecast) : false;
 

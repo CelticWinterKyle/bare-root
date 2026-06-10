@@ -32,29 +32,23 @@ export default async function InventoryPage() {
     );
   }
 
-  const [inventory, gardens] = await Promise.all([
+  // The shopping list only needs the distinct set of plants with active-
+  // season plantings in accessible gardens — query plantings directly
+  // instead of loading every garden→beds→cells→plantings tree.
+  const [inventory, plantedPlants] = await Promise.all([
     db.seedInventory.findMany({
       where: { userId: user.id },
       include: { user: false, plant: { select: { id: true, name: true, category: true } } },
       orderBy: [{ plant: { name: "asc" } }, { variety: "asc" }],
     }),
-    db.garden.findMany({
-      where: gardenAccessFilter(user.id),
-      include: {
-        seasons: { where: { isActive: true }, take: 1 },
-        beds: {
-          include: {
-            cells: {
-              include: {
-                plantings: {
-                  where: { season: { isActive: true } },
-                  include: { plant: { select: { id: true, name: true } } },
-                },
-              },
-            },
-          },
-        },
+    db.planting.findMany({
+      where: {
+        season: { isActive: true },
+        cell: { bed: { garden: gardenAccessFilter(user.id) } },
       },
+      distinct: ["plantId"],
+      select: { plant: { select: { id: true, name: true } } },
+      orderBy: { plant: { name: "asc" } },
     }),
   ]);
 
@@ -62,24 +56,11 @@ export default async function InventoryPage() {
   type ShoppingItem = { plantId: string; plantName: string; inInventory: boolean; inventoryQty: number | null };
   const inventoryByPlantId = new Map(inventory.map((i) => [i.plantId, i.quantity]));
 
-  const plannedPlantIds = new Map<string, string>();
-  for (const g of gardens) {
-    for (const b of g.beds) {
-      for (const c of b.cells) {
-        for (const p of c.plantings) {
-          if (!plannedPlantIds.has(p.plant.id)) {
-            plannedPlantIds.set(p.plant.id, p.plant.name);
-          }
-        }
-      }
-    }
-  }
-
-  const shoppingList: ShoppingItem[] = [...plannedPlantIds.entries()].map(([id, name]) => ({
-    plantId: id,
-    plantName: name,
-    inInventory: inventoryByPlantId.has(id) && (inventoryByPlantId.get(id) ?? 0) > 0,
-    inventoryQty: inventoryByPlantId.get(id) ?? null,
+  const shoppingList: ShoppingItem[] = plantedPlants.map(({ plant }) => ({
+    plantId: plant.id,
+    plantName: plant.name,
+    inInventory: inventoryByPlantId.has(plant.id) && (inventoryByPlantId.get(plant.id) ?? 0) > 0,
+    inventoryQty: inventoryByPlantId.get(plant.id) ?? null,
   }));
 
   return (

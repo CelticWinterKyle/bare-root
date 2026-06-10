@@ -8,88 +8,64 @@ import {
   calculateStartSeedsDate,
   calculateTransplantDate,
 } from "@/lib/services/planting-calendar";
-import { fetchCurrentWeather, fetchForecast, hasFrostRisk } from "@/lib/api/weather";
+import { hasFrostRisk } from "@/lib/api/weather";
 import type { CurrentWeather, ForecastDay } from "@/lib/api/weather";
+import { getGardenWeather } from "@/lib/services/garden-weather";
 import { getSuccessionSuggestions } from "@/lib/services/succession";
 import { getStartOptions } from "@/lib/services/planting-feasibility";
 import Link from "next/link";
 import { MapPin, Sprout } from "lucide-react";
 
-const THREE_HOURS = 3 * 60 * 60 * 1000;
-
 export default async function CalendarPage() {
   const user = await requireUser();
 
-  // Fetch all gardens with active seasons and their plantings
-  const gardens = await db.garden.findMany({
-    where: gardenAccessFilter(user.id),
-    include: {
-      beds: {
-        include: {
-          cells: {
-            include: {
-              plantings: {
-                where: { season: { isActive: true } },
-                include: {
-                  plant: {
-                    select: {
-                      id: true,
-                      name: true,
-                      indoorStartWeeks: true,
-                      transplantWeeks: true,
-                      daysToMaturity: true,
-                    },
-                  },
-                },
-              },
-            },
+  // Gardens (for weather/frost settings) + active-season plantings queried
+  // directly — the old garden→beds→cells→plantings include shipped the whole
+  // tree just to extract plantings.
+  const [gardens, plantings] = await Promise.all([
+    db.garden.findMany({
+      where: gardenAccessFilter(user.id),
+      include: { weatherCache: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.planting.findMany({
+      where: {
+        season: { isActive: true },
+        cell: { bed: { garden: gardenAccessFilter(user.id) } },
+      },
+      select: {
+        plantedDate: true,
+        expectedHarvestDate: true,
+        plant: {
+          select: {
+            id: true,
+            name: true,
+            indoorStartWeeks: true,
+            transplantWeeks: true,
+            daysToMaturity: true,
           },
         },
+        cell: { select: { bed: { select: { id: true, name: true, gardenId: true } } } },
       },
-      weatherCache: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
+      // Match the old garden-tree iteration order so first-seen dedupes
+      // (planNow) resolve against the same garden.
+      orderBy: { cell: { bed: { garden: { createdAt: "asc" } } } },
+    }),
+  ]);
+  const gardenById = new Map(gardens.map((g) => [g.id, g]));
 
-  // Use the first garden with a zip for weather
+  // Use the first garden with a zip for weather (stale-while-revalidate:
+  // only the first-ever view blocks on the OpenWeather fetch).
   const weatherGarden = gardens.find((g) => g.locationZip);
   let current: CurrentWeather | null = null;
   let forecast: ForecastDay[] | null = null;
 
   if (weatherGarden) {
-    const cacheAge = weatherGarden.weatherCache
-      ? Date.now() - new Date(weatherGarden.weatherCache.updatedAt).getTime()
-      : Infinity;
-
-    if (cacheAge > THREE_HOURS) {
-      // Refresh from API and store in cache
-      const [newCurrent, newForecast] = await Promise.all([
-        fetchCurrentWeather(weatherGarden.locationZip!),
-        fetchForecast(weatherGarden.locationZip!),
-      ]);
-
-      if (newCurrent || newForecast) {
-        await db.weatherCache.upsert({
-          where: { gardenId: weatherGarden.id },
-          create: {
-            gardenId: weatherGarden.id,
-            current: newCurrent ?? {},
-            forecast: newForecast ?? [],
-          },
-          update: {
-            current: newCurrent ?? {},
-            forecast: newForecast ?? [],
-          },
-        });
-        current = newCurrent;
-        forecast = newForecast;
-      }
-    } else {
-      // Serve from cache
-      current = weatherGarden.weatherCache?.current as CurrentWeather | null;
-      const rawForecast = weatherGarden.weatherCache?.forecast;
-      forecast = Array.isArray(rawForecast) ? (rawForecast as ForecastDay[]) : null;
-    }
+    ({ current, forecast } = await getGardenWeather(
+      weatherGarden.id,
+      weatherGarden.locationZip!,
+      weatherGarden.weatherCache
+    ));
   }
 
   // Build calendar events from all active-season plantings, DEDUPED:
@@ -112,64 +88,54 @@ export default async function CalendarPage() {
     }
   }
 
-  for (const garden of gardens) {
-    if (!garden.lastFrostDate) continue;
+  for (const planting of plantings) {
+    const bed = planting.cell.bed;
+    const garden = gardenById.get(bed.gardenId);
+    if (!garden?.lastFrostDate) continue;
 
-    for (const bed of garden.beds) {
-      for (const cell of bed.cells) {
-        for (const planting of cell.plantings) {
-          const { plant } = planting;
-          const base = {
-            plantName: plant.name,
-            plantId: plant.id,
-            bedId: bed.id,
-            bedName: bed.name,
-            gardenId: garden.id,
-            gardenName: garden.name,
-          };
+    const { plant } = planting;
+    const base = {
+      plantName: plant.name,
+      plantId: plant.id,
+      bedId: bed.id,
+      bedName: bed.name,
+      gardenId: garden.id,
+      gardenName: garden.name,
+    };
 
-          // Start seeds
-          if (plant.indoorStartWeeks) {
-            const d = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
-            if (d >= now && d <= cutoff) {
-              addEvent({ date: d, type: "START_SEEDS", ...base });
-            }
-          }
-
-          // Transplant
-          if (plant.transplantWeeks != null) {
-            const d = calculateTransplantDate(garden.lastFrostDate, plant.transplantWeeks);
-            if (d >= now && d <= cutoff) {
-              addEvent({ date: d, type: "TRANSPLANT", ...base });
-            }
-          }
-
-          // Harvest — use stored expectedHarvestDate if set
-          const harvestDate = planting.expectedHarvestDate;
-          if (harvestDate && harvestDate >= now && harvestDate <= cutoff) {
-            addEvent({ date: harvestDate, type: "HARVEST", ...base });
-          }
-        }
+    // Start seeds
+    if (plant.indoorStartWeeks) {
+      const d = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
+      if (d >= now && d <= cutoff) {
+        addEvent({ date: d, type: "START_SEEDS", ...base });
       }
+    }
+
+    // Transplant
+    if (plant.transplantWeeks != null) {
+      const d = calculateTransplantDate(garden.lastFrostDate, plant.transplantWeeks);
+      if (d >= now && d <= cutoff) {
+        addEvent({ date: d, type: "TRANSPLANT", ...base });
+      }
+    }
+
+    // Harvest — use stored expectedHarvestDate if set
+    const harvestDate = planting.expectedHarvestDate;
+    if (harvestDate && harvestDate >= now && harvestDate <= cutoff) {
+      addEvent({ date: harvestDate, type: "HARVEST", ...base });
     }
   }
 
   const events: CalendarEvent[] = Array.from(eventMap.values()).sort((a, b) => +a.date - +b.date);
 
   // Succession suggestions
-  const allActivePlantings = gardens.flatMap((g) =>
-    g.beds.flatMap((b) =>
-      b.cells.flatMap((c) =>
-        c.plantings.map((p) => ({
-          plant: p.plant,
-          plantedDate: p.plantedDate,
-          expectedHarvestDate: p.expectedHarvestDate,
-          bedName: b.name,
-          gardenName: g.name,
-        }))
-      )
-    )
-  );
+  const allActivePlantings = plantings.map((p) => ({
+    plant: p.plant,
+    plantedDate: p.plantedDate,
+    expectedHarvestDate: p.expectedHarvestDate,
+    bedName: p.cell.bed.name,
+    gardenName: gardenById.get(p.cell.bed.gardenId)?.name ?? "",
+  }));
   const firstFrostDate = gardens.find((g) => g.firstFrostDate)?.firstFrostDate ?? null;
   const successionSuggestions = getSuccessionSuggestions(allActivePlantings, firstFrostDate);
 
@@ -177,37 +143,28 @@ export default async function CalendarPage() {
   // method we'd recommend right now (anchored to today, not next spring).
   const planNow: { plantId: string; plantName: string; summary: string; thisSeason: boolean }[] = [];
   const seenPlant = new Set<string>();
-  for (const garden of gardens) {
-    const frost = { lastFrostDate: garden.lastFrostDate, firstFrostDate: garden.firstFrostDate };
-    for (const bed of garden.beds) {
-      for (const cell of bed.cells) {
-        for (const planting of cell.plantings) {
-          const p = planting.plant;
-          if (seenPlant.has(p.id) || p.daysToMaturity == null) continue;
-          seenPlant.add(p.id);
-          const f = getStartOptions(p, frost, now);
-          planNow.push({
-            plantId: p.id,
-            plantName: p.name,
-            summary: f.recommendedOption.summary,
-            thisSeason: f.recommendedThisSeason,
-          });
-        }
-      }
-    }
+  for (const planting of plantings) {
+    const garden = gardenById.get(planting.cell.bed.gardenId);
+    if (!garden) continue;
+    const p = planting.plant;
+    if (seenPlant.has(p.id) || p.daysToMaturity == null) continue;
+    seenPlant.add(p.id);
+    const f = getStartOptions(
+      p,
+      { lastFrostDate: garden.lastFrostDate, firstFrostDate: garden.firstFrostDate },
+      now
+    );
+    planNow.push({
+      plantId: p.id,
+      plantName: p.name,
+      summary: f.recommendedOption.summary,
+      thisSeason: f.recommendedThisSeason,
+    });
   }
   planNow.sort((a, b) => Number(b.thisSeason) - Number(a.thisSeason));
 
   // Active planting count for frost alert
-  const activePlantingCount = gardens.reduce(
-    (sum, g) =>
-      sum +
-      g.beds.reduce(
-        (s, b) => s + b.cells.reduce((c, cell) => c + cell.plantings.length, 0),
-        0
-      ),
-    0
-  );
+  const activePlantingCount = plantings.length;
 
   const hasFrost = forecast ? hasFrostRisk(forecast) : false;
 

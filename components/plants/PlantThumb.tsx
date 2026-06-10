@@ -11,6 +11,7 @@ import {
   Sprout,
   type LucideIcon,
 } from "lucide-react";
+import { pexelsThumb } from "@/lib/pexels-thumb";
 
 /**
  * Per-category fallback visuals. Tints/accents track the library's
@@ -54,7 +55,7 @@ export function PlantThumb({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={pexelsThumb(src)}
         alt={name}
         referrerPolicy="no-referrer"
         loading="lazy"
