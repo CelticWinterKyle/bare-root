@@ -61,16 +61,22 @@ export function WizardShell() {
     const zip = data.zip.replace(/\D/g, "");
     if (zip.length < 5) return;
     setLocationState("loading");
-    const result = await lookupLocation(zip);
-    if (result) {
-      setData((prev) => ({
-        ...prev,
-        zone: result.zone,
-        lastFrostDate: result.lastFrostDate,
-        firstFrostDate: result.firstFrostDate,
-      }));
-      setLocationState("found");
-    } else {
+    try {
+      const result = await lookupLocation(zip);
+      if (result) {
+        setData((prev) => ({
+          ...prev,
+          zone: result.zone,
+          lastFrostDate: result.lastFrostDate,
+          firstFrostDate: result.firstFrostDate,
+        }));
+        setLocationState("found");
+      } else {
+        setLocationState("not-found");
+      }
+    } catch {
+      // A failed action (network/DB blip) must not wedge the wizard in
+      // "loading" — "not-found" has friendly copy and lets the user continue.
       setLocationState("not-found");
     }
   }

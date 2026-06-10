@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { ensureDbUser } from "@/lib/ensure-user";
 import { db } from "@/lib/db";
+import { cleanupBeforeUserDelete } from "@/lib/account-cleanup";
 
 type ClerkEmailAddress = { id: string; email_address: string };
 type ClerkUserData = {
@@ -74,6 +75,10 @@ export async function POST(req: Request) {
     }
 
     case "user.deleted":
+      // Cancel billing + delete Blob photos first — neither cascades with
+      // the DB delete, and the subscription id is destroyed by it. No-ops
+      // when the row is already gone (e.g. deleteMyAccount ran first).
+      await cleanupBeforeUserDelete(event.data.id);
       // Cascade-deletes the user's gardens, reminders, push subscriptions,
       // etc. (all relations are onDelete: Cascade). Without this, deleted
       // Clerk users linger and keep receiving reminder emails/pushes.

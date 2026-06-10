@@ -2,6 +2,7 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clerkClient } from "@clerk/nextjs/server";
+import { cleanupBeforeUserDelete } from "@/lib/account-cleanup";
 
 /**
  * Export everything the user owns as a JSON-serializable object. Backs the
@@ -54,7 +55,10 @@ export async function exportMyData() {
  */
 export async function deleteMyAccount(): Promise<void> {
   const user = await requireUser();
-  // App data first (cascades through gardens and collaborations).
+  // Cancel billing and remove Blob photos while the rows still exist —
+  // the cascade below destroys the subscription id and photo URLs.
+  await cleanupBeforeUserDelete(user.id);
+  // App data next (cascades through gardens and collaborations).
   await db.user.delete({ where: { id: user.id } });
   // Then the auth identity so they can't sign back into a ghost account.
   try {

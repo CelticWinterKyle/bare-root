@@ -6,12 +6,16 @@ const OWNER_EMAIL = "kyle@celticwinter.com";
 
 /**
  * Owner-only manual comp: grant or revoke Pro for a tester by email.
- *   GET /api/admin/grant-pro?email=tester@example.com        → PRO
- *   GET /api/admin/grant-pro?email=tester@example.com&revoke=1 → FREE
+ *   POST /api/admin/grant-pro?email=tester@example.com        → PRO
+ *   POST /api/admin/grant-pro?email=tester@example.com&revoke=1 → FREE
+ * POST-only on purpose: a state-changing GET authenticated by the session
+ * cookie (SameSite=Lax) is CSRF-able via a crafted link. Trigger from a
+ * terminal: curl -X POST -H "Cookie: ..." or from the browser devtools
+ * console with fetch(url, { method: "POST" }).
  * The tester must have signed up first (so the account exists). Revoking is
  * graceful — over-limit gardens/beds become read-only, nothing is deleted.
  */
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   const me = await getCurrentUser();
   if (!me || me.email.toLowerCase() !== OWNER_EMAIL) {
     return new NextResponse("Unauthorized", { status: 401 });

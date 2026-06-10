@@ -434,7 +434,13 @@ export async function removePlanting(plantingId: string) {
   });
   if (!planting) throw new Error("Planting not found");
 
-  await db.planting.delete({ where: { id: plantingId } });
+  // Pending reminders must go with the planting — plantingId is SetNull on
+  // delete, so without this the cron keeps nudging about a removed plant.
+  // Already-sent ones stay as history.
+  await db.$transaction([
+    db.reminder.deleteMany({ where: { plantingId, sentAt: null } }),
+    db.planting.delete({ where: { id: plantingId } }),
+  ]);
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
   revalidatePath(`/garden/${planting.cell.bed.gardenId}`);
   revalidatePath(`/dashboard`);

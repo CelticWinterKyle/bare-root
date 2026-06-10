@@ -121,12 +121,16 @@ export async function GET(req: Request) {
         attempted = true;
         const payload = { title: reminder.title, body: reminder.body ?? "", url };
         for (const sub of user.pushSubscriptions) {
-          const ok = await sendPushNotification(
+          const result = await sendPushNotification(
             { endpoint: sub.endpoint, p256dhKey: sub.p256dhKey, authKey: sub.authKey },
             payload
           );
-          if (ok) delivered = true;
-          else await db.pushSubscription.delete({ where: { id: sub.id } });
+          if (result === "sent") delivered = true;
+          // Delete only permanently-dead subscriptions; transient push-service
+          // failures retry on the next run via the sendAttempts counter.
+          else if (result === "gone") {
+            await db.pushSubscription.delete({ where: { id: sub.id } });
+          }
         }
       }
 

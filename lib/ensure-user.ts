@@ -15,9 +15,10 @@ export async function ensureDbUser(clerkUserId: string) {
 
   const client = await clerkClient();
   const cu = await client.users.getUser(clerkUserId);
-  const primaryEmail =
-    cu.emailAddresses.find((e) => e.id === cu.primaryEmailAddressId)?.emailAddress ??
-    cu.emailAddresses[0]?.emailAddress;
+  const primaryEmailObj =
+    cu.emailAddresses.find((e) => e.id === cu.primaryEmailAddressId) ??
+    cu.emailAddresses[0];
+  const primaryEmail = primaryEmailObj?.emailAddress;
   if (!primaryEmail) throw new Error("No primary email for user");
   const fullName = [cu.firstName, cu.lastName].filter(Boolean).join(" ") || null;
 
@@ -31,6 +32,16 @@ export async function ensureDbUser(clerkUserId: string) {
   // ON UPDATE CASCADE, so the account keeps all its data.
   const byEmail = await db.user.findUnique({ where: { email: primaryEmail } });
   if (byEmail && byEmail.id !== clerkUserId) {
+    // Hard gate: re-linking hands the ENTIRE existing account to the new
+    // Clerk identity, so the email claim must be verified. Clerk normally
+    // enforces verification at sign-up, but this must not hinge on that
+    // config staying correct (e.g. an OAuth provider returning an
+    // unverified address) — an unverified match would be account takeover.
+    if (primaryEmailObj.verification?.status !== "verified") {
+      throw new Error(
+        `Refusing to re-link existing account for ${primaryEmail}: email is not verified on the new Clerk identity`
+      );
+    }
     return db.user.update({
       where: { id: byEmail.id },
       data: {
