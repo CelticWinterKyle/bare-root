@@ -26,17 +26,26 @@ export type FootprintPlacement = {
   cells: { cellId: string; row: number; col: number; isPrimary: boolean }[];
   /** Footprint that the plant SHOULD have had based on its spacing. */
   desiredFootprint: number;
-  /** True iff some footprint cells got dropped (edge of bed or occupied). */
+  /** True iff the bed itself is too small for the full footprint (the only
+   *  remaining reduction cause — occupied cells now BLOCK, never shrink). */
   footprintReduced: boolean;
+  /** Footprint edge length in cells (e.g. 2 for a 2×2 tomato). */
+  sideCells: number;
+  /** Set (>0) when placement was REJECTED because that many footprint cells
+   *  are already occupied — `cells` will be empty. Footprints must stay
+   *  rectangles: silently shrinking around neighbors produced L-shapes whose
+   *  bounding-box render painted over other plantings ("stacking"). */
+  blockedCells?: number;
 };
 
 /**
  * Computes which cells a plant would occupy when anchored at the given
  * row/col, using the "anchor at tap, extend LEFT and DOWN" convention.
- * Drops cells that fall outside the bed grid or are already occupied
- * by a planting in this season. The returned `cells` array always
- * contains the anchor cell if it itself is in bounds and free —
- * callers should check that before relying on the placement.
+ * The block slides to stay inside the bed; it only shrinks when the bed
+ * itself is smaller than the footprint (still a rectangle). If ANY cell of
+ * the resolved rectangle is occupied by another planting this season, the
+ * whole placement is rejected (blockedCells set, cells empty) — callers
+ * surface a "needs an N×N area" error.
  */
 async function resolveFootprint(args: {
   anchorCell: { id: string; row: number; col: number; bedId: string };
@@ -83,7 +92,7 @@ async function resolveFootprint(args: {
   });
   const cellByPos = new Map(cellsInBed.map((c) => [`${c.row},${c.col}`, c.id]));
 
-  // Drop cells already occupied in this season — but ignore the moving
+  // Occupancy check across the whole rectangle — ignoring the moving
   // planting's own cells when present, so it can re-anchor onto itself.
   const candidateIds = cellsInBed.map((c) => c.id);
   const occupied = await db.plantingCell.findMany({
@@ -98,11 +107,27 @@ async function resolveFootprint(args: {
   });
   const occupiedSet = new Set(occupied.map((o) => o.cellId));
 
+  // ANY occupied cell in the rectangle rejects the placement outright.
+  // Shrinking around neighbors created non-rectangular footprints that
+  // rendered as overlapping blocks — the grid must never lie.
+  const blockedCells = desired.filter((d) => {
+    const id = cellByPos.get(`${d.row},${d.col}`);
+    return id !== undefined && occupiedSet.has(id);
+  }).length;
+  if (blockedCells > 0) {
+    return {
+      cells: [],
+      desiredFootprint: sideCells * sideCells,
+      footprintReduced: false,
+      sideCells,
+      blockedCells,
+    };
+  }
+
   const placed = desired
     .map((d) => {
       const id = cellByPos.get(`${d.row},${d.col}`);
       if (!id) return null;
-      if (occupiedSet.has(id)) return null;
       return { cellId: id, row: d.row, col: d.col, isPrimary: d.isPrimary };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
@@ -111,6 +136,7 @@ async function resolveFootprint(args: {
     cells: placed,
     desiredFootprint: sideCells * sideCells,
     footprintReduced: placed.length < sideCells * sideCells,
+    sideCells,
   };
 }
 
@@ -175,11 +201,18 @@ export async function assignPlant(
     seasonId,
   });
 
+  if (placement.blockedCells) {
+    throw new Error(
+      placement.sideCells > 1
+        ? `Not enough room here — ${plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
+        : "This cell is already occupied. Try another."
+    );
+  }
   const primary = placement.cells.find((c) => c.isPrimary);
   if (!primary) {
-    // Anchor cell itself isn't placeable — either off-grid (shouldn't happen
-    // since we just resolved it) or already occupied. Surface a clear error
-    // so the picker can re-render without state drift.
+    // Anchor cell itself isn't placeable — off-grid (shouldn't happen since
+    // we just resolved it). Surface a clear error so the picker can
+    // re-render without state drift.
     throw new Error("This cell is already occupied. Try another.");
   }
 
@@ -214,12 +247,11 @@ export async function assignPlant(
     console.error("createRemindersForPlanting failed (non-fatal):", err);
   }
 
-  // Footprint warning — fired when we couldn't fit the plant's full
-  // recommended area (edge of bed or neighbors in the way).
+  // Footprint warning — now only fires when the BED is smaller than the
+  // plant's recommended area (occupied neighbors reject instead of shrink).
   let footprintWarning: string | undefined;
   if (placement.footprintReduced) {
-    const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
-    footprintWarning = `${plant.name} normally needs a ${sideCells}×${sideCells} area, but planted in ${placement.cells.length} of ${placement.desiredFootprint} cells. Crowded plants may produce less.`;
+    footprintWarning = `${plant.name} normally needs a ${placement.sideCells}×${placement.sideCells} area, but this bed only fits ${placement.cells.length} of ${placement.desiredFootprint} cells. Crowded plants may produce less.`;
   }
 
   // Existing spacing check — distance between plantings within this bed.
@@ -313,6 +345,13 @@ export async function movePlanting(
     excludePlantingId: planting.id,
   });
 
+  if (placement.blockedCells) {
+    throw new Error(
+      placement.sideCells > 1
+        ? `Not enough room there — ${planting.plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
+        : "That cell is already occupied."
+    );
+  }
   const primary = placement.cells.find((c) => c.isPrimary);
   if (!primary) {
     throw new Error("That cell is already occupied.");
@@ -341,9 +380,8 @@ export async function movePlanting(
   revalidatePath(`/dashboard`);
 
   if (placement.footprintReduced) {
-    const sideCells = Math.ceil(placement.desiredFootprint ** 0.5);
     return {
-      footprintWarning: `${planting.plant.name} normally needs a ${sideCells}×${sideCells} area, but moved into ${placement.cells.length} of ${placement.desiredFootprint} cells.`,
+      footprintWarning: `${planting.plant.name} normally needs a ${placement.sideCells}×${placement.sideCells} area, but this bed only fits ${placement.cells.length} of ${placement.desiredFootprint} cells.`,
     };
   }
   return {};
@@ -356,10 +394,9 @@ export async function movePlanting(
  *
  * Side effects: each successful placement creates a Planting + its
  * PlantingCell rows and schedules reminders. If a later cell's footprint
- * overlaps an earlier one, the later one still plants — just with a
- * reduced footprint (cells already taken get skipped, footprintReduced
- * fires). That matches the user's expectation when they bulk-select a
- * dense area: "fill what you can."
+ * overlaps an earlier one, the later cell is SKIPPED entirely (footprints
+ * never shrink around neighbors — they stay rectangles), and the summary
+ * reports it in `skipped`.
  *
  * Returns a summary the UI can use to surface one consolidated toast
  * instead of N separate ones.

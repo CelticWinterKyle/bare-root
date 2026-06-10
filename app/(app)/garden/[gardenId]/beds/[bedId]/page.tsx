@@ -258,6 +258,7 @@ export default async function BedPage({
               plantingId: occ.planting.id,
               primaryCellId: occ.planting.cellId,
               status: occ.planting.status,
+              plantName: occ.planting.plant.name,
             }
           : null,
       warnings,

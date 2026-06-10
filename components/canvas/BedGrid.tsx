@@ -128,7 +128,7 @@ type CellData = {
   /** Set when this cell is a non-anchor footprint cell of a multi-cell
    *  planting. Renders the same status color as the anchor but no label,
    *  and routes clicks to the anchor's detail panel. */
-  footprint: { plantingId: string; primaryCellId: string; status: PlantingStatus } | null;
+  footprint: { plantingId: string; primaryCellId: string; status: PlantingStatus; plantName?: string } | null;
   warnings: { type: "BENEFICIAL" | "HARMFUL"; plantName: string; notes: string | null }[];
 };
 type Props = {
@@ -220,17 +220,21 @@ function CellTile({
     data: { kind: "cell", cell },
     disabled: !canEdit || !!cell.planting || !!cell.footprint,
   });
+  // A multi-cell planting is draggable from ANY of its cells (anchor or
+  // footprint) — users grab the block, not a specific corner.
+  const dragPlantingId = cell.planting?.id ?? cell.footprint?.plantingId ?? null;
+  const dragPlantName = cell.planting?.plant.name ?? cell.footprint?.plantName ?? "plant";
   const drag = useDraggable({
     id: `drag:${cell.id}`,
-    data: cell.planting
+    data: dragPlantingId
       ? {
           kind: "planting",
-          plantingId: cell.planting.id,
-          plantName: cell.planting.plant.name,
+          plantingId: dragPlantingId,
+          plantName: dragPlantName,
           fromCellId: cell.id,
         }
       : undefined,
-    disabled: !canEdit || !cell.planting,
+    disabled: !canEdit || !dragPlantingId,
   });
 
   function setRef(node: HTMLDivElement | null) {
@@ -283,7 +287,7 @@ function CellTile({
     ? "inset 0 0 0 2px #7DA84E, 0 2px 8px rgba(125,168,78,0.25)"
     : "none";
 
-  const dragProps = isAnchor && canEdit ? { ...drag.attributes, ...drag.listeners } : {};
+  const dragProps = isOccupied && canEdit ? { ...drag.attributes, ...drag.listeners } : {};
 
   // Occupied cells are transparent (the footprint block draws the fill), so
   // their own border and radius are irrelevant — only empty/preview cells
@@ -317,7 +321,7 @@ function CellTile({
         borderRadius: cellRadius,
         boxShadow: cellBoxShadow,
         opacity: drag.isDragging ? 0.35 : 1,
-        cursor: isAnchor && canEdit ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
+        cursor: isOccupied && canEdit ? (drag.isDragging ? "grabbing" : "grab") : "pointer",
       }}
     >
       {sunMode && (
@@ -635,6 +639,32 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const dotPx = isMobile ? 6 : Math.max(6, Math.min(11, Math.round(cellPx * 0.085)));
   const dotOffset = isMobile ? 4 : Math.max(4, Math.min(9, Math.round(cellPx * 0.06)));
 
+  // Mirrors the server's resolveFootprint(): anchor at the target cell,
+  // extend down + left, slide to stay in-bounds. Returns the names of OTHER
+  // plantings inside the target rectangle plus the footprint edge length —
+  // empty blockers = the move is allowed. Pre-checking here means the user
+  // is told "needs a 2×2" at drop time instead of after a server round-trip.
+  function footprintBlockers(plantingId: string, target: CellData): { blockers: string[]; side: number } {
+    const anchorCell = cells.find((c) => c.planting?.id === plantingId);
+    const spacing = anchorCell?.planting?.plant.spacingInches ?? cellSizeIn;
+    const side = Math.max(1, Math.ceil(spacing / cellSizeIn));
+    const rowStart = Math.max(0, Math.min(target.row, gridRows - side));
+    const colStart = Math.max(0, Math.min(target.col - side + 1, gridCols - side));
+    const byPos = new Map(cells.map((c) => [`${c.row},${c.col}`, c]));
+    const blockers: string[] = [];
+    for (let dr = 0; dr < side; dr++) {
+      for (let dc = 0; dc < side; dc++) {
+        const c = byPos.get(`${rowStart + dr},${colStart + dc}`);
+        if (!c) continue;
+        const owner = c.planting?.id ?? c.footprint?.plantingId ?? null;
+        if (owner && owner !== plantingId) {
+          blockers.push(c.planting?.plant.name ?? c.footprint?.plantName ?? "another plant");
+        }
+      }
+    }
+    return { blockers, side };
+  }
+
   function handleCellClick(cell: CellData) {
     // Read-only mode: viewing a planting is the point, everything else is
     // off the table. Planted/footprint cells open the (read-only) detail
@@ -672,6 +702,14 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       }
       if (cell.planting || cell.footprint) {
         toast.error("That cell is occupied. Pick an empty one.");
+        return;
+      }
+      // The whole footprint rectangle must be clear, not just the tapped cell.
+      const moveFp = footprintBlockers(movingPlanting.id, cell);
+      if (moveFp.blockers.length > 0) {
+        toast.error(
+          `Not enough room — ${movingPlanting.plantName} needs a clear ${moveFp.side}×${moveFp.side} area (${[...new Set(moveFp.blockers)].join(", ")} in the way)`
+        );
         return;
       }
       const target = cell;
@@ -930,12 +968,19 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       // movePlanting calls and race the PlantingCell rows.
       if (isMoving) return;
       if (targetCell.id === source.fromCellId) return;
-      if (targetCell.planting || targetCell.footprint) {
-        toast.error("That cell is already occupied");
-        return;
-      }
       const pid = source.plantingId;
       const name = source.plantName;
+      // Validate the FULL footprint at the target, not just the cell under
+      // the cursor — a 2×2 tomato needs its whole rectangle free.
+      const fp = footprintBlockers(pid, targetCell);
+      if (fp.blockers.length > 0) {
+        toast.error(
+          fp.side > 1
+            ? `Not enough room — ${name} needs a clear ${fp.side}×${fp.side} area (${[...new Set(fp.blockers)].join(", ")} in the way)`
+            : "That cell is already occupied"
+        );
+        return;
+      }
       const targetId = targetCell.id;
       startMove(async () => {
         try {

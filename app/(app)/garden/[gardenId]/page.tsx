@@ -120,9 +120,9 @@ export default async function GardenPage({
     heightFt: bed.heightFt,
     gridCols: bed.gridCols,
     gridRows: bed.gridRows,
-    // Number of CELLS occupied (so a 2×2 tomato shows as 4, not 1).
-    // Matches what Robyn sees on the grid.
-    plantCount: bed.cells.reduce((sum, c) => sum + c.occupiedBy.length, 0),
+    // Number of PLANTINGS (a 2×2 tomato is 1 plant, not 4). The grid still
+    // shows per-cell occupancy visually via `cells` below.
+    plantCount: new Set(bed.cells.flatMap((c) => c.occupiedBy.map((o) => o.plantingId))).size,
     // Per-cell occupancy used by the 2D top-down render — each occupied
     // cell becomes a colored square; the 3D iso view ignores this field.
     cells: bed.cells.map((c) => ({
