@@ -128,7 +128,7 @@ export default async function GardenPage({
   // ── Tag pill shared styles ─────────────────────────────────────────────────
   const tagBase: React.CSSProperties = {
     fontFamily: "var(--font-mono)",
-    fontSize: "9px",
+    fontSize: "10px",
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     padding: "3px 8px",
@@ -178,9 +178,9 @@ export default async function GardenPage({
         <div className="flex items-start justify-between gap-4 px-[22px] md:px-8 pt-6 pb-5">
           <div>
             {/* Eyebrow with dash */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
-              My Garden
+              {isOwner ? "My Garden" : "Shared Garden"}
             </div>
             {/* Title */}
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 30px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 1 }}>
@@ -261,12 +261,12 @@ export default async function GardenPage({
             </div>
             <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
               <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.8)", fontWeight: 500, textTransform: "capitalize" }}>{weatherCurrent.description}</div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.55)", marginTop: "2px" }}>
                 {garden.usdaZone ? `Zone ${garden.usdaZone}` : ""}{garden.locationZip ? ` · ${garden.locationZip}` : ""}
               </div>
             </div>
             {frostRisk && (
-              <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "4px 8px", fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#A8D8FF", zIndex: 1, position: "relative" }}>
+              <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "4px 8px", fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#A8D8FF", zIndex: 1, position: "relative" }}>
                 ⚠ Frost Risk
               </div>
             )}
@@ -282,7 +282,7 @@ export default async function GardenPage({
                 {garden.locationZip ? "Weather unavailable" : "No location set"}
               </div>
               {!garden.locationZip && (
-                <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#A8D870", textDecoration: "none", marginTop: "2px", display: "block" }}>
+                <Link href={`/garden/${gardenId}/settings`} style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#A8D870", textDecoration: "none", marginTop: "2px", display: "block" }}>
                   Add zip code →
                 </Link>
               )}
@@ -319,7 +319,7 @@ export default async function GardenPage({
                   className="md:hidden absolute top-0 left-0 right-0 z-[2] flex items-center"
                   style={{ height: "28px", background: "rgba(253,253,248,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "0 10px", borderBottom: "1px solid rgba(228,228,220,0.8)" }}
                 >
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#6B6B5A" }}>Garden Canvas</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#6B6B5A" }}>Garden Canvas</span>
                 </div>
                 <GardenCanvasToggle
                   garden={{ id: garden.id, widthFt: garden.widthFt, heightFt: garden.heightFt }}
@@ -336,23 +336,23 @@ export default async function GardenPage({
           >
             <div style={{ padding: "14px 20px", borderRight: "1px solid #E4E4DC" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#111109", lineHeight: 1, letterSpacing: "-0.02em" }}>{bedCount}</div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Raised Beds</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Raised Beds</div>
             </div>
             <div style={{ padding: "14px 20px", borderRight: "1px solid #E4E4DC" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#111109", lineHeight: 1, letterSpacing: "-0.02em" }}>{totalPlantCount}</div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Active Plants</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Active Plants</div>
             </div>
             <div style={{ padding: "14px 20px", borderRight: "1px solid #E4E4DC" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#D4820A", lineHeight: 1, letterSpacing: "-0.02em" }}>
                 {garden.lastFrostDate ? formatFrostDateShort(garden.lastFrostDate) : "—"}
               </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Last Frost</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Last Frost</div>
             </div>
             <div style={{ padding: "14px 20px" }}>
               <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#111109", lineHeight: 1, letterSpacing: "-0.02em" }}>
                 {weatherCurrent ? `${weatherCurrent.temp}°` : "—"}
               </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Current Temp</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>Current Temp</div>
             </div>
           </div>
 
@@ -385,7 +385,7 @@ export default async function GardenPage({
                         <div style={{ fontFamily: "var(--font-display)", fontSize: "16px", fontWeight: 800, color: "#111109", letterSpacing: "-0.015em" }}>
                           {bed.name}
                         </div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "3px" }}>
                           {bed.widthFt} × {bed.heightFt} ft · {activeSeason?.name ?? "No season"}
                         </div>
                         {/* Plant count — desktop (below meta) */}
@@ -398,7 +398,7 @@ export default async function GardenPage({
                         <div style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 800, color: "#111109", lineHeight: 1 }}>
                           {bed.plantCount}
                         </div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#6B6B5A" }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#6B6B5A" }}>
                           plants
                         </div>
                       </div>
@@ -434,7 +434,7 @@ export default async function GardenPage({
 
         {atBedLimit && (
           <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", textAlign: "center", border: "1px dashed #D4E8BE" }}>
-            <p style={{ fontSize: "14px", color: "#ADADAA" }}>
+            <p style={{ fontSize: "14px", color: "#6B6B5A" }}>
               3 beds used on Free plan.{" "}
               <Link href="/settings/billing" style={{ color: "#D4820A" }}>
                 Upgrade to Pro

@@ -9,7 +9,7 @@ const tabs = [
   { href: "/garden",    label: "Garden",   icon: LayoutGrid },
   { href: "/plants",    label: "Plants",   icon: BookOpen },
   { href: "/calendar",  label: "Calendar", icon: CalendarDays },
-  { href: "/reminders", label: "Alerts",   icon: Bell },
+  { href: "/reminders", label: "Reminders", icon: Bell },
 ];
 
 export function BottomNav() {

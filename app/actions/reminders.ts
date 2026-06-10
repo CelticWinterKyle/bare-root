@@ -72,37 +72,6 @@ export async function dismissReminder(reminderId: string) {
   revalidatePath("/reminders");
 }
 
-export async function getUnreadCount(): Promise<number> {
-  const user = await requireUser();
-  return db.reminder.count({
-    where: {
-      userId: user.id,
-      sentAt: { not: null },
-      dismissed: false,
-    },
-  });
-}
-
-export async function getRecentReminders() {
-  const user = await requireUser();
-  return db.reminder.findMany({
-    where: {
-      userId: user.id,
-      dismissed: false,
-    },
-    orderBy: { scheduledAt: "desc" },
-    take: 20,
-    include: {
-      planting: {
-        include: {
-          plant: { select: { name: true } },
-          cell: { include: { bed: { select: { id: true, name: true, gardenId: true } } } },
-        },
-      },
-    },
-  });
-}
-
 const VALID_REMINDER_TYPES = new Set<string>(Object.values(ReminderType));
 
 export async function updateNotificationPreference(

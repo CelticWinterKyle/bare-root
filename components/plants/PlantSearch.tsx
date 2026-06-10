@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { PlantThumb } from "@/components/plants/PlantThumb";
+import { CreateCustomPlantDialog } from "@/components/plants/CreateCustomPlantDialog";
 import type { PlantCategory } from "@/lib/generated/prisma/enums";
 import { Search, Loader2, Leaf, Package } from "lucide-react";
 
@@ -59,6 +60,14 @@ export function PlantSearch({
   const [query, setQuery] = useState(initialQuery);
   const [activeCategory, setActiveCategory] = useState<PlantCategory | null>(initialCategory);
   const [plants, setPlants] = useState<Plant[]>(initialPlants);
+  // Re-sync from the server list when it changes (e.g. router.refresh() after
+  // creating a custom plant re-runs the page query and passes new props; the
+  // reference only changes on a server re-render, not on client re-renders).
+  const [prevInitialPlants, setPrevInitialPlants] = useState(initialPlants);
+  if (initialPlants !== prevInitialPlants) {
+    setPrevInitialPlants(initialPlants);
+    setPlants(initialPlants);
+  }
   const [isPending, startTransition] = useTransition();
   const [apiSearching, setApiSearching] = useState(false);
   // How many cards are shown; "Load more" reveals another page. Reset to the
@@ -109,30 +118,33 @@ export function PlantSearch({
 
   return (
     <div className="px-[22px] md:px-8 pt-4 pb-8">
-      {/* Search input */}
-      <div className="relative mb-4">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-          style={{ color: "#ADADAA" }}
-        />
-        <Input
-          placeholder="Search tomato, basil, marigold…"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-9"
-          style={{
-            background: "#F4F4EC",
-            border: "1px solid #E4E4DC",
-            color: "#111109",
-            fontSize: "15px",
-          }}
-        />
-        {(isPending || apiSearching) && (
-          <Loader2
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin"
+      {/* Search input + add-custom-plant */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
             style={{ color: "#ADADAA" }}
           />
-        )}
+          <Input
+            placeholder="Search tomato, basil, marigold…"
+            value={query}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-9"
+            style={{
+              background: "#F4F4EC",
+              border: "1px solid #E4E4DC",
+              color: "#111109",
+              fontSize: "15px",
+            }}
+          />
+          {(isPending || apiSearching) && (
+            <Loader2
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin"
+              style={{ color: "#ADADAA" }}
+            />
+          )}
+        </div>
+        <CreateCustomPlantDialog />
       </div>
 
       {/* Category pills — horizontal scroll, no emojis */}

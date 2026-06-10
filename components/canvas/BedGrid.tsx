@@ -149,6 +149,7 @@ function CellTile({
   isHoveredByPlanner,
   hasHarmful,
   hasBeneficial,
+  ariaLabel,
   onClick,
 }: {
   cell: CellData;
@@ -167,6 +168,7 @@ function CellTile({
   isHoveredByPlanner: boolean;
   hasHarmful: boolean;
   hasBeneficial: boolean;
+  ariaLabel: string;
   onClick: () => void;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
@@ -248,8 +250,18 @@ function CellTile({
     <div
       ref={setRef}
       {...dragProps}
+      role="button"
+      tabIndex={0}
+      aria-label={ariaLabel}
       onClick={onClick}
-      className={`relative flex items-center justify-center select-none transition-all duration-150 ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          // Space would scroll the page; Enter could double-fire on buttons.
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`relative flex items-center justify-center select-none transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#1C3D0A] focus-visible:-outline-offset-2 focus-visible:z-10 ${
         isNew ? "scale-110 z-10" : "scale-100"
       }`}
       style={{
@@ -867,7 +879,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               fontSize: 9,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "#ADADAA",
+              color: "#6B6B5A",
               marginRight: "auto",
             }}
           >
@@ -919,7 +931,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 <div className="rounded-full overflow-hidden" style={{ width: 90, height: 6, background: "#F4F4EC" }}>
                   <div style={{ width: `${fillPct}%`, height: "100%", background: "linear-gradient(90deg, #3A6B20, #7DA84E)", transition: "width 0.4s" }} />
                 </div>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#ADADAA" }}>{fillPct}% planted</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#6B6B5A" }}>{fillPct}% planted</span>
                 {plantList.length > 0 && (
                   <>
                     <span style={{ width: 1, height: 14, background: "#E4E4DC" }} />
@@ -946,7 +958,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="backdrop-blur-sm rounded-xl px-4 py-3 shadow-md text-center" style={{ background: "rgba(253,253,248,0.92)", border: "1px solid #E4E4DC" }}>
                   <p className="text-sm font-semibold" style={{ color: "#111109" }}>Tap any cell</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#ADADAA" }}>to assign a plant</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#6B6B5A" }}>to assign a plant</p>
                 </div>
               </div>
             )}
@@ -978,6 +990,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               >
                   <div
                     className="grid"
+                    role="group"
+                    aria-label={`Bed grid, ${gridRows} rows by ${gridCols} columns`}
                     style={{
                       position: "relative",
                       gridTemplateColumns: `repeat(${displayCols}, ${cellPx}px)`,
@@ -1044,6 +1058,23 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       const preview = previewAssignments.find(
                         (a) => a.row === cell.row && a.col === cell.col
                       );
+                      // Accessible name: position (logical row/col, 1-based) +
+                      // occupant + state. Footprint cells borrow the anchor's
+                      // plant name so every cell of a multi-cell planting
+                      // announces what's growing there.
+                      const occupantName =
+                        planting?.plant.name ??
+                        (cell.footprint
+                          ? cells.find((c) => c.id === cell.footprint!.primaryCellId)?.planting?.plant.name ?? null
+                          : null);
+                      const statusLabel = effectiveStatus ? STATUS_STYLES[effectiveStatus]?.label.toLowerCase() : null;
+                      const cellContent = sunMode
+                        ? `sun level ${effectiveSun(cell).replace(/_/g, " ").toLowerCase()}`
+                        : occupantName
+                        ? `${occupantName}${statusLabel ? `, ${statusLabel}` : ""}`
+                        : "empty";
+                      const isSelectedAny = isSelected || (selectMode && selectedCells.has(cell.id));
+                      const ariaLabel = `Row ${cell.row + 1}, column ${cell.col + 1} — ${cellContent}${isSelectedAny ? ", selected" : ""}`;
 
                       return (
                         <CellTile
@@ -1067,6 +1098,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           }
                           hasHarmful={cell.warnings.some((w) => w.type === "HARMFUL")}
                           hasBeneficial={cell.warnings.some((w) => w.type === "BENEFICIAL")}
+                          ariaLabel={ariaLabel}
                           onClick={() => handleCellClick(cell)}
                         />
                       );
@@ -1174,7 +1206,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           {!sunMode && !selectMode && (
             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 px-1">
               {presentStatuses.size === 0 && !hasAnyWarnings ? (
-                <span className="text-xs text-[#ADADAA]">Tap any cell to add a plant</span>
+                <span className="text-xs text-[#6B6B5A]">Tap any cell to add a plant</span>
               ) : (
                 <>
                   {Object.entries(STATUS_STYLES)
@@ -1182,18 +1214,18 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     .map(([key, s]) => (
                       <div key={key} className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ background: CELL_STYLE[key]?.bg ?? s.from, border: `1px solid ${CELL_STYLE[key]?.border ?? "transparent"}` }} />
-                        <span className="text-xs text-[#ADADAA]">{s.label}</span>
+                        <span className="text-xs text-[#6B6B5A]">{s.label}</span>
                       </div>
                     ))}
                   {hasAnyWarnings && (
                     <>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#B85C3A" }} />
-                        <span className="text-xs text-[#ADADAA]">Conflict</span>
+                        <span className="text-xs text-[#6B6B5A]">Conflict</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: "#3A6B20" }} />
-                        <span className="text-xs text-[#ADADAA]">Beneficial</span>
+                        <span className="text-xs text-[#6B6B5A]">Beneficial</span>
                       </div>
                     </>
                   )}
@@ -1216,6 +1248,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
             {/* Mode switcher — icon row */}
             <div
               className="flex items-stretch border-b shrink-0"
+              role="tablist"
+              aria-label="Editor mode"
               style={{ background: "#F8F8F2", borderColor: "#E4E4DC" }}
             >
               {(["plant", "sun", "companions", "smart", "select"] as const).map((tab) => {
@@ -1238,6 +1272,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   <button
                     key={tab}
                     type="button"
+                    role="tab"
+                    aria-selected={isActive}
                     onClick={() => {
                       // Cancel any active move/prefill mode when switching
                       // tabs so its banner doesn't linger and lie about what
@@ -1263,7 +1299,6 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       borderBottom: isActive ? "2px solid transparent" : "2px solid #E4E4DC",
                       cursor: "pointer",
                     }}
-                    aria-pressed={isActive}
                   >
                     {ICON[tab]}
                     <span>{LABEL[tab]}</span>
@@ -1351,7 +1386,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               {activeTab === "companions" && (
                 <div className="p-4">
                   {cells.every((c) => c.warnings.length === 0) ? (
-                    <div className="text-center py-10" style={{ color: "#ADADAA" }}>
+                    <div className="text-center py-10" style={{ color: "#6B6B5A" }}>
                       <Sprout className="w-7 h-7 mx-auto mb-2" />
                       <p className="text-sm">No companion notes</p>
                       <p className="text-xs mt-1">Add neighbouring plants to see relationships</p>

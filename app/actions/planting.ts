@@ -404,34 +404,6 @@ export async function bulkAssignPlant(
   return { planted, skipped, reduced };
 }
 
-/**
- * Read-only footprint preview used by the picker UI to highlight which
- * cells a plant would occupy before the user commits. Mirrors the logic
- * in assignPlant's resolveFootprint but never writes.
- */
-export async function previewFootprint(
-  cellId: string,
-  plantId: string,
-  seasonId: string
-): Promise<FootprintPlacement> {
-  const user = await requireUser();
-  const cell = await resolveCell(cellId, user.id);
-  const plant = await db.plantLibrary.findUniqueOrThrow({
-    where: { id: plantId },
-    select: { spacingInches: true },
-  });
-  return resolveFootprint({
-    anchorCell: { id: cell.id, row: cell.row, col: cell.col, bedId: cell.bedId },
-    bed: {
-      gridRows: cell.bed.gridRows,
-      gridCols: cell.bed.gridCols,
-      cellSizeIn: cell.bed.cellSizeIn,
-    },
-    spacingInches: plant.spacingInches,
-    seasonId,
-  });
-}
-
 export async function removePlanting(plantingId: string) {
   const user = await requireUser();
 
