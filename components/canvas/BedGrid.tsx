@@ -1300,6 +1300,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           const fpCols = b.maxC - b.minC + 1;
                           const showVariety =
                             !!b.variety && cellPx >= 28 && (fpCols >= 2 || cellPx >= 44);
+                          const label = b.name.split(" ")[0];
+                          // Width-aware cap: a long name ("habanero") must fit
+                          // its own footprint with breathing room, never jam
+                          // against a neighbor's label. Fraunces 700 italic
+                          // averages ~0.55em per glyph; budget = footprint
+                          // width minus container padding and an edge margin.
+                          const fitCap = (fpCols * cellPx - 16) / (0.55 * label.length);
                           return (
                             <div
                               key={pid}
@@ -1323,7 +1330,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                   // Caps are higher on desktop, where fit-to-canvas
                                   // cells reach 128px — keep ~the same text:cell
                                   // ratio as the old 14-in-56px look.
-                                  fontSize: Math.max(9, Math.min(span > 1 ? (isMobile ? 20 : 34) : (isMobile ? 14 : 26), cellPx * 0.28 * (span > 1 ? 1.35 : 1))),
+                                  fontSize: Math.max(9, Math.min(span > 1 ? (isMobile ? 20 : 34) : (isMobile ? 14 : 26), cellPx * 0.28 * (span > 1 ? 1.35 : 1), fitCap)),
                                   color: "#FDFDF8",
                                   letterSpacing: "-0.005em",
                                   textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 6px rgba(0,0,0,0.25)",
@@ -1331,7 +1338,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                   lineHeight: 1.05,
                                 }}
                               >
-                                {b.name.split(" ")[0]}
+                                {label}
                               </span>
                               {showVariety && (
                                 <span
