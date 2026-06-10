@@ -43,7 +43,7 @@ export default async function SettingsPage() {
       </div>
 
       {/* Settings links */}
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <SettingsLink
           href="/settings/account"
           icon={<User className="w-4 h-4" />}

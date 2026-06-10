@@ -314,7 +314,7 @@ export function RemindersClient({
           <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
             Upcoming
           </p>
-          <div className="space-y-2 stagger-rise">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start stagger-rise">
             {pending.map((r) => (
               <ReminderCard key={r.id} r={r} />
             ))}
@@ -327,7 +327,7 @@ export function RemindersClient({
           <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
             Sent
           </p>
-          <div className="space-y-2 opacity-75">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start opacity-75">
             {sent.map((r) => (
               <ReminderCard key={r.id} r={r} />
             ))}

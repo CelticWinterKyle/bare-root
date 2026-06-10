@@ -337,7 +337,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
               <p className="text-xs mt-1">Add what you have on hand.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {inventory.map((item) => (
                 <div key={item.id} className="flex items-center justify-between p-3 bg-white border border-[#E4E4DC] rounded-xl">
                   <div>
@@ -374,7 +374,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
             </div>
           ) : (
             <>
-              <div className="space-y-2 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
                 {shoppingList.map((item) => {
                   const isChecked = item.inInventory || checked.has(itemKey(item));
                   return (

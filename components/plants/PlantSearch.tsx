@@ -118,8 +118,10 @@ export function PlantSearch({
 
   return (
     <div className="px-[22px] md:px-8 pt-4 pb-8">
-      {/* Search input + add-custom-plant */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Search input + add-custom-plant; shares a row with the category
+          pills at lg so the controls stop stacking on wide screens */}
+      <div className="lg:flex lg:items-center lg:gap-3 lg:mb-5">
+      <div className="flex items-center gap-2 mb-4 lg:mb-0 lg:w-full lg:max-w-md lg:shrink-0">
         <div className="relative flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
@@ -147,8 +149,8 @@ export function PlantSearch({
         <CreateCustomPlantDialog />
       </div>
 
-      {/* Category pills — horizontal scroll, no emojis */}
-      <div style={{ display: "flex", gap: "6px", overflowX: "auto", flexWrap: "nowrap", paddingBottom: "2px", marginBottom: "20px" }}>
+      {/* Category pills — horizontal scroll on mobile, wrapping row at lg */}
+      <div className="flex gap-1.5 overflow-x-auto flex-nowrap pb-[2px] mb-5 lg:mb-0 lg:flex-wrap lg:overflow-visible">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.value;
           return (
@@ -175,6 +177,7 @@ export function PlantSearch({
           );
         })}
       </div>
+      </div>
 
       {/* Result count */}
       {plants.length > 0 && query && (
@@ -194,7 +197,7 @@ export function PlantSearch({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-fade-rise">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 animate-fade-rise">
           {plants.slice(0, visibleCount).map((plant) => {
             const style = CATEGORY_STYLE[plant.category] ?? CATEGORY_STYLE.OTHER;
             const stockQty = inventoryByPlant[plant.id];
