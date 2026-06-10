@@ -11,8 +11,19 @@ const isPublicRoute = createRouteMatcher([
   "/beta(.*)",
   "/api/webhooks(.*)",
   "/api/cron(.*)",
+  // Signed-token email unsubscribe — must work without login (one-click
+  // links in emails; the token itself is the auth).
+  "/api/email/unsubscribe(.*)",
   "/api/push(.*)",
   "/api/admin(.*)",
+  // SEO/metadata routes — extensionless or .txt/.xml, so they slip past the
+  // static-asset exclusion in the matcher below and would otherwise redirect
+  // crawlers (and signed-out browsers fetching favicons) to /sign-in.
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image(.*)",
+  "/icon(.*)",
+  "/apple-icon(.*)",
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {

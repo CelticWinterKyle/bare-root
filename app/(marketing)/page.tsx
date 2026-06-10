@@ -1,7 +1,31 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import styles from "./landing.module.css";
+
+// Note: openGraph/twitter are shallow-merged per segment — a page that sets
+// either key replaces the (marketing) layout's defaults wholesale, so each
+// block here is self-contained. Title inherits the layout default.
+export const metadata: Metadata = {
+  description:
+    "Plan the garden you'll actually grow. Bare Root is a visual garden planner that knows your climate, your beds, and what grows well together — drag-and-drop bed design, frost-date calendars, and companion planting built in.",
+  openGraph: {
+    title: "Bare Root: Visual Garden Planner",
+    description:
+      "Plan your garden. Grow with confidence. A visual planner that knows your climate, your beds, and what grows well together.",
+    url: "/",
+    siteName: "Bare Root",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bare Root: Visual Garden Planner",
+    description:
+      "Plan your garden. Grow with confidence. A visual planner that knows your climate, your beds, and what grows well together.",
+  },
+};
 
 // Isometric garden mockup — same drawing language as design-mockup-c.html.
 // Kept inline as an SVG so it ships as part of the page payload without an

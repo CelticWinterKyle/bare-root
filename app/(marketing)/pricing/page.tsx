@@ -1,7 +1,29 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "Start free with the visual bed planner, plant library, and companion planting. Upgrade to Pro for $4/mo (billed annually) to unlock the planting calendar, AI layout planner, reminders, harvest tracking, and collaborators.",
+  openGraph: {
+    title: "Pricing | Bare Root",
+    description:
+      "Free to start. Upgrade when you want more. Bare Root Pro is $4/mo billed annually, or $7/mo billed monthly.",
+    url: "/pricing",
+    siteName: "Bare Root",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pricing | Bare Root",
+    description:
+      "Free to start. Upgrade when you want more. Bare Root Pro is $4/mo billed annually.",
+  },
+};
 
 const COMPARISON = [
   { feature: "Gardens", free: "1", pro: "Unlimited" },

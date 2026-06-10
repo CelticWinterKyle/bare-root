@@ -20,6 +20,8 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
   const [, startTransition] = useTransition();
   const [pushSubscribing, setPushSubscribing] = useState(false);
   const [pushUnsupported, setPushUnsupported] = useState(false);
+  const [deviceSubscribed, setDeviceSubscribed] = useState(false);
+  const [deregistering, setDeregistering] = useState(false);
 
   // Surface a single, contextual hint at the top of the page if the
   // current browser/device just can't do push (private mode, old browser,
@@ -33,6 +35,16 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
       support.kind === "missing-vapid"
     ) {
       setPushUnsupported(true);
+    }
+
+    // Detect whether this device already has an active push subscription
+    // so we can offer per-device deregistration below.
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .getRegistration("/sw.js")
+        .then((reg) => reg?.pushManager.getSubscription())
+        .then((sub) => setDeviceSubscribed(!!sub))
+        .catch(() => {});
     }
   }, []);
 
@@ -57,12 +69,41 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
     try {
       await subscribeToPush();
       update(type, { channelPush: true });
+      setDeviceSubscribed(true);
       toast.success("Push notifications enabled on this device");
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Couldn't enable push notifications");
     } finally {
       setPushSubscribing(false);
+    }
+  }
+
+  // Per-type push toggles only flip preferences; this fully deregisters
+  // the device — browser unsubscribe + server row delete — so it stops
+  // receiving push entirely.
+  async function handleDeregisterDevice() {
+    setDeregistering(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
+      if (subscription) {
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        const res = await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint }),
+        });
+        if (!res.ok) throw new Error("Couldn't remove this device on the server.");
+      }
+      setDeviceSubscribed(false);
+      toast.success("Push notifications disabled on this device");
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Couldn't disable push on this device");
+    } finally {
+      setDeregistering(false);
     }
   }
 
@@ -86,6 +127,26 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
           <p className="mt-0.5 text-[#A06010]">
             Install Bare Root as an app (Add to Home Screen) or open it in a modern browser to enable push. Email notifications still work.
           </p>
+        </div>
+      )}
+
+      {deviceSubscribed && (
+        <div className="mb-4 p-4 rounded-xl border border-[#E4E4DC] bg-white flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Smartphone className="w-4 h-4 shrink-0 text-[#1C3D0A]" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[#111109]">This device receives push notifications</p>
+              <p className="text-xs text-[#ADADAA]">Disabling stops push on this device only.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleDeregisterDevice}
+            disabled={deregistering}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#E4E4DC] bg-white text-[#6B6B5A] hover:border-[#1C3D0A] hover:text-[#1C3D0A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            {deregistering && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            Disable
+          </button>
         </div>
       )}
 

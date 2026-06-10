@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
 import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
+import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 // Allow the full Fluid-compute window — email/push sends are network-bound.
 export const maxDuration = 300;
@@ -101,6 +102,9 @@ export async function GET(req: Request) {
     let sent = 0;
     const user = userReminders[0].user;
     const inSendWindow = isLocalSendWindow(now, user.timezone);
+    // Signed one-click unsubscribe link (CRON_SECRET is checked above, so
+    // this is always set here). Goes in the footer + List-Unsubscribe headers.
+    const unsubscribeUrl = buildUnsubscribeUrl(user.id) ?? undefined;
 
     for (const reminder of userReminders) {
       // System reminders (start seeds, transplant, harvest, frost, etc.)
@@ -132,8 +136,8 @@ export async function GET(req: Request) {
 
       if (sendEmail) {
         attempted = true;
-        const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url);
-        if (await sendReminderEmail(user.email, reminder.title, html)) delivered = true;
+        const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url, unsubscribeUrl);
+        if (await sendReminderEmail(user.email, reminder.title, html, unsubscribeUrl)) delivered = true;
       }
 
       if (sendPush && user.pushSubscriptions.length > 0) {

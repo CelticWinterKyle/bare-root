@@ -2,8 +2,22 @@ import type { Metadata } from "next";
 import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Bare Root",
+  // "| Bare Root" suffix comes from the (marketing) layout title template.
+  title: "Privacy Policy",
   description: "How Bare Root collects, uses, and protects your data.",
+  openGraph: {
+    title: "Privacy Policy | Bare Root",
+    description: "How Bare Root collects, uses, and protects your data.",
+    url: "/privacy",
+    siteName: "Bare Root",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy | Bare Root",
+    description: "How Bare Root collects, uses, and protects your data.",
+  },
 };
 
 const LAST_UPDATED = "May 14, 2026";

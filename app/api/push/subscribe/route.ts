@@ -39,3 +39,26 @@ export async function POST(req: Request) {
 
   return new Response("OK", { status: 201 });
 }
+
+const deleteSchema = z.object({
+  endpoint: z.string().url(),
+});
+
+export async function DELETE(req: Request) {
+  const { userId } = await auth();
+  if (!userId) return new Response("Unauthorized", { status: 401 });
+
+  const body = await req.json();
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response("Invalid body", { status: 400 });
+  }
+
+  // deleteMany scoped to the session user: deleting someone else's (or an
+  // unknown) endpoint is a silent no-op rather than an error.
+  await db.pushSubscription.deleteMany({
+    where: { endpoint: parsed.data.endpoint, userId },
+  });
+
+  return Response.json({ ok: true });
+}

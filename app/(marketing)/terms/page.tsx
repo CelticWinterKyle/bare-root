@@ -3,8 +3,22 @@ import type { Metadata } from "next";
 import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/MarketingChrome";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Bare Root",
+  // "| Bare Root" suffix comes from the (marketing) layout title template.
+  title: "Terms of Service",
   description: "The agreement between you and Bare Root when you use the service.",
+  openGraph: {
+    title: "Terms of Service | Bare Root",
+    description: "The agreement between you and Bare Root when you use the service.",
+    url: "/terms",
+    siteName: "Bare Root",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Service | Bare Root",
+    description: "The agreement between you and Bare Root when you use the service.",
+  },
 };
 
 const LAST_UPDATED = "May 14, 2026";
