@@ -6,7 +6,7 @@ import { gardenEditFilter } from "@/lib/permissions";
 import { assertBedWritable } from "@/lib/tier";
 import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
-import { createRemindersForPlanting, upsertHarvestReminder } from "@/lib/services/reminders";
+import { createRemindersForPlanting, upsertHarvestReminder, syncRemindersToStatus } from "@/lib/services/reminders";
 import { getStartOptions } from "@/lib/services/planting-feasibility";
 import { MAX_BULK_CELLS } from "@/lib/validation";
 
@@ -442,8 +442,28 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
   });
   if (!planting) throw new Error("Planting not found");
 
-  await db.planting.update({ where: { id: plantingId }, data: { status } });
+  await db.planting.update({
+    where: { id: plantingId },
+    data: {
+      status,
+      // Reasonable inference, still editable in the Dates section.
+      ...(status === "TRANSPLANTED" && !planting.transplantDate
+        ? { transplantDate: new Date() }
+        : {}),
+    },
+  });
+
+  // Doing the task in the bed must clear the nag — otherwise the user
+  // reconciles two systems by hand. Non-fatal: the status write stands.
+  try {
+    await syncRemindersToStatus(plantingId, status);
+  } catch (err) {
+    console.error("reminder sync failed (non-fatal):", err);
+  }
+
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+  revalidatePath("/reminders");
+  revalidatePath("/dashboard");
 }
 
 export async function updatePlantingStartMethod(

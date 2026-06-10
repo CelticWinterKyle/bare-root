@@ -10,6 +10,7 @@ import { PolaroidImage } from "@/components/dashboard/PolaroidImage";
 import { Sprout } from "lucide-react";
 import styles from "./dashboard.module.css";
 import { GardensOverview } from "@/components/dashboard/GardensOverview";
+import { TaskDoneButton } from "@/components/dashboard/TaskDoneButton";
 import { TIER_LIMITS } from "@/lib/tier";
 
 export const dynamic = "force-dynamic";
@@ -692,7 +693,11 @@ export default async function DashboardPage() {
                 ? `/garden/${r.planting.cell.bed.gardenId}/beds/${r.planting.cell.bed.id}`
                 : "/reminders";
               return (
-                <Link key={r.id} href={href} className={styles.taskCard}>
+                <Link key={r.id} href={href} className={styles.taskCard} style={{ position: "relative" }}>
+                  {r.plantingId &&
+                    (r.type === "START_SEEDS" || r.type === "TRANSPLANT" || r.type === "HARVEST") && (
+                      <TaskDoneButton reminderId={r.id} type={r.type} />
+                    )}
                   <div className={styles.taskCardHead}>
                     <div className={`${styles.taskIcon} ${reminderIconClass(r.type)}`}>
                       {REMINDER_ICON[r.type] ?? "•"}

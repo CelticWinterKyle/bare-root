@@ -2,6 +2,9 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
+import { addHarvestLog } from "@/app/actions/tracking";
+
+const HARVEST_UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
 import { Loader2, Trash2, X, Move } from "lucide-react";
 import type { PlantingStatus, PlantCategory, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import { pestInfoFor } from "@/lib/services/pest-data";
@@ -92,6 +95,23 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit
   const [isRemoving, startRemove] = useTransition();
   const [removeConfirm, setRemoveConfirm] = useState(false);
   const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [harvestQty, setHarvestQty] = useState("");
+  const [harvestUnit, setHarvestUnit] = useState("lbs");
+  const [isLogging, startLogging] = useTransition();
+
+  function handleQuickHarvest() {
+    const quantity = Number(harvestQty);
+    if (!quantity || quantity <= 0) return;
+    startLogging(async () => {
+      try {
+        await addHarvestLog(planting.id, { quantity, unit: harvestUnit });
+        toast.success(`Logged ${quantity} ${harvestUnit} of ${planting.plant.name}`);
+        setHarvestQty("");
+      } catch {
+        toast.error("Couldn't log the harvest. Please try again.");
+      }
+    });
+  }
 
   function handleMetaBlur(field: "variety" | "notes", value: string) {
     const current = field === "variety" ? planting.variety ?? "" : planting.notes ?? "";
@@ -311,6 +331,41 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit
               <span className="font-medium text-[#3A3A30]">{statusInfo.label}:</span>{" "}
               {STATUSES.find((s) => s.value === status)?.hint}
             </p>
+          )}
+
+          {/* Quick harvest log — the status hint literally promises "log
+              harvests below", so the form lives right here for plants that
+              are producing. Full history stays on the planting page. */}
+          {canEdit && (status === "HARVESTING" || status === "ACTIVE") && (
+            <div className="mt-2.5 flex items-center flex-wrap gap-1.5 p-2 rounded-lg" style={{ background: "#FFF3E8", border: "1px solid #F0DCC8" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4820A" }}>
+                Log harvest
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                value={harvestQty}
+                onChange={(e) => setHarvestQty(e.target.value)}
+                placeholder="Amt"
+                className="w-14 text-xs border border-[#E4E4DC] rounded-md px-2 py-1.5 bg-white text-[#111109] focus:outline-none focus:border-[#D4820A]"
+              />
+              <select
+                value={harvestUnit}
+                onChange={(e) => setHarvestUnit(e.target.value)}
+                className="text-xs border border-[#E4E4DC] rounded-md px-1.5 py-1.5 bg-white text-[#111109] focus:outline-none"
+              >
+                {HARVEST_UNITS.map((u) => <option key={u}>{u}</option>)}
+              </select>
+              <button
+                onClick={handleQuickHarvest}
+                disabled={isLogging || !Number(harvestQty)}
+                className="text-xs font-medium px-2.5 py-1.5 rounded-md bg-[#D4820A] text-white hover:bg-[#B86F08] transition-colors disabled:opacity-40"
+              >
+                {isLogging ? "…" : "Log"}
+              </button>
+            </div>
           )}
         </div>
 

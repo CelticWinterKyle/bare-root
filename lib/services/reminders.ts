@@ -160,3 +160,36 @@ export async function upsertHarvestReminder(
     });
   }
 }
+
+// ─── Status ↔ reminder sync ───────────────────────────────────────────────────
+
+/**
+ * Reminder types that are moot once a planting reaches a given status —
+ * marking tomatoes TRANSPLANTED makes both the start-seeds and transplant
+ * nags done. HARVESTING keeps the HARVEST reminder (picking is the current
+ * task); HARVESTED/FAILED clear everything.
+ */
+const TYPES_CLEARED_BY_STATUS: Record<string, ReminderType[]> = {
+  PLANNED: [],
+  SEEDS_STARTED: [ReminderType.START_SEEDS],
+  TRANSPLANTED: [ReminderType.START_SEEDS, ReminderType.TRANSPLANT],
+  ACTIVE: [ReminderType.START_SEEDS, ReminderType.TRANSPLANT],
+  HARVESTING: [ReminderType.START_SEEDS, ReminderType.TRANSPLANT],
+  HARVESTED: [ReminderType.START_SEEDS, ReminderType.TRANSPLANT, ReminderType.HARVEST],
+  FAILED: [ReminderType.START_SEEDS, ReminderType.TRANSPLANT, ReminderType.HARVEST],
+};
+
+/**
+ * Doing the task must clear the nag: when a planting's status advances,
+ * complete (dismiss) the reminders that status makes moot. The reverse
+ * direction — completing a reminder advances the status — lives in
+ * completeReminder (app/actions/reminders.ts).
+ */
+export async function syncRemindersToStatus(plantingId: string, status: string): Promise<void> {
+  const types = TYPES_CLEARED_BY_STATUS[status] ?? [];
+  if (types.length === 0) return;
+  await db.reminder.updateMany({
+    where: { plantingId, dismissed: false, type: { in: types } },
+    data: { dismissed: true },
+  });
+}

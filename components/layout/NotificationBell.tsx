@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors } from "lucide-react";
+import { useState, useEffect, useTransition } from "react";
+import { Bell, X, Check, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors } from "lucide-react";
 import Link from "next/link";
-import { dismissReminder } from "@/app/actions/reminders";
+import { toast } from "sonner";
+import { dismissReminder, completeReminder } from "@/app/actions/reminders";
+
+// Per-device "last opened the bell" timestamp — the badge counts only items
+// that arrived since. Opening the bell is "seen"; items stay listed until
+// dismissed/done.
+const SEEN_KEY = "bareroot:bellSeenAt";
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   START_SEEDS: <Sprout className="w-3.5 h-3.5 text-[#D4A843]" />,
@@ -19,20 +25,43 @@ type BellReminder = {
   type: string;
   title: string;
   body: string | null;
+  sentAt: string | null;
+  plantingId: string | null;
   gardenId: string | null;
   bedId: string | null;
 };
 
+const DONE_TYPES = new Set(["START_SEEDS", "TRANSPLANT", "HARVEST"]);
+
 export function NotificationBell({
   reminders,
-  unreadCount,
 }: {
   reminders: BellReminder[];
-  unreadCount: number;
+  unreadCount?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [localReminders, setLocalReminders] = useState(reminders);
   const [, startTransition] = useTransition();
+  // 0 until mount — localStorage isn't available during SSR, and a wrong
+  // badge that corrects itself reads worse than one appearing post-mount.
+  const [unseen, setUnseen] = useState(0);
+
+  useEffect(() => {
+    const seenAt = Number(localStorage.getItem(SEEN_KEY) ?? 0);
+    setUnseen(
+      localReminders.filter((r) => r.sentAt && new Date(r.sentAt).getTime() > seenAt).length
+    );
+  }, [localReminders]);
+
+  function handleOpen() {
+    setOpen((o) => {
+      if (!o) {
+        localStorage.setItem(SEEN_KEY, String(Date.now()));
+        setUnseen(0);
+      }
+      return !o;
+    });
+  }
 
   function handleDismiss(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -40,12 +69,24 @@ export function NotificationBell({
     startTransition(() => dismissReminder(id));
   }
 
-  const count = localReminders.length;
+  function handleDone(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setLocalReminders((prev) => prev.filter((r) => r.id !== id));
+    startTransition(async () => {
+      try {
+        await completeReminder(id);
+      } catch {
+        toast.error("Couldn't mark it done. Please try again.");
+      }
+    });
+  }
+
+  const count = unseen;
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleOpen}
         className="relative p-2 transition-colors"
         style={{ color: "#6B6B5A", background: "none" }}
         aria-label={`Notifications (${count} unread)`}
@@ -104,6 +145,17 @@ export function NotificationBell({
                           <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "#6B6B5A" }}>{r.body}</p>
                         )}
                       </Link>
+                      {r.plantingId && DONE_TYPES.has(r.type) && (
+                        <button
+                          onClick={(e) => handleDone(r.id, e)}
+                          className="shrink-0 transition-colors mt-0.5"
+                          style={{ color: "#7DA84E" }}
+                          aria-label="Mark done"
+                          title="Mark done"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => handleDismiss(r.id, e)}
                         className="shrink-0 transition-colors mt-0.5"

@@ -40,6 +40,7 @@ export default async function RemindersPage() {
           scheduledAt: r.scheduledAt.toISOString(),
           sentAt: r.sentAt?.toISOString() ?? null,
           recurrence: r.recurring ? r.recurrenceCron : null,
+          plantingId: r.planting?.id ?? null,
           plantName: r.planting?.plant.name ?? null,
           bedName: r.planting?.cell.bed.name ?? null,
           gardenId: r.planting?.cell.bed.gardenId ?? r.garden?.id ?? null,

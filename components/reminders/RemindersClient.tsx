@@ -1,11 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
-import { dismissReminder } from "@/app/actions/reminders";
+import { useState, useTransition } from "react";
+import { dismissReminder, completeReminder, snoozeReminder } from "@/app/actions/reminders";
+import { addHarvestLog } from "@/app/actions/tracking";
 import { CreateReminderDialog } from "@/components/reminders/CreateReminderDialog";
-import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors } from "lucide-react";
+import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors, Check, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+
+const HARVEST_UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
   START_SEEDS:       { icon: <Sprout className="w-4 h-4" />,          accent: "#D4A843", bg: "#FFF8E7" },
@@ -27,12 +30,16 @@ type ReminderItem = {
   scheduledAt: string;
   sentAt: string | null;
   recurrence: string | null;
+  plantingId: string | null;
   plantName: string | null;
   bedName: string | null;
   gardenId: string | null;
   bedId: string | null;
   gardenName: string | null;
 };
+
+// Reminder types where "done" can act on the planting itself.
+const ACTIONABLE_TYPES = new Set(["START_SEEDS", "TRANSPLANT", "HARVEST"]);
 
 function formatRelativeDate(iso: string): string {
   const date = new Date(iso);
@@ -53,6 +60,11 @@ export function RemindersClient({
   gardens: { id: string; name: string }[];
 }) {
   const [, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
+  // Reminder whose inline harvest quick-log is open.
+  const [loggingId, setLoggingId] = useState<string | null>(null);
+  const [qty, setQty] = useState("");
+  const [unit, setUnit] = useState("lbs");
 
   function handleDismiss(id: string) {
     startTransition(async () => {
@@ -60,6 +72,58 @@ export function RemindersClient({
         await dismissReminder(id);
       } catch {
         toast.error("Couldn't dismiss the reminder. Please try again.");
+      }
+    });
+  }
+
+  function handleDone(r: ReminderItem) {
+    setBusyId(r.id);
+    startTransition(async () => {
+      try {
+        await completeReminder(r.id);
+        toast.success(
+          r.type === "START_SEEDS" ? "Marked as seeds started"
+          : r.type === "TRANSPLANT" ? "Marked as transplanted"
+          : r.type === "HARVEST" ? "Marked as harvesting"
+          : "Done"
+        );
+      } catch {
+        toast.error("Couldn't mark it done. Please try again.");
+      } finally {
+        setBusyId(null);
+      }
+    });
+  }
+
+  function handleSnooze(r: ReminderItem) {
+    setBusyId(r.id);
+    startTransition(async () => {
+      try {
+        await snoozeReminder(r.id, 7);
+        toast.success("Snoozed a week");
+      } catch {
+        toast.error("Couldn't snooze. Please try again.");
+      } finally {
+        setBusyId(null);
+      }
+    });
+  }
+
+  function handleLogHarvest(r: ReminderItem) {
+    const quantity = Number(qty);
+    if (!r.plantingId || !quantity || quantity <= 0) return;
+    setBusyId(r.id);
+    startTransition(async () => {
+      try {
+        await addHarvestLog(r.plantingId!, { quantity, unit });
+        await completeReminder(r.id);
+        toast.success(`Logged ${quantity} ${unit}`);
+        setLoggingId(null);
+        setQty("");
+      } catch {
+        toast.error("Couldn't log the harvest. Please try again.");
+      } finally {
+        setBusyId(null);
       }
     });
   }
@@ -122,9 +186,78 @@ export function RemindersClient({
               </span>
             )}
             {r.plantName && (
-              <span className="text-xs text-[#ADADAA] truncate">{r.plantName}</span>
+              <span className="text-xs text-[#6B6B5A] truncate">{r.plantName}</span>
             )}
           </div>
+
+          {/* Action row — the reminder is a task, so give it task verbs. */}
+          <div className="flex items-center flex-wrap gap-2 mt-2.5">
+            {r.plantingId && r.type === "HARVEST" && loggingId !== r.id && (
+              <button
+                onClick={() => { setLoggingId(r.id); setQty(""); }}
+                disabled={busyId === r.id}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#1C3D0A] text-white hover:bg-[#3A6B20] transition-colors disabled:opacity-50"
+              >
+                <Scissors className="w-3 h-3" /> Log harvest
+              </button>
+            )}
+            {r.plantingId && ACTIONABLE_TYPES.has(r.type) && r.type !== "HARVEST" && (
+              <button
+                onClick={() => handleDone(r)}
+                disabled={busyId === r.id}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#1C3D0A] text-white hover:bg-[#3A6B20] transition-colors disabled:opacity-50"
+              >
+                {busyId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                Mark done
+              </button>
+            )}
+            <button
+              onClick={() => handleSnooze(r)}
+              disabled={busyId === r.id}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-[#E4E4DC] text-[#6B6B5A] hover:border-[#7DA84E] hover:text-[#1C3D0A] transition-colors disabled:opacity-50"
+            >
+              <Clock className="w-3 h-3" /> +1 week
+            </button>
+          </div>
+
+          {/* Inline harvest quick-log */}
+          {loggingId === r.id && (
+            <div className="flex items-center flex-wrap gap-2 mt-2.5 p-2.5 rounded-lg bg-[#FFF3E8] border border-[#F0DCC8]">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="Amount"
+                autoFocus
+                className="w-20 border border-[#E4E4DC] rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-[#D4820A]"
+              />
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="border border-[#E4E4DC] rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none"
+              >
+                {HARVEST_UNITS.map((u) => <option key={u}>{u}</option>)}
+              </select>
+              <button
+                onClick={() => handleLogHarvest(r)}
+                disabled={busyId === r.id || !Number(qty)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[#D4820A] text-white hover:bg-[#B86F08] transition-colors disabled:opacity-40"
+              >
+                {busyId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                Log &amp; done
+              </button>
+              <button
+                onClick={() => handleDone(r)}
+                disabled={busyId === r.id}
+                className="text-xs text-[#6B6B5A] underline hover:text-[#111109]"
+              >
+                Done without logging
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Dismiss */}

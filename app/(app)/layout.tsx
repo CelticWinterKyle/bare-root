@@ -69,6 +69,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     type: r.type,
     title: r.title,
     body: r.body,
+    sentAt: r.sentAt?.toISOString() ?? null,
+    plantingId: r.planting?.id ?? null,
     gardenId: r.planting?.cell.bed.gardenId ?? null,
     bedId: r.planting?.cell.bed.id ?? null,
   }));
