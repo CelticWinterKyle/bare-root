@@ -319,8 +319,15 @@ function CellTile({
         width: cellPx,
         height: cellPx,
         background: cellBg,
-        border: isOccupied ? "none" : `1.5px solid ${baseBorder}`,
-        borderStyle: preview && !isAnchor ? "dashed" : "solid",
+        // Single shorthand ONLY — never pair `border` with a `borderStyle`
+        // longhand. `border: "none"` leaves border-width at its 3px default,
+        // and a separate borderStyle re-enables it: every occupied cell got
+        // a 3px seam cutting multi-cell blocks into quadrants (only on fresh
+        // mounts — React's style diffing hid it after empty→occupied
+        // transitions, which is why moves looked fixed until a refresh).
+        border: isOccupied
+          ? "none"
+          : `1.5px ${preview && !isAnchor ? "dashed" : "solid"} ${baseBorder}`,
         borderRadius: cellRadius,
         boxShadow: cellBoxShadow,
         opacity: drag.isDragging ? 0.35 : 1,
