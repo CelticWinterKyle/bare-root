@@ -10,6 +10,7 @@ import {
   useDraggable,
   useDroppable,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { PlantPicker } from "./PlantPicker";
@@ -640,29 +641,40 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   const dotOffset = isMobile ? 4 : Math.max(4, Math.min(9, Math.round(cellPx * 0.06)));
 
   // Mirrors the server's resolveFootprint(): anchor at the target cell,
-  // extend down + left, slide to stay in-bounds. Returns the names of OTHER
-  // plantings inside the target rectangle plus the footprint edge length —
-  // empty blockers = the move is allowed. Pre-checking here means the user
-  // is told "needs a 2×2" at drop time instead of after a server round-trip.
-  function footprintBlockers(plantingId: string, target: CellData): { blockers: string[]; side: number } {
-    const anchorCell = cells.find((c) => c.planting?.id === plantingId);
-    const spacing = anchorCell?.planting?.plant.spacingInches ?? cellSizeIn;
+  // extend down + left, slide to stay in-bounds. Returns the rectangle's
+  // member cells, the names of OTHER plantings inside it (empty = placement
+  // allowed), and the footprint edge length. Drives both the drag-time
+  // ghost highlight and the drop/tap-move pre-checks, so the user is told
+  // "needs a 2×2" before a server round-trip.
+  function targetFootprint(
+    spacingInches: number | null,
+    target: CellData,
+    excludePlantingId?: string
+  ): { side: number; cellIds: string[]; blockers: string[] } {
+    const spacing = spacingInches ?? cellSizeIn;
     const side = Math.max(1, Math.ceil(spacing / cellSizeIn));
     const rowStart = Math.max(0, Math.min(target.row, gridRows - side));
     const colStart = Math.max(0, Math.min(target.col - side + 1, gridCols - side));
     const byPos = new Map(cells.map((c) => [`${c.row},${c.col}`, c]));
+    const cellIds: string[] = [];
     const blockers: string[] = [];
     for (let dr = 0; dr < side; dr++) {
       for (let dc = 0; dc < side; dc++) {
         const c = byPos.get(`${rowStart + dr},${colStart + dc}`);
         if (!c) continue;
+        cellIds.push(c.id);
         const owner = c.planting?.id ?? c.footprint?.plantingId ?? null;
-        if (owner && owner !== plantingId) {
+        if (owner && owner !== excludePlantingId) {
           blockers.push(c.planting?.plant.name ?? c.footprint?.plantName ?? "another plant");
         }
       }
     }
-    return { blockers, side };
+    return { side, cellIds, blockers };
+  }
+
+  function footprintBlockers(plantingId: string, target: CellData): { blockers: string[]; side: number } {
+    const anchorCell = cells.find((c) => c.planting?.id === plantingId);
+    return targetFootprint(anchorCell?.planting?.plant.spacingInches ?? null, target, plantingId);
   }
 
   function handleCellClick(cell: CellData) {
@@ -904,6 +916,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     | { kind: "planting"; plantingId: string; plantName: string; fromCellId: string };
 
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
+  // Live drag feedback: the full footprint rectangle under the cursor,
+  // tinted green (fits) or red (blocked) BEFORE the user releases.
+  const [dragGhost, setDragGhost] = useState<{ cellIds: string[]; valid: boolean } | null>(null);
 
   // PointerSensor with a 4px activation distance prevents the mouse-down on
   // an empty cell from being interpreted as a drag — keeps clicks working.
@@ -925,9 +940,33 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     });
   }
 
+  function onDragOver(e: DragOverEvent) {
+    if (!canEdit || !dragSource) {
+      setDragGhost(null);
+      return;
+    }
+    const overData = e.over?.data.current;
+    if (!overData || overData.kind !== "cell") {
+      setDragGhost(null);
+      return;
+    }
+    const target = overData.cell as CellData;
+    const fp =
+      dragSource.kind === "plant"
+        ? targetFootprint(dragSource.plant.spacingInches, target)
+        : targetFootprint(
+            cells.find((c) => c.planting?.id === dragSource.plantingId)?.planting?.plant
+              .spacingInches ?? null,
+            target,
+            dragSource.plantingId
+          );
+    setDragGhost({ cellIds: fp.cellIds, valid: fp.blockers.length === 0 });
+  }
+
   function onDragEnd(e: DragEndEvent) {
     const source = dragSource;
     setDragSource(null);
+    setDragGhost(null);
     // Belt-and-braces: drag sources/targets are already disabled when
     // read-only, but never mutate from a drag in view-only mode.
     if (!canEdit) return;
@@ -997,7 +1036,16 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => {
+        setDragSource(null);
+        setDragGhost(null);
+      }}
+    >
     <div className="flex flex-col">
       {/* Move-mode banner — set from the CellDetail Move button. The
           next empty-cell tap relocates the planting. */}
@@ -1407,6 +1455,39 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         })}
                       </div>
                   )}
+                  {/* Drag ghost — the full footprint rectangle under the
+                      cursor, green when it fits, red when blocked, so the
+                      user knows BEFORE releasing. Topmost, non-interactive. */}
+                  {dragGhost && (() => {
+                    const idx = new Map(displayCells.map((c, i) => [c.id, i]));
+                    let minR = Infinity, maxR = -1, minC = Infinity, maxC = -1;
+                    for (const id of dragGhost.cellIds) {
+                      const i = idx.get(id);
+                      if (i === undefined) continue;
+                      const r = Math.floor(i / displayCols);
+                      const c = i % displayCols;
+                      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+                      minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+                    }
+                    if (maxR < 0) return null;
+                    return (
+                      <div
+                        aria-hidden
+                        style={{
+                          position: "absolute",
+                          left: 16 + minC * cellPx,
+                          top: 14 + minR * cellPx,
+                          width: (maxC - minC + 1) * cellPx,
+                          height: (maxR - minR + 1) * cellPx,
+                          background: dragGhost.valid ? "rgba(125,168,78,0.30)" : "rgba(184,92,58,0.32)",
+                          border: `2px dashed ${dragGhost.valid ? "#3A6B20" : "#B85C3A"}`,
+                          borderRadius: 8,
+                          pointerEvents: "none",
+                          zIndex: 6,
+                        }}
+                      />
+                    );
+                  })()}
               </div>
             </div>
           </div>
