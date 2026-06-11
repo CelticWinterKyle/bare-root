@@ -7,6 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { FeedbackForm } from "./FeedbackForm";
 
 // The app's working vocabulary, in plain words. Mono term + short body,
 // Glasshouse voice — explains the concepts, not the buttons.
@@ -113,6 +114,7 @@ export function HelpSheet({
               <p style={{ fontSize: 13, color: "#3A3A30", lineHeight: 1.55 }}>{e.body}</p>
             </div>
           ))}
+          <FeedbackForm />
         </div>
       </SheetContent>
     </Sheet>

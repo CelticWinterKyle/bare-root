@@ -101,6 +101,24 @@ model User {
   seedInventory     SeedInventory[]
   reminders         Reminder[]
   pushSubscriptions PushSubscription[]
+  feedback          Feedback[]
+}
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+// In-app feedback from alpha testers — one row per submission, mirrored to
+// the owner's inbox by the submit action. `path` records where in the app
+// the user was when they sent it.
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  path      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
 // ─── Push Subscriptions ───────────────────────────────────────────────────────
