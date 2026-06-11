@@ -134,6 +134,7 @@ function DraggablePlantCard({
 
 export function PlantLibrary({
   recentPlants,
+  suggestionsLabel = "Recently used",
   cellSizeIn,
   gridCols,
   gridRows,
@@ -142,6 +143,9 @@ export function PlantLibrary({
   selectedPlantId,
 }: {
   recentPlants: LibraryPlant[];
+  /** Header over the default list — "Recently used" normally, "Popular
+   *  plants" when a fresh garden's list was padded with curated picks. */
+  suggestionsLabel?: string;
   cellSizeIn: number;
   gridCols?: number;
   gridRows?: number;
@@ -201,7 +205,7 @@ export function PlantLibrary({
               color: "#ADADAA",
             }}
           >
-            Recently used
+            {suggestionsLabel}
           </p>
         )}
       </div>

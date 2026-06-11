@@ -144,6 +144,7 @@ type Props = {
   seasonId: string;
   userId: string;
   recentPlants: Plant[];
+  suggestionsLabel?: string;
   isPro?: boolean;
   prefillPlant?: Plant | null;
   /** Garden frost dates ("MM-DD"), for the start-method guidance in the
@@ -446,7 +447,7 @@ function CellTile({
   );
 }
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, isPro, prefillPlant, frost, canEdit = true, seedInventory = [], familyHistory = [] }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, suggestionsLabel, isPro, prefillPlant, frost, canEdit = true, seedInventory = [], familyHistory = [] }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -1756,6 +1757,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 canEdit ? (
                   <PlantLibrary
                     recentPlants={recentPlants}
+                    suggestionsLabel={suggestionsLabel}
                     cellSizeIn={cellSizeIn}
                     gridCols={gridCols}
                     gridRows={gridRows}
@@ -1788,6 +1790,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     userId={userId}
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
+                    suggestionsLabel={suggestionsLabel}
                     seedInventory={seedInventory}
                     familyHistory={familyHistory}
                     onClose={() => {
@@ -1957,6 +1960,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     userId={userId}
                     cellSizeIn={cellSizeIn}
                     recentPlants={recentPlants}
+                    suggestionsLabel={suggestionsLabel}
                     seedInventory={seedInventory}
                     familyHistory={familyHistory}
                     onClose={() => {

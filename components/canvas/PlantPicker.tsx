@@ -38,6 +38,7 @@ export function PlantPicker({
   userId,
   cellSizeIn,
   recentPlants,
+  suggestionsLabel = "Recently used",
   seedInventory = [],
   familyHistory = [],
   onClose,
@@ -52,6 +53,9 @@ export function PlantPicker({
   userId: string;
   cellSizeIn: number;
   recentPlants: Plant[];
+  /** Header over the default list — "Recently used" normally, "Popular
+   *  plants" when a fresh garden's list was padded with curated picks. */
+  suggestionsLabel?: string;
   /** The user's seed inventory — drives the "have seeds" badge on plant
    *  rows so the picker answers "do I already own seeds for this?" */
   seedInventory?: { plantId: string; variety: string; quantity: number; unit: string }[];
@@ -188,7 +192,7 @@ export function PlantPicker({
       </div>
 
       {!query && recentPlants.length > 0 && (
-        <p className="text-xs text-[#ADADAA] mb-2">Recently used</p>
+        <p className="text-xs text-[#ADADAA] mb-2">{suggestionsLabel}</p>
       )}
 
       <div className="flex-1 overflow-y-auto space-y-1">

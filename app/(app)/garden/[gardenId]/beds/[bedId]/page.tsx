@@ -190,7 +190,39 @@ export default async function BedPage({
     take: 20,
     distinct: ["plantId"],
   });
-  const recentPlants = recentPlantings.map((p) => p.plant);
+  let recentPlants = recentPlantings.map((p) => p.plant);
+  // Whether the list is genuinely "recently used" — drives the picker's
+  // section label ("Recently used" vs "Popular plants").
+  const hasRecents = recentPlants.length > 0;
+
+  // First-run garden: no plantings yet means no recents, and the picker's
+  // empty search box is a dead end at the exact moment a new user taps
+  // their first cell. Pad with a curated set of popular plants from the
+  // seed library so there's always something to browse before searching.
+  if (recentPlants.length < 8) {
+    const POPULAR = [
+      "Tomato", "Basil", "Lettuce", "Carrot", "Bell Pepper", "Cucumber",
+      "Zucchini", "Bean", "Spinach", "Radish", "Onion", "Marigold",
+    ];
+    const popular = await db.plantLibrary.findMany({
+      where: { name: { in: POPULAR }, source: "seed", customForUserId: null },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        imageUrl: true,
+        daysToMaturity: true,
+        spacingInches: true,
+        plantFamily: true,
+      },
+    });
+    const have = new Set(recentPlants.map((p) => p.id));
+    const byName = new Map(popular.map((p) => [p.name, p]));
+    const padding = POPULAR
+      .map((n) => byName.get(n))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined && !have.has(p.id));
+    recentPlants = [...recentPlants, ...padding].slice(0, 12);
+  }
 
   // The user's seed inventory — the plant picker badges plants the user
   // already has seeds for ("Sungold · 2 packets").
@@ -377,6 +409,7 @@ export default async function BedPage({
           canEdit={canEdit}
           userId={user.id}
           recentPlants={recentPlants}
+          suggestionsLabel={hasRecents ? "Recently used" : "Popular plants"}
           seedInventory={seedInventory}
           familyHistory={familyHistory}
           prefillPlant={prefillPlant}
