@@ -445,6 +445,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
   // Drives the "3 Cherry Tomatoes planted" banner subtitle and resets
   // whenever a new prefill starts (via plant change) or is dismissed.
   const [prefillPlacedCount, setPrefillPlacedCount] = useState(0);
+  // Season switched while prefill/move was armed → the banners reference
+  // state from the previous season's view; drop them rather than plant or
+  // move under a stale label. (Ref-guarded so mount doesn't clear prefill.)
+  const prevSeasonRef = useRef(seasonId);
+  useEffect(() => {
+    if (prevSeasonRef.current === seasonId) return;
+    prevSeasonRef.current = seasonId;
+    setPendingPlant(null);
+    setPrefillPlacedCount(0);
+    setMovingPlanting(null);
+  }, [seasonId]);
   // After a single deliberate placement (tapping an empty cell → picker, or
   // dragging one plant from the library), auto-open the new planting's detail
   // panel so the gardener can set status / variety / dates right away instead
@@ -1633,6 +1644,17 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => {
+                      // Leaving SMART with an un-applied layout would silently
+                      // throw the generated plan away — ask first.
+                      if (
+                        activeTab === "smart" &&
+                        tab !== "smart" &&
+                        previewAssignments.length > 0 &&
+                        !window.confirm("Discard the AI layout you haven't applied yet?")
+                      ) {
+                        return;
+                      }
+                      if (tab !== "smart") setPreviewAssignments([]);
                       // Cancel any active move/prefill mode when switching
                       // tabs so its banner doesn't linger and lie about what
                       // the next cell tap will do.
@@ -1824,7 +1846,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       userId={userId}
                       recentPlants={recentPlants}
                       onAssignmentsAccepted={() => setPreviewAssignments([])}
-                      onClose={() => setActiveTab("plant")}
+                      onPreviewChange={setPreviewAssignments}
+                      onClose={() => {
+                        // Close from inside the panel is deliberate — clear
+                        // any preview so dashed cells don't linger in plant mode.
+                        setPreviewAssignments([]);
+                        setActiveTab("plant");
+                      }}
                       onHoverAssignment={setHoveredAssignment}
                     />
                   ) : (

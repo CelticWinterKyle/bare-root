@@ -25,6 +25,10 @@ type Props = {
   recentPlants: Plant[];
   onAssignmentsAccepted: (assignments: LayoutAssignment[]) => void;
   onHoverAssignment?: (coords: { row: number; col: number } | null) => void;
+  /** Mirrors the CURRENT un-applied result set (post-exclusions) up to the
+   *  grid, which renders the dashed cell previews and guards against
+   *  silently discarding them on tab switch. */
+  onPreviewChange?: (assignments: LayoutAssignment[]) => void;
   onClose: () => void;
 };
 
@@ -37,6 +41,7 @@ export function SmartLayoutPanel({
   recentPlants,
   onAssignmentsAccepted,
   onHoverAssignment,
+  onPreviewChange,
   onClose,
 }: Props) {
   const [step, setStep] = useState<Step>("wishlist");
@@ -83,6 +88,7 @@ export function SmartLayoutPanel({
       } else {
         setAssignments(result.assignments);
         setExcluded(new Set());
+        onPreviewChange?.(result.assignments);
         setStep("results");
       }
     } catch {
@@ -96,6 +102,7 @@ export function SmartLayoutPanel({
       const next = new Set(prev);
       if (next.has(index)) next.delete(index);
       else next.add(index);
+      onPreviewChange?.(assignments.filter((_, i) => !next.has(i)));
       return next;
     });
   }
@@ -118,6 +125,7 @@ export function SmartLayoutPanel({
     setStep("wishlist");
     setAssignments([]);
     setExcluded(new Set());
+    onPreviewChange?.([]);
   }
 
   if (step === "generating") {

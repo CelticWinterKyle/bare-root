@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
@@ -83,12 +83,6 @@ export function PlantPicker({
   const [isAssigning, startAssign] = useTransition();
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [spacingWarnings, setSpacingWarnings] = useState<SpacingWarning[]>([]);
-  // The spacing-warning path closes the picker on a delay. Track that timer so
-  // it's cancelled if the picker unmounts first (e.g. BedGrid swaps in the
-  // detail panel after an auto-open) — otherwise a stale onClose would fire
-  // and snap the detail panel shut.
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
 
   function handleSearch(q: string) {
     setQuery(q);
@@ -127,13 +121,13 @@ export function PlantPicker({
       const result = await assignPlant(cellId!, plantId, seasonId);
       onPlanted?.(cellId!);
       // Footprint warning takes precedence — it's the more actionable
-      // signal ("not enough room" vs "neighbors are close"). Keep the
-      // picker open briefly so the user can see what happened.
+      // signal ("not enough room" vs "neighbors are close"). Spacing
+      // warnings keep the picker open until the user dismisses them —
+      // an auto-close cut people off mid-read.
       if (result.footprintWarning) {
         toast.warning(result.footprintWarning, { duration: 6000 });
       } else if (result.spacingWarnings.length > 0) {
         setSpacingWarnings(result.spacingWarnings);
-        closeTimerRef.current = setTimeout(onClose, 2500);
         return;
       }
       onClose();
@@ -145,14 +139,21 @@ export function PlantPicker({
       {spacingWarnings.length > 0 && (
         <div className="mb-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-medium text-yellow-800">Spacing conflict</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-yellow-800">Spacing conflict — planted anyway</p>
             {spacingWarnings.map((w, i) => (
               <p key={i} className="text-xs text-yellow-700">
                 Too close to {w.neighborPlantName} ({w.distanceIn}″ apart, needs {w.requiredIn}″)
               </p>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 text-xs font-semibold text-yellow-800 hover:text-yellow-900 px-2 py-1 rounded hover:bg-yellow-100 transition-colors"
+          >
+            Got it
+          </button>
         </div>
       )}
       <div className="relative mb-3">
