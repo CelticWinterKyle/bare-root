@@ -36,14 +36,34 @@ export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; 
     parseFloat(form.heightFt) > 0;
 
   function handleSubmit() {
+    // Mirror the server's bed limits (lib/validation.ts: MAX_BED_FT=100,
+    // MAX_BED_CELLS=5000) so the user gets the real reason here — production
+    // masks messages thrown by server actions, so a server-side rejection
+    // can only ever surface as a generic error.
+    const widthFt = parseFloat(form.widthFt);
+    const heightFt = parseFloat(form.heightFt);
+    const cellSizeIn = parseInt(form.cellSizeIn);
+    if (widthFt > 100 || heightFt > 100) {
+      toast.error("Beds max out at 100 ft per side.");
+      return;
+    }
+    const cellCount =
+      Math.max(1, Math.floor(widthFt * (12 / cellSizeIn))) *
+      Math.max(1, Math.floor(heightFt * (12 / cellSizeIn)));
+    if (cellCount > 5000) {
+      toast.error(
+        `That bed would have ${cellCount.toLocaleString()} cells — the limit is 5,000. Try a smaller bed${cellSizeIn === 6 ? ` or 1 ft squares` : ""}.`
+      );
+      return;
+    }
     startTransition(async () => {
       try {
         const bedId = await createBed({
           gardenId,
           name: form.name.trim(),
-          widthFt: parseFloat(form.widthFt),
-          heightFt: parseFloat(form.heightFt),
-          cellSizeIn: parseInt(form.cellSizeIn) as 12 | 6,
+          widthFt,
+          heightFt,
+          cellSizeIn: cellSizeIn as 12 | 6,
         });
         setOpen(false);
         router.push(`/garden/${gardenId}/beds/${bedId}`);
