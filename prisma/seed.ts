@@ -406,6 +406,19 @@ async function main() {
   }
 
   console.log(`Seeded ${added} companion relations.`);
+
+  // Perennial flags — by NAME (the category data is unreliable for this;
+  // see the 20260610230000 migration, which uses the same list).
+  const PERENNIALS = [
+    "Artichoke", "Asparagus", "Blackberry", "Blueberry", "Currant", "Lavender",
+    "Mint", "Oregano", "Raspberry", "Rhubarb", "Rosemary", "Sage", "Strawberry",
+    "Tarragon", "Thyme", "Chives", "Echinacea",
+  ];
+  const flagged = await db.plantLibrary.updateMany({
+    where: { name: { in: PERENNIALS }, source: "seed", customForUserId: null },
+    data: { isPerennial: true },
+  });
+  console.log(`Flagged ${flagged.count} perennials.`);
   console.log("Done.");
 }
 

@@ -48,7 +48,15 @@ export default async function GardenPage({
               // plant category so the 2D top-down view can colour each
               // occupied cell by crop type without an extra round-trip.
               occupiedBy: {
-                where: { planting: { season: { isActive: true } } },
+                where: {
+                  planting: {
+                    OR: [
+                      { isPerennial: true, clearedAt: null },
+                      { season: { isActive: true } },
+                    ],
+                  },
+                },
+                orderBy: { planting: { occupiesFrom: "desc" } },
                 select: {
                   plantingId: true,
                   isPrimary: true,

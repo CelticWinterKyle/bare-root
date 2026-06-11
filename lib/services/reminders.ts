@@ -15,23 +15,30 @@ type ReminderInput = {
     indoorStartWeeks: number | null;
     transplantWeeks: number | null;
     daysToMaturity: number | null;
+    isPerennial?: boolean;
   };
   garden: {
     lastFrostDate: string | null;
   };
   plantedDate?: Date | null;
   startMethod?: PlantStartMethod | null;
+  /** Future planting (the scrubber's "plant into April"): anchor the
+   *  do-it reminder at this date instead of generating spring-schedule
+   *  reminders from frost math. */
+  plannedFor?: Date | null;
 };
 
 export async function createRemindersForPlanting(input: ReminderInput): Promise<void> {
-  const { plantingId, gardenId, userId, plant, garden, plantedDate, startMethod } = input;
+  const { plantingId, gardenId, userId, plant, garden, plantedDate, startMethod, plannedFor } = input;
   const now = new Date();
 
   // Direct-sow and buy-a-start put the plant in the ground now, so the
   // indoor-start and frost-relative transplant reminders don't apply — only
   // the harvest reminder does. SEED_INDOORS (or an unset method) keeps the
-  // full spring schedule.
+  // full spring schedule. Perennials bought as starts never need the
+  // yearly seed-starting schedule either.
   const inGroundNow = startMethod === "DIRECT_SOW" || startMethod === "BUY_START";
+  const isFuture = plannedFor != null && plannedFor > now;
 
   type ReminderCreate = {
     userId: string;
@@ -45,7 +52,23 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
 
   const reminders: ReminderCreate[] = [];
 
-  if (!inGroundNow && garden.lastFrostDate) {
+  // Future planting: one anchored "do it" reminder at the planned date —
+  // the frost-relative spring schedule doesn't apply to a chosen month.
+  if (isFuture && plannedFor) {
+    const verb =
+      startMethod === "DIRECT_SOW" ? "Sow" : startMethod === "BUY_START" ? "Plant out" : "Start";
+    reminders.push({
+      userId,
+      plantingId,
+      gardenId,
+      type: startMethod === "SEED_INDOORS" ? ReminderType.START_SEEDS : ReminderType.TRANSPLANT,
+      title: `${verb} ${plant.name}`,
+      body: `You planned ${plant.name} for ${plannedFor.toLocaleDateString("en-US", { month: "long", day: "numeric" })} — time to get it going.`,
+      scheduledAt: plannedFor,
+    });
+  }
+
+  if (!isFuture && !inGroundNow && garden.lastFrostDate) {
     if (plant.indoorStartWeeks != null && plant.indoorStartWeeks > 0) {
       const startSeeds = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
       if (startSeeds > now) {

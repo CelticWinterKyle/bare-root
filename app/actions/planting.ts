@@ -6,6 +6,8 @@ import { gardenEditFilter } from "@/lib/permissions";
 import { assertBedWritable } from "@/lib/tier";
 import type { SunLevel, PlantingStatus, PlantStartMethod } from "@/lib/generated/prisma/enums";
 import { getSpacingWarnings, type SpacingWarning } from "@/lib/services/spacing";
+import { overlapFilter, windowForNewPlanting, windowFromDates, type OccupancyWindow } from "@/lib/services/occupancy";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { createRemindersForPlanting, upsertHarvestReminder, syncRemindersToStatus } from "@/lib/services/reminders";
 import { getStartOptions } from "@/lib/services/planting-feasibility";
 import { MAX_BULK_CELLS } from "@/lib/validation";
@@ -42,21 +44,29 @@ export type FootprintPlacement = {
  * Computes which cells a plant would occupy when anchored at the given
  * row/col, using the "anchor at tap, extend LEFT and DOWN" convention.
  * The block slides to stay inside the bed; it only shrinks when the bed
- * itself is smaller than the footprint (still a rectangle). If ANY cell of
- * the resolved rectangle is occupied by another planting this season, the
- * whole placement is rejected (blockedCells set, cells empty) — callers
- * surface a "needs an N×N area" error.
+ * itself is smaller than the footprint (still a rectangle).
+ *
+ * Occupancy is WINDOW-AWARE (lib/services/occupancy.ts): a cell blocks the
+ * placement when a live perennial holds it, or a same-season planting's
+ * window overlaps the new window. Runs on the caller's TRANSACTION client
+ * under the per-bed advisory lock — the old @@unique([cellId,seasonId])
+ * race guard is gone, so the check and the insert must be atomic.
  */
-async function resolveFootprint(args: {
-  anchorCell: { id: string; row: number; col: number; bedId: string };
-  bed: { gridRows: number; gridCols: number; cellSizeIn: number };
-  spacingInches: number | null;
-  seasonId: string;
-  /** When moving an existing planting, exclude its own cells from the
-   *  "occupied" check so we don't refuse to place it on top of itself. */
-  excludePlantingId?: string;
-}): Promise<FootprintPlacement> {
-  const { anchorCell, bed, spacingInches, seasonId, excludePlantingId } = args;
+async function resolveFootprint(
+  tx: Prisma.TransactionClient,
+  args: {
+    anchorCell: { id: string; row: number; col: number; bedId: string };
+    bed: { gridRows: number; gridCols: number; cellSizeIn: number };
+    spacingInches: number | null;
+    seasonId: string;
+    /** Occupancy window the new placement will claim. */
+    window: OccupancyWindow;
+    /** When moving an existing planting, exclude its own cells from the
+     *  "occupied" check so we don't refuse to place it on top of itself. */
+    excludePlantingId?: string;
+  }
+): Promise<FootprintPlacement> {
+  const { anchorCell, bed, spacingInches, seasonId, window, excludePlantingId } = args;
   const spacing = spacingInches ?? bed.cellSizeIn;
   const sideCells = Math.max(1, Math.ceil(spacing / bed.cellSizeIn));
 
@@ -83,7 +93,7 @@ async function resolveFootprint(args: {
   }
 
   // Look up the actual Cell ids for those positions.
-  const cellsInBed = await db.cell.findMany({
+  const cellsInBed = await tx.cell.findMany({
     where: {
       bedId: anchorCell.bedId,
       OR: desired.map((d) => ({ row: d.row, col: d.col })),
@@ -92,16 +102,15 @@ async function resolveFootprint(args: {
   });
   const cellByPos = new Map(cellsInBed.map((c) => [`${c.row},${c.col}`, c.id]));
 
-  // Occupancy check across the whole rectangle — ignoring the moving
-  // planting's own cells when present, so it can re-anchor onto itself.
+  // Window-aware occupancy across the whole rectangle: live perennials
+  // block in every season; same-season plantings block when their windows
+  // overlap the new one. The moving planting's own cells are ignored so it
+  // can re-anchor onto itself.
   const candidateIds = cellsInBed.map((c) => c.id);
-  const occupied = await db.plantingCell.findMany({
+  const occupied = await tx.plantingCell.findMany({
     where: {
       cellId: { in: candidateIds },
-      planting: {
-        seasonId,
-        ...(excludePlantingId ? { id: { not: excludePlantingId } } : {}),
-      },
+      planting: overlapFilter(seasonId, window, excludePlantingId),
     },
     select: { cellId: true },
   });
@@ -144,7 +153,12 @@ export async function assignPlant(
   cellId: string,
   plantId: string,
   seasonId: string,
-  startMethod?: PlantStartMethod
+  startMethod?: PlantStartMethod,
+  opts?: {
+    /** Plant into a future month: the occupancy window (and reminders)
+     *  anchor at this date instead of now. */
+    plannedFor?: Date;
+  }
 ): Promise<{
   plantingId: string;
   spacingWarnings: SpacingWarning[];
@@ -173,6 +187,7 @@ export async function assignPlant(
       indoorStartWeeks: true,
       transplantWeeks: true,
       daysToMaturity: true,
+      isPerennial: true,
     },
   });
 
@@ -191,31 +206,12 @@ export async function assignPlant(
       firstFrostDate: garden.firstFrostDate,
     }).recommended;
 
-  const placement = await resolveFootprint({
-    anchorCell: { id: cell.id, row: cell.row, col: cell.col, bedId: cell.bedId },
-    bed: {
-      gridRows: cell.bed.gridRows,
-      gridCols: cell.bed.gridCols,
-      cellSizeIn: cell.bed.cellSizeIn,
-    },
-    spacingInches: plant.spacingInches,
-    seasonId,
+  // Occupancy window the new planting will claim — anchored at now, or at
+  // a planned future month (the scrubber's "plant into April" flow).
+  const window = windowForNewPlanting(plant.daysToMaturity, {
+    plannedFor: opts?.plannedFor ?? null,
+    isPerennial: plant.isPerennial,
   });
-
-  if (placement.blockedCells) {
-    throw new Error(
-      placement.sideCells > 1
-        ? `Not enough room here — ${plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
-        : "This cell is already occupied. Try another."
-    );
-  }
-  const primary = placement.cells.find((c) => c.isPrimary);
-  if (!primary) {
-    // Anchor cell itself isn't placeable — off-grid (shouldn't happen since
-    // we just resolved it). Surface a clear error so the picker can
-    // re-render without state drift.
-    throw new Error("This cell is already occupied. Try another.");
-  }
 
   // Plants-per-cell from spacing — the square-foot-gardening density rule:
   // a 3" carrot in a 6" cell is 2 per side = 4 per cell; a 1" radish in a
@@ -226,10 +222,51 @@ export async function assignPlant(
     : 1;
   const quantityPerCell = perSide * perSide;
 
-  // Create the planting + every footprint cell in one transaction.
-  const planting = await db.$transaction(async (tx) => {
+  // Occupancy check + insert are ONE transaction under a per-bed advisory
+  // lock — with the cellId+seasonId unique gone, this atomicity is the
+  // race guard against two concurrent placements double-booking a window.
+  const { planting, placement } = await db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${cell.bedId}))`;
+
+    const placement = await resolveFootprint(tx, {
+      anchorCell: { id: cell.id, row: cell.row, col: cell.col, bedId: cell.bedId },
+      bed: {
+        gridRows: cell.bed.gridRows,
+        gridCols: cell.bed.gridCols,
+        cellSizeIn: cell.bed.cellSizeIn,
+      },
+      spacingInches: plant.spacingInches,
+      seasonId,
+      window,
+    });
+
+    if (placement.blockedCells) {
+      throw new Error(
+        placement.sideCells > 1
+          ? `Not enough room here — ${plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
+          : "This cell is already occupied. Try another."
+      );
+    }
+    const primary = placement.cells.find((c) => c.isPrimary);
+    if (!primary) {
+      // Anchor cell itself isn't placeable — off-grid (shouldn't happen
+      // since we just resolved it). Clear error so the picker re-renders
+      // without state drift.
+      throw new Error("This cell is already occupied. Try another.");
+    }
+
     const p = await tx.planting.create({
-      data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell, startMethod: method },
+      data: {
+        cellId,
+        seasonId,
+        plantId,
+        status: "PLANNED",
+        quantityPerCell,
+        startMethod: method,
+        occupiesFrom: window.from,
+        occupiesUntil: window.until,
+        isPerennial: plant.isPerennial,
+      },
     });
     await tx.plantingCell.createMany({
       data: placement.cells.map((c) => ({
@@ -238,7 +275,7 @@ export async function assignPlant(
         isPrimary: c.isPrimary,
       })),
     });
-    return p;
+    return { planting: p, placement };
   });
 
   // Reminders are secondary. The planting is already committed above, so a
@@ -252,6 +289,7 @@ export async function assignPlant(
       plant,
       garden,
       startMethod: method,
+      plannedFor: opts?.plannedFor ?? null,
     });
   } catch (err) {
     console.error("createRemindersForPlanting failed (non-fatal):", err);
@@ -338,39 +376,48 @@ export async function movePlanting(
   // No-op if anchoring on the same cell.
   if (newAnchorCellId === planting.cellId) return {};
 
-  const placement = await resolveFootprint({
-    anchorCell: {
-      id: newAnchor.id,
-      row: newAnchor.row,
-      col: newAnchor.col,
-      bedId: newAnchor.bedId,
-    },
-    bed: {
-      gridRows: newAnchor.bed.gridRows,
-      gridCols: newAnchor.bed.gridCols,
-      cellSizeIn: newAnchor.bed.cellSizeIn,
-    },
-    spacingInches: planting.plant.spacingInches,
-    seasonId: planting.seasonId,
-    excludePlantingId: planting.id,
-  });
+  // The move keeps the planting's own occupancy window — it changes WHERE,
+  // not WHEN. Check + swap run atomically under the per-bed lock.
+  const moveWindow: OccupancyWindow = {
+    from: planting.occupiesFrom,
+    until: planting.occupiesUntil,
+  };
 
-  if (placement.blockedCells) {
-    throw new Error(
-      placement.sideCells > 1
-        ? `Not enough room there — ${planting.plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
-        : "That cell is already occupied."
-    );
-  }
-  const primary = placement.cells.find((c) => c.isPrimary);
-  if (!primary) {
-    throw new Error("That cell is already occupied.");
-  }
+  const placement = await db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${newAnchor.bedId}))`;
 
-  // Atomically: remove old PlantingCell rows, update anchor pointer,
-  // insert new PlantingCell rows. The Planting row itself (and all of
-  // its photos/logs/notes/reminders) is untouched.
-  await db.$transaction(async (tx) => {
+    const placement = await resolveFootprint(tx, {
+      anchorCell: {
+        id: newAnchor.id,
+        row: newAnchor.row,
+        col: newAnchor.col,
+        bedId: newAnchor.bedId,
+      },
+      bed: {
+        gridRows: newAnchor.bed.gridRows,
+        gridCols: newAnchor.bed.gridCols,
+        cellSizeIn: newAnchor.bed.cellSizeIn,
+      },
+      spacingInches: planting.plant.spacingInches,
+      seasonId: planting.seasonId,
+      window: moveWindow,
+      excludePlantingId: planting.id,
+    });
+
+    if (placement.blockedCells) {
+      throw new Error(
+        placement.sideCells > 1
+          ? `Not enough room there — ${planting.plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
+          : "That cell is already occupied."
+      );
+    }
+    const primary = placement.cells.find((c) => c.isPrimary);
+    if (!primary) {
+      throw new Error("That cell is already occupied.");
+    }
+
+    // Remove old PlantingCell rows, update anchor pointer, insert new ones.
+    // The Planting row itself (photos/logs/notes/reminders) is untouched.
     await tx.plantingCell.deleteMany({ where: { plantingId } });
     await tx.planting.update({
       where: { id: plantingId },
@@ -383,6 +430,7 @@ export async function movePlanting(
         isPrimary: c.isPrimary,
       })),
     });
+    return placement;
   });
 
   revalidatePath(`/garden/${newAnchor.bed.gardenId}/beds/${newAnchor.bedId}`);
@@ -514,6 +562,18 @@ export async function undoRemovePlanting(snapshot: {
     snapshot.startMethod ?? undefined
   );
 
+  // Restore the occupancy window from the snapshot's dates (assignPlant
+  // just stamped a fresh now-anchored one).
+  const restored = await db.planting.findUniqueOrThrow({
+    where: { id: res.plantingId },
+    select: { occupiesFrom: true, isPerennial: true },
+  });
+  const window = windowFromDates(
+    snapshot.plantedDate,
+    snapshot.expectedHarvestDate,
+    restored.occupiesFrom,
+    restored.isPerennial
+  );
   await db.planting.update({
     where: { id: res.plantingId },
     data: {
@@ -523,6 +583,8 @@ export async function undoRemovePlanting(snapshot: {
       plantedDate: snapshot.plantedDate,
       transplantDate: snapshot.transplantDate,
       expectedHarvestDate: snapshot.expectedHarvestDate,
+      occupiesFrom: window.from,
+      occupiesUntil: window.until,
     },
   });
 
@@ -580,6 +642,12 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
       // Reasonable inference, still editable in the Dates section.
       ...(status === "TRANSPLANTED" && !planting.transplantDate
         ? { transplantDate: new Date() }
+        : {}),
+      // A finished annual releases its cells from now — the window closes
+      // so a successor can claim the spot. Perennials keep their open
+      // window (permanent removal is the clearedAt flow, not a status).
+      ...((status === "HARVESTED" || status === "FAILED") && !planting.isPerennial
+        ? { occupiesUntil: new Date() }
         : {}),
     },
   });
@@ -724,6 +792,16 @@ export async function updatePlantingDates(
     update.plantedDate = data.plantedDate ? new Date(data.plantedDate) : null;
   if (data.transplantDate !== undefined)
     update.transplantDate = data.transplantDate ? new Date(data.transplantDate) : null;
+
+  // Date edits move the occupancy window with them.
+  const window = windowFromDates(
+    plantedDate,
+    expectedHarvestDate,
+    planting.occupiesFrom,
+    planting.isPerennial
+  );
+  update.occupiesFrom = window.from;
+  update.occupiesUntil = window.until;
 
   await db.planting.update({ where: { id: plantingId }, data: update });
 

@@ -30,7 +30,15 @@ export async function GET() {
               row: true,
               col: true,
               occupiedBy: {
-                where: { planting: { season: { isActive: true } } },
+                where: {
+                  planting: {
+                    OR: [
+                      { isPerennial: true, clearedAt: null },
+                      { season: { isActive: true } },
+                    ],
+                  },
+                },
+                orderBy: { planting: { occupiesFrom: "desc" } },
                 select: {
                   isPrimary: true,
                   planting: {

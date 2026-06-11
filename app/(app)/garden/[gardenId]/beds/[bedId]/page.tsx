@@ -79,13 +79,23 @@ export default async function BedPage({
         include: {
           // PlantingCell is the source of truth for "what's growing in this
           // cell?" — it covers both primary (anchor) cells and footprint
-          // cells of multi-cell plants. Filtered to the viewing season.
+          // cells of multi-cell plants. Filtered to the viewing season PLUS
+          // live perennials, which occupy their cells in every season.
+          // Ordered latest-occupant-first: a cell may legally hold a
+          // finished planting and its successor, and [0] must be the
+          // successor.
           occupiedBy: {
             where: {
-              planting: viewingSeason
-                ? { seasonId: viewingSeason.id }
-                : { season: { isActive: true } },
+              planting: {
+                OR: [
+                  { isPerennial: true, clearedAt: null },
+                  viewingSeason
+                    ? { seasonId: viewingSeason.id }
+                    : { season: { isActive: true } },
+                ],
+              },
             },
+            orderBy: { planting: { occupiesFrom: "desc" } },
             include: {
               planting: {
                 include: {

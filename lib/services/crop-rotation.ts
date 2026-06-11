@@ -34,7 +34,9 @@ export async function getBedFamilyHistory(
     select: {
       name: true,
       plantings: {
-        where: { cell: { bedId } },
+        // A LIVE perennial from a past season isn't rotation history — it's
+        // still in the ground. Cleared perennials count like anything else.
+        where: { cell: { bedId }, NOT: { isPerennial: true, clearedAt: null } },
         select: { plant: { select: { name: true, plantFamily: true } } },
       },
     },
@@ -79,6 +81,8 @@ export async function getCropRotationWarnings(
     take: 2,
     include: {
       plantings: {
+        // Live perennials are current occupants, not history (see above).
+        where: { NOT: { isPerennial: true, clearedAt: null } },
         include: {
           plant: { select: { name: true, plantFamily: true } },
           cell: { include: { bed: { select: { id: true } } } },

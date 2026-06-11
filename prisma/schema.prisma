@@ -319,6 +319,19 @@ model Planting {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
+  // ── Occupancy window ────────────────────────────────────────────────────
+  // Half-open interval [occupiesFrom, occupiesUntil) during which this
+  // planting claims its PlantingCell footprint. Maintained EXCLUSIVELY via
+  // lib/services/occupancy.ts — never write these fields ad hoc.
+  // occupiesUntil null = open-ended (in-flight annuals, live perennials).
+  occupiesFrom  DateTime  @default(now())
+  occupiesUntil DateTime?
+  // Perennial liveness: isPerennial denormalized from PlantLibrary at
+  // creation (library edits never silently change occupancy); a live
+  // perennial (clearedAt null) occupies its cells in EVERY season.
+  isPerennial   Boolean   @default(false)
+  clearedAt     DateTime?
+
   cell        Cell            @relation(fields: [cellId], references: [id], onDelete: Cascade)
   season      Season          @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   plant       PlantLibrary    @relation(fields: [plantId], references: [id])
@@ -331,9 +344,14 @@ model Planting {
   growthNotes GrowthNote[]
   reminders   Reminder[]
 
-  @@unique([cellId, seasonId])
+  // The old @@unique([cellId, seasonId]) is GONE — the time model allows
+  // successive plantings in one cell within a season when their occupancy
+  // windows don't overlap. The overlap rule is enforced in resolveFootprint
+  // inside the assign transaction under a per-bed advisory lock.
+  @@index([cellId, seasonId])
   @@index([seasonId])
   @@index([plantId])
+  @@index([isPerennial, clearedAt])
 }
 
 // Join table linking a Planting to every Cell in its footprint.
@@ -434,6 +452,10 @@ model PlantLibrary {
   // (e.g. an imported plant the source API had no grow-cycle data for),
   // so the UI can label them and a user edit can clear the flag.
   timingEstimated  Boolean       @default(false)
+  // Persists across seasons (asparagus, herbs, berries, trees). Copied onto
+  // Planting.isPerennial at assign time so occupancy never shifts under a
+  // library edit.
+  isPerennial      Boolean       @default(false)
   // Common pests/diseases for this plant. Persisted values come from
   // Perenual enrichment (pest_susceptibility); the UI also merges in
   // category-based defaults from lib/services/pest-data.ts, so these may

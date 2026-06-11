@@ -82,11 +82,15 @@ export async function createSeasonWithCarryOver(
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     select: { id: true },
   });
+  // Perennials never carry over — they never left. Their single row stays
+  // live across seasons and blocks its cells via cross-season occupancy.
   const [growAgainTotal, toCarry] = prevSeason
     ? await Promise.all([
-        db.planting.count({ where: { seasonId: prevSeason.id, growAgain: true } }),
+        db.planting.count({
+          where: { seasonId: prevSeason.id, growAgain: true, isPerennial: false },
+        }),
         db.planting.findMany({
-          where: { seasonId: prevSeason.id, growAgain: true },
+          where: { seasonId: prevSeason.id, growAgain: true, isPerennial: false },
           select: { cellId: true, plantId: true, variety: true },
           orderBy: { createdAt: "asc" },
           take: MAX_CARRY_OVER_PLANTINGS,
@@ -116,10 +120,12 @@ export async function createSeasonWithCarryOver(
   // see earlier placements as occupied, or overlapping pairs would race.
   for (const p of toCarry) {
     try {
-      await assignPlant(p.cellId, p.plantId, newSeason.id);
+      const res = await assignPlant(p.cellId, p.plantId, newSeason.id);
       if (p.variety) {
+        // The cellId+seasonId compound selector died with the unique
+        // constraint — assignPlant returns the new planting's id directly.
         await db.planting.update({
-          where: { cellId_seasonId: { cellId: p.cellId, seasonId: newSeason.id } },
+          where: { id: res.plantingId },
           data: { variety: p.variety },
         });
       }
