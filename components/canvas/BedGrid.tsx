@@ -688,6 +688,26 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
     return targetFootprint(anchorCell?.planting?.plant.spacingInches ?? null, target, plantingId);
   }
 
+  // Undo action for a successful move: move it straight back to its old
+  // anchor. The server re-validates the old spot, so if something claimed
+  // it in the meantime the undo fails with a clear error instead of lying.
+  function moveUndoOpts(plantingId: string, plantName: string, prevAnchorId: string | null) {
+    if (!prevAnchorId) return undefined;
+    return {
+      duration: 6000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          movePlanting(plantingId, prevAnchorId)
+            .then(() => toast.success(`Moved ${plantName} back`))
+            .catch((err: unknown) =>
+              toast.error(err instanceof Error ? err.message : "Couldn't undo the move")
+            );
+        },
+      },
+    };
+  }
+
   function handleCellClick(cell: CellData) {
     // Read-only mode: viewing a planting is the point, everything else is
     // off the table. Planted/footprint cells open the (read-only) detail
@@ -737,6 +757,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       }
       const target = cell;
       const mv = movingPlanting;
+      const prevAnchorId = cells.find((c) => c.planting?.id === mv.id)?.id ?? null;
       startMove(async () => {
         try {
           const result = await movePlanting(mv.id, target.id);
@@ -744,7 +765,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           if (result.footprintWarning) {
             toast.warning(result.footprintWarning, { duration: 5000 });
           } else {
-            toast.success(`Moved ${mv.plantName}`);
+            toast.success(`Moved ${mv.plantName}`, moveUndoOpts(mv.id, mv.plantName, prevAnchorId));
           }
           setMovingPlanting(null);
         } catch (err) {
@@ -1032,12 +1053,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         return;
       }
       const targetId = targetCell.id;
+      const prevAnchorId = cells.find((c) => c.planting?.id === pid)?.id ?? null;
       startMove(async () => {
         try {
           const result = await movePlanting(pid, targetId);
           handlePlanted(targetId);
           if (result.footprintWarning) toast.warning(result.footprintWarning, { duration: 5000 });
-          else toast.success(`Moved ${name}`);
+          else toast.success(`Moved ${name}`, moveUndoOpts(pid, name, prevAnchorId));
         } catch (err) {
           console.error(err);
           toast.error(err instanceof Error ? err.message : "Couldn't move. Please try again");
@@ -1756,6 +1778,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 <CellDetail
                   planting={{ ...panel.planting, cell: { row: panel.cell.row, col: panel.cell.col } }}
                   warnings={panel.cell.warnings}
+                  cellId={panel.cell.id}
+                  seasonId={seasonId}
                   gardenId={gardenId}
                   bedId={bedId}
                   frost={frost}

@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
-import { assignPlant, bulkAssignPlant } from "@/app/actions/planting";
+import { assignPlant, bulkAssignPlant, undoBulkAssign } from "@/app/actions/planting";
 import { Search, Loader2, AlertTriangle, Package, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PlantThumb } from "@/components/plants/PlantThumb";
@@ -112,8 +112,25 @@ export function PlantPicker({
         if (summary.planted > 0) parts.push(`Planted ${summary.planted}`);
         if (summary.skipped > 0) parts.push(`${summary.skipped} skipped`);
         if (summary.reduced > 0) parts.push(`${summary.reduced} with reduced spacing`);
-        if (summary.planted > 0) toast.success(parts.join(" · "));
-        else toast.error("Couldn't plant any. Cells may already be occupied");
+        if (summary.planted > 0) {
+          // One-tap undo deletes exactly the plantings this bulk created.
+          const created = summary.plantingIds;
+          toast.success(parts.join(" · "), {
+            duration: 6000,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                undoBulkAssign(created)
+                  .then((r) => toast.success(`Removed ${r.removed} planting${r.removed === 1 ? "" : "s"}`))
+                  .catch((err: unknown) =>
+                    toast.error(err instanceof Error ? err.message : "Couldn't undo")
+                  );
+              },
+            },
+          });
+        } else {
+          toast.error("Couldn't plant any. Cells may already be occupied");
+        }
         onClose();
         return;
       }

@@ -146,6 +146,7 @@ export async function assignPlant(
   seasonId: string,
   startMethod?: PlantStartMethod
 ): Promise<{
+  plantingId: string;
   spacingWarnings: SpacingWarning[];
   footprintWarning?: string;
 }> {
@@ -283,7 +284,7 @@ export async function assignPlant(
   revalidatePath(`/garden/${cell.bed.gardenId}/beds/${cell.bedId}`);
   revalidatePath(`/garden/${cell.bed.gardenId}`);
   revalidatePath(`/dashboard`);
-  return { spacingWarnings, footprintWarning };
+  return { plantingId: planting.id, spacingWarnings, footprintWarning };
 }
 
 /**
@@ -409,8 +410,10 @@ export async function bulkAssignPlant(
   planted: number;
   skipped: number;
   reduced: number;
+  /** Created Planting ids — lets the UI offer a one-tap bulk undo. */
+  plantingIds: string[];
 }> {
-  if (cellIds.length === 0) return { planted: 0, skipped: 0, reduced: 0 };
+  if (cellIds.length === 0) return { planted: 0, skipped: 0, reduced: 0, plantingIds: [] };
   // Each cell is several queries + a transaction, run serially — an
   // unbounded list is a resource-exhaustion vector. The UI can't select
   // more cells than the bed has, and beds cap well below this.
@@ -421,6 +424,7 @@ export async function bulkAssignPlant(
   let planted = 0;
   let skipped = 0;
   let reduced = 0;
+  const plantingIds: string[] = [];
 
   // Serial loop — multi-cell footprints depend on earlier placements
   // having landed (so the next iteration can see them as occupied).
@@ -429,6 +433,7 @@ export async function bulkAssignPlant(
     try {
       const result = await assignPlant(cellId, plantId, seasonId);
       planted++;
+      plantingIds.push(result.plantingId);
       if (result.footprintWarning) reduced++;
     } catch (err) {
       // "This cell is already occupied" — expected if a prior anchor's
@@ -438,7 +443,87 @@ export async function bulkAssignPlant(
     }
   }
 
-  return { planted, skipped, reduced };
+  return { planted, skipped, reduced, plantingIds };
+}
+
+/**
+ * One-tap undo for a bulk placement: deletes exactly the plantings that
+ * bulkAssignPlant just created (access-filtered, so a tampered id list can
+ * only ever remove the caller's own plantings). Pending reminders go with
+ * them, same as removePlanting.
+ */
+export async function undoBulkAssign(plantingIds: string[]) {
+  const user = await requireUser();
+  if (plantingIds.length === 0) return { removed: 0 };
+  if (plantingIds.length > MAX_BULK_CELLS) {
+    throw new Error("Too many plantings to undo");
+  }
+
+  const owned = await db.planting.findMany({
+    where: { id: { in: plantingIds }, cell: { bed: { garden: gardenEditFilter(user.id) } } },
+    select: { id: true, cell: { select: { bedId: true, bed: { select: { gardenId: true } } } } },
+  });
+  if (owned.length === 0) return { removed: 0 };
+  const ids = owned.map((p) => p.id);
+
+  await db.$transaction([
+    db.reminder.deleteMany({ where: { plantingId: { in: ids }, sentAt: null } }),
+    db.planting.deleteMany({ where: { id: { in: ids } } }),
+  ]);
+
+  const bed = owned[0].cell;
+  revalidatePath(`/garden/${bed.bed.gardenId}/beds/${bed.bedId}`);
+  revalidatePath(`/garden/${bed.bed.gardenId}`);
+  revalidatePath(`/dashboard`);
+  return { removed: ids.length };
+}
+
+/**
+ * One-tap undo for removing a HISTORY-FREE planting: re-plants from the
+ * snapshot the client captured before the remove, then restores status,
+ * dates, variety and notes. Only offered when the planting had no
+ * harvests/photos/notes — those cascade-delete and can't be honestly
+ * restored, so plantings with history keep the confirm-only flow.
+ */
+export async function undoRemovePlanting(snapshot: {
+  cellId: string;
+  plantId: string;
+  seasonId: string;
+  status: PlantingStatus;
+  variety: string | null;
+  notes: string | null;
+  startMethod: PlantStartMethod | null;
+  plantedDate: Date | null;
+  transplantDate: Date | null;
+  expectedHarvestDate: Date | null;
+}) {
+  // assignPlant re-runs the full access/footprint/reminder pipeline.
+  const res = await assignPlant(
+    snapshot.cellId,
+    snapshot.plantId,
+    snapshot.seasonId,
+    snapshot.startMethod ?? undefined
+  );
+
+  await db.planting.update({
+    where: { id: res.plantingId },
+    data: {
+      status: snapshot.status,
+      variety: snapshot.variety,
+      notes: snapshot.notes,
+      plantedDate: snapshot.plantedDate,
+      transplantDate: snapshot.transplantDate,
+      expectedHarvestDate: snapshot.expectedHarvestDate,
+    },
+  });
+
+  try {
+    await syncRemindersToStatus(res.plantingId, snapshot.status);
+  } catch (err) {
+    console.error("reminder sync failed (non-fatal):", err);
+  }
+
+  return { plantingId: res.plantingId };
 }
 
 export async function removePlanting(plantingId: string) {

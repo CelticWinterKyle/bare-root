@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { removePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
+import { removePlanting, undoRemovePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { addHarvestLog } from "@/app/actions/tracking";
 
 const HARVEST_UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
@@ -51,6 +51,10 @@ type Props = {
     _count?: { harvestLogs: number; photos: number; growthNotes: number };
   };
   warnings: CompanionWarning[];
+  /** Anchor cell id + season — captured into the remove-undo snapshot so a
+   *  history-free planting can be re-created exactly where it was. */
+  cellId: string;
+  seasonId: string;
   gardenId: string;
   bedId: string;
   /** Garden frost dates ("MM-DD") that drive the start-method guidance. */
@@ -82,7 +86,7 @@ const START_METHOD_LABEL: Record<PlantStartMethod, string> = {
   BUY_START: "Bought as a start",
 };
 
-export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit = true, onClose, onMoveStart }: Props) {
+export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bedId, frost, canEdit = true, onClose, onMoveStart }: Props) {
   const [status, setStatus] = useState<PlantingStatus>(planting.status);
   const [plantedDate, setPlantedDate] = useState(toInputDate(planting.plantedDate));
   const [transplantDate, setTransplantDate] = useState(toInputDate(planting.transplantDate));
@@ -168,9 +172,42 @@ export function CellDetail({ planting, warnings, gardenId, bedId, frost, canEdit
       return;
     }
     if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    // Snapshot BEFORE removing — undo re-plants from this. Only offered for
+    // history-free plantings: harvests/photos/notes cascade-delete and can't
+    // be honestly restored, so those keep the confirm-only flow.
+    const c = planting._count;
+    const historyFree = !c || (c.harvestLogs === 0 && c.photos === 0 && c.growthNotes === 0);
+    const snapshot = {
+      cellId,
+      plantId: planting.plant.id,
+      seasonId,
+      status,
+      variety: variety || null,
+      notes: notes || null,
+      startMethod: planting.startMethod,
+      plantedDate: plantedDate ? new Date(plantedDate) : null,
+      transplantDate: transplantDate ? new Date(transplantDate) : null,
+      expectedHarvestDate: expectedHarvest ? new Date(expectedHarvest) : null,
+    };
+    const plantName = planting.plant.name;
     startRemove(async () => {
       try {
         await removePlanting(planting.id);
+        if (historyFree) {
+          toast.success(`Removed ${plantName}`, {
+            duration: 6000,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                undoRemovePlanting(snapshot)
+                  .then(() => toast.success(`${plantName} is back`))
+                  .catch((err: unknown) =>
+                    toast.error(err instanceof Error ? err.message : "Couldn't undo the remove")
+                  );
+              },
+            },
+          });
+        }
         onClose();
       } catch {
         setRemoveConfirm(false);
