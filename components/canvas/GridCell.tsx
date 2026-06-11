@@ -66,7 +66,7 @@ export const SUN_BG: Record<string, string> = {
 
 
 
-export type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null; plantFamily?: string | null };
+export type Plant = { id: string; name: string; category: string; imageUrl: string | null; daysToMaturity: number | null; spacingInches: number | null; indoorStartWeeks?: number | null; transplantWeeks?: number | null; plantFamily?: string | null; isPerennial?: boolean };
 export type Planting = {
   id: string;
   status: PlantingStatus;
@@ -81,6 +81,8 @@ export type Planting = {
   quantityPerCell?: number;
   /** Start of the occupancy window — "Planned for" display + future pill. */
   occupiesFrom?: Date;
+  /** Denormalized perennial liveness (drives badge + remove flow). */
+  isPerennial?: boolean;
   /** Scrubber temporal state: future = window hasn't started (ghost +
    *  dashed), past = window over while scrubbing history (grey ghost),
    *  dormant = perennial off-season. Absent/current = today's rendering. */

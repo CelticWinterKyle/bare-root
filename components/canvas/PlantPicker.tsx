@@ -27,6 +27,7 @@ type Plant = {
   daysToMaturity: number | null;
   spacingInches: number | null;
   plantFamily?: string | null;
+  isPerennial?: boolean;
 };
 
 /**
@@ -263,6 +264,7 @@ export function PlantPicker({
                 <p className="font-medium text-sm text-[#111109] truncate">{plant.name}</p>
                 <p className="text-xs text-[#ADADAA]">
                   {plant.daysToMaturity ? `${plant.daysToMaturity} days` : plant.category}
+                  {plant.isPerennial && <span style={{ color: "#3A6B20", fontWeight: 600 }}> · perennial</span>}
                   {(() => {
                     const hint = footprintHint(plant.spacingInches, cellSizeIn);
                     return hint ? <span className="text-[#3A6B20] font-medium"> · {hint}</span> : null;

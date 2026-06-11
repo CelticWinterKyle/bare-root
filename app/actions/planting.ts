@@ -597,6 +597,40 @@ export async function undoRemovePlanting(snapshot: {
   return { plantingId: res.plantingId };
 }
 
+/**
+ * End a live perennial WITHOUT deleting it: clearedAt closes its liveness,
+ * occupiesUntil releases its cells from now, status moves to HARVESTED so
+ * it reads as finished in season records. Photos/harvests/notes all stay —
+ * this is the honest opposite of removePlanting's hard delete.
+ */
+export async function clearPerennial(plantingId: string) {
+  const user = await requireUser();
+
+  const planting = await db.planting.findFirst({
+    where: {
+      id: plantingId,
+      isPerennial: true,
+      clearedAt: null,
+      cell: { bed: { garden: gardenEditFilter(user.id) } },
+    },
+    include: { cell: { include: { bed: true } } },
+  });
+  if (!planting) throw new Error("Planting not found");
+
+  const now = new Date();
+  await db.$transaction([
+    db.reminder.deleteMany({ where: { plantingId, sentAt: null } }),
+    db.planting.update({
+      where: { id: plantingId },
+      data: { clearedAt: now, occupiesUntil: now, status: "HARVESTED" },
+    }),
+  ]);
+
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}/beds/${planting.cell.bedId}`);
+  revalidatePath(`/garden/${planting.cell.bed.gardenId}`);
+  revalidatePath(`/dashboard`);
+}
+
 export async function removePlanting(plantingId: string) {
   const user = await requireUser();
 

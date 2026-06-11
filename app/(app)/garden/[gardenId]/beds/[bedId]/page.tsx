@@ -28,6 +28,17 @@ export async function generateMetadata({
   };
 }
 
+// A live perennial reads as dormant when the viewed month falls entirely
+// outside the garden's frost-free window (rough but honest for zone-based
+// gardens; roots persist, tops rest).
+function isDormantMonth(ym: string, lastFrost: string | null, firstFrost: string | null): boolean {
+  if (!lastFrost || !firstFrost) return false;
+  const month = Number(ym.split("-")[1]);
+  const growStart = Number(lastFrost.split("-")[0]);
+  const growEnd = Number(firstFrost.split("-")[0]);
+  return month < growStart || month > growEnd;
+}
+
 export default async function BedPage({
   params,
   searchParams,
@@ -163,6 +174,8 @@ export default async function BedPage({
                       spacingInches: true,
                       indoorStartWeeks: true,
                       transplantWeeks: true,
+                      isPerennial: true,
+                      harvestMonths: true,
                     },
                   },
                   // History counts so the remove-confirm in CellDetail can
@@ -345,15 +358,22 @@ export default async function BedPage({
             startMethod: rawPlanting.startMethod,
             quantityPerCell: rawPlanting.quantityPerCell,
             occupiesFrom: rawPlanting.occupiesFrom,
+            isPerennial: rawPlanting.isPerennial,
             // Temporal state for scrubber styling: future = window hasn't
             // started; past = window fully over (only marked when scrubbing,
             // so the today view renders finished plantings exactly as
-            // before); else current.
+            // before); dormant = live perennial viewed in a month outside
+            // the frost-free growing window; else current.
             temporal: (rawPlanting.occupiesFrom > now
               ? "future"
               : viewingMonth && rawPlanting.occupiesUntil && rawPlanting.occupiesUntil < now
               ? "past"
-              : "current") as "future" | "past" | "current",
+              : viewingMonth &&
+                rawPlanting.isPerennial &&
+                !rawPlanting.clearedAt &&
+                isDormantMonth(viewingMonth, bed.garden.lastFrostDate, bed.garden.firstFrostDate)
+              ? "dormant"
+              : "current") as "future" | "past" | "current" | "dormant",
             _count: rawPlanting._count,
           }
         : null,

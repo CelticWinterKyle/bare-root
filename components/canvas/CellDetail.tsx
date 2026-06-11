@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { removePlanting, undoRemovePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
+import { removePlanting, undoRemovePlanting, clearPerennial, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
 import { logHarvestResilient } from "@/lib/offline/log-harvest";
 
 const HARVEST_UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
@@ -51,6 +51,8 @@ type Props = {
     /** Occupancy window start — "Planned for" display on future plantings. */
     occupiesFrom?: Date;
     temporal?: "past" | "current" | "future" | "dormant";
+    /** Live-perennial flag — switches Remove into the clear-vs-delete flow. */
+    isPerennial?: boolean;
     /** History counts — when present and non-zero, the remove confirm warns
      *  that removal also deletes these records (hard delete cascades). */
     _count?: { harvestLogs: number; photos: number; growthNotes: number };
@@ -182,10 +184,37 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
   function handleRemoveClick() {
     if (!removeConfirm) {
       setRemoveConfirm(true);
-      removeTimerRef.current = setTimeout(() => setRemoveConfirm(false), 3000);
+      // Perennials get a persistent two-option panel instead of a timed
+      // confirm — the choice deserves a beat of thought.
+      if (!planting.isPerennial) {
+        removeTimerRef.current = setTimeout(() => setRemoveConfirm(false), 3000);
+      }
+      return;
+    }
+    if (planting.isPerennial) {
+      // Armed perennial: the main button is the cancel; the real actions
+      // live in the panel above.
+      setRemoveConfirm(false);
       return;
     }
     if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    doDelete();
+  }
+
+  function handleClearPerennial() {
+    const plantName = planting.plant.name;
+    startRemove(async () => {
+      try {
+        await clearPerennial(planting.id);
+        toast.success(`${plantName} cleared — its cells are free and the history stays`);
+        onClose();
+      } catch {
+        toast.error("Couldn't clear it. Please try again.");
+      }
+    });
+  }
+
+  function doDelete() {
     // Snapshot BEFORE removing — undo re-plants from this. Only offered for
     // history-free plantings: harvests/photos/notes cascade-delete and can't
     // be honestly restored, so those keep the confirm-only flow.
@@ -303,6 +332,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           {planting.plant.category.charAt(0) + planting.plant.category.slice(1).toLowerCase()}
           {" · "}Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
           {(planting.quantityPerCell ?? 1) > 1 && <>{" · "}{planting.quantityPerCell} per cell</>}
+          {planting.isPerennial && <>{" · "}perennial</>}
           {planting.temporal === "future" && planting.occupiesFrom && (
             <>{" · "}planned for {new Date(planting.occupiesFrom).toLocaleDateString("en-US", { month: "long", day: "numeric" })}</>
           )}
@@ -557,9 +587,52 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           edge so the actions are reachable without scrolling the whole panel
           (the content above scrolls; this doesn't). */}
       <div style={{ position: "sticky", bottom: 0, zIndex: 2 }}>
+      {/* Perennial remove: a persistent two-option panel — clear (end it
+          today, keep history) vs delete entirely. */}
+      {canEdit && removeConfirm && planting.isPerennial && (
+        <div style={{
+          padding: "10px 16px",
+          background: "#FDF2E0",
+          borderTop: "1px solid rgba(212,130,10,0.25)",
+          fontFamily: "var(--font-body)",
+          fontSize: "11px",
+          color: "#7A4A0A",
+          lineHeight: 1.45,
+        }}>
+          <p style={{ marginBottom: 8 }}>
+            <strong>{planting.plant.name} is a perennial.</strong> Clear it to end it today
+            (frees its cells, keeps {historyParts.length > 0 ? historyParts.join(", ") : "its history"});
+            delete only if it was a mistake.
+          </p>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              onClick={handleClearPerennial}
+              disabled={isRemoving}
+              style={{
+                flex: 1, padding: "7px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                background: "#1C3D0A", color: "white", border: "1.5px solid #1C3D0A",
+                cursor: "pointer", opacity: isRemoving ? 0.5 : 1,
+              }}
+            >
+              Clear — keep history
+            </button>
+            <button
+              onClick={doDelete}
+              disabled={isRemoving}
+              style={{
+                flex: 1, padding: "7px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                background: "transparent", color: "#7A2A18", border: "1.5px solid rgba(122,42,24,0.3)",
+                cursor: "pointer", opacity: isRemoving ? 0.5 : 1,
+              }}
+            >
+              Delete entirely
+            </button>
+          </div>
+        </div>
+      )}
       {/* History warning — shown while the remove button is armed, when the
           planting has records that the hard delete would take with it. */}
-      {canEdit && removeConfirm && historyParts.length > 0 && (
+      {canEdit && removeConfirm && !planting.isPerennial && historyParts.length > 0 && (
         <div style={{
           padding: "8px 16px",
           background: "#FBF0EE",
@@ -628,7 +701,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           }}
         >
           {isRemoving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-          {removeConfirm ? "Confirm" : "Remove"}
+          {removeConfirm ? (planting.isPerennial ? "Cancel" : "Confirm") : "Remove"}
         </button>}
       </div>
       </div>

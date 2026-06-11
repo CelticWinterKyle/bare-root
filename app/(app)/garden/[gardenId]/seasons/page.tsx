@@ -35,6 +35,24 @@ export default async function SeasonsPage({
 
   if (!garden) notFound();
 
+  // Live perennials — they belong to the garden, not to any one season.
+  const perennials = await db.planting.findMany({
+    where: {
+      isPerennial: true,
+      clearedAt: null,
+      cell: { bed: { gardenId } },
+    },
+    select: {
+      id: true,
+      variety: true,
+      occupiesFrom: true,
+      plant: { select: { name: true } },
+      cell: { select: { bed: { select: { id: true, name: true } } } },
+      season: { select: { name: true } },
+    },
+    orderBy: { occupiesFrom: "asc" },
+  });
+
   const isPro = user.subscriptionTier === "PRO";
   const activeSeason = garden.seasons.find((s) => s.isActive);
   const pastSeasons = garden.seasons.filter((s) => !s.isActive);
@@ -90,6 +108,39 @@ export default async function SeasonsPage({
               />
             </div>
             <PlantingsSummary plantings={activeSeason.plantings} />
+          </div>
+        </div>
+      )}
+
+      {/* Perennials — residents that outlive seasons */}
+      {perennials.length > 0 && (
+        <div className="mb-6">
+          <h2 className="font-display text-lg font-semibold text-[#111109] mb-1 pb-2 border-b border-[#E4E4DC]">
+            Perennials
+          </h2>
+          <p className="text-xs text-[#6B6B5A] mb-3">
+            These live across seasons — they hold their cells until you clear them from the bed.
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {perennials.map((p) => (
+              <Link
+                key={p.id}
+                href={`/garden/${gardenId}/beds/${p.cell.bed.id}`}
+                className="flex items-center justify-between gap-3 p-3 rounded-xl border bg-white hover:bg-[#F4F4EC] transition-colors"
+                style={{ borderColor: "#E4E4DC" }}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[#111109] truncate">
+                    {p.plant.name}
+                    {p.variety ? ` · ${p.variety}` : ""}
+                  </p>
+                  <p className="text-xs text-[#6B6B5A]">
+                    Bed {p.cell.bed.name} · since {p.season.name}
+                  </p>
+                </div>
+                <Leaf className="w-4 h-4 shrink-0" style={{ color: "#3A6B20" }} />
+              </Link>
+            ))}
           </div>
         </div>
       )}

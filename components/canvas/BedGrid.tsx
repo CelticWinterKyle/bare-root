@@ -1009,6 +1009,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                           // plantings render exactly as always.
                           const isFuture = b.temporal === "future";
                           const isPast = b.temporal === "past";
+                          const isDormant = b.temporal === "dormant";
                           return (
                             <div
                               key={pid}
@@ -1032,10 +1033,27 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                 boxShadow: isSel
                                   ? "0 0 0 3px rgba(28,61,10,0.35), inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 7px rgba(28,18,10,0.5)"
                                   : "inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(28,18,10,0.4)",
-                                opacity: isFuture ? 0.65 : isPast ? 0.55 : 1,
-                                filter: isPast ? "grayscale(0.65)" : undefined,
+                                opacity: isFuture ? 0.65 : isPast ? 0.55 : isDormant ? 0.7 : 1,
+                                filter: isPast ? "grayscale(0.65)" : isDormant ? "grayscale(0.45) brightness(0.92)" : undefined,
                               }}
                             >
+                              {isDormant && (
+                                <span
+                                  style={{
+                                    position: "absolute",
+                                    top: 4,
+                                    left: 6,
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: Math.max(8, Math.min(10, cellPx * 0.14)),
+                                    letterSpacing: "0.08em",
+                                    textTransform: "uppercase",
+                                    color: "rgba(253,253,248,0.9)",
+                                    textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                                  }}
+                                >
+                                  dormant
+                                </span>
+                              )}
                               {isFuture && b.occupiesFrom && (
                                 <span
                                   style={{
