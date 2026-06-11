@@ -48,6 +48,9 @@ type Props = {
     startMethod: PlantStartMethod | null;
     /** Plants growing in each occupied cell (SFG density). */
     quantityPerCell?: number;
+    /** Occupancy window start — "Planned for" display on future plantings. */
+    occupiesFrom?: Date;
+    temporal?: "past" | "current" | "future" | "dormant";
     /** History counts — when present and non-zero, the remove confirm warns
      *  that removal also deletes these records (hard delete cascades). */
     _count?: { harvestLogs: number; photos: number; growthNotes: number };
@@ -300,6 +303,9 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           {planting.plant.category.charAt(0) + planting.plant.category.slice(1).toLowerCase()}
           {" · "}Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
           {(planting.quantityPerCell ?? 1) > 1 && <>{" · "}{planting.quantityPerCell} per cell</>}
+          {planting.temporal === "future" && planting.occupiesFrom && (
+            <>{" · "}planned for {new Date(planting.occupiesFrom).toLocaleDateString("en-US", { month: "long", day: "numeric" })}</>
+          )}
         </div>
         {/* Status pill */}
         <div style={{
@@ -342,6 +348,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
             }}
             frost={frost}
             current={planting.startMethod}
+            anchorDate={planting.temporal === "future" && planting.occupiesFrom ? new Date(planting.occupiesFrom) : null}
           />
         ) : planting.startMethod ? (
           <div>

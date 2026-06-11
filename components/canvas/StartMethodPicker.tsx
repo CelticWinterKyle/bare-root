@@ -19,6 +19,9 @@ type Props = {
   frost: { lastFrostDate: string | null; firstFrostDate: string | null };
   /** The method already saved on the planting; null means "use the recommendation". */
   current: PlantStartMethod | null;
+  /** Future planting: anchor the feasibility math at its planned date
+   *  instead of today, so "plant now / harvest ~" reads for that month. */
+  anchorDate?: Date | null;
 };
 
 function fmt(d: Date): string {
@@ -42,8 +45,8 @@ function detail(o: StartOption): string {
  * to today and the garden's frost dates, and persists the choice so the
  * calendar/reminders follow the path the gardener actually took.
  */
-export function StartMethodPicker({ plantingId, plant, frost, current }: Props) {
-  const f = getStartOptions(plant, frost);
+export function StartMethodPicker({ plantingId, plant, frost, current, anchorDate = null }: Props) {
+  const f = getStartOptions(plant, frost, anchorDate ?? undefined);
   const [selected, setSelected] = useState<StartMethod>(
     (current as StartMethod | null) ?? f.recommended
   );

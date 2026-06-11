@@ -49,6 +49,7 @@ export function PlantPicker({
   cellSizeIn,
   recentPlants,
   suggestionsLabel = "Recently used",
+  plannedFor = null,
   seedInventory = [],
   familyHistory = [],
   onClose,
@@ -66,6 +67,10 @@ export function PlantPicker({
   /** Header over the default list — "Recently used" normally, "Popular
    *  plants" when a fresh garden's list was padded with curated picks. */
   suggestionsLabel?: string;
+  /** Scrubbed to a future month: single-cell picks anchor there. (Bulk
+   *  mode plants for now regardless — fan-out future planting is a later
+   *  refinement.) */
+  plannedFor?: Date | null;
   /** The user's seed inventory — drives the "have seeds" badge on plant
    *  rows so the picker answers "do I already own seeds for this?" */
   seedInventory?: { plantId: string; variety: string; quantity: number; unit: string }[];
@@ -160,7 +165,7 @@ export function PlantPicker({
         return;
       }
 
-      const result = await assignPlant(cellId!, plantId, seasonId);
+      const result = await assignPlant(cellId!, plantId, seasonId, undefined, plannedFor ? { plannedFor } : undefined);
       onPlanted?.(cellId!);
       // Footprint warning takes precedence — it's the more actionable
       // signal ("not enough room" vs "neighbors are close"). Spacing

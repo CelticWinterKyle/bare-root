@@ -9,6 +9,7 @@ import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { EditBedDialog } from "@/components/garden/EditBedDialog";
 import { TemplatesDialog } from "@/components/garden/TemplatesDialog";
+import { MonthScrubber } from "@/components/canvas/MonthScrubber";
 import { getCropRotationWarnings, getBedFamilyHistory } from "@/lib/services/crop-rotation";
 import { gardenAccessFilter } from "@/lib/permissions";
 
@@ -32,10 +33,10 @@ export default async function BedPage({
   searchParams,
 }: {
   params: Promise<{ gardenId: string; bedId: string }>;
-  searchParams: Promise<{ season?: string; plant?: string }>;
+  searchParams: Promise<{ season?: string; plant?: string; month?: string }>;
 }) {
   const { gardenId, bedId } = await params;
-  const { season: seasonParam, plant: plantParam } = await searchParams;
+  const { season: seasonParam, plant: plantParam, month: monthParam } = await searchParams;
   const user = await requireUser();
 
   // If we arrived from the plant detail page with ?plant=ID, pre-load the
@@ -62,6 +63,43 @@ export default async function BedPage({
     allSeasons.find((s) => s.isActive) ??
     null;
 
+  // ── Viewing month (the scrubber) ──────────────────────────────────────────
+  // ?month=YYYY-MM scrubs the bed through time: the grid shows the plantings
+  // whose occupancy windows overlap that month. No param (or the current
+  // month) = the default today view, which keeps the season-scoped filter so
+  // finished plantings stay visible exactly as before.
+  const now = new Date();
+  const currentYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const validMonth = monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam) ? monthParam : null;
+  const viewingMonth = validMonth && validMonth !== currentYm ? validMonth : null;
+  const monthStart = viewingMonth ? new Date(`${viewingMonth}-01T00:00:00`) : null;
+  const monthEnd = monthStart
+    ? new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1)
+    : null;
+  // Plant-into-the-future anchor: scrubbed to a future month, new plantings
+  // land mid-month (the 1st reads as "start of month"; noon dodges TZ edges).
+  const plannedFor =
+    monthStart && monthStart > now
+      ? new Date(monthStart.getFullYear(), monthStart.getMonth(), 1, 12)
+      : null;
+
+  // Scrubber range: season start through a 12-month planning horizon.
+  const scrubberMonths: string[] = [];
+  if (viewingSeason) {
+    const start = new Date(viewingSeason.startDate);
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const horizon = new Date(now.getFullYear(), now.getMonth() + 12, 1);
+    const end = viewingSeason.endDate && viewingSeason.endDate > horizon
+      ? new Date(viewingSeason.endDate)
+      : horizon;
+    while (cursor <= end && scrubberMonths.length < 36) {
+      scrubberMonths.push(
+        `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`
+      );
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+  }
+
   const bed = await db.bed.findFirst({
     where: { id: bedId, gardenId, garden: gardenAccessFilter(user.id) },
     include: {
@@ -86,14 +124,30 @@ export default async function BedPage({
           // successor.
           occupiedBy: {
             where: {
-              planting: {
-                OR: [
-                  { isPerennial: true, clearedAt: null },
-                  viewingSeason
-                    ? { seasonId: viewingSeason.id }
-                    : { season: { isActive: true } },
-                ],
-              },
+              planting:
+                monthStart && monthEnd
+                  ? {
+                      // Scrubbed month M: live perennials in the ground by M,
+                      // plus same-season plantings whose window overlaps M.
+                      OR: [
+                        { isPerennial: true, clearedAt: null, occupiesFrom: { lt: monthEnd } },
+                        {
+                          ...(viewingSeason
+                            ? { seasonId: viewingSeason.id }
+                            : { season: { isActive: true } }),
+                          occupiesFrom: { lt: monthEnd },
+                          OR: [{ occupiesUntil: null }, { occupiesUntil: { gt: monthStart } }],
+                        },
+                      ],
+                    }
+                  : {
+                      OR: [
+                        { isPerennial: true, clearedAt: null },
+                        viewingSeason
+                          ? { seasonId: viewingSeason.id }
+                          : { season: { isActive: true } },
+                      ],
+                    },
             },
             orderBy: { planting: { occupiesFrom: "desc" } },
             include: {
@@ -290,6 +344,16 @@ export default async function BedPage({
             notes: rawPlanting.notes,
             startMethod: rawPlanting.startMethod,
             quantityPerCell: rawPlanting.quantityPerCell,
+            occupiesFrom: rawPlanting.occupiesFrom,
+            // Temporal state for scrubber styling: future = window hasn't
+            // started; past = window fully over (only marked when scrubbing,
+            // so the today view renders finished plantings exactly as
+            // before); else current.
+            temporal: (rawPlanting.occupiesFrom > now
+              ? "future"
+              : viewingMonth && rawPlanting.occupiesUntil && rawPlanting.occupiesUntil < now
+              ? "past"
+              : "current") as "future" | "past" | "current",
             _count: rawPlanting._count,
           }
         : null,
@@ -398,6 +462,14 @@ export default async function BedPage({
           {bed.widthFt} × {bed.heightFt} ft · {bed.gridCols} × {bed.gridRows} grid · {bed.cellSizeIn}&quot; cells
           {bed.garden.usdaZone ? ` · Zone ${bed.garden.usdaZone}` : ""}
         </p>
+        {/* Month scrubber — the bed's time control */}
+        {scrubberMonths.length > 1 && (
+          <div className="mt-3">
+            <Suspense>
+              <MonthScrubber months={scrubberMonths} current={viewingMonth} currentYm={currentYm} />
+            </Suspense>
+          </div>
+        )}
         {/* Crop rotation warnings */}
         {rotationWarnings.length > 0 && (
           <div className="mt-3 space-y-1.5">
@@ -429,6 +501,7 @@ export default async function BedPage({
           canEdit={canEdit}
           userId={user.id}
           recentPlants={recentPlants}
+          plannedFor={plannedFor}
           suggestionsLabel={hasRecents ? "Recently used" : "Popular plants"}
           seedInventory={seedInventory}
           familyHistory={familyHistory}
