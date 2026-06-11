@@ -246,6 +246,7 @@ export default async function BedPage({
             variety: rawPlanting.variety,
             notes: rawPlanting.notes,
             startMethod: rawPlanting.startMethod,
+            quantityPerCell: rawPlanting.quantityPerCell,
             _count: rawPlanting._count,
           }
         : null,

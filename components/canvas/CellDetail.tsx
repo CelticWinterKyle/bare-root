@@ -46,6 +46,8 @@ type Props = {
     variety: string | null;
     notes: string | null;
     startMethod: PlantStartMethod | null;
+    /** Plants growing in each occupied cell (SFG density). */
+    quantityPerCell?: number;
     /** History counts — when present and non-zero, the remove confirm warns
      *  that removal also deletes these records (hard delete cascades). */
     _count?: { harvestLogs: number; photos: number; growthNotes: number };
@@ -288,6 +290,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         }}>
           {planting.plant.category.charAt(0) + planting.plant.category.slice(1).toLowerCase()}
           {" · "}Row {planting.cell.row + 1}, Col {planting.cell.col + 1}
+          {(planting.quantityPerCell ?? 1) > 1 && <>{" · "}{planting.quantityPerCell} per cell</>}
         </div>
         {/* Status pill */}
         <div style={{

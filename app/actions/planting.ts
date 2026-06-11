@@ -217,10 +217,19 @@ export async function assignPlant(
     throw new Error("This cell is already occupied. Try another.");
   }
 
+  // Plants-per-cell from spacing — the square-foot-gardening density rule:
+  // a 3" carrot in a 6" cell is 2 per side = 4 per cell; a 1" radish in a
+  // 12" cell caps at 4 per side = 16. Spacing >= cell size means 1 (and
+  // possibly a multi-cell footprint instead).
+  const perSide = plant.spacingInches
+    ? Math.max(1, Math.min(4, Math.floor(cell.bed.cellSizeIn / plant.spacingInches)))
+    : 1;
+  const quantityPerCell = perSide * perSide;
+
   // Create the planting + every footprint cell in one transaction.
   const planting = await db.$transaction(async (tx) => {
     const p = await tx.planting.create({
-      data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell: 1, startMethod: method },
+      data: { cellId, seasonId, plantId, status: "PLANNED", quantityPerCell, startMethod: method },
     });
     await tx.plantingCell.createMany({
       data: placement.cells.map((c) => ({

@@ -115,6 +115,8 @@ type Planting = {
   variety: string | null;
   notes: string | null;
   startMethod: PlantStartMethod | null;
+  /** Plants growing in each occupied cell (SFG density — 4 carrots/cell). */
+  quantityPerCell?: number;
   /** History counts (harvests/photos/notes) — drives the "removing also
    *  deletes its history" warning in CellDetail's remove confirm. */
   _count?: { harvestLogs: number; photos: number; growthNotes: number };
@@ -359,6 +361,27 @@ function CellTile({
       {/* Plant name is no longer drawn here — it's rendered once, centered
           over the whole footprint, by the label overlay layer (see the grid
           below) so multi-cell plants read as one block with a centered name. */}
+      {/* Density badge — SFG plants-per-cell (×4 carrots), top-left so it
+          doesn't fight the status dot. Hidden in dense/zoomed-out views. */}
+      {isAnchor && cell.planting && (cell.planting.quantityPerCell ?? 1) > 1 && !sunMode && !dense && (
+        <span
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            top: dotOffset,
+            left: dotOffset + 2,
+            fontFamily: "var(--font-mono)",
+            fontSize: Math.max(9, Math.min(13, cellPx * 0.16)),
+            fontWeight: 600,
+            lineHeight: 1,
+            color: "rgba(253,253,248,0.92)",
+            textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          ×{cell.planting.quantityPerCell}
+        </span>
+      )}
       {/* Status indicator dot — small, top-right of anchor cell so the
           italic name stays clean and centered. */}
       {isAnchor && cell.planting && !sunMode && (
