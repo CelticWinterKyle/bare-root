@@ -2,7 +2,7 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { removePlanting, undoRemovePlanting, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
-import { addHarvestLog } from "@/app/actions/tracking";
+import { logHarvestResilient } from "@/lib/offline/log-harvest";
 
 const HARVEST_UNITS = ["lbs", "oz", "kg", "g", "count", "bunches", "bags"];
 import { Loader2, Trash2, X, Move } from "lucide-react";
@@ -110,8 +110,17 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
     if (!quantity || quantity <= 0) return;
     startLogging(async () => {
       try {
-        await addHarvestLog(planting.id, { quantity, unit: harvestUnit });
-        toast.success(`Logged ${quantity} ${harvestUnit} of ${planting.plant.name}`);
+        const landed = await logHarvestResilient({
+          plantingId: planting.id,
+          plantName: planting.plant.name,
+          quantity,
+          unit: harvestUnit,
+        });
+        toast.success(
+          landed === "queued"
+            ? `Saved on this device — will sync when you're back online`
+            : `Logged ${quantity} ${harvestUnit} of ${planting.plant.name}`
+        );
         setHarvestQty("");
       } catch {
         toast.error("Couldn't log the harvest. Please try again.");

@@ -34,22 +34,33 @@ function revalidatePlanting(planting: { cell: { bed: { gardenId: string; id: str
 
 export async function addHarvestLog(
   plantingId: string,
-  data: { quantity: number; unit: string; notes?: string; harvestedAt?: string }
+  data: { quantity: number; unit: string; notes?: string; harvestedAt?: string; clientId?: string }
 ) {
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
   const harvestedAt = parseHarvestDate(data.harvestedAt);
 
-  await db.harvestLog.create({
-    data: {
-      plantingId,
-      quantity: data.quantity,
-      unit: data.unit,
-      notes: data.notes || null,
-      harvestedAt,
-    },
-  });
+  try {
+    await db.harvestLog.create({
+      data: {
+        plantingId,
+        quantity: data.quantity,
+        unit: data.unit,
+        notes: data.notes || null,
+        harvestedAt,
+        clientId: data.clientId || null,
+      },
+    });
+  } catch (err) {
+    // Duplicate clientId = this log already synced (offline replay retried,
+    // or a flaky connection delivered the first attempt after all). That's
+    // success, not failure — return without a second row.
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      return;
+    }
+    throw err;
+  }
 
   // Set actualHarvestDate to the earliest harvest date logged.
   const existing = await db.planting.findUnique({

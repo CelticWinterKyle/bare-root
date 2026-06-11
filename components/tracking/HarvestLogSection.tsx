@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
-import { addHarvestLog, deleteHarvestLog } from "@/app/actions/tracking";
+import { deleteHarvestLog } from "@/app/actions/tracking";
+import { logHarvestResilient } from "@/lib/offline/log-harvest";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,17 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
     if (!quantity || Number(quantity) <= 0) return;
     startAdd(async () => {
       try {
-        await addHarvestLog(plantingId, { quantity: Number(quantity), unit, notes: notes || undefined, harvestedAt: date });
+        const landed = await logHarvestResilient({
+          plantingId,
+          plantName: "this plant",
+          quantity: Number(quantity),
+          unit,
+          notes: notes || undefined,
+          harvestedAt: date,
+        });
+        if (landed === "queued") {
+          toast.success("Saved on this device — will sync when you're back online");
+        }
         setQuantity("");
         setNotes("");
         setOpen(false);

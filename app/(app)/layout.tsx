@@ -14,6 +14,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { PwaInstallPrompt } from "@/components/layout/PwaInstallPrompt";
 import { TimezoneSync } from "@/components/layout/TimezoneSync";
+import { OfflineSync } from "@/components/offline/OfflineSync";
 import { HelpButton } from "@/components/help/HelpButton";
 
 // Paths that bypass the onboarding gate. /onboarding hosts the wizard
@@ -185,6 +186,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
 
       <PwaInstallPrompt />
+      <OfflineSync />
     </div>
   );
 }

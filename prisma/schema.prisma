@@ -386,6 +386,9 @@ model HarvestLog {
   quantity    Float
   unit        String
   notes       String?
+  // Client-generated idempotency key — offline-queued logs replay safely
+  // (a duplicate insert is treated as success, never a second row).
+  clientId    String?  @unique
 
   planting Planting @relation(fields: [plantingId], references: [id], onDelete: Cascade)
 

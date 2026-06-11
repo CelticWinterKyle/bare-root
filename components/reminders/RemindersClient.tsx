@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { dismissReminder, completeReminder, snoozeReminder } from "@/app/actions/reminders";
-import { addHarvestLog } from "@/app/actions/tracking";
+import { logHarvestResilient } from "@/lib/offline/log-harvest";
 import { CreateReminderDialog } from "@/components/reminders/CreateReminderDialog";
 import { Bell, X, Leaf, Snowflake, Sprout, ArrowUpFromLine, Scissors, Check, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -115,9 +115,18 @@ export function RemindersClient({
     setBusyId(r.id);
     startTransition(async () => {
       try {
-        await addHarvestLog(r.plantingId!, { quantity, unit });
+        const landed = await logHarvestResilient({
+          plantingId: r.plantingId!,
+          plantName: r.plantName ?? "this plant",
+          quantity,
+          unit,
+        });
         await completeReminder(r.id);
-        toast.success(`Logged ${quantity} ${unit}`);
+        toast.success(
+          landed === "queued"
+            ? "Saved on this device — will sync when you're back online"
+            : `Logged ${quantity} ${unit}`
+        );
         setLoggingId(null);
         setQty("");
       } catch {
