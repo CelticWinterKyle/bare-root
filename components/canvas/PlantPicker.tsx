@@ -8,6 +8,16 @@ import { toast } from "sonner";
 import { PlantThumb } from "@/components/plants/PlantThumb";
 import type { SpacingWarning } from "@/lib/services/spacing";
 import type { BedFamilyHistory } from "@/lib/services/crop-rotation";
+import type { PlantCategory } from "@/lib/generated/prisma/enums";
+
+// Compact browse pills — the four categories people actually plant in beds.
+const PICKER_CATEGORIES: { label: string; value: PlantCategory | null }[] = [
+  { label: "All", value: null },
+  { label: "Vegetables", value: "VEGETABLE" },
+  { label: "Herbs", value: "HERB" },
+  { label: "Flowers", value: "FLOWER" },
+  { label: "Fruit", value: "FRUIT" },
+];
 
 type Plant = {
   id: string;
@@ -83,21 +93,32 @@ export function PlantPicker({
   const historyByFamily = new Map(familyHistory.map((h) => [h.family, h]));
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Plant[]>(recentPlants);
+  const [activeCategory, setActiveCategory] = useState<PlantCategory | null>(null);
   const [isSearching, startSearch] = useTransition();
   const [isAssigning, startAssign] = useTransition();
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [spacingWarnings, setSpacingWarnings] = useState<SpacingWarning[]>([]);
 
-  function handleSearch(q: string) {
-    setQuery(q);
-    if (q.length < 2) {
+  function runSearch(q: string, category: PlantCategory | null) {
+    if (q.length < 2 && category === null) {
       setResults(recentPlants);
       return;
     }
     startSearch(async () => {
-      const found = await searchPlantsAction(q, null, userId);
+      const found = await searchPlantsAction(q.length >= 2 ? q : "", category, userId);
       setResults(found);
     });
+  }
+
+  function handleSearch(q: string) {
+    setQuery(q);
+    runSearch(q, activeCategory);
+  }
+
+  function handleCategory(category: PlantCategory | null) {
+    const next = activeCategory === category ? null : category;
+    setActiveCategory(next);
+    runSearch(query, next);
   }
 
   function handlePick(plantId: string) {
@@ -191,7 +212,29 @@ export function PlantPicker({
         )}
       </div>
 
-      {!query && recentPlants.length > 0 && (
+      {/* Category pills — browse without typing */}
+      <div className="flex gap-1.5 overflow-x-auto flex-nowrap pb-1 mb-2">
+        {PICKER_CATEGORIES.map((c) => {
+          const isActive = activeCategory === c.value;
+          return (
+            <button
+              key={c.label}
+              type="button"
+              onClick={() => handleCategory(c.value)}
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+              style={{
+                border: `1.5px solid ${isActive ? "#1C3D0A" : "#E4E4DC"}`,
+                background: isActive ? "#1C3D0A" : "transparent",
+                color: isActive ? "white" : "#6B6B5A",
+              }}
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {!query && !activeCategory && recentPlants.length > 0 && (
         <p className="text-xs text-[#ADADAA] mb-2">{suggestionsLabel}</p>
       )}
 

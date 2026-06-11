@@ -8,6 +8,7 @@ import { ChevronLeft, RotateCcw } from "lucide-react";
 import { BedGrid } from "@/components/canvas/BedGrid";
 import { SeasonSelector } from "@/components/seasons/SeasonSelector";
 import { EditBedDialog } from "@/components/garden/EditBedDialog";
+import { TemplatesDialog } from "@/components/garden/TemplatesDialog";
 import { getCropRotationWarnings, getBedFamilyHistory } from "@/lib/services/crop-rotation";
 import { gardenAccessFilter } from "@/lib/permissions";
 
@@ -369,6 +370,15 @@ export default async function BedPage({
               ).size,
             }}
           />}
+          {canEdit && (
+            <TemplatesDialog
+              bedId={bed.id}
+              gardenId={gardenId}
+              seasonId={viewingSeason?.id ?? ""}
+              bedCols={bed.gridCols}
+              bedRows={bed.gridRows}
+            />
+          )}
         </div>
         {/* Sub — mono meta */}
         <p style={{

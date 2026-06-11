@@ -6,6 +6,16 @@ import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
 import { PlantThumb } from "@/components/plants/PlantThumb";
 import { Search, Loader2 } from "lucide-react";
+import type { PlantCategory } from "@/lib/generated/prisma/enums";
+
+// Compact browse pills — the four categories people actually plant in beds.
+const LIBRARY_CATEGORIES: { label: string; value: PlantCategory | null }[] = [
+  { label: "All", value: null },
+  { label: "Vegetables", value: "VEGETABLE" },
+  { label: "Herbs", value: "HERB" },
+  { label: "Flowers", value: "FLOWER" },
+  { label: "Fruit", value: "FRUIT" },
+];
 
 export type LibraryPlant = {
   id: string;
@@ -156,21 +166,32 @@ export function PlantLibrary({
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<LibraryPlant[]>(recentPlants);
+  const [activeCategory, setActiveCategory] = useState<PlantCategory | null>(null);
   const [isSearching, startSearch] = useTransition();
 
-  function handleSearch(q: string) {
-    setQuery(q);
-    if (q.length < 2) {
+  function runSearch(q: string, category: PlantCategory | null) {
+    if (q.length < 2 && category === null) {
       setResults(recentPlants);
       return;
     }
     startSearch(async () => {
-      const found = await searchPlantsAction(q, null, userId);
+      const found = await searchPlantsAction(q.length >= 2 ? q : "", category, userId);
       setResults(found);
     });
   }
 
-  const showRecent = query.length < 2 && results.length > 0;
+  function handleSearch(q: string) {
+    setQuery(q);
+    runSearch(q, activeCategory);
+  }
+
+  function handleCategory(category: PlantCategory | null) {
+    const next = activeCategory === category ? null : category;
+    setActiveCategory(next);
+    runSearch(query, next);
+  }
+
+  const showRecent = query.length < 2 && activeCategory === null && results.length > 0;
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -193,6 +214,27 @@ export function PlantLibrary({
               style={{ color: "#7DA84E" }}
             />
           )}
+        </div>
+        {/* Category pills — browse without typing */}
+        <div className="flex gap-1 overflow-x-auto flex-nowrap pt-2">
+          {LIBRARY_CATEGORIES.map((c) => {
+            const isActive = activeCategory === c.value;
+            return (
+              <button
+                key={c.label}
+                type="button"
+                onClick={() => handleCategory(c.value)}
+                className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors"
+                style={{
+                  border: `1.5px solid ${isActive ? "#1C3D0A" : "#E4E4DC"}`,
+                  background: isActive ? "#1C3D0A" : "transparent",
+                  color: isActive ? "white" : "#6B6B5A",
+                }}
+              >
+                {c.label}
+              </button>
+            );
+          })}
         </div>
         {showRecent && (
           <p

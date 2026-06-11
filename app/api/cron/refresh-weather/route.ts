@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { fetchCurrentWeather, fetchForecast } from "@/lib/api/weather";
+import { looksLikeRain } from "@/lib/services/watering";
 
 export const maxDuration = 300;
 
@@ -59,6 +60,11 @@ export async function GET(req: Request) {
         ]);
         if (!current) return 0;
 
+        // Observed-rain tracker for the watering heuristic: every 3h pass
+        // that sees rain-ish current conditions stamps the cache. The free
+        // tier has no precipitation amounts, so presence is the signal.
+        const raining = looksLikeRain(current.icon, current.description);
+
         let updated = 0;
         for (const gardenId of gardenIds) {
           await db.weatherCache.upsert({
@@ -67,10 +73,12 @@ export async function GET(req: Request) {
               gardenId,
               current: current as never,
               forecast: (forecast ?? []) as never,
+              ...(raining ? { lastRainAt: new Date() } : {}),
             },
             update: {
               current: current as never,
               forecast: (forecast ?? []) as never,
+              ...(raining ? { lastRainAt: new Date() } : {}),
             },
           });
           updated++;

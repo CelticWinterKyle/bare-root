@@ -102,6 +102,42 @@ model User {
   reminders         Reminder[]
   pushSubscriptions PushSubscription[]
   feedback          Feedback[]
+  bedTemplates      BedTemplate[]
+}
+
+// ─── Bed templates ────────────────────────────────────────────────────────────
+
+// A reusable bed plan: grid dimensions + a list of (row, col, plant) anchor
+// assignments. userId null = curated built-in (seeded in migrations); set =
+// a user's "save this bed as a template". Applying replays the assignments
+// through the canonical assignPlant path (same shape as smart-layout).
+model BedTemplate {
+  id          String   @id @default(cuid())
+  userId      String?
+  name        String
+  description String?
+  gridCols    Int
+  gridRows    Int
+  cellSizeIn  Int
+  createdAt   DateTime @default(now())
+
+  user        User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments TemplateAssignment[]
+
+  @@index([userId])
+}
+
+model TemplateAssignment {
+  id         String @id @default(cuid())
+  templateId String
+  row        Int
+  col        Int
+  plantId    String
+
+  template BedTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  plant    PlantLibrary @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
 }
 
 // ─── Feedback ─────────────────────────────────────────────────────────────────
@@ -405,10 +441,11 @@ model PlantLibrary {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  companions     CompanionRelation[] @relation("PlantCompanions")
-  antagonists    CompanionRelation[] @relation("PlantAntagonists")
-  plantings      Planting[]
-  seedInventory  SeedInventory[]
+  companions          CompanionRelation[]  @relation("PlantCompanions")
+  antagonists         CompanionRelation[]  @relation("PlantAntagonists")
+  plantings           Planting[]
+  seedInventory       SeedInventory[]
+  templateAssignments TemplateAssignment[]
 
   @@index([customForUserId])
   @@index([category])
@@ -478,6 +515,9 @@ model WeatherCache {
   gardenId  String   @unique
   current   Json
   forecast  Json?
+  // Last time the refresh cron observed rain-ish current conditions for
+  // this garden — drives the "skip watering, it rained" heuristic.
+  lastRainAt DateTime?
   updatedAt DateTime @updatedAt
 
   garden Garden @relation(fields: [gardenId], references: [id], onDelete: Cascade)
