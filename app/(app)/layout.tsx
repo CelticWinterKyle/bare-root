@@ -16,6 +16,7 @@ import { PwaInstallPrompt } from "@/components/layout/PwaInstallPrompt";
 import { TimezoneSync } from "@/components/layout/TimezoneSync";
 import { OfflineSync } from "@/components/offline/OfflineSync";
 import { HelpButton } from "@/components/help/HelpButton";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 
 // Paths that bypass the onboarding gate. /onboarding hosts the wizard
 // itself; /invite/[token] handles collaborator joins (those users get
@@ -131,6 +132,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             />
           </div>
           <div className="flex items-center gap-2">
+            <GlobalSearch trigger="icon" />
             <HelpButton />
             <NotificationBell reminders={bellReminders} unreadCount={unreadCount} />
             <Link

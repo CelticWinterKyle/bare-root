@@ -6,6 +6,7 @@ import {
   BookOpen, Package, Bell, Settings,
 } from "lucide-react";
 import { GardenSwitcher, type GardenOption } from "@/components/garden/GardenSwitcher";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { HelpButton } from "@/components/help/HelpButton";
 
 const NAV_SECTIONS = [
@@ -121,6 +122,11 @@ export function DesktopSidebar({
 
       {/* Garden switcher */}
       <GardenSwitcher gardens={gardens} activeGardenId={activeGardenId} atLimit={atGardenLimit} />
+
+      {/* Global search (also ⌘K anywhere) */}
+      <div style={{ padding: "10px 12px 0" }}>
+        <GlobalSearch trigger="sidebar" />
+      </div>
 
       {/* Nav */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: "8px" }}>

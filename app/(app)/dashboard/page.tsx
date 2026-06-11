@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { tempValue } from "@/lib/units";
 import { gardenAccessFilter } from "@/lib/permissions";
 import { hasFrostRisk } from "@/lib/api/weather";
 import { getGardenWeather } from "@/lib/services/garden-weather";
@@ -761,7 +762,7 @@ export default async function DashboardPage() {
             <>
               <div className={styles.weatherTop}>
                 <div className={styles.weatherTemp}>
-                  {weatherCurrent.temp}
+                  {tempValue(weatherCurrent.temp, user.units)}
                   <sup>°</sup>
                 </div>
                 <div>
@@ -777,14 +778,14 @@ export default async function DashboardPage() {
                 <div className={styles.weatherStat}>
                   <div className="label">Low</div>
                   <div className="value">
-                    {nextLow !== null ? nextLow : "—"}
+                    {nextLow !== null ? tempValue(nextLow, user.units) : "—"}
                     <sup style={{ fontSize: 11 }}>°</sup>
                   </div>
                 </div>
                 <div className={styles.weatherStat}>
                   <div className="label">High</div>
                   <div className="value">
-                    {nextHigh !== null ? nextHigh : "—"}
+                    {nextHigh !== null ? tempValue(nextHigh, user.units) : "—"}
                     <sup style={{ fontSize: 11 }}>°</sup>
                   </div>
                 </div>

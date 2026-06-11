@@ -14,6 +14,11 @@ enum Tier {
   PRO
 }
 
+enum Units {
+  IMPERIAL
+  METRIC
+}
+
 enum CollabRole {
   EDITOR
   VIEWER
@@ -85,6 +90,7 @@ model User {
   name                 String?
   avatarUrl            String?
   timezone             String    @default("UTC")
+  units                Units     @default(IMPERIAL)
   subscriptionTier     Tier      @default(FREE)
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique

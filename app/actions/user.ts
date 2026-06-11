@@ -18,3 +18,10 @@ export async function updateUserTimezone(timezone: string): Promise<void> {
   if (timezone === user.timezone) return;
   await db.user.update({ where: { id: user.id }, data: { timezone } });
 }
+
+/** Display units (imperial/metric). Storage stays imperial; only rendering changes. */
+export async function updateUserUnits(units: "IMPERIAL" | "METRIC"): Promise<void> {
+  const user = await requireUser();
+  if (units !== "IMPERIAL" && units !== "METRIC") return;
+  await db.user.update({ where: { id: user.id }, data: { units } });
+}

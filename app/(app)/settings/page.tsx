@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Bell, CreditCard, Package, ChevronRight, LogOut, User } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { AccountDataSection } from "@/components/settings/AccountDataSection";
+import { UnitsToggle } from "@/components/settings/UnitsToggle";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -36,6 +37,9 @@ export default async function SettingsPage() {
             Times shown in: {user.timezone}{" "}
             <span className="text-[#C6C6BD]">(detected from this device)</span>
           </p>
+          <div className="mt-2">
+            <UnitsToggle current={user.units} />
+          </div>
         </div>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isPro ? "bg-[#1C3D0A] text-white" : "bg-[#F4F4EC] text-[#6B6B5A]"}`}>
           {isPro ? "Pro" : "Free"}

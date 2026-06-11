@@ -12,6 +12,7 @@ import { TemplatesDialog } from "@/components/garden/TemplatesDialog";
 import { MonthScrubber } from "@/components/canvas/MonthScrubber";
 import { getCropRotationWarnings, getBedFamilyHistory } from "@/lib/services/crop-rotation";
 import { gardenAccessFilter } from "@/lib/permissions";
+import { formatDims, formatInches } from "@/lib/units";
 
 export async function generateMetadata({
   params,
@@ -479,7 +480,7 @@ export default async function BedPage({
           fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em",
           textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px",
         }}>
-          {bed.widthFt} × {bed.heightFt} ft · {bed.gridCols} × {bed.gridRows} grid · {bed.cellSizeIn}&quot; cells
+          {formatDims(bed.widthFt, bed.heightFt, user.units)} · {bed.gridCols} × {bed.gridRows} grid · {formatInches(bed.cellSizeIn, user.units)} cells
           {bed.garden.usdaZone ? ` · Zone ${bed.garden.usdaZone}` : ""}
         </p>
         {/* Month scrubber — the bed's time control */}
