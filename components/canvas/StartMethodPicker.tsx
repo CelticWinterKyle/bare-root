@@ -47,12 +47,21 @@ export function StartMethodPicker({ plantingId, plant, frost, current }: Props) 
   const [selected, setSelected] = useState<StartMethod>(
     (current as StartMethod | null) ?? f.recommended
   );
+  // Collapsed once a method is saved — the three option cards are the
+  // panel's biggest space hog and it's a once-per-plant decision. A fresh
+  // planting (no saved method yet) opens expanded for the guided choice.
+  const [expanded, setExpanded] = useState(current === null);
   const [isSaving, startSave] = useTransition();
 
   function pick(method: StartMethod) {
-    if (method === selected || isSaving) return;
+    if (isSaving) return;
+    if (method === selected) {
+      setExpanded(false);
+      return;
+    }
     const prev = selected;
     setSelected(method);
+    setExpanded(false);
     startSave(async () => {
       try {
         await updatePlantingStartMethod(plantingId, method as PlantStartMethod);
@@ -63,6 +72,32 @@ export function StartMethodPicker({ plantingId, plant, frost, current }: Props) 
   }
 
   const sel = f.options.find((o) => o.method === selected) ?? f.recommendedOption;
+
+  if (!expanded) {
+    return (
+      <div>
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>
+          How to start
+        </p>
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: "#F4F4EC" }}>
+          <div className="min-w-0">
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#3A3A30", display: "block" }}>
+              {startMethodLabel(selected)}
+            </span>
+            <span style={{ fontSize: "11px", color: "#6B6B5A" }}>{detail(sel)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="shrink-0 text-xs font-medium hover:underline"
+            style={{ color: "#3A6B20" }}
+          >
+            Change
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

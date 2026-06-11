@@ -537,6 +537,10 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         )}
       </div>
 
+      {/* Sticky footer — Open/Move/Remove pin to the panel's visible bottom
+          edge so the actions are reachable without scrolling the whole panel
+          (the content above scrolls; this doesn't). */}
+      <div style={{ position: "sticky", bottom: 0, zIndex: 2 }}>
       {/* History warning — shown while the remove button is armed, when the
           planting has records that the hard delete would take with it. */}
       {canEdit && removeConfirm && historyParts.length > 0 && (
@@ -610,6 +614,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           {isRemoving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
           {removeConfirm ? "Confirm" : "Remove"}
         </button>}
+      </div>
       </div>
     </div>
   );
