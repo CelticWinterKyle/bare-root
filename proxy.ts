@@ -21,6 +21,9 @@ const isPublicRoute = createRouteMatcher([
   // crawlers (and signed-out browsers fetching favicons) to /sign-in.
   "/robots.txt",
   "/sitemap.xml",
+  // PWA manifest — browsers fetch it without credentials, so an auth
+  // redirect breaks installability even for signed-in users.
+  "/manifest.json",
   "/opengraph-image(.*)",
   "/icon(.*)",
   "/apple-icon(.*)",
