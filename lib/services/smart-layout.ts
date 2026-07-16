@@ -90,6 +90,16 @@ Empty cells available: ${emptyCells.length} of ${bed.cells.length} total
 Sun mapping (row,col → level):
 ${sunMap}
 
+Occupied cells — do NOT place anything here:
+${
+  bed.cells.some((c) => c.isOccupied)
+    ? bed.cells
+        .filter((c) => c.isOccupied)
+        .map((c) => `(${c.row},${c.col})`)
+        .join(", ")
+    : "none — the whole bed is empty"
+}
+
 Plants to place:
 ${wishlistText}
 
