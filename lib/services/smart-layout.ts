@@ -53,14 +53,22 @@ export async function generateBedLayout(
 ): Promise<LayoutAssignment[]> {
   const emptyCells = bed.cells.filter((c) => !c.isOccupied);
 
-  const sunMap = bed.cells
-    .map((c) => `(${c.row},${c.col}): ${c.sunLevel.replace(/_/g, " ").toLowerCase()}`)
-    .join(", ");
+  // Only spell out exceptions — enumerating every cell put a 60×60 bed's
+  // 3,600 sun entries (tens of thousands of tokens) into the prompt.
+  const shadedCells = bed.cells.filter((c) => c.sunLevel !== "FULL_SUN");
+  const sunMap =
+    shadedCells.length === 0
+      ? "All cells are full sun."
+      : `All cells are full sun except: ${shadedCells
+          .map((c) => `(${c.row},${c.col}): ${c.sunLevel.replace(/_/g, " ").toLowerCase()}`)
+          .join(", ")}`;
 
+  // The response format requires plantId, so the id must be IN the prompt —
+  // without it the model has nothing real to echo and omits placements.
   const wishlistText = wishlist
     .map(
       (p) =>
-        `- ${p.name} (spacing: ${p.spacingInches ?? "unknown"}", sun: ${p.sunRequirement?.replace(/_/g, " ").toLowerCase() ?? "any"}, family: ${p.plantFamily ?? "unknown"})`
+        `- ${p.name} (plantId: ${p.id}, spacing: ${p.spacingInches ?? "unknown"}", sun: ${p.sunRequirement?.replace(/_/g, " ").toLowerCase() ?? "any"}, family: ${p.plantFamily ?? "unknown"})`
     )
     .join("\n");
 
@@ -99,13 +107,13 @@ Rules:
 5. Only place as many plants as there are suitable empty cells
 
 Return ONLY valid JSON in this exact format, no other text:
-{"assignments":[{"row":0,"col":0,"plantId":"<id>","plantName":"<name>","reasoning":"<1 sentence>"}]}
+{"assignments":[{"row":0,"col":0,"plantId":"<the plantId from the wishlist>","plantName":"<name>","reasoning":"<1 sentence>"}]}
 
-If a plant cannot be placed due to spacing or sun constraints, omit it. Row and col are 0-indexed.`;
+If a plant cannot be placed due to spacing or sun constraints, omit it. Row and col are 0-indexed. Place each wishlist plant at least once when a suitable empty cell exists.`;
 
   const message = await client.messages.create({
-    model: "claude-opus-4-7",
-    max_tokens: 1024,
+    model: "claude-opus-4-8",
+    max_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -119,5 +127,13 @@ If a plant cannot be placed due to spacing or sun constraints, omit it. Row and 
 
   // Validate: only accept empty cells
   const emptyCellKeys = new Set(emptyCells.map((c) => `${c.row},${c.col}`));
-  return parsed.assignments.filter((a) => emptyCellKeys.has(`${a.row},${a.col}`));
+  const valid = parsed.assignments.filter((a) => emptyCellKeys.has(`${a.row},${a.col}`));
+  if (valid.length === 0) {
+    // "0 plants placed" with no error is undebuggable from the UI — keep
+    // the model's actual output in the logs.
+    console.error(
+      `Smart layout returned 0 valid placements (${parsed.assignments.length} raw). Response head: ${text.slice(0, 400)}`
+    );
+  }
+  return valid;
 }
