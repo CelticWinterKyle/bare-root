@@ -19,7 +19,10 @@ export async function sendReminderEmail(
   html: string,
   unsubscribeUrl?: string
 ): Promise<boolean> {
-  if (!resend) return false;
+  if (!resend) {
+    console.error("Email skipped: RESEND_API_KEY is not set");
+    return false;
+  }
   try {
     const headers = unsubscribeUrl
       ? {
@@ -29,7 +32,14 @@ export async function sendReminderEmail(
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         }
       : undefined;
-    await resend.emails.send({ from: FROM, to, subject, html, headers });
+    // The Resend SDK does not throw on API failures (bad key, unverified
+    // domain) — it returns { error }, so a swallowed error here looked
+    // like a successful send.
+    const { error } = await resend.emails.send({ from: FROM, to, subject, html, headers });
+    if (error) {
+      console.error("Email send rejected:", error);
+      return false;
+    }
     return true;
   } catch (err) {
     console.error("Email send error:", err);
