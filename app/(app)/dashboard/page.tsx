@@ -32,6 +32,13 @@ function timeOfDay(d: Date, tz: string): "morning" | "afternoon" | "evening" {
   return "evening";
 }
 
+// Stored MM-DD frost values ("04-15") read as raw codes in the weather card.
+function formatFrostMmdd(mmdd: string): string {
+  const [m, d] = mmdd.split("-").map(Number);
+  if (!m || !d) return mmdd;
+  return new Date(2000, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
@@ -503,7 +510,10 @@ export default async function DashboardPage() {
   } else if (todayReminders.length >= 2) {
     heroSub = `${todayReminders.length} tasks waiting today. The garden's settled, but a few things need your hands.`;
   } else if (recentHarvests.length > 0) {
-    const daysSince = daysBetween(startOfDay(recentHarvests[0].harvestedAt), today);
+    // harvestedAt is a real instant (not a stored date-only), so its day
+    // boundary must come from the user's tz — the UTC day can be tomorrow
+    // for an evening log, which read as "-1 days ago" here.
+    const daysSince = daysBetween(startOfDayInTz(recentHarvests[0].harvestedAt, tz), today);
     if (daysSince <= 3) {
       const what = recentHarvests[0].planting.plant.name.toLowerCase();
       heroSub = `Last harvest was ${daysSince === 0 ? "today" : `${daysSince} day${daysSince === 1 ? "" : "s"} ago`}, fresh ${what}. The yields are coming in.`;
@@ -657,7 +667,7 @@ export default async function DashboardPage() {
   }
 
   // ── Getting-started checklist (young, incomplete accounts) ─────────────────
-  const accountAgeDays = daysBetween(startOfDay(user.createdAt), today);
+  const accountAgeDays = daysBetween(startOfDayInTz(user.createdAt, tz), today);
   const checklistSteps = [
     {
       label: "Plant your first bed",
@@ -796,7 +806,7 @@ export default async function DashboardPage() {
                 <div className={styles.weatherStat}>
                   <div className="label">Last frost</div>
                   <div className="value">
-                    <em>{primaryGarden.lastFrostDate ?? "—"}</em>
+                    <em>{primaryGarden.lastFrostDate ? formatFrostMmdd(primaryGarden.lastFrostDate) : "—"}</em>
                   </div>
                 </div>
               </div>

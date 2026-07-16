@@ -63,6 +63,7 @@ export default async function GardenPrintPage({
 
   const activeSeason = garden.seasons[0] ?? null;
   const printedOn = new Intl.DateTimeFormat("en-US", {
+    timeZone: user.timezone || "UTC",
     month: "long",
     day: "numeric",
     year: "numeric",

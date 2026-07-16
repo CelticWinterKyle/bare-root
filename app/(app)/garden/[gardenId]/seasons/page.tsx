@@ -135,7 +135,7 @@ export default async function SeasonsPage({
                     {p.variety ? ` · ${p.variety}` : ""}
                   </p>
                   <p className="text-xs text-[#6B6B5A]">
-                    Bed {p.cell.bed.name} · since {p.season.name}
+                    {p.cell.bed.name} · since {p.season.name}
                   </p>
                 </div>
                 <Leaf className="w-4 h-4 shrink-0" style={{ color: "#3A6B20" }} />

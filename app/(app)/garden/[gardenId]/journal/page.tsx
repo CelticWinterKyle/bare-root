@@ -141,8 +141,11 @@ export default async function GardenJournalPage({
   const truncated = entries.length > MERGED_CAP;
   const timeline = entries.slice(0, MERGED_CAP);
 
+  // Server renders in UTC — without the user's tz an evening harvest
+  // stamps as tomorrow's date.
   const stamp = (d: Date) =>
     new Intl.DateTimeFormat("en-US", {
+      timeZone: user.timezone || "UTC",
       weekday: "short",
       month: "short",
       day: "numeric",

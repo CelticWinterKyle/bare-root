@@ -203,10 +203,19 @@ export async function getPlantAction(plantId: string) {
       const result = await searchPerenual(plant.name);
       const match = result?.data?.[0];
       if (!match) return;
+      // externalId is unique — a separately imported row may already own
+      // this match (curated "Carrot" matching an imported perenual carrot),
+      // and claiming it blind P2002'd the whole backfill.
+      const externalId = String(match.id);
+      const taken = await db.plantLibrary.findUnique({
+        where: { externalId },
+        select: { id: true },
+      });
+      const claimId = !taken || taken.id === plantId;
       const img = await findPexelsImageUrl(plant.name, plant.category);
       await db.plantLibrary.update({
         where: { id: plantId },
-        data: { externalId: String(match.id), ...(img ? { imageUrl: img } : {}) },
+        data: { ...(claimId ? { externalId } : {}), ...(img ? { imageUrl: img } : {}) },
       });
       // Also fetch full details while we have the ID
       const full = await getPerenualPlant(match.id);
