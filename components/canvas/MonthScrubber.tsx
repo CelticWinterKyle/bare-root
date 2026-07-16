@@ -51,16 +51,26 @@ export function MonthScrubber({
       role="tablist"
       aria-label="Viewing month"
     >
-      {current !== null && current !== currentYm && (
-        <button
-          type="button"
-          onClick={() => go(null)}
-          className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
-          style={{ background: "#1C3D0A", color: "white" }}
-        >
-          Today
-        </button>
-      )}
+      {/* Always rendered: popping in only when scrubbed shifted every month
+          button sideways right as the user was clicking through them. */}
+      {(() => {
+        const onToday = current === null || current === currentYm;
+        return (
+          <button
+            type="button"
+            onClick={() => go(null)}
+            disabled={onToday}
+            className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+            style={
+              onToday
+                ? { background: "transparent", color: "#B5B5A6", border: "1.5px solid #E4E4DC" }
+                : { background: "#1C3D0A", color: "white", border: "1.5px solid #1C3D0A" }
+            }
+          >
+            Today
+          </button>
+        );
+      })()}
       {months.map((ym) => {
         const isSelected = ym === selected;
         const isNow = ym === currentYm;

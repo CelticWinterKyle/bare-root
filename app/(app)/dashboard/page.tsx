@@ -421,9 +421,13 @@ export default async function DashboardPage() {
       orderBy: { expectedHarvestDate: "asc" },
       include: { plant: { select: { name: true } } },
     }),
+    // Scoped to this year's seasons: the tile sits under "year to date",
+    // so a rating on last year's planting shouldn't produce a lone "4.0"
+    // next to zero harvests.
     db.planting.findMany({
       where: {
         rating: { not: null },
+        season: { startDate: { gte: yearStart } },
         cell: { bed: { gardenId: { in: accessibleGardenIds } } },
       },
       select: { rating: true },

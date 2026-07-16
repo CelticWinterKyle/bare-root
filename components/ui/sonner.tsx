@@ -1,11 +1,24 @@
 "use client"
 
+import * as React from "react"
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
+
+  // Sonner pauses toast timers while the page is hidden, so a confirmation
+  // fired just before backgrounding the app (constant on the mobile PWA)
+  // would still be sitting there minutes later. Stale confirmations are
+  // worse than missed ones — clear them when the page comes back.
+  React.useEffect(() => {
+    const onVisibilityChange = () => {
+      if (!document.hidden) toast.dismiss()
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange)
+  }, [])
 
   return (
     <Sonner

@@ -4,6 +4,7 @@ import {
   calculateStartSeedsDate,
   calculateTransplantDate,
   calculateExpectedHarvest,
+  frostBelongsToCurrentCycle,
 } from "@/lib/services/planting-calendar";
 
 type ReminderInput = {
@@ -68,7 +69,16 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
     });
   }
 
-  if (!isFuture && !inGroundNow && garden.lastFrostDate) {
+  // The spring schedule only applies while this year's frost date is still
+  // ahead. Once it has passed, resolveLastFrostDate rolls to NEXT year's
+  // frost — and a planting placed mid-season would get "start seeds in 231
+  // days" / "transplant in 287 days" reminders for a season it won't live
+  // to see (it's harvested by fall).
+  const springApplies = garden.lastFrostDate
+    ? frostBelongsToCurrentCycle(garden.lastFrostDate)
+    : false;
+
+  if (!isFuture && !inGroundNow && garden.lastFrostDate && springApplies) {
     if (plant.indoorStartWeeks != null && plant.indoorStartWeeks > 0) {
       const startSeeds = calculateStartSeedsDate(garden.lastFrostDate, plant.indoorStartWeeks);
       if (startSeeds > now) {
@@ -93,7 +103,7 @@ export async function createRemindersForPlanting(input: ReminderInput): Promise<
           gardenId,
           type: ReminderType.TRANSPLANT,
           title: `Transplant ${plant.name} outdoors`,
-          body: `Your ${plant.name} should be ready to move outside now.`,
+          body: `Your ${plant.name} should be ready to move outside.`,
           scheduledAt: transplant,
         });
       }
