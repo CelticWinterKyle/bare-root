@@ -56,10 +56,9 @@
 
 /* ── Reusable bits ──────────────────────────────────────────────────────── */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
   color: var(--sage);
   font-weight: 500;
   display: inline-flex;
@@ -77,10 +76,8 @@
 .eyebrow.muted::before { background: var(--mid); }
 
 .tag {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   padding: 3px 9px;
   border-radius: 100px;
   border: 1px solid var(--rule);
@@ -119,19 +116,16 @@
   min-width: 0;
 }
 .topbarDate {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: var(--muted);
   font-weight: 500;
   white-space: nowrap;
 }
 .topbarEdition {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: var(--ghost);
   white-space: nowrap;
 }
@@ -237,10 +231,9 @@
   font-weight: 400;
 }
 .weatherZone {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: rgba(255,255,255,0.5);
   margin-bottom: 4px;
   text-align: right;
@@ -267,10 +260,9 @@
   z-index: 1;
 }
 .weatherStat .label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: rgba(255,255,255,0.4);
   margin-bottom: 4px;
 }
@@ -292,10 +284,8 @@
   background: rgba(212,130,10,0.18);
   border: 1px solid rgba(212,130,10,0.3);
   border-radius: 8px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: #F2A03D;
   position: relative;
   z-index: 1;
@@ -343,10 +333,8 @@
 }
 .sectionTitle em { font-style: italic; color: var(--deep); }
 .sectionAction {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: var(--sage);
   font-weight: 600;
   cursor: pointer;
@@ -402,10 +390,8 @@
 .taskIconCustom { background: var(--surface); color: var(--muted); }
 
 .taskType {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 500;
 }
@@ -430,10 +416,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--sage);
   font-weight: 600;
   margin-top: 12px;
@@ -536,10 +520,8 @@
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.15);
   color: white;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   padding: 9px 14px;
   border-radius: 8px;
   font-weight: 600;
@@ -572,10 +554,9 @@
 .gardenCardCanvasPill {
   position: absolute;
   top: 12px; left: 12px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: rgba(168,216,112,0.7);
   background: rgba(0,0,0,0.4);
   backdrop-filter: blur(4px);
@@ -596,10 +577,8 @@
 }
 .gardenStat:last-child { border-right: none; }
 .gardenStat .label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   margin-bottom: 5px;
   font-weight: 500;
@@ -616,10 +595,8 @@
 .gardenStat .value em { font-style: italic; color: var(--deep); }
 .gardenStat .valueAmber { color: var(--amber); }
 .gardenStat .valueSub {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--ghost);
   margin-top: 4px;
   font-weight: 500;
@@ -667,10 +644,8 @@
 }
 .bedTileName em { font-style: italic; color: var(--deep); }
 .bedTileMeta {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 3px;
   font-weight: 500;
@@ -689,10 +664,8 @@
   font-variation-settings: 'opsz' 26;
 }
 .bedTileCount .label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 2px;
   font-weight: 500;
@@ -743,10 +716,8 @@
 }
 .widgetTitle em { font-style: italic; color: var(--deep); }
 .widgetMeta {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--ghost);
   font-weight: 500;
   white-space: nowrap;
@@ -766,9 +737,7 @@
 }
 .seasonDates {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--muted);
   margin-bottom: 16px;
   font-weight: 500;
@@ -799,10 +768,8 @@
 .seasonProgress {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 500;
 }
@@ -834,10 +801,8 @@
   font-weight: 700;
 }
 .qstat .label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 5px;
   font-weight: 500;
@@ -873,19 +838,15 @@
 }
 .upcomingDayDow {
   font-family: var(--font-mono);
-  font-size: 7px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 10px;
   color: var(--mid);
   margin-top: 2px;
   font-weight: 600;
 }
 .upcomingInfo { min-width: 0; }
 .upcomingType {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 600;
   display: inline-block;
   margin-bottom: 2px;
@@ -979,9 +940,7 @@
 }
 .reminderTime {
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 11px;
   color: var(--ghost);
   font-weight: 500;
   margin-top: 3px;
@@ -1072,9 +1031,7 @@
 }
 .polaroidStamp {
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 11px;
   color: var(--ghost);
   font-weight: 500;
 }
@@ -1147,10 +1104,9 @@
 }
 .suggestCard > * { position: relative; z-index: 1; }
 .suggestEyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
   color: var(--mid);
   font-weight: 600;
   margin-bottom: 12px;
@@ -1212,10 +1168,8 @@
   font-size: 44px;
 }
 .suggestVizLabel {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: var(--mid);
   margin-top: 8px;
   font-weight: 600;
@@ -1280,10 +1234,8 @@
   gap: 8px;
   background: var(--deep);
   color: var(--white);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   padding: 12px 18px;
   border-radius: 8px;
   font-weight: 600;

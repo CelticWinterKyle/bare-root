@@ -52,7 +52,7 @@ function fmtDay(d: Date, tz: string): string {
   const month = parts.find((p) => p.type === "month")?.value ?? "";
   const day = parts.find((p) => p.type === "day")?.value ?? "";
   const year = parts.find((p) => p.type === "year")?.value ?? "";
-  return `${weekday} · ${month} ${day}, ${year}`;
+  return `${weekday}, ${month} ${day}, ${year}`;
 }
 
 function fmtHeroDate(d: Date, tz: string): string {
@@ -66,7 +66,7 @@ function fmtHeroDate(d: Date, tz: string): string {
   const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
   const month = parts.find((p) => p.type === "month")?.value ?? "";
   const day = parseInt(parts.find((p) => p.type === "day")?.value ?? "1");
-  return `${weekday} ${timeOfDay(d, tz)} · the ${ordinal(day)} of ${month}`;
+  return `${weekday} ${timeOfDay(d, tz)}, the ${ordinal(day)} of ${month}`;
 }
 
 const REMINDER_LABEL: Record<string, string> = {
@@ -1294,7 +1294,7 @@ export default async function DashboardPage() {
                   month: "short",
                   day: "2-digit",
                   weekday: "short",
-                }).format(h.harvestedAt).replace(",", " ·");
+                }).format(h.harvestedAt);
                 const rating = h.planting && (h.planting as { rating?: number | null }).rating;
                 return (
                   <Link

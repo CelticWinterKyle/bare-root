@@ -68,10 +68,8 @@ export function HelpSheet({
         <SheetHeader style={{ borderBottom: "1px solid #E4E4DC", paddingBottom: 14 }}>
           <span
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
+              fontFamily: "var(--font-display)", fontStyle: "italic",
+              fontSize: 13,
               color: "#7DA84E",
               fontWeight: 500,
             }}
@@ -100,10 +98,8 @@ export function HelpSheet({
             <div key={e.term}>
               <div
                 style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 12,
                   color: "#1C3D0A",
                   fontWeight: 600,
                   marginBottom: 4,

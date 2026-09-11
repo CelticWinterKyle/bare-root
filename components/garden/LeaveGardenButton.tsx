@@ -51,10 +51,9 @@ export function LeaveGardenButton({
   const style: React.CSSProperties =
     variant === "mobile"
       ? {
-          fontFamily: "var(--font-mono)",
-          fontSize: "10px",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
+          fontFamily: "var(--font-body)",
+          fontWeight: 500,
+          fontSize: "12px",
           padding: "7px 10px",
           borderRadius: "8px",
           border: `1px solid ${confirm ? danger : "rgba(122,42,24,0.25)"}`,

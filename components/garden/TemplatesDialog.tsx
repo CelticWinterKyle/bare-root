@@ -153,8 +153,7 @@ export function TemplatesDialog({
                         <span
                           className="ml-2 align-middle"
                           style={{
-                            fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.1em",
-                            textTransform: "uppercase", padding: "2px 6px", borderRadius: 100,
+                            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: 11, padding: "2px 6px", borderRadius: 100,
                             background: "#E4F0D4", color: "#1C3D0A",
                           }}
                         >

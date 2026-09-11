@@ -157,7 +157,7 @@ export function SmartLayoutPanel({
           <span className="font-display text-sm font-semibold text-[#111109]">
             {assignments.length} plant{assignments.length !== 1 ? "s" : ""} placed
           </span>
-          <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-[#ADADAA]">
+          <span className="ml-auto text-[12px] font-medium text-[#ADADAA]">
             {selectedCount} of {assignments.length} selected
           </span>
         </div>

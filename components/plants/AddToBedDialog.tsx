@@ -110,9 +110,7 @@ export function AddToBedDialog({ plantId, plantName, gardens, compact = false }:
                     <p
                       className="text-xs"
                       style={{
-                        fontFamily: "var(--font-mono)",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
+                        fontWeight: 500, fontFamily: "var(--font-body)",
                         color: "#6B6B5A",
                       }}
                     >

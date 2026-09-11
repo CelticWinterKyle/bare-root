@@ -78,10 +78,8 @@ export default async function GardenPrintPage({
   const offsetY = (svgH - garden.heightFt * scale) / 2;
 
   const mono: React.CSSProperties = {
-    fontFamily: "var(--font-mono)",
-    fontSize: "9px",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
+    fontWeight: 500, fontFamily: "var(--font-body)",
+    fontSize: "11px",
     color: "#555",
   };
 

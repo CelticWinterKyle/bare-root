@@ -79,7 +79,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
   if (!expanded) {
     return (
       <div>
-        <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>
+        <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>
           How to start
         </p>
         <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: "#F4F4EC" }}>
@@ -104,7 +104,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
 
   return (
     <div>
-      <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>
+      <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>
         How to start
       </p>
 
@@ -138,8 +138,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
                 {isRec && (
                   <span
                     style={{
-                      fontFamily: "var(--font-mono)", fontSize: "7px", letterSpacing: "0.1em",
-                      textTransform: "uppercase", padding: "2px 6px", borderRadius: "100px",
+                      fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "10px", padding: "2px 6px", borderRadius: "100px",
                       background: isSel ? "rgba(255,255,255,0.2)" : "#E4F0D4",
                       color: isSel ? "#fff" : "#1C3D0A",
                     }}

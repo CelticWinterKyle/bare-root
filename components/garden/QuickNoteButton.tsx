@@ -54,10 +54,8 @@ export function QuickNoteButton({
   const triggerStyle: React.CSSProperties =
     variant === "mobile"
       ? {
-          fontFamily: "var(--font-mono)",
-          fontSize: "10px",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
+          fontWeight: 500, fontFamily: "var(--font-body)",
+          fontSize: "12px",
           color: "#3A3A30",
           padding: "7px 10px",
           borderRadius: "8px",

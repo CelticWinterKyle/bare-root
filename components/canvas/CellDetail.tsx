@@ -342,8 +342,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         <div style={{
           position: "absolute", right: "14px", top: "50%",
           transform: "translateY(-50%)",
-          fontFamily: "var(--font-mono)", fontSize: "8px",
-          letterSpacing: "0.1em", textTransform: "uppercase",
+          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
           background: "rgba(168,216,112,0.2)", color: "#A8D870",
           padding: "3px 8px", borderRadius: "100px",
           border: "1px solid rgba(168,216,112,0.3)", zIndex: 1,
@@ -383,7 +382,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           />
         ) : planting.startMethod ? (
           <div>
-            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "6px" }}>Start method</p>
+            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "6px" }}>Start method</p>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30" }}>
               {START_METHOD_LABEL[planting.startMethod]}
             </p>
@@ -392,7 +391,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
 
         {/* Status — buttons for editors, a static chip for viewers */}
         <div>
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Status</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Status</p>
           {canEdit ? (
             <div className="grid grid-cols-2 gap-1.5">
               {STATUSES.map((s) => (
@@ -432,7 +431,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
               are producing. Full history stays on the planting page. */}
           {canEdit && (status === "HARVESTING" || status === "ACTIVE") && (
             <div className="mt-2.5 flex items-center flex-wrap gap-1.5 p-2 rounded-lg" style={{ background: "#FFF3E8", border: "1px solid #F0DCC8" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4820A" }}>
+              <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#D4820A" }}>
                 Log harvest
               </span>
               <input
@@ -465,7 +464,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
 
         {/* Variety + Notes — inputs for editors, plain text for viewers */}
         <div>
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Details</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Details</p>
           {canEdit ? (
             <div className="space-y-2">
               <input
@@ -505,7 +504,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
 
         {/* Dates — date inputs for editors, plain text for viewers */}
         <div>
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Dates</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Dates</p>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Planted</label>
@@ -553,7 +552,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         {/* Companion warnings */}
         {(harmful.length > 0 || beneficial.length > 0) && (
           <div>
-            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ADADAA", marginBottom: "8px" }}>Companions in this bed</p>
+            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Companions in this bed</p>
             <div className="space-y-1.5">
               {harmful.map((w) => (
                 <div key={w.plantName} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}>

@@ -33,10 +33,8 @@ export function FeedbackForm() {
     <div style={{ borderTop: "1px solid #E4E4DC", paddingTop: 16 }}>
       <div
         style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
+          fontFamily: "var(--font-body)",
+          fontSize: 12,
           color: "#1C3D0A",
           fontWeight: 600,
           marginBottom: 4,

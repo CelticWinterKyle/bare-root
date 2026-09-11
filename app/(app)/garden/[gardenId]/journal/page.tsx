@@ -169,7 +169,7 @@ export default async function GardenJournalPage({
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#7DA84E", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
               The Journal · {garden.name}
             </div>
@@ -218,10 +218,10 @@ export default async function GardenJournalPage({
                     <div className="flex-1 min-w-0">
                       {/* Stamp line */}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#ADADAA" }}>
+                        <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA" }}>
                           {stamp(e.at, e.kind)}
                         </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: meta.fg }}>
+                        <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: meta.fg }}>
                           {meta.label}
                         </span>
                       </div>
@@ -277,7 +277,7 @@ export default async function GardenJournalPage({
               })}
             </div>
             {truncated && (
-              <p className="text-center text-xs text-[#ADADAA] mt-5" style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <p className="text-center text-xs text-[#ADADAA] mt-5" style={{ fontWeight: 500, fontFamily: "var(--font-body)" }}>
                 Showing the latest {MERGED_CAP} entries
               </p>
             )}

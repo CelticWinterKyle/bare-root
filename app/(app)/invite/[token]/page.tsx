@@ -59,10 +59,8 @@ export default async function InvitePage({
             <div
               className="flex items-center justify-center gap-1.5"
               style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
+                fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic",
+                fontSize: "13px",
                 color: "#7DA84E",
               }}
             >
@@ -157,10 +155,8 @@ export default async function InvitePage({
         <p
           className="text-center mt-5"
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "9px",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
+            fontWeight: 500, fontFamily: "var(--font-body)",
+            fontSize: "11px",
             color: "#ADADAA",
           }}
         >

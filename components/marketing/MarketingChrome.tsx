@@ -110,10 +110,8 @@ export function MarketingChrome({
               alignItems: "center",
               justifyContent: "space-between",
               gap: 16,
-              fontFamily: "var(--font-ibm-plex-mono), monospace",
-              fontSize: 10,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
+              fontWeight: 500, fontFamily: "var(--font-body)",
+              fontSize: 12,
               color: "#ADADAA",
             }}
           >

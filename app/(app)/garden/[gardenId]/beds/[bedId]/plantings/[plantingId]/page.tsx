@@ -83,7 +83,7 @@ export default async function PlantingDetailPage({
             </span>
           )}
         </h1>
-        <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px" }}>
+        <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginTop: "5px" }}>
           {planting.season.name} · {planting.cell.bed.name} · {statusLabel}
         </p>
       </div>

@@ -124,9 +124,7 @@ function DraggablePlantCard({
           className="text-[10px] mt-0.5 truncate"
           style={{
             color: "#6B6B5A",
-            fontFamily: "var(--font-mono)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
+            fontWeight: 500, fontFamily: "var(--font-body)",
           }}
         >
           {[
@@ -240,10 +238,8 @@ export function PlantLibrary({
           <p
             className="mt-2"
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
+              fontWeight: 500, fontFamily: "var(--font-body)",
+              fontSize: 11,
               color: "#ADADAA",
             }}
           >
@@ -279,10 +275,8 @@ export function PlantLibrary({
       <div
         className="px-3 py-2 text-center"
         style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 9,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
+          fontWeight: 500, fontFamily: "var(--font-body)",
+          fontSize: 11,
           color: "#ADADAA",
           borderTop: "1px solid #E4E4DC",
         }}

@@ -59,10 +59,8 @@ export function GardenCanvasToggle({ garden, beds }: { garden: Garden2D; beds: B
             aria-pressed={mode === m}
             aria-label={`Switch to ${m} view`}
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "9px",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
+              fontFamily: "var(--font-body)",
+              fontSize: "11px",
               fontWeight: 600,
               padding: "5px 11px",
               borderRadius: "100px",

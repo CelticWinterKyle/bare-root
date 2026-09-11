@@ -855,10 +855,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           <span
             className="md:hidden"
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              fontWeight: 500, fontFamily: "var(--font-body)",
+              fontSize: 11,
               color: "#6B6B5A",
               marginRight: "auto",
             }}
@@ -1052,10 +1050,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                     position: "absolute",
                                     top: 4,
                                     left: 6,
-                                    fontFamily: "var(--font-mono)",
+                                    fontWeight: 500, fontFamily: "var(--font-body)",
                                     fontSize: Math.max(8, Math.min(10, cellPx * 0.14)),
-                                    letterSpacing: "0.08em",
-                                    textTransform: "uppercase",
                                     color: "rgba(253,253,248,0.9)",
                                     textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                                   }}
@@ -1069,10 +1065,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                                     position: "absolute",
                                     top: 4,
                                     left: 6,
-                                    fontFamily: "var(--font-mono)",
+                                    fontWeight: 500, fontFamily: "var(--font-body)",
                                     fontSize: Math.max(8, Math.min(10, cellPx * 0.14)),
-                                    letterSpacing: "0.08em",
-                                    textTransform: "uppercase",
                                     color: "rgba(253,253,248,0.95)",
                                     textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                                   }}
@@ -1342,7 +1336,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 style={{ background: "#F4F4EC", borderColor: "#E4E4DC" }}
               >
                 <Eye className="w-3 h-3" style={{ color: "#6B6B5A" }} />
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#6B6B5A" }}>
+                <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A" }}>
                   Viewing — read only
                 </span>
               </div>
@@ -1439,10 +1433,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     style={{
                       background: isActive ? "#FDFDF8" : "transparent",
                       color: isActive ? "#1C3D0A" : "#6B6B5A",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "9px",
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
+                      fontFamily: "var(--font-body)",
+                      fontSize: "11px",
                       fontWeight: isActive ? 600 : 500,
                       borderTop: isActive ? "2px solid #1C3D0A" : "2px solid transparent",
                       borderBottom: isActive ? "2px solid transparent" : "2px solid #E4E4DC",

@@ -90,10 +90,8 @@ export function GettingStartedCard({ steps }: { steps: ChecklistStep[] }) {
               display: "inline-flex",
               alignItems: "center",
               gap: 10,
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
+              fontFamily: "var(--font-body)",
+              fontSize: 12,
               color: "#3A6B20",
               fontWeight: 500,
             }}

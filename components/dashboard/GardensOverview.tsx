@@ -16,10 +16,8 @@ export type GardenCard = {
 };
 
 const tagStyle: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: "9px",
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
+  fontWeight: 500, fontFamily: "var(--font-body)",
+  fontSize: "11px",
   color: "#6B6B5A",
   background: "#F4F4EC",
   border: "1px solid #E4E4DC",
@@ -68,10 +66,8 @@ export function GardensOverview({
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
+            fontFamily: "var(--font-body)",
+            fontSize: "12px",
             color: "#3A6B20",
             fontWeight: 500,
           }}

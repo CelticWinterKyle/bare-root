@@ -71,8 +71,7 @@ export function GardenSwitcher({
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "var(--font-mono)", fontSize: "8px", letterSpacing: "0.18em",
-            textTransform: "uppercase", color: "#ADADAA", marginBottom: "1px",
+            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "1px",
           }}>
             Garden
           </div>

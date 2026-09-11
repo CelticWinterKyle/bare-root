@@ -107,7 +107,7 @@ export function NotificationBell({
               <p className="font-display text-sm font-semibold" style={{ color: "#111109" }}>Reminders</p>
               <Link
                 href="/reminders"
-                className="font-mono text-[11px] uppercase tracking-wider transition-colors"
+                className="text-[12px] font-medium transition-colors"
                 style={{ color: "#7DA84E", letterSpacing: "0.1em" }}
                 onClick={() => setOpen(false)}
               >

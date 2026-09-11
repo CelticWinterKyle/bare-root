@@ -33,8 +33,7 @@ export function PlantFeasibility({
       <div
         style={{
           display: "flex", alignItems: "center", gap: "8px",
-          fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em",
-          textTransform: "uppercase", color: "#3A6B20", marginBottom: "6px",
+          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#3A6B20", marginBottom: "6px",
         }}
       >
         <span style={{ width: 16, height: 1.5, background: "#3A6B20", borderRadius: 1 }} />

@@ -33,7 +33,7 @@ export function TrialBanner({ daysLeft }: { daysLeft: number }) {
         color: "#FDFDF8",
       }}
     >
-      <p className="flex-1 text-center font-mono uppercase tracking-wider" style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
+      <p className="flex-1 text-center font-medium" style={{ fontSize: "13px" }}>
         {daysLeft === 0
           ? "Your Pro trial ends today."
           : `Your Pro trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}.`}{" "}

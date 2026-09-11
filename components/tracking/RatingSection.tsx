@@ -58,7 +58,7 @@ export function RatingSection({ plantingId, rating: initialRating, growAgain: in
       <div className="bg-white border border-[#E4E4DC] rounded-xl p-4 space-y-4">
         {/* Star rating */}
         <div>
-          <p className="text-xs text-[#ADADAA] mb-2" style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <p className="text-xs text-[#ADADAA] mb-2" style={{ fontWeight: 500, fontFamily: "var(--font-body)" }}>
             How did it grow?
           </p>
           <div className="flex items-center gap-1" onMouseLeave={() => setHoverRating(null)}>
@@ -90,7 +90,7 @@ export function RatingSection({ plantingId, rating: initialRating, growAgain: in
 
         {/* Grow again? */}
         <div>
-          <p className="text-xs text-[#ADADAA] mb-2" style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <p className="text-xs text-[#ADADAA] mb-2" style={{ fontWeight: 500, fontFamily: "var(--font-body)" }}>
             Grow this again next season?
           </p>
           <div className="flex gap-2">

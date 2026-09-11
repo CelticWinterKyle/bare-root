@@ -111,8 +111,7 @@ export function DesktopSidebar({
             bare root
           </div>
           <div style={{
-            fontFamily: "var(--font-mono)", fontSize: "8px",
-            letterSpacing: "0.15em", textTransform: "uppercase",
+            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
             color: "#ADADAA", marginTop: "1px",
           }}>
             Garden Planner
@@ -133,8 +132,7 @@ export function DesktopSidebar({
         {NAV_SECTIONS.map((section) => (
           <div key={section.label} style={{ padding: "14px 0 6px" }}>
             <div style={{
-              fontFamily: "var(--font-mono)", fontSize: "8px",
-              letterSpacing: "0.2em", textTransform: "uppercase",
+              fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
               color: "#ADADAA", padding: "0 18px 6px",
             }}>
               {section.label}
@@ -161,8 +159,7 @@ export function DesktopSidebar({
                   )}
                   {proLocked && (
                     <span style={{
-                      marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: "8px",
-                      letterSpacing: "0.06em", textTransform: "uppercase",
+                      marginLeft: "auto", fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
                       background: "#F4F4EC", color: "#ADADAA",
                       padding: "1px 5px", borderRadius: "4px", lineHeight: 1.6,
                     }}>
@@ -215,8 +212,7 @@ export function DesktopSidebar({
         <HelpButton />
         {isPro && (
           <span style={{
-            fontFamily: "var(--font-mono)", fontSize: "8px",
-            letterSpacing: "0.06em", textTransform: "uppercase",
+            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
             background: "linear-gradient(135deg, #D4820A, #F0A030)",
             color: "white", padding: "2px 6px", borderRadius: "4px",
             flexShrink: 0,

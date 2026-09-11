@@ -536,8 +536,7 @@ export default async function BedPage({
         </div>
         {/* Sub — mono meta */}
         <p style={{
-          fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em",
-          textTransform: "uppercase", color: "#6B6B5A", marginTop: "5px",
+          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginTop: "5px",
         }}>
           {formatDims(bed.widthFt, bed.heightFt, user.units)} · {bed.gridCols} × {bed.gridRows} grid · {formatInches(bed.cellSizeIn, user.units)} cells
           {bed.garden.usdaZone ? ` · Zone ${bed.garden.usdaZone}` : ""}

@@ -171,8 +171,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
       <p
         className="px-2 py-1"
         style={{
-          fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.14em",
-          textTransform: "uppercase", color: "#ADADAA",
+          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: 11, color: "#ADADAA",
         }}
       >
         {label}
