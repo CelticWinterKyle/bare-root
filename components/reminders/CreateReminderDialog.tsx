@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import {
   Dialog,
@@ -64,7 +65,7 @@ export function CreateReminderDialog({ gardens }: { gardens: GardenOption[] }) {
         setOpen(false);
       } catch (err) {
         console.error(err);
-        toast.error(err instanceof Error ? err.message : "Failed to create reminder");
+        toast.error(actionErrorMessage(err, "Failed to create reminder"));
       }
     });
   }

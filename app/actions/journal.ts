@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -16,14 +17,14 @@ export async function addGardenNote(gardenId: string, body: string) {
 
   const parsed = gardenNoteSchema.safeParse({ gardenId, body });
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid note");
+    throw new ActionError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "Invalid note");
   }
 
   const garden = await db.garden.findFirst({
     where: { id: parsed.data.gardenId, ...gardenEditFilter(user.id) },
     select: { id: true },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   await db.growthNote.create({
     data: { gardenId: garden.id, body: parsed.data.body },

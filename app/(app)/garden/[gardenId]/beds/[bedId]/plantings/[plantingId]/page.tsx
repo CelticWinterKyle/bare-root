@@ -1,3 +1,4 @@
+import { getPhotoAllowanceRemaining } from "@/lib/tier";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
@@ -48,6 +49,11 @@ export default async function PlantingDetailPage({
   );
 
   const statusLabel = planting.status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
+  // The photo cap counts the garden OWNER's total across all plantings, on
+  // the owner's tier — the same rule uploadPhoto enforces. The viewer's tier
+  // and this planting's count were the wrong inputs.
+  const photosRemaining = await getPhotoAllowanceRemaining(planting.cell.bed.gardenId);
 
   return (
     <div>
@@ -166,7 +172,7 @@ export default async function PlantingDetailPage({
         <PhotoGallery
           plantingId={plantingId}
           photos={planting.photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption, takenAt: p.takenAt }))}
-          isPro={user.subscriptionTier === "PRO"}
+          photosRemaining={photosRemaining}
         />
 
         {/* Growth notes */}

@@ -1,10 +1,11 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { put } from "@vercel/blob";
-import { checkCanUploadPhoto, isProFeature } from "@/lib/tier";
+import { checkCanUploadPhoto, isProFeature, TierLimitError } from "@/lib/tier";
 import { validatePhotoUpload } from "@/lib/validation";
 
 // Parse a date-only input ("YYYY-MM-DD") as LOCAL midnight. `new Date(str)`
@@ -22,7 +23,7 @@ async function resolvePlanting(plantingId: string, userId: string) {
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(userId) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!p) throw new Error("Planting not found");
+  if (!p) throw new ActionError("NOT_FOUND", "Planting not found");
   return p;
 }
 
@@ -84,7 +85,7 @@ export async function deleteHarvestLog(logId: string) {
     where: { id: logId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
-  if (!log) throw new Error("Log not found");
+  if (!log) throw new ActionError("NOT_FOUND", "Log not found");
 
   await db.harvestLog.delete({ where: { id: logId } });
   revalidatePlanting(log.planting);
@@ -108,7 +109,7 @@ export async function uploadPhoto(plantingId: string, formData: FormData) {
   }
 
   const file = formData.get("file") as File;
-  if (!file || file.size === 0) throw new Error("No file provided");
+  if (!file || file.size === 0) throw new ActionError("INVALID_INPUT", "No file provided");
 
   // Type/size gate: blobs are PUBLIC, so without this anything (SVG with
   // scripts, HTML, arbitrary files) gets hosted under our store. Extension
@@ -132,7 +133,7 @@ export async function deletePhoto(photoId: string) {
     where: { id: photoId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
-  if (!photo) throw new Error("Photo not found");
+  if (!photo) throw new ActionError("NOT_FOUND", "Photo not found");
 
   const { del } = await import("@vercel/blob");
   await del(photo.url);
@@ -156,7 +157,7 @@ export async function deleteGrowthNote(noteId: string) {
     where: { id: noteId, planting: { cell: { bed: { garden: gardenEditFilter(user.id) } } } },
     include: { planting: { include: { cell: { include: { bed: true } } } } },
   });
-  if (!note) throw new Error("Note not found");
+  if (!note) throw new ActionError("NOT_FOUND", "Note not found");
 
   await db.growthNote.delete({ where: { id: noteId } });
   // The where clause above requires a planting relation, so this only skips
@@ -175,7 +176,7 @@ export async function upsertSeedInventory(data: {
   notes?: string;
 }) {
   const user = await requireUser();
-  if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
+  if (!isProFeature(user.subscriptionTier)) throw new TierLimitError();
   const row = await db.seedInventory.upsert({
     where: { userId_plantId_variety: { userId: user.id, plantId: data.plantId, variety: data.variety } },
     // Explicit fields only — the payload comes from the client, and spreading
@@ -199,7 +200,7 @@ export async function upsertSeedInventory(data: {
 
 export async function deleteSeedInventory(id: string) {
   const user = await requireUser();
-  if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
+  if (!isProFeature(user.subscriptionTier)) throw new TierLimitError();
   await db.seedInventory.deleteMany({ where: { id, userId: user.id } });
   revalidatePath("/inventory");
 }

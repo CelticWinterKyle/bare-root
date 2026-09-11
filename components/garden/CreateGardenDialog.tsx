@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage, actionErrorCode } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -85,11 +86,10 @@ export function CreateGardenDialog({
         setOpen(false);
         router.push(`/garden/${gardenId}`);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "";
         toast.error(
-          msg === "UPGRADE_REQUIRED"
+          actionErrorCode(err) === "UPGRADE_REQUIRED"
             ? "Upgrade to Pro to add more gardens."
-            : "Couldn't create the garden. Please try again."
+            : actionErrorMessage(err, "Couldn't create the garden. Please try again.")
         );
       }
     });

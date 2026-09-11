@@ -1,3 +1,4 @@
+import { ActionError } from "@/lib/action-error";
 import { db } from "@/lib/db";
 import { CollabRole } from "@/lib/generated/prisma/enums";
 
@@ -59,5 +60,5 @@ export async function requireGardenOwner(userId: string, gardenId: string): Prom
     where: { id: gardenId, userId },
     select: { id: true },
   });
-  if (!garden) throw new Error("You don't have permission to perform this action");
+  if (!garden) throw new ActionError("PERMISSION_DENIED");
 }

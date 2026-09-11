@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -105,9 +106,7 @@ export function WizardShell() {
         router.push(`/garden/${gardenId}`);
       } catch (err) {
         setSubmitError(
-          err instanceof Error && err.message
-            ? err.message
-            : "Couldn't finish setting up your garden. Please try again."
+          actionErrorMessage(err, "Couldn't finish setting up your garden. Please try again.")
         );
       }
     });

@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { after } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUser } from "@/lib/auth";
@@ -299,8 +300,8 @@ export async function createCustomPlant(data: {
   // clamped to sane ranges so a negative/huge value can't poison the
   // footprint/spacing math (spacingInches drives the bed-grid cell loop).
   const name = data.name?.trim();
-  if (!name) throw new Error("Plant name is required");
-  if (name.length > 100) throw new Error("Plant name is too long");
+  if (!name) throw new ActionError("INVALID_INPUT", "Plant name is required");
+  if (name.length > 100) throw new ActionError("INVALID_INPUT", "Plant name is too long");
   const clampOpt = (n: number | undefined, min: number, max: number) =>
     n === undefined || Number.isNaN(n) ? null : Math.min(max, Math.max(min, Math.round(n)));
 
@@ -347,12 +348,12 @@ export async function updatePlantTiming(
   const plant = await db.plantLibrary.findFirst({
     where: { id: plantId, OR: [{ customForUserId: null }, { customForUserId: user.id }] },
   });
-  if (!plant) throw new Error("Plant not found");
+  if (!plant) throw new ActionError("NOT_FOUND", "Plant not found");
 
   const clampInt = (v: number | null | undefined, min: number, max: number) => {
     if (v == null) return null;
     const n = Math.round(v);
-    if (Number.isNaN(n) || n < min || n > max) throw new Error("Invalid timing value");
+    if (Number.isNaN(n) || n < min || n > max) throw new ActionError("INVALID_INPUT", "Invalid timing value");
     return n;
   };
 

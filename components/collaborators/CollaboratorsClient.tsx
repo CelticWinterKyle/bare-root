@@ -1,5 +1,6 @@
 "use client";
 
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { inviteCollaborator, removeCollaborator, updateCollaboratorRole, cancelInvitation } from "@/app/actions/collaborators";
 import { UserPlus, X, Clock, Loader2 } from "lucide-react";
@@ -65,11 +66,8 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
         setEmail("");
         setShowInvite(false);
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          if (err.message === "COLLABORATOR_LIMIT_REACHED") setError("You've reached the 5-collaborator limit.");
-          else if (err.message === "CANNOT_INVITE_SELF") setError("You're already here — no need to invite yourself.");
-          else setError("That invite didn't go through. Give it another try.");
-        }
+        // Production strips thrown messages; the code and copy ride on the digest.
+        setError(actionErrorMessage(err, "That invite didn't go through. Give it another try."));
       }
     });
   }

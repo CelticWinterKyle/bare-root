@@ -1,5 +1,6 @@
 "use client";
 
+import { actionErrorMessage } from "@/lib/action-error";
 import { useEffect, useState, useTransition } from "react";
 import { updateNotificationPreference } from "@/app/actions/reminders";
 import { subscribeToPush, checkPushSupport } from "@/lib/push-client";
@@ -73,7 +74,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
       toast.success("Push notifications enabled on this device");
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Couldn't enable push notifications");
+      toast.error(actionErrorMessage(err, "Couldn't enable push notifications"));
     } finally {
       setPushSubscribing(false);
     }
@@ -101,7 +102,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
       toast.success("Push notifications disabled on this device");
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Couldn't disable push on this device");
+      toast.error(actionErrorMessage(err, "Couldn't disable push on this device"));
     } finally {
       setDeregistering(false);
     }

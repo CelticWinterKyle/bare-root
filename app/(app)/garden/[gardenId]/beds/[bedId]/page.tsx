@@ -1,3 +1,5 @@
+import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
+import { getLockedBedIds, getLockedGardenIds } from "@/lib/tier";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
@@ -120,6 +122,7 @@ export default async function BedPage({
           id: true,
           name: true,
           userId: true,
+          user: { select: { subscriptionTier: true } },
           usdaZone: true,
           lastFrostDate: true,
           firstFrostDate: true,
@@ -201,7 +204,7 @@ export default async function BedPage({
   // role resolution, so this small lookup lives locally). Missing
   // collaborator row defaults to view-only — safest assumption.
   const isOwner = bed.garden.userId === user.id;
-  const canEdit =
+  const canEditByRole =
     isOwner ||
     (
       await db.gardenCollaborator.findUnique({
@@ -209,6 +212,19 @@ export default async function BedPage({
         select: { role: true },
       })
     )?.role === "EDITOR";
+
+  // Tier lock. A FREE owner's beds past the limit (and every bed in a locked
+  // garden) are read-only until they upgrade or delete extras. The lock
+  // follows the OWNER's tier, so collaborators on a downgraded garden lose
+  // write access with it. Enforced server-side by assertBedWritable; this
+  // keeps the UI honest instead of letting every tap fail with an error.
+  const ownerTier = bed.garden.user.subscriptionTier;
+  const [lockedGardenIds, lockedBedIds] = await Promise.all([
+    getLockedGardenIds(bed.garden.userId, ownerTier),
+    getLockedBedIds(gardenId, ownerTier),
+  ]);
+  const locked = lockedGardenIds.includes(gardenId) || lockedBedIds.includes(bedId);
+  const canEdit = canEditByRole && !locked;
 
   // Crop rotation warnings for this bed
   const rotationWarnings = viewingSeason
@@ -402,6 +418,19 @@ export default async function BedPage({
 
   return (
     <div className="container-wide w-full flex flex-col">
+      {locked && (
+        <div style={{ background: "#FFF8E7", borderBottom: "1px solid #FDE68A", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
+          {isOwner ? (
+            <>
+              This bed is read-only because it&apos;s over your free plan limit.{" "}
+              <Link href="/settings/billing" style={{ textDecoration: "underline", color: "#7A4A0A" }}>Upgrade to Pro</Link>{" "}
+              to edit it, or delete extra beds to get back under the limit.
+            </>
+          ) : (
+            <>This bed is read-only until the garden&apos;s owner is back on Pro.</>
+          )}
+        </div>
+      )}
       {/* Header — grid-header-clean */}
       <div className="px-[22px] md:px-8 pt-5 pb-4" style={{ background: "#FDFDF8", borderBottom: "1px solid #E4E4DC" }}>
         {/* Back row */}
@@ -507,6 +536,20 @@ export default async function BedPage({
           </div>
         )}
       </div>
+
+      {!viewingSeason && (
+        <div className="px-[22px] md:px-8 pt-4">
+          <div style={{ borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", background: "#F4F4EC", border: "1px solid #E4E4DC", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: "14px", color: "#111109", fontWeight: 500 }}>No active season</p>
+              <p style={{ fontSize: "13px", color: "#6B6B5A", marginTop: "2px" }}>
+                Plantings live inside a season (e.g. Spring 2026). Create one to start planting this bed.
+              </p>
+            </div>
+            {canEdit && <CreateSeasonDialog gardenId={gardenId} hasActiveSeason={false} />}
+          </div>
+        </div>
+      )}
 
       {/* BedGrid — full width, no extra padding */}
       <div className="flex-1 w-full">

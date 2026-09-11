@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -20,24 +21,24 @@ const MAX_TEMPLATE_NAME = 60;
 export async function saveBedAsTemplate(bedId: string, seasonId: string, name: string) {
   const user = await requireUser();
   const trimmed = name.trim().slice(0, MAX_TEMPLATE_NAME);
-  if (!trimmed) throw new Error("Give the template a name.");
+  if (!trimmed) throw new ActionError("INVALID_INPUT", "Give the template a name.");
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
     select: { id: true, gridCols: true, gridRows: true, cellSizeIn: true },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
   const count = await db.bedTemplate.count({ where: { userId: user.id } });
   if (count >= MAX_USER_TEMPLATES) {
-    throw new Error("Template limit reached — delete one first.");
+    throw new ActionError("INVALID_INPUT", "Template limit reached — delete one first.");
   }
 
   const plantings = await db.planting.findMany({
     where: { seasonId, cell: { bedId } },
     select: { plantId: true, cell: { select: { row: true, col: true } } },
   });
-  if (plantings.length === 0) throw new Error("Nothing planted to save yet.");
+  if (plantings.length === 0) throw new ActionError("INVALID_INPUT", "Nothing planted to save yet.");
 
   const template = await db.bedTemplate.create({
     data: {
@@ -64,7 +65,7 @@ export async function deleteTemplate(templateId: string) {
   const deleted = await db.bedTemplate.deleteMany({
     where: { id: templateId, userId: user.id },
   });
-  if (deleted.count === 0) throw new Error("Template not found");
+  if (deleted.count === 0) throw new ActionError("NOT_FOUND", "Template not found");
 }
 
 /**
@@ -84,16 +85,16 @@ export async function applyTemplate(
     where: { id: templateId, OR: [{ userId: null }, { userId: user.id }] },
     include: { assignments: true },
   });
-  if (!template) throw new Error("Template not found");
+  if (!template) throw new ActionError("NOT_FOUND", "Template not found");
   if (template.assignments.length > MAX_BULK_CELLS) {
-    throw new Error("Template too large");
+    throw new ActionError("INVALID_INPUT", "Template too large");
   }
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
     select: { id: true, gardenId: true },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
   await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
 
   const cells = await db.cell.findMany({
@@ -146,7 +147,7 @@ export async function duplicateBed(
       garden: { select: { seasons: { where: { isActive: true }, select: { id: true } } } },
     },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
   await assertGardenWritable(user.id, user.subscriptionTier, bed.gardenId);
   await checkCanCreateBed(bed.gardenId, user.subscriptionTier);
 

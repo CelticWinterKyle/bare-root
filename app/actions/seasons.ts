@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -14,14 +15,14 @@ export async function createSeason(
 
   const parsed = seasonInputSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid season");
+    throw new ActionError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "Invalid season");
   }
   const data = parsed.data;
 
   const garden = await db.garden.findFirst({
     where: { id: gardenId, ...gardenEditFilter(user.id) },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   await db.$transaction(async (tx) => {
     if (data.setActive) {
@@ -66,14 +67,14 @@ export async function createSeasonWithCarryOver(
 
   const parsed = seasonInputSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid season");
+    throw new ActionError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "Invalid season");
   }
   const data = parsed.data;
 
   const garden = await db.garden.findFirst({
     where: { id: gardenId, ...gardenEditFilter(user.id) },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   // Snapshot the previous season's grow-again picks BEFORE creating the new
   // season, so "most recent season" can't resolve to the one we're making.
@@ -152,7 +153,7 @@ export async function setActiveSeason(seasonId: string) {
   const season = await db.season.findFirst({
     where: { id: seasonId, garden: gardenEditFilter(user.id) },
   });
-  if (!season) throw new Error("Season not found");
+  if (!season) throw new ActionError("NOT_FOUND", "Season not found");
 
   await db.$transaction([
     db.season.updateMany({ where: { gardenId: season.gardenId }, data: { isActive: false } }),
@@ -169,7 +170,7 @@ export async function archiveSeason(seasonId: string) {
   const season = await db.season.findFirst({
     where: { id: seasonId, garden: gardenEditFilter(user.id) },
   });
-  if (!season) throw new Error("Season not found");
+  if (!season) throw new ActionError("NOT_FOUND", "Season not found");
 
   await db.season.update({ where: { id: seasonId }, data: { isActive: false, endDate: new Date() } });
 
@@ -187,7 +188,7 @@ export async function ratePlanting(
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   // Whitelist — the payload comes from the client, and Prisma's unchecked
   // update would otherwise accept cellId/seasonId/occupancy fields and let a
@@ -196,7 +197,7 @@ export async function ratePlanting(
   let rating: number | null = null;
   if (rawRating !== null && rawRating !== undefined) {
     const n = Math.round(Number(rawRating));
-    if (!Number.isFinite(n) || n < 1 || n > 5) throw new Error("Rating must be 1–5");
+    if (!Number.isFinite(n) || n < 1 || n > 5) throw new ActionError("INVALID_INPUT", "Rating must be 1–5");
     rating = n;
   }
   const growAgain =

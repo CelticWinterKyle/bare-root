@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -17,7 +18,7 @@ async function resolveCell(cellId: string, userId: string) {
     where: { id: cellId, bed: { garden: gardenEditFilter(userId) } },
     include: { bed: true },
   });
-  if (!cell) throw new Error("Cell not found");
+  if (!cell) throw new ActionError("NOT_FOUND", "Cell not found");
   return cell;
 }
 
@@ -175,7 +176,7 @@ export async function assignPlant(
     where: { id: seasonId, gardenId: cell.bed.gardenId },
     select: { id: true },
   });
-  if (!season) throw new Error("Season not found");
+  if (!season) throw new ActionError("NOT_FOUND", "Season not found");
 
   await assertBedWritable(user.id, user.subscriptionTier, cell.bed.gardenId, cell.bedId);
 
@@ -241,7 +242,8 @@ export async function assignPlant(
     });
 
     if (placement.blockedCells) {
-      throw new Error(
+      throw new ActionError(
+        placement.sideCells > 1 ? "NO_ROOM" : "CELL_OCCUPIED",
         placement.sideCells > 1
           ? `Not enough room here — ${plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
           : "This cell is already occupied. Try another."
@@ -252,7 +254,7 @@ export async function assignPlant(
       // Anchor cell itself isn't placeable — off-grid (shouldn't happen
       // since we just resolved it). Clear error so the picker re-renders
       // without state drift.
-      throw new Error("This cell is already occupied. Try another.");
+      throw new ActionError("CELL_OCCUPIED", "This cell is already occupied. Try another.");
     }
 
     const p = await tx.planting.create({
@@ -358,19 +360,19 @@ export async function movePlanting(
       cell: { select: { bedId: true } },
     },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   const newAnchor = await db.cell.findFirst({
     where: { id: newAnchorCellId, bed: { garden: gardenEditFilter(user.id) } },
     include: { bed: true },
   });
-  if (!newAnchor) throw new Error("Target cell not found");
+  if (!newAnchor) throw new ActionError("NOT_FOUND", "Target cell not found");
 
   await assertBedWritable(user.id, user.subscriptionTier, newAnchor.bed.gardenId, newAnchor.bedId);
 
   // Same-bed enforcement — cross-bed moves are out of scope for v1.
   if (planting.cell.bedId !== newAnchor.bedId) {
-    throw new Error("Can't move a planting between beds. Remove and replant instead.");
+    throw new ActionError("INVALID_INPUT", "Can't move a planting between beds. Remove and replant instead.");
   }
 
   // No-op if anchoring on the same cell.
@@ -405,7 +407,7 @@ export async function movePlanting(
     });
 
     if (placement.blockedCells) {
-      throw new Error(
+      throw new ActionError("INVALID_INPUT", 
         placement.sideCells > 1
           ? `Not enough room there — ${planting.plant.name} needs a clear ${placement.sideCells}×${placement.sideCells} area.`
           : "That cell is already occupied."
@@ -413,7 +415,7 @@ export async function movePlanting(
     }
     const primary = placement.cells.find((c) => c.isPrimary);
     if (!primary) {
-      throw new Error("That cell is already occupied.");
+      throw new ActionError("CELL_OCCUPIED", "That cell is already occupied.");
     }
 
     // Remove old PlantingCell rows, update anchor pointer, insert new ones.
@@ -475,7 +477,7 @@ export async function bulkAssignPlant(
   // unbounded list is a resource-exhaustion vector. The UI can't select
   // more cells than the bed has, and beds cap well below this.
   if (cellIds.length > MAX_BULK_CELLS) {
-    throw new Error(`Too many cells selected (max ${MAX_BULK_CELLS})`);
+    throw new ActionError("INVALID_INPUT", `Too many cells selected (max ${MAX_BULK_CELLS})`);
   }
 
   let planted = 0;
@@ -513,7 +515,7 @@ export async function undoBulkAssign(plantingIds: string[]) {
   const user = await requireUser();
   if (plantingIds.length === 0) return { removed: 0 };
   if (plantingIds.length > MAX_BULK_CELLS) {
-    throw new Error("Too many plantings to undo");
+    throw new ActionError("INVALID_INPUT", "Too many plantings to undo");
   }
 
   const owned = await db.planting.findMany({
@@ -615,7 +617,7 @@ export async function clearPerennial(plantingId: string) {
     },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   const now = new Date();
   await db.$transaction([
@@ -638,7 +640,7 @@ export async function removePlanting(plantingId: string) {
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   // Pending reminders must go with the planting — plantingId is SetNull on
   // delete, so without this the cron keeps nudging about a removed plant.
@@ -667,7 +669,7 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   await db.planting.update({
     where: { id: plantingId },
@@ -714,7 +716,7 @@ export async function updatePlantingStartMethod(
       },
     },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   await db.planting.update({ where: { id: plantingId }, data: { startMethod } });
 
@@ -756,7 +758,7 @@ export async function updatePlantingMeta(
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   const update: { notes?: string | null; variety?: string | null } = {};
   if (data.notes !== undefined) update.notes = data.notes?.trim() || null;
@@ -777,12 +779,12 @@ export async function updatePlantingRating(
     where: { id: plantingId, cell: { bed: { garden: gardenEditFilter(user.id) } } },
     include: { cell: { include: { bed: true } } },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   const update: { rating?: number | null; growAgain?: boolean | null } = {};
   if (data.rating !== undefined) {
     if (data.rating !== null && (data.rating < 1 || data.rating > 5)) {
-      throw new Error("Rating must be between 1 and 5");
+      throw new ActionError("INVALID_INPUT", "Rating must be between 1 and 5");
     }
     update.rating = data.rating;
   }
@@ -806,7 +808,7 @@ export async function updatePlantingDates(
       cell: { include: { bed: true } },
     },
   });
-  if (!planting) throw new Error("Planting not found");
+  if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
   const plantedDate =
     data.plantedDate !== undefined

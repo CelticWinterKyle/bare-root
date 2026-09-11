@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -103,14 +104,14 @@ export async function acceptLayoutAssignments(
   // Client-supplied list; each accepted assignment runs the full
   // assignPlant path (queries + transaction + reminders) serially.
   if (assignments.length > MAX_BULK_CELLS) {
-    throw new Error(`Too many assignments (max ${MAX_BULK_CELLS})`);
+    throw new ActionError("INVALID_INPUT", `Too many assignments (max ${MAX_BULK_CELLS})`);
   }
 
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
     select: { id: true, gardenId: true },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
   // Validate plantIds: only global plants or this user's own custom plants.
   // The client supplies these, so without this check a user could inject

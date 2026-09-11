@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { removePlanting, undoRemovePlanting, clearPerennial, updatePlantingStatus, updatePlantingDates, updatePlantingMeta } from "@/app/actions/planting";
@@ -245,7 +246,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
                 undoRemovePlanting(snapshot)
                   .then(() => toast.success(`${plantName} is back`))
                   .catch((err: unknown) =>
-                    toast.error(err instanceof Error ? err.message : "Couldn't undo the remove")
+                    toast.error(actionErrorMessage(err, "Couldn't undo the remove"))
                   );
               },
             },

@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Bell, Check, Loader2 } from "lucide-react";
@@ -36,7 +37,7 @@ export function SuccessionActions({
         );
       } catch (err) {
         console.error(err);
-        toast.error(err instanceof Error ? err.message : "Couldn't set the reminder. Please try again");
+        toast.error(actionErrorMessage(err, "Couldn't set the reminder. Please try again"));
       }
     });
   }

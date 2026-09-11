@@ -1,4 +1,6 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
+import { toast } from "sonner";
 import { useState, useTransition, useRef, useEffect } from "react";
 import { uploadPhoto, deletePhoto } from "@/app/actions/tracking";
 import { Camera, Trash2, Loader2, Lock, X } from "lucide-react";
@@ -15,12 +17,11 @@ type Photo = {
 type Props = {
   plantingId: string;
   photos: Photo[];
-  isPro: boolean;
+  /** Photos the garden OWNER can still upload across all plantings; null = unlimited. */
+  photosRemaining: number | null;
 };
 
-const FREE_LIMIT = 20;
-
-export function PhotoGallery({ plantingId, photos, isPro }: Props) {
+export function PhotoGallery({ plantingId, photos, photosRemaining }: Props) {
   const [isUploading, startUpload] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
@@ -59,16 +60,29 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
     formData.append("file", pendingFile);
     if (pendingCaption.trim()) formData.append("caption", pendingCaption.trim());
     startUpload(async () => {
-      await uploadPhoto(plantingId, formData);
-      cancelPending();
+      // Uncaught inside startTransition this would replace the page with the
+      // route error boundary — and a too-large phone photo is routine.
+      try {
+        await uploadPhoto(plantingId, formData);
+        cancelPending();
+      } catch (err) {
+        console.error(err);
+        toast.error(actionErrorMessage(err, "Couldn't upload that photo. Please try again."));
+      }
     });
   }
 
   function handleDelete(id: string) {
     setDeletingId(id);
     startDelete(async () => {
-      await deletePhoto(id);
-      setDeletingId(null);
+      try {
+        await deletePhoto(id);
+      } catch (err) {
+        console.error(err);
+        toast.error(actionErrorMessage(err, "Couldn't delete that photo. Please try again."));
+      } finally {
+        setDeletingId(null);
+      }
     });
   }
 
@@ -77,7 +91,8 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg font-semibold text-[#111109]">Photos</h2>
         <span className="text-xs text-[#ADADAA]">
-          {photos.length}{!isPro ? `/${FREE_LIMIT}` : ""} photo{photos.length !== 1 ? "s" : ""}
+          {photos.length} photo{photos.length !== 1 ? "s" : ""}
+          {photosRemaining !== null ? ` · ${photosRemaining} left on Free` : ""}
         </span>
       </div>
 
@@ -159,7 +174,7 @@ export function PhotoGallery({ plantingId, photos, isPro }: Props) {
         </div>
       )}
 
-      {!isPro && photos.length >= FREE_LIMIT ? (
+      {photosRemaining !== null && photosRemaining <= 0 ? (
         <div className="flex items-center gap-2 text-sm text-[#ADADAA]">
           <Lock className="w-4 h-4" />
           <span>

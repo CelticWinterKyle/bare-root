@@ -1,3 +1,4 @@
+import { ActionError } from "@/lib/action-error";
 import { Tier } from "@/lib/generated/prisma/enums";
 import { db } from "@/lib/db";
 
@@ -11,9 +12,9 @@ export const TIER_LIMITS = {
   },
 } as const;
 
-export class TierLimitError extends Error {
-  constructor(public readonly code: "UPGRADE_REQUIRED") {
-    super("Tier limit reached");
+export class TierLimitError extends ActionError {
+  constructor(code: "UPGRADE_REQUIRED" = "UPGRADE_REQUIRED") {
+    super(code);
     this.name = "TierLimitError";
   }
 }
@@ -48,15 +49,36 @@ export async function checkCanCreateBed(
   if (count >= TIER_LIMITS.FREE.bedsPerGarden) throw new TierLimitError("UPGRADE_REQUIRED");
 }
 
+/** Photos across ALL of an owner's plantings — the number the cap counts. */
+export async function countOwnerPhotos(userId: string): Promise<number> {
+  return db.plantingPhoto.count({
+    where: { planting: { season: { garden: { userId } } } },
+  });
+}
+
 export async function checkCanUploadPhoto(
   userId: string,
   tier: Tier
 ): Promise<void> {
   if (tier === "PRO") return;
-  const count = await db.plantingPhoto.count({
-    where: { planting: { season: { garden: { userId } } } },
-  });
+  const count = await countOwnerPhotos(userId);
   if (count >= TIER_LIMITS.FREE.photos) throw new TierLimitError("UPGRADE_REQUIRED");
+}
+
+/**
+ * Photos the garden's OWNER can still upload (null = unlimited). The UI gate
+ * must use this, not the viewer's tier or one planting's count — otherwise a
+ * free owner at the cap sees "Add photo", taps it, and the upload throws.
+ */
+export async function getPhotoAllowanceRemaining(gardenId: string): Promise<number | null> {
+  const garden = await db.garden.findUnique({
+    where: { id: gardenId },
+    select: { userId: true, user: { select: { subscriptionTier: true } } },
+  });
+  if (!garden) return 0;
+  if (garden.user.subscriptionTier === "PRO") return null;
+  const used = await countOwnerPhotos(garden.userId);
+  return Math.max(0, TIER_LIMITS.FREE.photos - used);
 }
 
 export async function checkCanAddCollaborator(tier: Tier): Promise<void> {

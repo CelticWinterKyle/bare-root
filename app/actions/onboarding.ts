@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -29,7 +30,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
   await checkCanCreateGarden(user.id, user.subscriptionTier);
 
   validateGardenDimensions(input);
-  if (!input.gardenName.trim()) throw new Error("Garden name is required");
+  if (!input.gardenName.trim()) throw new ActionError("INVALID_INPUT", "Garden name is required");
 
   const now = new Date();
   const year = now.getFullYear();

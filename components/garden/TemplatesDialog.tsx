@@ -1,5 +1,6 @@
 "use client";
 
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -84,7 +85,7 @@ export function TemplatesDialog({
         setTemplates(null); // refetch on next open section render
         listTemplates().then(setTemplates).catch(() => {});
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Couldn't save the template.");
+        toast.error(actionErrorMessage(err, "Couldn't save the template."));
       }
     });
   }
@@ -108,7 +109,7 @@ export function TemplatesDialog({
         setOpen(false);
         router.push(`/garden/${gardenId}/beds/${res.newBedId}`);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Couldn't duplicate the bed.");
+        toast.error(actionErrorMessage(err, "Couldn't duplicate the bed."));
       }
     });
   }

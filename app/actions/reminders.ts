@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ReminderType, type PlantingStatus } from "@/lib/generated/prisma/enums";
@@ -18,14 +19,14 @@ export async function createCustomReminder(input: {
 
   const parsed = customReminderSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid reminder");
+    throw new ActionError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "Invalid reminder");
   }
   const data = parsed.data;
   const title = data.title;
 
   const when = new Date(data.scheduledAt);
   if (when.getTime() < Date.now()) {
-    throw new Error("Reminder time must be in the future");
+    throw new ActionError("INVALID_INPUT", "Reminder time must be in the future");
   }
 
   const recurring = data.repeat === "weekly" || data.repeat === "monthly";
@@ -43,7 +44,7 @@ export async function createCustomReminder(input: {
       },
       select: { id: true },
     });
-    if (!garden) throw new Error("Garden not found");
+    if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
   }
 
   await db.reminder.create({
@@ -79,12 +80,12 @@ export async function createSuccessionReminder(
 
   const parsed = successionReminderSchema.safeParse({ plantId, gardenId, suggestedDate, plantName });
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid reminder");
+    throw new ActionError("INVALID_INPUT", parsed.error.issues[0]?.message ?? "Invalid reminder");
   }
 
   const when = new Date(parsed.data.suggestedDate);
   if (when.getTime() < Date.now()) {
-    throw new Error("That suggested date has already passed");
+    throw new ActionError("INVALID_INPUT", "That suggested date has already passed");
   }
 
   // Same access pattern as createCustomReminder: view access is enough —
@@ -99,7 +100,7 @@ export async function createSuccessionReminder(
     },
     select: { id: true },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   // Use the canonical plant name from the DB (the client-supplied name is
   // just a fallback for validation messages).
@@ -110,7 +111,7 @@ export async function createSuccessionReminder(
     },
     select: { name: true },
   });
-  if (!plant) throw new Error("Plant not found");
+  if (!plant) throw new ActionError("NOT_FOUND", "Plant not found");
 
   await db.reminder.create({
     data: {
@@ -174,7 +175,7 @@ export async function completeReminder(reminderId: string): Promise<void> {
       },
     },
   });
-  if (!reminder) throw new Error("Reminder not found");
+  if (!reminder) throw new ActionError("NOT_FOUND", "Reminder not found");
 
   const targetStatus = STATUS_FOR_REMINDER_TYPE[reminder.type];
   const planting = reminder.planting;
@@ -215,7 +216,7 @@ export async function snoozeReminder(reminderId: string, days = 7): Promise<void
     where: { id: reminderId, userId: user.id },
     select: { scheduledAt: true },
   });
-  if (!reminder) throw new Error("Reminder not found");
+  if (!reminder) throw new ActionError("NOT_FOUND", "Reminder not found");
 
   // Snooze from "now or the scheduled time, whichever is later" so an
   // overdue reminder lands days-from-today, not days-from-last-month.
@@ -239,7 +240,7 @@ export async function updateNotificationPreference(
 ) {
   const user = await requireUser();
   if (!VALID_REMINDER_TYPES.has(type)) {
-    throw new Error("Invalid notification type");
+    throw new ActionError("INVALID_INPUT", "Invalid notification type");
   }
   const reminderType = type as ReminderType;
   await db.notificationPreference.upsert({

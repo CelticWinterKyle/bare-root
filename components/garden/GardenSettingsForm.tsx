@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage, isNextRedirect } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,7 +115,7 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
         toast.success("Garden updated");
       } catch (err) {
         console.error(err);
-        toast.error(err instanceof Error ? err.message : "Failed to save");
+        toast.error(actionErrorMessage(err, "Failed to save"));
       }
     });
   }
@@ -130,7 +131,7 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
         await deleteGarden(gardenId);
       } catch (err) {
         // deleteGarden redirects on success; only catches actual failures
-        if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
+        if (isNextRedirect(err)) return;
         console.error(err);
         toast.error("Failed to delete garden");
       }

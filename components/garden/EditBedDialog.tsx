@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,7 @@ export function EditBedDialog({ bedId, gardenId, initial }: Props) {
         setOpen(false);
       } catch (err) {
         console.error(err);
-        toast.error(err instanceof Error ? err.message : "Failed to update bed");
+        toast.error(actionErrorMessage(err, "Failed to update bed"));
       }
     });
   }

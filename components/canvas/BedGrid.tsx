@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition, useRef, useEffect, useLayoutEffect } from "react";
 import {
   DndContext,
@@ -393,7 +394,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           movePlanting(plantingId, prevAnchorId)
             .then(() => toast.success(`Moved ${plantName} back`))
             .catch((err: unknown) =>
-              toast.error(err instanceof Error ? err.message : "Couldn't undo the move")
+              toast.error(actionErrorMessage(err, "Couldn't undo the move"))
             );
         },
       },
@@ -462,7 +463,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           setMovingPlanting(null);
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't move. Please try again");
+          toast.error(actionErrorMessage(err, "Couldn't move. Please try again"));
         }
       });
       return;
@@ -719,7 +720,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           else toast.success(`Planted ${plant.name}`);
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't plant. Please try again");
+          toast.error(actionErrorMessage(err, "Couldn't plant. Please try again"));
         }
       });
       return;
@@ -754,7 +755,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           else toast.success(`Moved ${name}`, moveUndoOpts(pid, name, prevAnchorId));
         } catch (err) {
           console.error(err);
-          toast.error(err instanceof Error ? err.message : "Couldn't move. Please try again");
+          toast.error(actionErrorMessage(err, "Couldn't move. Please try again"));
         }
       });
     }

@@ -1,5 +1,7 @@
 "use server";
 
+import { TierLimitError } from "@/lib/tier";
+import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -37,19 +39,19 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
   const user = await requireUser();
 
   if (user.subscriptionTier !== "PRO") {
-    throw new Error("UPGRADE_REQUIRED");
+    throw new TierLimitError();
   }
 
   const garden = await db.garden.findFirst({
     where: { id: gardenId, userId: user.id },
     select: { name: true },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   const lowerEmail = email.toLowerCase();
 
   // Can't invite yourself
-  if (lowerEmail === user.email.toLowerCase()) throw new Error("CANNOT_INVITE_SELF");
+  if (lowerEmail === user.email.toLowerCase()) throw new ActionError("CANNOT_INVITE_SELF");
 
   const existingUser = await db.user.findUnique({ where: { email: lowerEmail } });
   const alreadyMember = existingUser
@@ -69,7 +71,7 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
         where: { gardenId, email: { not: lowerEmail }, acceptedAt: null, expiresAt: { gt: new Date() } },
       }),
     ]);
-    if (collabCount + pendingCount >= 5) throw new Error("COLLABORATOR_LIMIT_REACHED");
+    if (collabCount + pendingCount >= 5) throw new ActionError("COLLABORATOR_LIMIT_REACHED");
   }
 
   const token = generateToken();
@@ -100,7 +102,7 @@ export async function removeCollaborator(gardenId: string, collaboratorUserId: s
   const user = await requireUser();
 
   const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   await db.gardenCollaborator.deleteMany({
     where: { gardenId, userId: collaboratorUserId },
@@ -117,7 +119,7 @@ export async function updateCollaboratorRole(
   const user = await requireUser();
 
   const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   // updateMany so a stale/already-removed row is a graceful no-op instead of
   // throwing a P2025 the user sees as a generic error.
@@ -133,7 +135,7 @@ export async function cancelInvitation(gardenId: string, invitationId: string) {
   const user = await requireUser();
 
   const garden = await db.garden.findFirst({ where: { id: gardenId, userId: user.id } });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   // Scope the delete to the owned garden so a caller can't pass an
   // invitationId belonging to a different garden. deleteMany also makes a
@@ -147,12 +149,12 @@ export async function acceptInvitation(token: string): Promise<{ gardenId: strin
 
   const invitation = await db.gardenInvitation.findUnique({ where: { token } });
 
-  if (!invitation) throw new Error("INVALID_TOKEN");
-  if (invitation.expiresAt < new Date()) throw new Error("EXPIRED");
-  if (invitation.acceptedAt) throw new Error("ALREADY_ACCEPTED");
+  if (!invitation) throw new ActionError("INVALID_TOKEN");
+  if (invitation.expiresAt < new Date()) throw new ActionError("EXPIRED");
+  if (invitation.acceptedAt) throw new ActionError("ALREADY_ACCEPTED");
 
   if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
-    throw new Error("EMAIL_MISMATCH");
+    throw new ActionError("EMAIL_MISMATCH");
   }
 
   await db.$transaction([

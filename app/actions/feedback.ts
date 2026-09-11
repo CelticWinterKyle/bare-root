@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendReminderEmail } from "@/lib/api/email";
@@ -16,9 +17,9 @@ const OWNER_EMAIL = "kyle@celticwinter.com";
 export async function submitFeedback(message: string, path?: string) {
   const user = await requireUser();
   const trimmed = message.trim();
-  if (!trimmed) throw new Error("Write a little something first.");
+  if (!trimmed) throw new ActionError("INVALID_INPUT", "Write a little something first.");
   if (trimmed.length > MAX_FEEDBACK_CHARS) {
-    throw new Error(`Keep it under ${MAX_FEEDBACK_CHARS} characters.`);
+    throw new ActionError("INVALID_INPUT", `Keep it under ${MAX_FEEDBACK_CHARS} characters.`);
   }
   const cleanPath = path && path.startsWith("/") ? path.slice(0, 200) : null;
 

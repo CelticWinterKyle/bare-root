@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { searchPlantsAction } from "@/app/actions/plants";
@@ -127,10 +128,21 @@ export function PlantPicker({
     runSearch(query, next);
   }
 
+  // Thrown inside startTransition, an uncaught error replaces the whole bed
+  // page with the route error boundary. "Not enough room" and "already
+  // occupied" are routine outcomes, so every pick runs through this guard.
+  function guarded(run: () => Promise<void>): Promise<void> {
+    return run().catch((err: unknown) => {
+      console.error(err);
+      toast.error(actionErrorMessage(err, "Couldn't plant. Please try again"));
+      setAssigningId(null);
+    });
+  }
+
   function handlePick(plantId: string) {
     setAssigningId(plantId);
     setSpacingWarnings([]);
-    startAssign(async () => {
+    startAssign(() => guarded(async () => {
       if (isBulk) {
         const ids = cellIds!;
         const summary = await bulkAssignPlant(ids, plantId, seasonId);
@@ -154,7 +166,7 @@ export function PlantPicker({
                 undoBulkAssign(created)
                   .then((r) => toast.success(`Removed ${r.removed} planting${r.removed === 1 ? "" : "s"}`))
                   .catch((err: unknown) =>
-                    toast.error(err instanceof Error ? err.message : "Couldn't undo")
+                    toast.error(actionErrorMessage(err, "Couldn't undo"))
                   );
               },
             },
@@ -179,7 +191,7 @@ export function PlantPicker({
         return;
       }
       onClose();
-    });
+    }));
   }
 
   return (

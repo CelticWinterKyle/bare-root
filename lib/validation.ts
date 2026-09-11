@@ -1,3 +1,4 @@
+import { ActionError } from "@/lib/action-error";
 import { z } from "zod";
 
 /**
@@ -34,13 +35,13 @@ export function validateBedDimensions(input: {
 }): { gridCols: number; gridRows: number } {
   const parsed = bedDimensionsSchema.safeParse(input);
   if (!parsed.success) {
-    throw new Error(`Bed dimensions must be between 0 and ${MAX_BED_FT} ft`);
+    throw new ActionError("INVALID_INPUT", `Bed dimensions must be between 0 and ${MAX_BED_FT} ft`);
   }
   const { widthFt, heightFt, cellSizeIn } = parsed.data;
   const gridCols = Math.max(1, Math.floor(widthFt * (12 / cellSizeIn)));
   const gridRows = Math.max(1, Math.floor(heightFt * (12 / cellSizeIn)));
   if (gridCols * gridRows > MAX_BED_CELLS) {
-    throw new Error(
+    throw new ActionError("INVALID_INPUT", 
       `That bed would have ${gridCols * gridRows} cells — the limit is ${MAX_BED_CELLS}. Try a smaller bed or 12" cells.`
     );
   }
@@ -54,7 +55,7 @@ export const gardenDimensionsSchema = z.object({
 
 export function validateGardenDimensions(input: { widthFt: number; heightFt: number }): void {
   if (!gardenDimensionsSchema.safeParse(input).success) {
-    throw new Error(`Garden dimensions must be between 0 and ${MAX_GARDEN_FT} ft`);
+    throw new ActionError("INVALID_INPUT", `Garden dimensions must be between 0 and ${MAX_GARDEN_FT} ft`);
   }
 }
 
@@ -106,7 +107,7 @@ export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 /** Throws on bad uploads; returns the extension derived from the validated MIME type. */
 export function validatePhotoUpload(file: File): string {
   const ext = ALLOWED_PHOTO_TYPES[file.type];
-  if (!ext) throw new Error("Photos must be JPEG, PNG, WebP, AVIF, or GIF");
-  if (file.size > MAX_PHOTO_BYTES) throw new Error("Photos must be 10 MB or smaller");
+  if (!ext) throw new ActionError("INVALID_INPUT", "Photos must be JPEG, PNG, WebP, AVIF, or GIF");
+  if (file.size > MAX_PHOTO_BYTES) throw new ActionError("INVALID_INPUT", "Photos must be 10 MB or smaller");
   return ext;
 }

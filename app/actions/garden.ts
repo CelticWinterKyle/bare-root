@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
@@ -19,7 +20,7 @@ export async function updateBedPosition(bedId: string, xPosition: number, yPosit
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
   await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
 
@@ -43,7 +44,7 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
   const garden = await db.garden.findFirst({
     where: { id: gardenId, ...gardenEditFilter(user.id) },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   await assertGardenWritable(user.id, user.subscriptionTier, gardenId);
 
@@ -56,7 +57,7 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
 
   if (input.name !== undefined) {
     const name = input.name.trim();
-    if (!name) throw new Error("Name is required");
+    if (!name) throw new ActionError("INVALID_INPUT", "Name is required");
     data.name = name;
   }
   if (input.description !== undefined) data.description = input.description?.trim() || null;
@@ -93,7 +94,7 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
     const month = m ? Number(m[1]) : 0;
     const day = m ? Number(m[2]) : 0;
     if (!m || month < 1 || month > 12 || day < 1 || day > 31) {
-      throw new Error("Frost date must be a valid MM-DD (e.g. 04-15)");
+      throw new ActionError("INVALID_INPUT", "Frost date must be a valid MM-DD (e.g. 04-15)");
     }
     return t;
   };
@@ -114,7 +115,7 @@ export async function deleteGarden(gardenId: string): Promise<void> {
   const garden = await db.garden.findFirst({
     where: { id: gardenId, userId: user.id },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   // Pending reminders tied to this garden (frost/water/custom via gardenId,
   // planting reminders via the bed chain) go with it — both FKs are SetNull,
@@ -160,7 +161,7 @@ export async function createGarden(input: CreateGardenInput): Promise<string> {
   await checkCanCreateGarden(user.id, user.subscriptionTier);
 
   const name = input.gardenName.trim();
-  if (!name) throw new Error("Garden name is required");
+  if (!name) throw new ActionError("INVALID_INPUT", "Garden name is required");
   validateGardenDimensions(input);
 
   const now = new Date();
@@ -215,7 +216,7 @@ export async function setActiveGarden(gardenId: string): Promise<void> {
     where: { id: gardenId, ...gardenAccessFilter(user.id) },
     select: { id: true },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
   await writeActiveGarden(gardenId);
   revalidatePath("/", "layout");
 }

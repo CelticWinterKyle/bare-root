@@ -1,4 +1,5 @@
 "use server";
+import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -20,7 +21,7 @@ export async function createBed(input: CreateBedInput): Promise<string> {
   const garden = await db.garden.findFirst({
     where: { id: input.gardenId, ...gardenEditFilter(user.id) },
   });
-  if (!garden) throw new Error("Garden not found");
+  if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
   await assertGardenWritable(user.id, user.subscriptionTier, input.gardenId);
   await checkCanCreateBed(input.gardenId, user.subscriptionTier);
@@ -68,7 +69,7 @@ export async function deleteBed(bedId: string): Promise<void> {
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
   // Pending reminders for plantings in this bed go with it — plantingId is
   // SetNull on delete, so otherwise the cron keeps nudging about plants that
@@ -93,7 +94,7 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
   const bed = await db.bed.findFirst({
     where: { id: bedId, garden: gardenEditFilter(user.id) },
   });
-  if (!bed) throw new Error("Bed not found");
+  if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
   await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
 
