@@ -124,7 +124,7 @@ export function GlobalSearch({ trigger }: { trigger: "sidebar" | "icon" }) {
                         key={p.id}
                         icon={<Sprout className="w-3.5 h-3.5" style={{ color: "#3A6B20" }} />}
                         title={`${p.plantName}${p.variety ? ` · ${p.variety}` : ""}`}
-                        sub={`Bed ${p.bedName}`}
+                        sub={p.bedName}
                         onClick={() => go(`/garden/${p.gardenId}/beds/${p.bedId}`)}
                       />
                     ))}

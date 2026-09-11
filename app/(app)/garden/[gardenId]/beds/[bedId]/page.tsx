@@ -31,6 +31,34 @@ export async function generateMetadata({
   };
 }
 
+// Which of a cell's occupants the grid shows. On the today view a cell can
+// legally hold a finished planting, its live successor, and one planned for
+// a future month (placed while scrubbed ahead). Latest-occupiesFrom-first
+// picked the future one and hid the live plant. Rank: window contains now →
+// most recently finished → soonest upcoming. Scrubbed views pass null: the
+// query already limited occupants to that month and latest-first is right.
+function pickOccupant<T extends { planting: { occupiesFrom: Date; occupiesUntil: Date | null } }>(
+  occupants: T[],
+  now: Date | null
+): T | null {
+  if (occupants.length === 0) return null;
+  if (!now) return occupants[0];
+  const rank = (o: T) => {
+    const { occupiesFrom, occupiesUntil } = o.planting;
+    if (occupiesFrom <= now && (!occupiesUntil || occupiesUntil > now)) return 0;
+    if (occupiesUntil && occupiesUntil <= now) return 1;
+    return 2;
+  };
+  return [...occupants].sort((a, b) => {
+    const ra = rank(a);
+    const rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    if (ra === 1) return b.planting.occupiesUntil!.getTime() - a.planting.occupiesUntil!.getTime();
+    if (ra === 2) return a.planting.occupiesFrom.getTime() - b.planting.occupiesFrom.getTime();
+    return b.planting.occupiesFrom.getTime() - a.planting.occupiesFrom.getTime();
+  })[0];
+}
+
 // A live perennial reads as dormant when the viewed month falls entirely
 // outside the garden's frost-free window (rough but honest for zone-based
 // gardens; roots persist, tops rest).
@@ -326,13 +354,13 @@ export default async function BedPage({
     select: { plantId: true, variety: true, quantity: true, unit: true },
   });
 
-  // Build cell data with companion warnings. Per cell, occupiedBy is at
-  // most one entry for the viewing season (enforced in app code by
-  // assignPlant). That entry tells us whether this cell is the anchor
+  // Build cell data with companion warnings. A cell can hold more than one
+  // entry (a finished planting and its successor); pickOccupant chooses the
+  // one the grid shows. That entry tells us whether this cell is the anchor
   // (isPrimary) or a footprint cell — and only the anchor renders the
   // plant label / status pill / interactive detail panel.
   const cells = bed.cells.map((cell) => {
-    const occ = cell.occupiedBy[0] ?? null;
+    const occ = pickOccupant(cell.occupiedBy, monthStart ? null : now);
     const isPrimary = occ?.isPrimary ?? false;
     const rawPlanting = occ && isPrimary ? occ.planting : null;
 

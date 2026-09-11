@@ -464,7 +464,12 @@ export async function movePlanting(
 export async function bulkAssignPlant(
   cellIds: string[],
   plantId: string,
-  seasonId: string
+  seasonId: string,
+  opts?: {
+    /** Same as assignPlant: anchor the occupancy window (and reminders) at
+     *  this date when planting into a scrubbed-ahead month. */
+    plannedFor?: Date;
+  }
 ): Promise<{
   planted: number;
   skipped: number;
@@ -490,7 +495,7 @@ export async function bulkAssignPlant(
   // Parallelizing would race on overlapping-footprint pairs.
   for (const cellId of cellIds) {
     try {
-      const result = await assignPlant(cellId, plantId, seasonId);
+      const result = await assignPlant(cellId, plantId, seasonId, undefined, opts);
       planted++;
       plantingIds.push(result.plantingId);
       if (result.footprintWarning) reduced++;

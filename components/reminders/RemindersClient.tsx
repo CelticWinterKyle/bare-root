@@ -1,5 +1,6 @@
 "use client";
 
+import { reminderDayYmd, daysBetweenYmd, ymdInTz } from "@/lib/dates";
 import { useState, useTransition } from "react";
 import { dismissReminder, completeReminder, snoozeReminder } from "@/app/actions/reminders";
 import { logHarvestResilient } from "@/lib/offline/log-harvest";
@@ -41,10 +42,12 @@ type ReminderItem = {
 // Reminder types where "done" can act on the planting itself.
 const ACTIONABLE_TYPES = new Set(["START_SEEDS", "TRANSPLANT", "HARVEST"]);
 
-function formatRelativeDate(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+// Calendar days, not instants: system reminders are UTC midnight of the
+// intended day, so instant math showed "Yesterday" on the due day for any
+// user west of UTC. CUSTOM reminders are real instants in the user's tz.
+function formatRelativeDate(iso: string, type: string, tz: string): string {
+  const dueYmd = reminderDayYmd(new Date(iso), type, tz);
+  const diffDays = daysBetweenYmd(ymdInTz(new Date(), tz), dueYmd);
   if (diffDays === 0) return "Today";
   if (diffDays === -1) return "Yesterday";
   if (diffDays === 1) return "Tomorrow";
@@ -55,9 +58,12 @@ function formatRelativeDate(iso: string): string {
 export function RemindersClient({
   reminders,
   gardens,
+  timezone,
 }: {
   reminders: ReminderItem[];
   gardens: { id: string; name: string }[];
+  /** IANA zone (user.timezone) — day boundaries come from here, never the server's UTC clock. */
+  timezone: string;
 }) {
   const [, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -187,7 +193,7 @@ export function RemindersClient({
               className="text-xs font-medium px-1.5 py-0.5 rounded-md"
               style={{ background: cfg.bg, color: cfg.accent }}
             >
-              {formatRelativeDate(r.scheduledAt)}
+              {formatRelativeDate(r.scheduledAt, r.type, timezone)}
             </span>
             {r.recurrence && (
               <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-[#F4F4EC] text-[#6B6B5A]">

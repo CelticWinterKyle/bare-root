@@ -1,4 +1,5 @@
 "use client";
+import { localYmd } from "@/lib/dates";
 import { useState, useTransition } from "react";
 import { deleteHarvestLog } from "@/app/actions/tracking";
 import { logHarvestResilient } from "@/lib/offline/log-harvest";
@@ -27,7 +28,9 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("lbs");
   const [notes, setNotes] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  // Local calendar day — toISOString() is UTC, which is tomorrow for an
+  // evening user west of Greenwich.
+  const [date, setDate] = useState(localYmd(new Date()));
   const [isAdding, startAdd] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startDelete] = useTransition();
@@ -99,7 +102,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
                   {log.quantity} {log.unit}
                 </span>
                 <span className="text-xs text-[#ADADAA] ml-2">
-                  {new Date(log.harvestedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {new Date(log.harvestedAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}
                 </span>
                 {log.notes && <p className="text-xs text-[#6B6B5A] mt-0.5">{log.notes}</p>}
               </div>

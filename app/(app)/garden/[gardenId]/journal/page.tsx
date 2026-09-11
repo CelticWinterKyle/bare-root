@@ -141,11 +141,13 @@ export default async function GardenJournalPage({
   const truncated = entries.length > MERGED_CAP;
   const timeline = entries.slice(0, MERGED_CAP);
 
-  // Server renders in UTC — without the user's tz an evening harvest
-  // stamps as tomorrow's date.
-  const stamp = (d: Date) =>
+  // Notes and photos are instants → the user's tz (the server runs in UTC,
+  // where an evening note is already tomorrow). Harvest dates are DATE-ONLY,
+  // stored as UTC midnight of the user's calendar day → render in UTC, or a
+  // "Jul 15" pick reads as Jul 14 west of Greenwich.
+  const stamp = (d: Date, kind: Entry["kind"]) =>
     new Intl.DateTimeFormat("en-US", {
-      timeZone: user.timezone || "UTC",
+      timeZone: kind === "harvest" ? "UTC" : user.timezone || "UTC",
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -217,7 +219,7 @@ export default async function GardenJournalPage({
                       {/* Stamp line */}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#ADADAA" }}>
-                          {stamp(e.at)}
+                          {stamp(e.at, e.kind)}
                         </span>
                         <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: meta.fg }}>
                           {meta.label}

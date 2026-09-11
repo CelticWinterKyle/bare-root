@@ -1,3 +1,4 @@
+import { formatFrostMmdd, startOfDay, startOfDayInTz, daysBetween, ymdInTz, ymdUtc, daysBetweenYmd, reminderDayYmd, reminderTz } from "@/lib/dates";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tempValue } from "@/lib/units";
@@ -30,13 +31,6 @@ function timeOfDay(d: Date, tz: string): "morning" | "afternoon" | "evening" {
   if (h < 12) return "morning";
   if (h < 17) return "afternoon";
   return "evening";
-}
-
-// Stored MM-DD frost values ("04-15") read as raw codes in the weather card.
-function formatFrostMmdd(mmdd: string): string {
-  const [m, d] = mmdd.split("-").map(Number);
-  if (!m || !d) return mmdd;
-  return new Date(2000, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function ordinal(n: number): string {
@@ -73,33 +67,6 @@ function fmtHeroDate(d: Date, tz: string): string {
   const month = parts.find((p) => p.type === "month")?.value ?? "";
   const day = parseInt(parts.find((p) => p.type === "day")?.value ?? "1");
   return `${weekday} ${timeOfDay(d, tz)} · the ${ordinal(day)} of ${month}`;
-}
-
-/** UTC midnight of the calendar day `d` falls on — for STORED date-only values. */
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setUTCHours(0, 0, 0, 0);
-  return x;
-}
-
-/** The instant the user's calendar day began — for "today/tomorrow" boundaries. */
-function startOfDayInTz(d: Date, tz: string): Date {
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d); // "2026-06-09"
-  const utcMidnight = new Date(`${ymd}T00:00:00Z`);
-  // Shift by the tz's offset at that moment (toLocaleString round-trip).
-  const tzClock = new Date(utcMidnight.toLocaleString("en-US", { timeZone: tz }));
-  return new Date(utcMidnight.getTime() - (tzClock.getTime() - utcMidnight.getTime()));
-}
-
-// Round, not floor: the operands mix tz-local and UTC midnights, which can
-// differ by the tz offset without changing the calendar-day distance.
-function daysBetween(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 const REMINDER_LABEL: Record<string, string> = {
@@ -510,10 +477,10 @@ export default async function DashboardPage() {
   } else if (todayReminders.length >= 2) {
     heroSub = `${todayReminders.length} tasks waiting today. The garden's settled, but a few things need your hands.`;
   } else if (recentHarvests.length > 0) {
-    // harvestedAt is a real instant (not a stored date-only), so its day
-    // boundary must come from the user's tz — the UTC day can be tomorrow
-    // for an evening log, which read as "-1 days ago" here.
-    const daysSince = daysBetween(startOfDayInTz(recentHarvests[0].harvestedAt, tz), today);
+    // harvestedAt is DATE-ONLY (UTC midnight of the user's calendar day, see
+    // parseHarvestDate), so compare calendar days: its UTC day vs today in
+    // the user's tz. Instant math here once read "-1 days ago".
+    const daysSince = daysBetweenYmd(ymdUtc(recentHarvests[0].harvestedAt), ymdInTz(now, tz));
     if (daysSince <= 3) {
       const what = recentHarvests[0].planting.plant.name.toLowerCase();
       heroSub = `Last harvest was ${daysSince === 0 ? "today" : `${daysSince} day${daysSince === 1 ? "" : "s"} ago`}, fresh ${what}. The yields are coming in.`;
@@ -523,14 +490,9 @@ export default async function DashboardPage() {
   }
 
   // ── §04 "Worth doing" suggestion (data-driven, first match wins) ───────────
-  const todayYmdTz = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
+  const todayYmdTz = ymdInTz(now, tz);
   const overdueCount = todayReminders.filter(
-    (r) => r.scheduledAt.toISOString().slice(0, 10) < todayYmdTz
+    (r) => reminderDayYmd(r.scheduledAt, r.type, tz) < todayYmdTz
   ).length;
   const monthNum = parseInt(
     new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "numeric" }).format(now)
@@ -812,7 +774,7 @@ export default async function DashboardPage() {
               </div>
               {frostRisk && frostDay && (
                 <div className={styles.weatherAlert}>
-                  ⚠ Cold night · {Math.round(frostDay.minTemp)}°F on {frostDay.date.slice(5)}
+                  ⚠ Cold night · {Math.round(frostDay.minTemp)}°F on {formatFrostMmdd(frostDay.date.slice(5))}
                 </div>
               )}
             </>
@@ -881,21 +843,18 @@ export default async function DashboardPage() {
               // System reminders are stored as UTC midnights of the intended
               // calendar day — classify by calendar day (reminder's UTC day
               // vs the user's tz day), not by instant, or a "today" reminder
-              // reads as overdue for any user west of UTC.
-              const dueYmd = due.toISOString().slice(0, 10);
-              const todayYmd = new Intl.DateTimeFormat("en-CA", {
-                timeZone: tz,
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              }).format(now);
+              // reads as overdue for any user west of UTC. CUSTOM reminders
+              // are real instants, so their day (and label) use the user's tz.
+              const dueYmd = reminderDayYmd(due, r.type, tz);
+              const todayYmd = ymdInTz(now, tz);
+              const dueTz = reminderTz(r.type, tz);
               const overdue = dueYmd < todayYmd;
               const isToday = dueYmd === todayYmd;
               const whenLabel = overdue
-                ? `↗ Overdue · ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(due)}`
+                ? `↗ Overdue · ${new Intl.DateTimeFormat("en-US", { timeZone: dueTz, month: "short", day: "numeric" }).format(due)}`
                 : isToday
                 ? "● Today"
-                : `○ ${new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(due)}`;
+                : `○ ${new Intl.DateTimeFormat("en-US", { timeZone: dueTz, weekday: "short", month: "short", day: "numeric" }).format(due)}`;
               const whenClass = overdue
                 ? styles.taskWhenDue
                 : isToday
@@ -922,7 +881,7 @@ export default async function DashboardPage() {
                     <em>{plantName}</em>
                   </div>
                   <div className={styles.taskDetail}>
-                    {r.body ?? (bedName ? `Bed ${bedName}` : r.title)}
+                    {r.body ?? bedName ?? r.title}
                   </div>
                   <div className={`${styles.taskWhen} ${whenClass}`}>{whenLabel}</div>
                 </Link>
@@ -1227,19 +1186,20 @@ export default async function DashboardPage() {
               <div className={styles.upcomingList}>
                 {upcomingReminders.map((r) => {
                   const d = r.scheduledAt;
-                  const dow = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(d);
+                  // Date-only for system reminders (UTC), instant for CUSTOM (user tz).
+                  const dTz = reminderTz(r.type, tz);
+                  const dow = new Intl.DateTimeFormat("en-US", { timeZone: dTz, weekday: "short" }).format(d);
+                  const dayNum = new Intl.DateTimeFormat("en-US", { timeZone: dTz, day: "numeric" }).format(d);
                   const plantName = r.planting?.plant.name ?? r.title;
-                  const where =
-                    r.planting?.cell.bed.name
-                      ? `Bed ${r.planting.cell.bed.name}`
-                      : r.garden?.name ?? "";
+                  // Bed names already read "Bed 1" — prefixing again gave "Bed Bed 1".
+                  const where = r.planting?.cell.bed.name ?? r.garden?.name ?? "";
                   const href = r.planting?.cell.bed.gardenId
                     ? `/garden/${r.planting.cell.bed.gardenId}/beds/${r.planting.cell.bed.id}`
                     : "/reminders";
                   return (
                     <Link key={r.id} href={href} className={styles.upcomingItem}>
                       <div className={styles.upcomingDay}>
-                        <div className={styles.upcomingDayNum}>{d.getDate()}</div>
+                        <div className={styles.upcomingDayNum}>{dayNum}</div>
                         <div className={styles.upcomingDayDow}>{dow}</div>
                       </div>
                       <div className={styles.upcomingInfo}>
@@ -1328,7 +1288,9 @@ export default async function DashboardPage() {
                 // Prefer the user's own photo of the planting (uploaded in
                 // the planting gallery) over the stock library image.
                 const ownPhoto = h.planting.photos[0]?.url ?? null;
+                // Date-only value (UTC midnight of the user's day) → render in UTC.
                 const stamp = new Intl.DateTimeFormat("en-US", {
+                  timeZone: "UTC",
                   month: "short",
                   day: "2-digit",
                   weekday: "short",

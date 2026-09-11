@@ -1,4 +1,5 @@
 "use server";
+import { utcMidnight, ymdInTz } from "@/lib/dates";
 import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
@@ -8,14 +9,24 @@ import { put } from "@vercel/blob";
 import { checkCanUploadPhoto, isProFeature, TierLimitError } from "@/lib/tier";
 import { validatePhotoUpload } from "@/lib/validation";
 
-// Parse a date-only input ("YYYY-MM-DD") as LOCAL midnight. `new Date(str)`
-// treats a bare date as UTC, which then displays as the previous day for
-// anyone west of UTC. Falls back to full parsing for anything else.
-function parseHarvestDate(s: string | undefined): Date {
-  if (!s) return new Date();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return new Date(s);
+// harvestedAt is DATE-ONLY: stored as UTC midnight of the user's calendar
+// day — the same convention system reminders use — and rendered with
+// timeZone "UTC". A "YYYY-MM-DD" from the picker maps straight to that day.
+// No date (quick harvest) means today IN THE USER'S TIMEZONE: the server
+// runs in UTC, where a 9pm log is already tomorrow. Anything else is read
+// as an instant and resolved to the user's calendar day.
+function parseHarvestDate(s: string | undefined, tz: string): Date {
+  let ymd: string;
+  if (!s) ymd = ymdInTz(new Date(), tz);
+  else if (/^\d{4}-\d{2}-\d{2}$/.test(s)) ymd = s;
+  else {
+    const instant = new Date(s);
+    if (Number.isNaN(instant.getTime())) throw new ActionError("INVALID_INPUT", "That harvest date isn't valid.");
+    ymd = ymdInTz(instant, tz);
+  }
+  const d = utcMidnight(ymd);
+  if (Number.isNaN(d.getTime())) throw new ActionError("INVALID_INPUT", "That harvest date isn't valid.");
+  return d;
 }
 
 async function resolvePlanting(plantingId: string, userId: string) {
@@ -40,7 +51,7 @@ export async function addHarvestLog(
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
-  const harvestedAt = parseHarvestDate(data.harvestedAt);
+  const harvestedAt = parseHarvestDate(data.harvestedAt, user.timezone || "UTC");
 
   try {
     await db.harvestLog.create({

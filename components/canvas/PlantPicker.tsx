@@ -145,7 +145,7 @@ export function PlantPicker({
     startAssign(() => guarded(async () => {
       if (isBulk) {
         const ids = cellIds!;
-        const summary = await bulkAssignPlant(ids, plantId, seasonId);
+        const summary = await bulkAssignPlant(ids, plantId, seasonId, plannedFor ? { plannedFor } : undefined);
         // Fire placement animations for each successful anchor. We don't
         // know exactly which ids succeeded vs were skipped due to
         // overlap, so we fire for all and let the visual refetch settle

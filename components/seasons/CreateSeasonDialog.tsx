@@ -1,4 +1,5 @@
 "use client";
+import { localYmd } from "@/lib/dates";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSeason, createSeasonWithCarryOver } from "@/app/actions/seasons";
@@ -142,5 +143,6 @@ function suggestSeasonName(): string {
 }
 
 function toInputDate(d: Date): string {
-  return d.toISOString().split("T")[0];
+  // Local day — toISOString() is UTC, which is tomorrow for an evening user.
+  return localYmd(d);
 }

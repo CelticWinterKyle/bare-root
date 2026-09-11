@@ -31,6 +31,7 @@ export default async function RemindersPage() {
   return (
     <div className="container-narrow">
       <RemindersClient
+        timezone={user.timezone || "UTC"}
         gardens={gardens}
         reminders={reminders.map((r) => ({
           id: r.id,
