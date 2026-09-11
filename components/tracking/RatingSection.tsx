@@ -1,4 +1,6 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
+import { toast } from "sonner";
 import { useState, useTransition } from "react";
 import { updatePlantingRating } from "@/app/actions/planting";
 import { Star, Loader2 } from "lucide-react";
@@ -16,18 +18,31 @@ export function RatingSection({ plantingId, rating: initialRating, growAgain: in
   const [isPending, startTransition] = useTransition();
 
   function handleStarClick(value: number) {
+    const prev = rating;
     const next = rating === value ? null : value;
     setRating(next);
     startTransition(async () => {
-      await updatePlantingRating(plantingId, { rating: next });
+      try {
+        await updatePlantingRating(plantingId, { rating: next });
+      } catch (err) {
+        // Optimistic UI must roll back, or the stars lie about what's saved.
+        setRating(prev);
+        toast.error(actionErrorMessage(err, "Couldn't save the rating. Please try again."));
+      }
     });
   }
 
   function handleGrowAgain(value: boolean | null) {
+    const prev = growAgain;
     const next = growAgain === value ? null : value;
     setGrowAgain(next);
     startTransition(async () => {
-      await updatePlantingRating(plantingId, { growAgain: next });
+      try {
+        await updatePlantingRating(plantingId, { growAgain: next });
+      } catch (err) {
+        setGrowAgain(prev);
+        toast.error(actionErrorMessage(err, "Couldn't save that. Please try again."));
+      }
     });
   }
 

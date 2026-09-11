@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { generateLayoutAction, acceptLayoutAssignments } from "@/app/actions/smart-layout";
 import { searchPlantsAction } from "@/app/actions/plants";
@@ -112,11 +113,18 @@ export function SmartLayoutPanel({
     if (chosen.length === 0) return;
     startAccept(async () => {
       try {
-        await acceptLayoutAssignments(bedId, seasonId, chosen);
+        const res = await acceptLayoutAssignments(bedId, seasonId, chosen);
+        if (res.skipped > 0) {
+          // A silent partial apply made "0 of 8 placed" look like success.
+          toast.warning(
+            `Placed ${res.planted} of ${chosen.length}. ${res.skipped} couldn't fit — those cells were already taken.`,
+            { duration: 8000 }
+          );
+        }
         onAssignmentsAccepted(chosen);
         onClose();
-      } catch {
-        toast.error("Couldn't apply the layout. Please try again.");
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't apply the layout. Please try again."));
       }
     });
   }

@@ -49,7 +49,7 @@ export function WizardShell() {
     cellSizeIn: "12",
   });
   const [locationState, setLocationState] = useState<
-    "idle" | "loading" | "found" | "not-found"
+    "idle" | "loading" | "found" | "not-found" | "skipped"
   >("idle");
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -115,7 +115,8 @@ export function WizardShell() {
   const step1Valid = data.gardenName.trim().length > 0;
   const step2Valid =
     parseFloat(data.widthFt) > 0 && parseFloat(data.heightFt) > 0;
-  const step3Valid = locationState === "found" || locationState === "not-found";
+  const step3Valid =
+    locationState === "found" || locationState === "not-found" || locationState === "skipped";
   const step4Valid =
     parseFloat(data.bedWidthFt) > 0 && parseFloat(data.bedHeightFt) > 0;
 
@@ -253,7 +254,8 @@ export function WizardShell() {
               Where is your garden?
             </h2>
             <p className="text-[#6B6B5A] text-sm mb-6">
-              Your zip code tells us your growing zone and frost dates.
+              Your zip code tells us your growing zone and frost dates. Outside the US? Skip
+              this step and set your zone and frost dates in garden settings later.
             </p>
             <div className="space-y-2">
               <Label htmlFor="zip">US zip code</Label>
@@ -317,13 +319,28 @@ export function WizardShell() {
               <Button variant="ghost" onClick={() => setStep(2)}>
                 ← Back
               </Button>
-              <Button
-                onClick={() => setStep(4)}
-                disabled={!step3Valid}
-                className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
-              >
-                Continue →
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Don't force a fake zip on non-US gardeners — it persisted
+                    and the dashboard promised a forecast for "00000" forever. */}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setData((prev) => ({ ...prev, zip: "", zone: "", lastFrostDate: null, firstFrostDate: null }));
+                    setLocationState("skipped");
+                    setStep(4);
+                  }}
+                  className="text-[#6B6B5A]"
+                >
+                  Skip for now
+                </Button>
+                <Button
+                  onClick={() => setStep(4)}
+                  disabled={!step3Valid}
+                  className="bg-[#1C3D0A] hover:bg-[#3d6b1e] text-white"
+                >
+                  Continue →
+                </Button>
+              </div>
             </div>
           </div>
         )}

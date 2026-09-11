@@ -1,4 +1,5 @@
 "use server";
+import { overlapFilter } from "@/lib/services/occupancy";
 import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
@@ -24,7 +25,15 @@ export async function generateLayoutAction(
       garden: { select: { usdaZone: true, lastFrostDate: true } },
       cells: {
         include: {
-          plantings: { where: { seasonId }, select: { id: true } },
+          // Every current occupant of the cell — footprint cells of
+          // multi-cell plants and live perennials from earlier seasons
+          // included. The old `plantings` relation only saw primary cells
+          // of this season, so the model was handed "free" cells that
+          // assignPlant then rejected, and the layout came back short.
+          occupiedBy: {
+            where: { planting: overlapFilter(seasonId, { from: new Date(), until: null }) },
+            select: { plantingId: true },
+          },
         },
         orderBy: [{ row: "asc" }, { col: "asc" }],
       },
@@ -71,7 +80,7 @@ export async function generateLayoutAction(
           row: c.row,
           col: c.col,
           sunLevel: c.sunLevel,
-          isOccupied: c.plantings.length > 0,
+          isOccupied: c.occupiedBy.length > 0,
         })),
       },
       wishlistPlants,
@@ -98,7 +107,7 @@ export async function acceptLayoutAssignments(
   bedId: string,
   seasonId: string,
   assignments: LayoutAssignment[]
-): Promise<{ planted: number }> {
+): Promise<{ planted: number; skipped: number }> {
   const user = await requireUser();
 
   // Client-supplied list; each accepted assignment runs the full
@@ -138,20 +147,23 @@ export async function acceptLayoutAssignments(
   // bare Planting rows with no PlantingCell, so plants were invisible and
   // their cells then rejected manual planting. Occupied cells are skipped.
   let planted = 0;
+  let skipped = 0;
   for (const a of assignments) {
-    if (!allowedIds.has(a.plantId)) continue;
+    if (!allowedIds.has(a.plantId)) { skipped++; continue; }
     const cellId = cellByPos.get(`${a.row},${a.col}`);
-    if (!cellId) continue;
+    if (!cellId) { skipped++; continue; }
     try {
       await assignPlant(cellId, a.plantId, seasonId);
       planted++;
     } catch {
-      // Cell already occupied (footprint overlap or pre-existing) — skip.
+      // Cell already occupied (footprint overlap or pre-existing). Counted
+      // so the UI can say so instead of reporting a silent partial success.
+      skipped++;
     }
   }
 
   revalidatePath(`/garden/${bed.gardenId}/beds/${bedId}`);
   revalidatePath(`/garden/${bed.gardenId}`);
   revalidatePath(`/dashboard`);
-  return { planted };
+  return { planted, skipped };
 }

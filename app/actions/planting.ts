@@ -676,22 +676,37 @@ export async function updatePlantingStatus(plantingId: string, status: PlantingS
   });
   if (!planting) throw new ActionError("NOT_FOUND", "Planting not found");
 
-  await db.planting.update({
-    where: { id: plantingId },
-    data: {
-      status,
-      // Reasonable inference, still editable in the Dates section.
-      ...(status === "TRANSPLANTED" && !planting.transplantDate
-        ? { transplantDate: new Date() }
-        : {}),
-      // A finished annual releases its cells from now — the window closes
-      // so a successor can claim the spot. Perennials keep their open
-      // window (permanent removal is the clearedAt flow, not a status).
-      ...((status === "HARVESTED" || status === "FAILED") && !planting.isPerennial
-        ? { occupiesUntil: new Date() }
-        : {}),
-    },
-  });
+  const finishing = (status === "HARVESTED" || status === "FAILED") && !planting.isPerennial;
+  const wasFinished = planting.status === "HARVESTED" || planting.status === "FAILED";
+  // Un-finishing (Harvested → Active, say) must reclaim the window: leaving
+  // occupiesUntil in the past let a successor be placed on a live plant.
+  const reopenedWindow =
+    !finishing && wasFinished && !planting.isPerennial
+      ? windowFromDates(planting.plantedDate, planting.expectedHarvestDate, planting.occupiesFrom, false)
+      : null;
+
+  const data = {
+    status,
+    // Reasonable inference, still editable in the Dates section.
+    ...(status === "TRANSPLANTED" && !planting.transplantDate ? { transplantDate: new Date() } : {}),
+    // A finished annual releases its cells from now — the window closes
+    // so a successor can claim the spot. Perennials keep their open
+    // window (permanent removal is the clearedAt flow, not a status).
+    ...(finishing ? { occupiesUntil: new Date() } : {}),
+    ...(reopenedWindow ? { occupiesUntil: reopenedWindow.until } : {}),
+  };
+
+  if (reopenedWindow) {
+    // Reclaiming cells is an occupancy write: check for a successor under
+    // the bed lock, like every other placement.
+    await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${planting.cell.bedId}))`;
+      await assertWindowFree(tx, planting.id, planting.seasonId, reopenedWindow);
+      await tx.planting.update({ where: { id: plantingId }, data });
+    });
+  } else {
+    await db.planting.update({ where: { id: plantingId }, data });
+  }
 
   // Doing the task in the bed must clear the nag — otherwise the user
   // reconciles two systems by hand. Non-fatal: the status write stands.
@@ -800,6 +815,42 @@ export async function updatePlantingRating(
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/seasons`);
 }
 
+function parseDateInput(s: string): Date {
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) throw new ActionError("INVALID_INPUT", "That date isn't valid.");
+  return d;
+}
+
+/**
+ * Throws CELL_OCCUPIED when any cell of `plantingId` is claimed by ANOTHER
+ * planting whose window overlaps `window`. Run under the bed's advisory
+ * lock, like every other occupancy write — otherwise stretching a finished
+ * planting's dates over its successor double-books the cells and the grid
+ * lies again.
+ */
+async function assertWindowFree(
+  tx: Parameters<typeof resolveFootprint>[0],
+  plantingId: string,
+  seasonId: string,
+  window: OccupancyWindow
+): Promise<void> {
+  const own = await tx.plantingCell.findMany({ where: { plantingId }, select: { cellId: true } });
+  if (own.length === 0) return;
+  const clash = await tx.plantingCell.findFirst({
+    where: {
+      cellId: { in: own.map((c) => c.cellId) },
+      planting: overlapFilter(seasonId, window, plantingId),
+    },
+    select: { plantingId: true },
+  });
+  if (clash) {
+    throw new ActionError(
+      "CELL_OCCUPIED",
+      "Those dates overlap another planting in this spot. Adjust the dates or move the plant first."
+    );
+  }
+}
+
 export async function updatePlantingDates(
   plantingId: string,
   data: { plantedDate?: string | null; transplantDate?: string | null }
@@ -817,7 +868,7 @@ export async function updatePlantingDates(
 
   const plantedDate =
     data.plantedDate !== undefined
-      ? data.plantedDate ? new Date(data.plantedDate) : null
+      ? data.plantedDate ? parseDateInput(data.plantedDate) : null
       : planting.plantedDate;
 
   let expectedHarvestDate: Date | null = planting.expectedHarvestDate;
@@ -829,10 +880,9 @@ export async function updatePlantingDates(
   }
 
   const update: Record<string, Date | null> = { expectedHarvestDate };
-  if (data.plantedDate !== undefined)
-    update.plantedDate = data.plantedDate ? new Date(data.plantedDate) : null;
+  if (data.plantedDate !== undefined) update.plantedDate = plantedDate;
   if (data.transplantDate !== undefined)
-    update.transplantDate = data.transplantDate ? new Date(data.transplantDate) : null;
+    update.transplantDate = data.transplantDate ? parseDateInput(data.transplantDate) : null;
 
   // Date edits move the occupancy window with them.
   const window = windowFromDates(
@@ -844,7 +894,12 @@ export async function updatePlantingDates(
   update.occupiesFrom = window.from;
   update.occupiesUntil = window.until;
 
-  await db.planting.update({ where: { id: plantingId }, data: update });
+  // Same invariant assignPlant/movePlanting hold, under the same lock.
+  await db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${planting.cell.bedId}))`;
+    await assertWindowFree(tx, planting.id, planting.seasonId, window);
+    await tx.planting.update({ where: { id: plantingId }, data: update });
+  });
 
   if (plantedDate && planting.plant.daysToMaturity) {
     await upsertHarvestReminder(

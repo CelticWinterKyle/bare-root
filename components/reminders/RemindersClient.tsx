@@ -1,5 +1,6 @@
 "use client";
 
+import { actionErrorMessage } from "@/lib/action-error";
 import { reminderDayYmd, daysBetweenYmd, ymdInTz } from "@/lib/dates";
 import { useState, useTransition } from "react";
 import { dismissReminder, completeReminder, snoozeReminder } from "@/app/actions/reminders";
@@ -127,16 +128,21 @@ export function RemindersClient({
           quantity,
           unit,
         });
-        await completeReminder(r.id);
-        toast.success(
-          landed === "queued"
-            ? "Saved on this device — will sync when you're back online"
-            : `Logged ${quantity} ${unit}`
-        );
+        if (landed === "synced") {
+          await completeReminder(r.id);
+          toast.success(`Logged ${quantity} ${unit}`);
+        } else {
+          // Queued = we're offline, so completeReminder (a server action)
+          // would throw. Awaiting it here showed "Couldn't log" for a
+          // harvest that WAS saved, and the retry queued a duplicate.
+          toast.success(
+            "Saved on this device — will sync when you're back online. Mark the reminder done once you're connected."
+          );
+        }
         setLoggingId(null);
         setQty("");
-      } catch {
-        toast.error("Couldn't log the harvest. Please try again.");
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't log the harvest. Please try again."));
       } finally {
         setBusyId(null);
       }

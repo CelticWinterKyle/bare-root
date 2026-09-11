@@ -1,4 +1,6 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
+import { toast } from "sonner";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setActiveGarden } from "@/app/actions/garden";
@@ -36,7 +38,12 @@ export function GardenSwitcher({
       return;
     }
     startTransition(async () => {
-      await setActiveGarden(id);
+      try {
+        await setActiveGarden(id);
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't switch gardens. Please try again."));
+        return;
+      }
       setOpen(false);
       router.push(`/garden/${id}`);
       router.refresh();

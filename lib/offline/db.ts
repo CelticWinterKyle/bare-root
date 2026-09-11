@@ -105,3 +105,26 @@ export async function listQueuedHarvests(): Promise<QueuedHarvest[]> {
 export async function removeQueuedHarvest(clientId: string): Promise<void> {
   await tx("harvestQueue", "readwrite", (s) => s.delete(clientId));
 }
+
+/**
+ * Wipe everything offline-related in this browser: the IndexedDB snapshot
+ * and harvest queue, plus the /offline document the service worker cached.
+ * Called on sign-out — otherwise the next person on this device can open
+ * /offline and see the previous user's beds.
+ */
+export async function clearOfflineData(): Promise<void> {
+  const cacheWipe = async () => {
+    if (!("caches" in window)) return;
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((k) => k.startsWith("bareroot-offline"))
+        .map((k) => caches.open(k).then((c) => c.delete("/offline")))
+    );
+  };
+  await Promise.allSettled([
+    tx("snapshot", "readwrite", (s) => s.clear()),
+    tx("harvestQueue", "readwrite", (s) => s.clear()),
+    cacheWipe(),
+  ]);
+}

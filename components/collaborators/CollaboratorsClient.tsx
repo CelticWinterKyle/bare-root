@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { inviteCollaborator, removeCollaborator, updateCollaboratorRole, cancelInvitation } from "@/app/actions/collaborators";
@@ -75,20 +76,33 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
   function handleRemove(userId: string, collabId: string) {
     setRemovingId(collabId);
     startRemove(async () => {
-      await removeCollaborator(gardenId, userId);
-      setRemovingId(null);
+      try {
+        await removeCollaborator(gardenId, userId);
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't remove that collaborator. Please try again."));
+      } finally {
+        setRemovingId(null); // was left spinning forever on failure
+      }
     });
   }
 
   function handleRoleChange(userId: string, newRole: string) {
     startRemove(async () => {
-      await updateCollaboratorRole(gardenId, userId, newRole as never);
+      try {
+        await updateCollaboratorRole(gardenId, userId, newRole as never);
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't change that role. Please try again."));
+      }
     });
   }
 
   function handleCancelInvite(invitationId: string) {
     startCancel(async () => {
-      await cancelInvitation(gardenId, invitationId);
+      try {
+        await cancelInvitation(gardenId, invitationId);
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't cancel that invitation. Please try again."));
+      }
     });
   }
 

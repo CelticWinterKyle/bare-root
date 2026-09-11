@@ -102,6 +102,13 @@ export async function ensureDbUser(clerkUserId: string) {
       where: { email: primaryEmail, acceptedAt: null },
       data: { acceptedAt: new Date() },
     });
+    // A collaborator's "onboarding" IS accepting the invite (mirrors
+    // acceptInvitation). Without this the (app) layout gate bounced every
+    // invitee into the create-YOUR-garden wizard on first sign-in.
+    if (!user.onboardingComplete) {
+      await db.user.update({ where: { id: clerkUserId }, data: { onboardingComplete: true } });
+      return { ...user, onboardingComplete: true };
+    }
   }
 
   return user;

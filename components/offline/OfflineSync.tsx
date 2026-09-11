@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { setSnapshot, listQueuedHarvests, removeQueuedHarvest } from "@/lib/offline/db";
@@ -13,6 +14,7 @@ import { setSnapshot, listQueuedHarvests, removeQueuedHarvest } from "@/lib/offl
  *    gone" verdict). clientId idempotency makes retries safe.
  */
 export function OfflineSync() {
+  const router = useRouter();
   const running = useRef(false);
 
   useEffect(() => {
@@ -23,6 +25,7 @@ export function OfflineSync() {
         // 1. Replay queued harvests first so the snapshot reflects them.
         const queued = await listQueuedHarvests();
         let replayed = 0;
+        let dropped = 0;
         for (const q of queued) {
           try {
             const res = await fetch("/api/offline/harvest", {
@@ -30,17 +33,31 @@ export function OfflineSync() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(q),
             });
-            if (res.ok || res.status === 410) {
+            if (res.ok) {
               await removeQueuedHarvest(q.clientId);
-              if (res.ok) replayed++;
+              replayed++;
+            } else if (res.status >= 400 && res.status < 500) {
+              // The server has ruled on this entry (planting gone, access
+              // revoked, malformed): retrying forever can't fix it. Drop it
+              // and SAY so — silently eating a harvest is worse.
+              await removeQueuedHarvest(q.clientId);
+              dropped++;
             }
-            // Other statuses: leave queued for the next pass.
+            // 5xx: leave queued for the next pass.
           } catch {
             break; // network dropped mid-replay — try again next time
           }
         }
         if (replayed > 0) {
           toast.success(`Synced ${replayed} harvest${replayed === 1 ? "" : "s"} logged offline`);
+          // Server-rendered pages are stale until they re-fetch.
+          router.refresh();
+        }
+        if (dropped > 0) {
+          toast.error(
+            `${dropped} harvest${dropped === 1 ? "" : "s"} logged offline couldn't be synced (the planting is gone or you no longer have access) and ${dropped === 1 ? "was" : "were"} discarded.`,
+            { duration: 10000 }
+          );
         }
 
         // 2. Refresh the offline snapshot.
@@ -63,7 +80,7 @@ export function OfflineSync() {
     sync();
     window.addEventListener("online", sync);
     return () => window.removeEventListener("online", sync);
-  }, []);
+  }, [router]);
 
   return null;
 }

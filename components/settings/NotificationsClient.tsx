@@ -50,8 +50,17 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
   }, []);
 
   function update(type: string, patch: Partial<Setting>) {
+    const before = settings.find((s) => s.type === type);
     setSettings((prev) => prev.map((s) => (s.type === type ? { ...s, ...patch } : s)));
-    startTransition(() => updateNotificationPreference(type, patch));
+    startTransition(async () => {
+      try {
+        await updateNotificationPreference(type, patch);
+      } catch (err) {
+        // Optimistic toggle must roll back, or the switch lies about what's saved.
+        if (before) setSettings((prev) => prev.map((s) => (s.type === type ? before : s)));
+        toast.error(actionErrorMessage(err, "Couldn't save that setting. Please try again."));
+      }
+    });
   }
 
   async function handlePushToggle(type: string, current: boolean) {

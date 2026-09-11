@@ -1,4 +1,5 @@
 "use client";
+import { actionErrorMessage } from "@/lib/action-error";
 import { useState, useTransition } from "react";
 import { upsertSeedInventory, deleteSeedInventory } from "@/app/actions/tracking";
 import { searchPlantsAction } from "@/app/actions/plants";
@@ -110,8 +111,13 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
   function handleDelete(id: string) {
     setDeletingId(id);
     startDelete(async () => {
-      await deleteSeedInventory(id);
-      setDeletingId(null);
+      try {
+        await deleteSeedInventory(id);
+      } catch (err) {
+        toast.error(actionErrorMessage(err, "Couldn't remove that. Please try again."));
+      } finally {
+        setDeletingId(null);
+      }
     });
   }
 

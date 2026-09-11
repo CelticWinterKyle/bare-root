@@ -488,7 +488,15 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       const current = pendingSun[cell.id] ?? cell.sunLevel;
       const next = SUN_CYCLE[(SUN_CYCLE.indexOf(current) + 1) % SUN_CYCLE.length];
       setPendingSun((prev) => ({ ...prev, [cell.id]: next }));
-      startSunUpdate(async () => { await updateCellSun(cell.id, next); });
+      startSunUpdate(async () => {
+        try {
+          await updateCellSun(cell.id, next);
+        } catch (err) {
+          // Roll the optimistic paint back, or the sun map lies.
+          setPendingSun((prev) => ({ ...prev, [cell.id]: current }));
+          toast.error(actionErrorMessage(err, "Couldn't save the sun level"));
+        }
+      });
       return;
     }
     if (cell.planting) {

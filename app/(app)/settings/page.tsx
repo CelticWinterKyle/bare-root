@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import Link from "next/link";
-import { Bell, CreditCard, Package, ChevronRight, LogOut, User } from "lucide-react";
-import { SignOutButton } from "@clerk/nextjs";
+import { Bell, CreditCard, Package, ChevronRight, User } from "lucide-react";
+import { SignOutButton } from "@/components/settings/SignOutButton";
 import { AccountDataSection } from "@/components/settings/AccountDataSection";
 import { UnitsToggle } from "@/components/settings/UnitsToggle";
 
@@ -62,12 +62,7 @@ export default async function SettingsPage() {
       <AccountDataSection />
 
       <div className="mt-8">
-        <SignOutButton>
-          <button className="flex items-center gap-2 text-sm text-[#B85C3A] hover:text-[#9B4A2E] transition-colors">
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </SignOutButton>
+        <SignOutButton />
       </div>
       </div>
     </div>
