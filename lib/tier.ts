@@ -3,7 +3,7 @@ import { Tier } from "@/lib/generated/prisma/enums";
 import { db } from "@/lib/db";
 
 export const TIER_LIMITS = {
-  FREE: { gardens: 1, bedsPerGarden: 3, photos: 20, collaborators: 0 },
+  FREE: { gardens: 1, bedsPerGarden: 5, photos: 20, collaborators: 0 },
   PRO: {
     gardens: Infinity,
     bedsPerGarden: Infinity,
@@ -40,11 +40,22 @@ export async function checkCanCreateGarden(
   if (count >= TIER_LIMITS.FREE.gardens) throw new TierLimitError("UPGRADE_REQUIRED");
 }
 
-export async function checkCanCreateBed(
-  gardenId: string,
-  tier: Tier
-): Promise<void> {
-  if (tier === "PRO") return;
+/**
+ * The garden owner's id + tier. Every lock and cap follows the OWNER, never
+ * the caller — a Pro collaborator can't add a sixth bed to a Free owner's
+ * garden, and a Free owner's editors are locked out with them.
+ */
+async function gardenOwner(gardenId: string): Promise<{ id: string; tier: Tier } | null> {
+  const g = await db.garden.findUnique({
+    where: { id: gardenId },
+    select: { userId: true, user: { select: { subscriptionTier: true } } },
+  });
+  return g ? { id: g.userId, tier: g.user.subscriptionTier } : null;
+}
+
+export async function checkCanCreateBed(gardenId: string): Promise<void> {
+  const owner = await gardenOwner(gardenId);
+  if (!owner || owner.tier === "PRO") return;
   const count = await db.bed.count({ where: { gardenId } });
   if (count >= TIER_LIMITS.FREE.bedsPerGarden) throw new TierLimitError("UPGRADE_REQUIRED");
 }
@@ -126,41 +137,30 @@ export async function getLockedBedIds(
 }
 
 /**
- * Throw if a FREE user tries to EXPAND/EDIT a garden that's over their limit
- * (locked read-only after a downgrade). Only applies to gardens the user
- * owns. Removing/deleting is intentionally NOT gated so a downgraded user
- * can delete extras to get back under the limit and unlock.
+ * Throw when the garden is locked read-only (a FREE owner over the garden
+ * limit after a downgrade). Follows the OWNER's tier, so it blocks the
+ * owner and their collaborators alike. Removing/deleting is intentionally
+ * NOT gated so a downgraded owner can delete extras to get back under the
+ * limit and unlock.
  */
-export async function assertGardenWritable(
-  userId: string,
-  tier: Tier,
-  gardenId: string
-): Promise<void> {
-  if (tier === "PRO") return;
-  const locked = await getLockedGardenIds(userId, tier);
+export async function assertGardenWritable(gardenId: string): Promise<void> {
+  const owner = await gardenOwner(gardenId);
+  if (!owner || owner.tier === "PRO") return;
+  const locked = await getLockedGardenIds(owner.id, owner.tier);
   if (locked.includes(gardenId)) throw new TierLimitError("UPGRADE_REQUIRED");
 }
 
 /**
- * Throw if a FREE user tries to EXPAND/EDIT a locked bed (or any bed in a
- * locked garden). Only enforced for the garden's owner — collaborators are
- * governed by the owner's tier.
+ * Throw when the bed (or its garden) is locked read-only for a FREE owner.
+ * Follows the OWNER's tier — the old version returned early for any
+ * non-owner, so editors kept full write access to locked beds.
  */
-export async function assertBedWritable(
-  userId: string,
-  tier: Tier,
-  gardenId: string,
-  bedId: string
-): Promise<void> {
-  if (tier === "PRO") return;
-  const garden = await db.garden.findUnique({
-    where: { id: gardenId },
-    select: { userId: true },
-  });
-  if (!garden || garden.userId !== userId) return;
+export async function assertBedWritable(gardenId: string, bedId: string): Promise<void> {
+  const owner = await gardenOwner(gardenId);
+  if (!owner || owner.tier === "PRO") return;
   const [lockedGardens, lockedBeds] = await Promise.all([
-    getLockedGardenIds(userId, tier),
-    getLockedBedIds(gardenId, tier),
+    getLockedGardenIds(owner.id, owner.tier),
+    getLockedBedIds(gardenId, owner.tier),
   ]);
   if (lockedGardens.includes(gardenId) || lockedBeds.includes(bedId)) {
     throw new TierLimitError("UPGRADE_REQUIRED");

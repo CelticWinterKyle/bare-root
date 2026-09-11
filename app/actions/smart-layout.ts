@@ -9,6 +9,31 @@ import { assignPlant } from "@/app/actions/planting";
 import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-layout";
 import { MAX_BULK_CELLS } from "@/lib/validation";
 
+const MAX_AI_WISHLIST = 20;
+const AI_RUNS_PER_DAY = 20;
+
+/**
+ * Claims one of today's AI runs for the user; false when the cap is hit.
+ * Two guarded updateMany calls instead of read-then-write, so concurrent
+ * requests can't both slip under the cap.
+ */
+async function consumeAiRun(userId: string): Promise<boolean> {
+  const dayStart = new Date();
+  dayStart.setUTCHours(0, 0, 0, 0);
+  // New day (or never run): the counter restarts at 1.
+  const reset = await db.user.updateMany({
+    where: { id: userId, OR: [{ aiRunsResetAt: null }, { aiRunsResetAt: { lt: dayStart } }] },
+    data: { aiRunsToday: 1, aiRunsResetAt: new Date() },
+  });
+  if (reset.count === 1) return true;
+  // Same day: increment only while under the cap — the where clause is the guard.
+  const bump = await db.user.updateMany({
+    where: { id: userId, aiRunsToday: { lt: AI_RUNS_PER_DAY } },
+    data: { aiRunsToday: { increment: 1 } },
+  });
+  return bump.count === 1;
+}
+
 export async function generateLayoutAction(
   bedId: string,
   seasonId: string,
@@ -17,6 +42,21 @@ export async function generateLayoutAction(
   const user = await requireUser();
   if (user.subscriptionTier !== "PRO") {
     return { assignments: [], error: "UPGRADE_REQUIRED" };
+  }
+
+  // Cost guardrails: each run is a multi-thousand-token Opus call. Without
+  // these one account could loop it indefinitely with a huge wishlist.
+  if (wishlistPlantIds.length === 0) {
+    return { assignments: [], error: "Pick at least one plant first." };
+  }
+  if (wishlistPlantIds.length > MAX_AI_WISHLIST) {
+    return { assignments: [], error: `Pick up to ${MAX_AI_WISHLIST} plants for one layout.` };
+  }
+  if (!(await consumeAiRun(user.id))) {
+    return {
+      assignments: [],
+      error: `You've used today's ${AI_RUNS_PER_DAY} layout runs. They reset at midnight UTC.`,
+    };
   }
 
   const bed = await db.bed.findFirst({

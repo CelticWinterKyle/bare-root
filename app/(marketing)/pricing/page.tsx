@@ -38,7 +38,7 @@ const COMPARISON = [
   { feature: "Weather & frost alerts", free: true, pro: true },
   { feature: "Harvest tracking", free: true, pro: true },
   { feature: "Gardens", free: "1", pro: "Unlimited" },
-  { feature: "Beds per garden", free: "3", pro: "Unlimited" },
+  { feature: "Beds per garden", free: "5", pro: "Unlimited" },
   { feature: "Photo uploads", free: "20 total", pro: "Unlimited" },
   { feature: "Season history", free: false, pro: true },
   { feature: "AI layout planner", free: false, pro: true },
@@ -198,7 +198,7 @@ export default async function PricingPage() {
                 fontFamily: "var(--font-fraunces), Georgia, serif",
               }}
             >
-              One garden, three beds — and the whole growing season. Calendar, reminders, frost alerts, and harvest logging included.
+              One garden, five beds — and the whole growing season. Calendar, reminders, frost alerts, and harvest logging included.
             </p>
           </div>
 

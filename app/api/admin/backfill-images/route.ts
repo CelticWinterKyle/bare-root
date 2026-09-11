@@ -110,20 +110,15 @@ function parseParams(req: Request) {
   return { after, limit, reSource };
 }
 
-export async function GET(req: Request) {
-  const user = await getCurrentUser();
-  if (!user || user.email.toLowerCase() !== OWNER_EMAIL) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-  const { after, limit, reSource } = parseParams(req);
-  return NextResponse.json(await runBackfill(after, limit, reSource));
-}
-
+// POST only (a mutating GET is CSRF-able — see cleanup-reminders). From the
+// owner's devtools console:
+//   fetch("/api/admin/backfill-images?limit=40", { method: "POST" }).then(r => r.json())
 export async function POST(req: Request) {
   const secret = req.headers.get("x-admin-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const bySecret = !!secret && secret === process.env.CRON_SECRET;
+  const user = bySecret ? null : await getCurrentUser();
+  const byOwner = !!user && user.email.toLowerCase() === OWNER_EMAIL;
+  if (!bySecret && !byOwner) return new NextResponse("Unauthorized", { status: 401 });
   const { after, limit, reSource } = parseParams(req);
   return NextResponse.json(await runBackfill(after, limit, reSource));
 }

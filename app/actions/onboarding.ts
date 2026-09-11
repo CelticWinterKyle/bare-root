@@ -1,10 +1,9 @@
 "use server";
-import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { checkCanCreateGarden } from "@/lib/tier";
-import { validateBedDimensions, validateGardenDimensions } from "@/lib/validation";
+import { validateBedDimensions, validateGardenDimensions, requiredText, optionalText, validateFrostMmdd, MAX_NAME_CHARS } from "@/lib/validation";
 
 type BedInput = {
   name: string;
@@ -30,7 +29,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
   await checkCanCreateGarden(user.id, user.subscriptionTier);
 
   validateGardenDimensions(input);
-  if (!input.gardenName.trim()) throw new ActionError("INVALID_INPUT", "Garden name is required");
+  const gardenName = requiredText(input.gardenName, "Garden name", MAX_NAME_CHARS);
 
   const now = new Date();
   const year = now.getFullYear();
@@ -47,12 +46,12 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
     const garden = await tx.garden.create({
       data: {
         userId: user.id,
-        name: input.gardenName,
+        name: gardenName,
         locationZip: input.zip || null,
         locationDisplay: input.zone ? `Zone ${input.zone}` : null,
         usdaZone: input.zone || null,
-        lastFrostDate: input.lastFrostDate,
-        firstFrostDate: input.firstFrostDate,
+        lastFrostDate: validateFrostMmdd(input.lastFrostDate),
+        firstFrostDate: validateFrostMmdd(input.firstFrostDate),
         widthFt: input.widthFt,
         heightFt: input.heightFt,
       },
@@ -69,7 +68,8 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
     });
 
     if (input.bed) {
-      const { name, widthFt, heightFt, cellSizeIn } = input.bed;
+      const { widthFt, heightFt, cellSizeIn } = input.bed;
+      const name = optionalText(input.bed.name, "Bed name", MAX_NAME_CHARS) ?? "Bed 1";
       const { gridCols, gridRows } = validateBedDimensions(input.bed);
 
       const bed = await tx.bed.create({

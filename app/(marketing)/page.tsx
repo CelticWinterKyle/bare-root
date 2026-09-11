@@ -701,7 +701,7 @@ export default async function LandingPage() {
             <div className={styles.planPrice}>$0</div>
             <div className={styles.planPeriod}>No card required</div>
             <ul className={styles.planFeatures}>
-              <li>1 garden, 3 beds</li>
+              <li>1 garden, 5 beds</li>
               <li>Full plant library (150+ curated)</li>
               <li>Visual canvas with multi-cell plants</li>
               <li>Companion planting warnings</li>

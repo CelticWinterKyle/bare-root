@@ -1,4 +1,5 @@
 "use server";
+import { optionalText, MAX_NOTES_CHARS } from "@/lib/validation";
 import { ActionError } from "@/lib/action-error";
 import { after } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -309,7 +310,7 @@ export async function createCustomPlant(data: {
     data: {
       name,
       category: data.category,
-      description: data.description?.trim() || null,
+      description: optionalText(data.description, "Description", MAX_NOTES_CHARS),
       daysToMaturity: clampOpt(data.daysToMaturity, 1, 3650),
       spacingInches: clampOpt(data.spacingInches, 1, 120),
       sunRequirement: data.sunRequirement ?? null,

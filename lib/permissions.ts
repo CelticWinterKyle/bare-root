@@ -1,6 +1,6 @@
 import { ActionError } from "@/lib/action-error";
 import { db } from "@/lib/db";
-import { CollabRole } from "@/lib/generated/prisma/enums";
+import { CollabRole, Tier } from "@/lib/generated/prisma/enums";
 
 /**
  * Prisma `where` fragment matching gardens the user can VIEW —
@@ -30,6 +30,9 @@ export function gardenEditFilter(userId: string) {
     OR: [
       { userId },
       {
+        // Collaborators are a Pro feature: when the owner drops to Free,
+        // editors become read-only until the owner is back on Pro.
+        user: { subscriptionTier: Tier.PRO },
         collaborators: {
           some: { userId, role: CollabRole.EDITOR, acceptedAt: { not: null } },
         },

@@ -95,7 +95,7 @@ export async function applyTemplate(
     select: { id: true, gardenId: true },
   });
   if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
-  await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
+  await assertBedWritable(bed.gardenId, bedId);
 
   const cells = await db.cell.findMany({
     where: { bedId, OR: template.assignments.map((a) => ({ row: a.row, col: a.col })) },
@@ -148,8 +148,8 @@ export async function duplicateBed(
     },
   });
   if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
-  await assertGardenWritable(user.id, user.subscriptionTier, bed.gardenId);
-  await checkCanCreateBed(bed.gardenId, user.subscriptionTier);
+  await assertGardenWritable(bed.gardenId);
+  await checkCanCreateBed(bed.gardenId);
 
   const newBedId = await createBed({
     gardenId: bed.gardenId,

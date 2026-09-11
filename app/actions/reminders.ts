@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ReminderType, type PlantingStatus } from "@/lib/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
-import { customReminderSchema, successionReminderSchema } from "@/lib/validation";
+import { customReminderSchema, successionReminderSchema, MAX_OPEN_CUSTOM_REMINDERS } from "@/lib/validation";
 import { syncRemindersToStatus } from "@/lib/services/reminders";
 
 export async function createCustomReminder(input: {
@@ -23,6 +23,19 @@ export async function createCustomReminder(input: {
   }
   const data = parsed.data;
   const title = data.title;
+
+  // Open custom reminders feed the hourly dispatch batch (200/run) and
+  // outbound email, so an unbounded pile from one account could starve
+  // everyone else's. Nobody needs 200 waiting.
+  const open = await db.reminder.count({
+    where: { userId: user.id, type: ReminderType.CUSTOM, sentAt: null, dismissed: false },
+  });
+  if (open >= MAX_OPEN_CUSTOM_REMINDERS) {
+    throw new ActionError(
+      "INVALID_INPUT",
+      `You have ${MAX_OPEN_CUSTOM_REMINDERS} reminders waiting — clear some first.`
+    );
+  }
 
   const when = new Date(data.scheduledAt);
   if (when.getTime() < Date.now()) {

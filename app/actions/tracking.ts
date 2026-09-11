@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { put } from "@vercel/blob";
 import { checkCanUploadPhoto, isProFeature, TierLimitError } from "@/lib/tier";
-import { validatePhotoUpload } from "@/lib/validation";
+import { validatePhotoUpload, harvestLogSchema, seedInventorySchema, requiredText, optionalText, MAX_NOTES_CHARS, MAX_CAPTION_CHARS } from "@/lib/validation";
 
 // harvestedAt is DATE-ONLY: stored as UTC midnight of the user's calendar
 // day — the same convention system reminders use — and rendered with
@@ -51,17 +51,22 @@ export async function addHarvestLog(
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
-  const harvestedAt = parseHarvestDate(data.harvestedAt, user.timezone || "UTC");
+  const parsed = harvestLogSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new ActionError("INVALID_INPUT", "Enter a quantity greater than 0 and a unit.");
+  }
+  const input = parsed.data;
+  const harvestedAt = parseHarvestDate(input.harvestedAt, user.timezone || "UTC");
 
   try {
     await db.harvestLog.create({
       data: {
         plantingId,
-        quantity: data.quantity,
-        unit: data.unit,
-        notes: data.notes || null,
+        quantity: input.quantity,
+        unit: input.unit,
+        notes: input.notes || null,
         harvestedAt,
-        clientId: data.clientId || null,
+        clientId: input.clientId || null,
       },
     });
   } catch (err) {
@@ -130,7 +135,7 @@ export async function uploadPhoto(plantingId: string, formData: FormData) {
     access: "public",
   });
 
-  const caption = (formData.get("caption") as string) || null;
+  const caption = optionalText(formData.get("caption"), "Caption", MAX_CAPTION_CHARS);
   await db.plantingPhoto.create({
     data: { plantingId, url: blob.url, caption },
   });
@@ -158,7 +163,8 @@ export async function addGrowthNote(plantingId: string, body: string) {
   const user = await requireUser();
   const planting = await resolvePlanting(plantingId, user.id);
 
-  await db.growthNote.create({ data: { plantingId, body } });
+  const text = requiredText(body, "Note", MAX_NOTES_CHARS);
+  await db.growthNote.create({ data: { plantingId, body: text } });
   revalidatePlanting(planting);
 }
 
@@ -188,20 +194,25 @@ export async function upsertSeedInventory(data: {
 }) {
   const user = await requireUser();
   if (!isProFeature(user.subscriptionTier)) throw new TierLimitError();
+  const parsed = seedInventorySchema.safeParse(data);
+  if (!parsed.success) {
+    throw new ActionError("INVALID_INPUT", "Check the variety, quantity and unit.");
+  }
+  const input = parsed.data;
   const row = await db.seedInventory.upsert({
-    where: { userId_plantId_variety: { userId: user.id, plantId: data.plantId, variety: data.variety } },
+    where: { userId_plantId_variety: { userId: user.id, plantId: input.plantId, variety: input.variety } },
     // Explicit fields only — the payload comes from the client, and spreading
     // it after userId let a caller override userId/id and write into
     // another user's inventory.
     create: {
       userId: user.id,
-      plantId: data.plantId,
-      variety: data.variety,
-      quantity: data.quantity,
-      unit: data.unit,
-      notes: data.notes || null,
+      plantId: input.plantId,
+      variety: input.variety,
+      quantity: input.quantity,
+      unit: input.unit,
+      notes: input.notes || null,
     },
-    update: { quantity: data.quantity, unit: data.unit, notes: data.notes || null },
+    update: { quantity: input.quantity, unit: input.unit, notes: input.notes || null },
   });
   revalidatePath("/inventory");
   // Returned so callers (shopping-list check-off) can offer an Undo that

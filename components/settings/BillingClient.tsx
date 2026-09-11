@@ -10,7 +10,7 @@ import Link from "next/link";
 // one real garden with the whole growing loop; Pro sells scale plus the
 // year-over-year layer.
 const FREE_FEATURES = [
-  "1 garden, 3 beds",
+  "1 garden, 5 beds",
   "Full plant library",
   "Visual bed planner",
   "Companion planting warnings",

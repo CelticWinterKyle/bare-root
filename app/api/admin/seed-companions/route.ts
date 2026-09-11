@@ -124,9 +124,10 @@ const PAIRS: Pair[] = [
  * Owner-only one-time seed: adds curated companion relationships for the
  * canonical plants that had none. Idempotent — skips any pair already present
  * in either direction, and any pair whose plant/companion name isn't found.
- *   GET /api/admin/seed-companions
+ *   POST /api/admin/seed-companions  (POST only — a mutating GET is CSRF-able;
+ *   from the owner's devtools console: fetch(url, { method: "POST" }))
  */
-export async function GET() {
+export async function POST() {
   const me = await getCurrentUser();
   if (!me || me.email.toLowerCase() !== OWNER_EMAIL) {
     return new NextResponse("Unauthorized", { status: 401 });

@@ -178,7 +178,7 @@ export async function assignPlant(
   });
   if (!season) throw new ActionError("NOT_FOUND", "Season not found");
 
-  await assertBedWritable(user.id, user.subscriptionTier, cell.bed.gardenId, cell.bedId);
+  await assertBedWritable(cell.bed.gardenId, cell.bedId);
 
   const plant = await db.plantLibrary.findUniqueOrThrow({
     where: { id: plantId },
@@ -368,7 +368,7 @@ export async function movePlanting(
   });
   if (!newAnchor) throw new ActionError("NOT_FOUND", "Target cell not found");
 
-  await assertBedWritable(user.id, user.subscriptionTier, newAnchor.bed.gardenId, newAnchor.bedId);
+  await assertBedWritable(newAnchor.bed.gardenId, newAnchor.bedId);
 
   // Same-bed enforcement — cross-bed moves are out of scope for v1.
   if (planting.cell.bedId !== newAnchor.bedId) {

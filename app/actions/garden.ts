@@ -12,7 +12,7 @@ import {
   clearActiveGarden,
   getActiveGardenCookie,
 } from "@/lib/active-garden";
-import { validateGardenDimensions } from "@/lib/validation";
+import { validateGardenDimensions, requiredText, optionalText, validateFrostMmdd, MAX_NAME_CHARS, MAX_NOTES_CHARS } from "@/lib/validation";
 
 export async function updateBedPosition(bedId: string, xPosition: number, yPosition: number) {
   const user = await requireUser();
@@ -22,7 +22,7 @@ export async function updateBedPosition(bedId: string, xPosition: number, yPosit
   });
   if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
-  await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
+  await assertBedWritable(bed.gardenId, bedId);
 
   await db.bed.update({ where: { id: bedId }, data: { xPosition, yPosition } });
   revalidatePath(`/garden/${bed.gardenId}`);
@@ -46,7 +46,7 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
   });
   if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
-  await assertGardenWritable(user.id, user.subscriptionTier, gardenId);
+  await assertGardenWritable(gardenId);
 
   validateGardenDimensions({
     widthFt: input.widthFt ?? garden.widthFt,
@@ -55,12 +55,10 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
 
   const data: Record<string, unknown> = {};
 
-  if (input.name !== undefined) {
-    const name = input.name.trim();
-    if (!name) throw new ActionError("INVALID_INPUT", "Name is required");
-    data.name = name;
+  if (input.name !== undefined) data.name = requiredText(input.name, "Name", MAX_NAME_CHARS);
+  if (input.description !== undefined) {
+    data.description = optionalText(input.description, "Description", MAX_NOTES_CHARS);
   }
-  if (input.description !== undefined) data.description = input.description?.trim() || null;
   if (input.widthFt !== undefined) data.widthFt = input.widthFt;
   if (input.heightFt !== undefined) data.heightFt = input.heightFt;
 
@@ -84,22 +82,8 @@ export async function updateGarden(gardenId: string, input: UpdateGardenInput): 
   }
 
   // Explicit frost-date overrides (always win over zip-derived values).
-  // Validate the MM-DD format and real month/day ranges — an unchecked
-  // string like "13-99" silently rolls over into a wrong date downstream
-  // (JS Date overflow), producing plausible-but-wrong reminder timing.
-  const validFrost = (v: string | null | undefined): string | null => {
-    const t = (v ?? "").trim();
-    if (!t) return null;
-    const m = /^(\d{2})-(\d{2})$/.exec(t);
-    const month = m ? Number(m[1]) : 0;
-    const day = m ? Number(m[2]) : 0;
-    if (!m || month < 1 || month > 12 || day < 1 || day > 31) {
-      throw new ActionError("INVALID_INPUT", "Frost date must be a valid MM-DD (e.g. 04-15)");
-    }
-    return t;
-  };
-  if (input.lastFrostDate !== undefined) data.lastFrostDate = validFrost(input.lastFrostDate);
-  if (input.firstFrostDate !== undefined) data.firstFrostDate = validFrost(input.firstFrostDate);
+  if (input.lastFrostDate !== undefined) data.lastFrostDate = validateFrostMmdd(input.lastFrostDate);
+  if (input.firstFrostDate !== undefined) data.firstFrostDate = validateFrostMmdd(input.firstFrostDate);
 
   await db.garden.update({ where: { id: gardenId }, data });
   revalidatePath(`/garden/${gardenId}`);
@@ -160,8 +144,7 @@ export async function createGarden(input: CreateGardenInput): Promise<string> {
   const user = await requireUser();
   await checkCanCreateGarden(user.id, user.subscriptionTier);
 
-  const name = input.gardenName.trim();
-  if (!name) throw new ActionError("INVALID_INPUT", "Garden name is required");
+  const name = requiredText(input.gardenName, "Garden name", MAX_NAME_CHARS);
   validateGardenDimensions(input);
 
   const now = new Date();
@@ -182,8 +165,9 @@ export async function createGarden(input: CreateGardenInput): Promise<string> {
         locationZip: input.zip || null,
         locationDisplay: input.zone ? `Zone ${input.zone}` : null,
         usdaZone: input.zone || null,
-        lastFrostDate: input.lastFrostDate,
-        firstFrostDate: input.firstFrostDate,
+        // Validated here too — the wizard path is what every new user hits.
+        lastFrostDate: validateFrostMmdd(input.lastFrostDate),
+        firstFrostDate: validateFrostMmdd(input.firstFrostDate),
         widthFt: input.widthFt,
         heightFt: input.heightFt,
       },

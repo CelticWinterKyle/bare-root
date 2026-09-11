@@ -1,5 +1,6 @@
 "use server";
 
+import { MAX_INVITES_PER_DAY } from "@/lib/validation";
 import { TierLimitError } from "@/lib/tier";
 import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/auth";
@@ -48,7 +49,22 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
   });
   if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
-  const lowerEmail = email.toLowerCase();
+  const lowerEmail = email.trim().toLowerCase();
+  if (lowerEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lowerEmail)) {
+    throw new ActionError("INVALID_INPUT", "Enter a valid email address.");
+  }
+
+  // Outbound mail from a Pro account is otherwise unbounded (re-inviting
+  // re-sends). A day's worth of real invites is a handful.
+  const sentToday = await db.gardenInvitation.count({
+    where: { garden: { userId: user.id }, invitedAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+  });
+  if (sentToday >= MAX_INVITES_PER_DAY) {
+    throw new ActionError(
+      "INVALID_INPUT",
+      `You've sent ${MAX_INVITES_PER_DAY} invitations today — try again tomorrow.`
+    );
+  }
 
   // Can't invite yourself
   if (lowerEmail === user.email.toLowerCase()) throw new ActionError("CANNOT_INVITE_SELF");
@@ -83,7 +99,8 @@ export async function inviteCollaborator(gardenId: string, email: string, role: 
   await db.gardenInvitation.upsert({
     where: { gardenId_email: { gardenId, email: lowerEmail } },
     create: { gardenId, email: lowerEmail, role, token, expiresAt },
-    update: { role, token, expiresAt, acceptedAt: null },
+    // invitedAt bumps on re-send so the daily cap counts it.
+    update: { role, token, expiresAt, acceptedAt: null, invitedAt: new Date() },
   });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";

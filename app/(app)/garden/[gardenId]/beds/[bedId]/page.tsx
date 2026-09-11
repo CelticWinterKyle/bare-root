@@ -252,7 +252,9 @@ export default async function BedPage({
     getLockedBedIds(gardenId, ownerTier),
   ]);
   const locked = lockedGardenIds.includes(gardenId) || lockedBedIds.includes(bedId);
-  const canEdit = canEditByRole && !locked;
+  // Editors also need a Pro owner (collaborators are a Pro feature).
+  const collabBlocked = !isOwner && canEditByRole && ownerTier !== "PRO";
+  const canEdit = canEditByRole && !locked && !collabBlocked;
 
   // Crop rotation warnings for this bed
   const rotationWarnings = viewingSeason
@@ -446,7 +448,7 @@ export default async function BedPage({
 
   return (
     <div className="container-wide w-full flex flex-col">
-      {locked && (
+      {(locked || collabBlocked) && (
         <div style={{ background: "#FFF8E7", borderBottom: "1px solid #FDE68A", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
           {isOwner ? (
             <>

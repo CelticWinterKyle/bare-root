@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenAccessFilter } from "@/lib/permissions";
-import { getLockedGardenIds } from "@/lib/tier";
+import { getLockedGardenIds, TIER_LIMITS } from "@/lib/tier";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Printer, Sprout } from "lucide-react";
@@ -83,8 +83,8 @@ export default async function GardenPage({
   const bedCount = garden.beds.length;
 
   // Bed limit follows the OWNER's tier, not the viewer's. Otherwise a
-  // free-plan collaborator viewing a Pro owner's 5-bed garden would
-  // mistakenly hit the 3-bed limit.
+  // free-plan collaborator viewing a Pro owner's 12-bed garden would
+  // mistakenly hit the free bed limit.
   const isOwner = garden.userId === user.id;
   const ownerTier = isOwner
     ? user.subscriptionTier
@@ -92,7 +92,7 @@ export default async function GardenPage({
         where: { id: garden.userId },
         select: { subscriptionTier: true },
       }))?.subscriptionTier ?? "FREE";
-  const atBedLimit = ownerTier === "FREE" && bedCount >= 3;
+  const atBedLimit = ownerTier === "FREE" && bedCount >= TIER_LIMITS.FREE.bedsPerGarden;
 
   // Resolve the viewer's role so the UI can hide edit affordances from
   // VIEWER collaborators (every edit would just fail server-side anyway).
@@ -105,7 +105,9 @@ export default async function GardenPage({
           select: { role: true },
         })
       )?.role ?? "VIEWER";
-  const canEdit = role !== "VIEWER";
+  // Editors need a Pro owner: collaborators are a Pro feature and turn
+  // read-only when the owner drops to Free (gardenEditFilter enforces it).
+  const canEdit = role === "OWNER" || (role === "EDITOR" && ownerTier === "PRO");
 
   // Stale-while-revalidate: only the first-ever view blocks on OpenWeather.
   let weatherCurrent: CurrentWeather | null = null;
@@ -194,6 +196,11 @@ export default async function GardenPage({
           This garden is read-only because it&apos;s over your free plan limit.{" "}
           <Link href="/settings/billing" style={{ textDecoration: "underline", color: "#7A4A0A" }}>Upgrade to Pro</Link>{" "}
           to edit it, or delete extras to get back under the limit.
+        </div>
+      )}
+      {role === "EDITOR" && ownerTier !== "PRO" && (
+        <div style={{ background: "#FFF8E7", borderBottom: "1px solid #FDE68A", color: "#7A4A0A", fontSize: "13px", padding: "10px 22px", textAlign: "center" }}>
+          This garden is read-only until its owner is back on Pro.
         </div>
       )}
       {/* ── Page header ──────────────────────────────────────────────────── */}
@@ -520,7 +527,7 @@ export default async function GardenPage({
         {atBedLimit && (
           <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", textAlign: "center", border: "1px dashed #D4E8BE" }}>
             <p style={{ fontSize: "14px", color: "#6B6B5A" }}>
-              3 beds used on Free plan.{" "}
+              {TIER_LIMITS.FREE.bedsPerGarden} beds used on Free plan.{" "}
               <Link href="/settings/billing" style={{ color: "#D4820A" }}>
                 Upgrade to Pro
               </Link>{" "}

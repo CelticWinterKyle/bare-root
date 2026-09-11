@@ -76,20 +76,16 @@ async function runCleanup() {
   };
 }
 
+// POST only. A GET that mutates is CSRF-able: any page the owner visits can
+// navigate them here and the session cookie rides along. Two ways in:
+//   x-admin-secret header (curl -X POST -H "x-admin-secret: $CRON_SECRET" …)
+//   or the owner's session from the app's devtools console:
+//   fetch("/api/admin/cleanup-reminders", { method: "POST" }).then(r => r.json())
 export async function POST(req: Request) {
   const secret = req.headers.get("x-admin-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-  return NextResponse.json(await runCleanup());
-}
-
-export async function GET() {
-  // Owner-only browser trigger — uses the Clerk session, so no secret is
-  // needed (the CRON_SECRET is a write-only Vercel var and can't be read back).
-  const user = await getCurrentUser();
-  if (!user || user.email.toLowerCase() !== OWNER_EMAIL) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const bySecret = !!secret && secret === process.env.CRON_SECRET;
+  const user = bySecret ? null : await getCurrentUser();
+  const byOwner = !!user && user.email.toLowerCase() === OWNER_EMAIL;
+  if (!bySecret && !byOwner) return new NextResponse("Unauthorized", { status: 401 });
   return NextResponse.json(await runCleanup());
 }

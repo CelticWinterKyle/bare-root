@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { checkCanCreateBed, assertGardenWritable, assertBedWritable } from "@/lib/tier";
-import { validateBedDimensions } from "@/lib/validation";
+import { validateBedDimensions, requiredText, optionalText, MAX_NAME_CHARS } from "@/lib/validation";
 
 type CreateBedInput = {
   gardenId: string;
@@ -23,8 +23,8 @@ export async function createBed(input: CreateBedInput): Promise<string> {
   });
   if (!garden) throw new ActionError("NOT_FOUND", "Garden not found");
 
-  await assertGardenWritable(user.id, user.subscriptionTier, input.gardenId);
-  await checkCanCreateBed(input.gardenId, user.subscriptionTier);
+  await assertGardenWritable(input.gardenId);
+  await checkCanCreateBed(input.gardenId);
 
   const { gridCols, gridRows } = validateBedDimensions(input);
 
@@ -36,7 +36,7 @@ export async function createBed(input: CreateBedInput): Promise<string> {
     const bed = await tx.bed.create({
       data: {
         gardenId: input.gardenId,
-        name: input.name,
+        name: requiredText(input.name, "Bed name", MAX_NAME_CHARS),
         xPosition: (existingCount % 3) * (input.widthFt + 1),
         yPosition: Math.floor(existingCount / 3) * (input.heightFt + 1),
         widthFt: input.widthFt,
@@ -96,7 +96,7 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
   });
   if (!bed) throw new ActionError("NOT_FOUND", "Bed not found");
 
-  await assertBedWritable(user.id, user.subscriptionTier, bed.gardenId, bedId);
+  await assertBedWritable(bed.gardenId, bedId);
 
   const nextWidthFt = input.widthFt ?? bed.widthFt;
   const nextHeightFt = input.heightFt ?? bed.heightFt;
@@ -153,7 +153,7 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
     await tx.bed.update({
       where: { id: bedId },
       data: {
-        name: input.name?.trim() || bed.name,
+        name: optionalText(input.name, "Bed name", MAX_NAME_CHARS) ?? bed.name,
         widthFt: nextWidthFt,
         heightFt: nextHeightFt,
         cellSizeIn: nextCellSizeIn,

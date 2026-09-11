@@ -3,7 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { ensureDbUser } from "@/lib/ensure-user";
-import { BETA_COOKIE, isValidBetaCode } from "@/lib/beta";
+import { BETA_COOKIE, BETA_MAX_USES, isValidBetaCode } from "@/lib/beta";
 import { redirect } from "next/navigation";
 
 // React.cache: the layout AND every page call this independently, so
@@ -33,10 +33,15 @@ export const getCurrentUser = cache(async () => {
     try {
       const beta = (await cookies()).get(BETA_COOKIE)?.value;
       if (isValidBetaCode(beta)) {
-        user = await db.user.update({
-          where: { id: user.id },
-          data: { subscriptionTier: "PRO" },
-        });
+        // Cap total grants so a leaked link can't hand out unlimited Pro;
+        // betaGrantedAt is the audit trail (and the counter).
+        const granted = await db.user.count({ where: { betaGrantedAt: { not: null } } });
+        if (granted < BETA_MAX_USES) {
+          user = await db.user.update({
+            where: { id: user.id },
+            data: { subscriptionTier: "PRO", betaGrantedAt: new Date() },
+          });
+        }
       }
     } catch {
       // cookies() unavailable or update failed — non-fatal, account stays Free.

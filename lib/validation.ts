@@ -111,3 +111,65 @@ export function validatePhotoUpload(file: File): string {
   if (file.size > MAX_PHOTO_BYTES) throw new ActionError("INVALID_INPUT", "Photos must be 10 MB or smaller");
   return ext;
 }
+
+// ─── Free-text and numeric bounds ─────────────────────────────────────────────
+// Every user-typed string gets a ceiling. Nothing here is a real limit for a
+// gardener; they exist so a hand-crafted request can't store megabytes per
+// row or make a page render unbounded text.
+export const MAX_NAME_CHARS = 100;
+export const MAX_NOTES_CHARS = 2000;
+export const MAX_CAPTION_CHARS = 200;
+export const MAX_UNIT_CHARS = 20;
+export const MAX_HARVEST_QUANTITY = 100_000;
+export const MAX_OPEN_CUSTOM_REMINDERS = 200;
+export const MAX_INVITES_PER_DAY = 10;
+
+/** Trimmed text or null when blank; throws when over `max`. */
+export function optionalText(value: unknown, label: string, max: number): string | null {
+  const t = typeof value === "string" ? value.trim() : "";
+  if (!t) return null;
+  if (t.length > max) {
+    throw new ActionError("INVALID_INPUT", `${label} must be ${max} characters or fewer`);
+  }
+  return t;
+}
+
+/** Trimmed text; throws when blank or over `max`. */
+export function requiredText(value: unknown, label: string, max: number): string {
+  const t = optionalText(value, label, max);
+  if (!t) throw new ActionError("INVALID_INPUT", `${label} is required`);
+  return t;
+}
+
+export const harvestLogSchema = z.object({
+  quantity: z.number().finite().positive().max(MAX_HARVEST_QUANTITY),
+  unit: z.string().trim().min(1).max(MAX_UNIT_CHARS),
+  notes: z.string().trim().max(MAX_NOTES_CHARS).optional(),
+  harvestedAt: z.string().max(40).optional(),
+  clientId: z.string().max(64).optional(),
+});
+
+export const seedInventorySchema = z.object({
+  plantId: z.string().min(1).max(64),
+  variety: z.string().trim().max(MAX_NAME_CHARS),
+  quantity: z.number().finite().min(0).max(MAX_HARVEST_QUANTITY),
+  unit: z.string().trim().min(1).max(MAX_UNIT_CHARS),
+  notes: z.string().trim().max(MAX_NOTES_CHARS).optional(),
+});
+
+/**
+ * MM-DD frost date or null. Throws on anything else — an unchecked string
+ * like "13-99" silently rolls over into a wrong date downstream (JS Date
+ * overflow), producing plausible-but-wrong reminder timing.
+ */
+export function validateFrostMmdd(v: string | null | undefined): string | null {
+  const t = (v ?? "").trim();
+  if (!t) return null;
+  const m = /^(\d{2})-(\d{2})$/.exec(t);
+  const month = m ? Number(m[1]) : 0;
+  const day = m ? Number(m[2]) : 0;
+  if (!m || month < 1 || month > 12 || day < 1 || day > 31) {
+    throw new ActionError("INVALID_INPUT", "Frost date must be a valid MM-DD (e.g. 04-15)");
+  }
+  return t;
+}
