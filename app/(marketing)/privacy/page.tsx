@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         style={{ padding: "56px 24px 64px", maxWidth: 760, margin: "0 auto" }}
       >
         <div style={{ marginBottom: 16 }}>
-          <MarketingEyebrow>§ Legal · Privacy</MarketingEyebrow>
+          <MarketingEyebrow>Privacy policy</MarketingEyebrow>
         </div>
         <h1
           style={{
@@ -48,15 +48,13 @@ export default function PrivacyPage() {
         </h1>
         <p
           style={{
-            fontFamily: "var(--font-ibm-plex-mono), monospace",
-            fontSize: 10,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
+            fontWeight: 500, fontFamily: "var(--font-body)",
+            fontSize: 12,
             color: "#ADADAA",
             marginBottom: 40,
           }}
         >
-          Last updated · {LAST_UPDATED}
+          Last updated {LAST_UPDATED}
         </p>
 
         <Section title="Summary">

@@ -314,8 +314,7 @@ export default async function LandingPage() {
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
           <div className={styles.heroMeta}>
-            <span className={styles.eyebrow}>Issue 01 · Spring 2026</span>
-            <span className={styles.heroIssue}>Volume One</span>
+            <span className={styles.eyebrow}>A visual planner for raised-bed gardens</span>
           </div>
           <h1 className={styles.heroTitle}>
             Plan the garden<br />
@@ -333,7 +332,7 @@ export default async function LandingPage() {
             </Link>
             <Link href="/pricing" className={`${styles.btn} ${styles.btnGhost}`}>See pricing</Link>
           </div>
-          <div className={styles.heroTrust}>No credit card · Free forever tier</div>
+          <div className={styles.heroTrust}>No credit card. Free forever.</div>
           <div className={styles.heroTags}>
             <span className={`${styles.tag} ${styles.tagGreen}`}>Zone-aware</span>
             <span className={`${styles.tag} ${styles.tagAmber}`}>Companion science</span>
@@ -343,14 +342,14 @@ export default async function LandingPage() {
         </div>
 
         <div className={styles.heroCanvas}>
-          <div className={styles.heroCanvasPill}>Garden Canvas · Interactive</div>
-          <div className={styles.heroCanvasHint}>Drag to rearrange · scroll to zoom</div>
+          <div className={styles.heroCanvasPill}>Garden canvas</div>
+          <div className={styles.heroCanvasHint}>Drag to rearrange, scroll to zoom</div>
           <GardenIsoSvg />
         </div>
       </section>
 
       <div className={styles.scrollCue}>
-        <span className={styles.cueLabel}>Scroll · The field guide</span>
+        <span className={styles.cueLabel}>The field guide</span>
         <div className={styles.scrollCueLine} />
         <span className={styles.cueLabel}>↓</span>
       </div>
@@ -358,7 +357,6 @@ export default async function LandingPage() {
       {/* ───── Field guide intro ───── */}
       <section className={styles.fieldGuide} id="field-guide">
         <aside className={styles.fieldGuideMeta}>
-          <span className={styles.sectionNum}>§ 01</span>
           <span className={styles.fieldGuideTitle}>A new<br />field guide<br />for the home<br />garden.</span>
         </aside>
         <div className={styles.fieldGuideBody}>
@@ -387,7 +385,7 @@ export default async function LandingPage() {
       <section className={styles.canvasShowcase}>
         <div className={styles.canvasShowcaseInner}>
           <div className={styles.canvasShowcaseHeader}>
-            <span className={styles.eyebrow}>§ 02 · The Canvas</span>
+            <span className={styles.eyebrow}>The canvas</span>
             <h2>Drag, drop, and <em>actually see</em> your garden.</h2>
             <p>
               Top-down beds with real proportions. Plants take the room they
@@ -503,7 +501,7 @@ export default async function LandingPage() {
             <div className={styles.climateRow}>
               <div className={styles.climateTemp}>68<sup>°</sup></div>
               <div className={styles.climateMeta}>
-                <div className={styles.climateLoc}>Zone 7b · 45213</div>
+                <div className={styles.climateLoc}>Zone 7b, 45213</div>
                 <div className={styles.climateDesc}>Partly cloudy</div>
               </div>
             </div>
@@ -512,13 +510,13 @@ export default async function LandingPage() {
               <div className={styles.climateLi}>
                 <span className={styles.climateLiDot} />
                 <span className={styles.climateLiName}>Last frost</span>
-                <span className={styles.climateLiEvent}>Average · zone 7b</span>
+                <span className={styles.climateLiEvent}>Average for zone 7b</span>
                 <span className={styles.climateLiDate}>Apr 15</span>
               </div>
               <div className={styles.climateLi}>
                 <span className={styles.climateLiDot} />
                 <span className={styles.climateLiName}>First frost</span>
-                <span className={styles.climateLiEvent}>Average · zone 7b</span>
+                <span className={styles.climateLiEvent}>Average for zone 7b</span>
                 <span className={styles.climateLiDate}>Oct 22</span>
               </div>
               <div className={styles.climateLi}>
@@ -533,7 +531,7 @@ export default async function LandingPage() {
 
         <div className={styles.duetCard}>
           <div className={styles.duetNum}>04</div>
-          <span className={styles.eyebrow}>Personal calendar</span>
+          <span className={styles.eyebrow}>Your calendar</span>
           <h3>The right thing, at the <em>right week</em>.</h3>
           <p>
             Pulled together from each plant&apos;s days-to-maturity, your local
@@ -587,7 +585,7 @@ export default async function LandingPage() {
       <section className={styles.companions}>
         <div className={styles.companionsInner}>
           <div className={styles.companionsText}>
-            <span className={styles.eyebrow}>§ 05 · Companion science</span>
+            <span className={styles.eyebrow}>Companion science</span>
             <h2>What grows well together, <em>and what won&apos;t</em>.</h2>
             <p>
               Centuries of gardener wisdom plus modern horticultural research,
@@ -596,7 +594,7 @@ export default async function LandingPage() {
               keeps enemies apart.
             </p>
             <div className={styles.companionsStatLine}>
-              <strong>129 companion relationships</strong> · across <strong>153 curated plants</strong>
+              <strong>129 companion relationships</strong> across <strong>153 curated plants</strong>
             </div>
           </div>
 
@@ -623,7 +621,7 @@ export default async function LandingPage() {
         <div className={styles.pullquoteMark}>&ldquo;</div>
         <q>I&apos;ve been gardening for fifteen years and I&apos;ve never had a tool actually <em>think</em> the way I think about my beds.</q>
         <div className={styles.pullquoteAttribution}>
-          Alpha tester <span className={styles.pullquoteName}>Robyn W.</span> · 7b · raised beds
+          <span className={styles.pullquoteName}>Robyn W.</span>, alpha tester, zone 7b, raised beds
         </div>
       </section>
 
@@ -670,7 +668,7 @@ export default async function LandingPage() {
       {/* ───── Ledger ───── */}
       <section className={styles.ledger}>
         <div className={styles.ledgerHead}>
-          <span className={styles.eyebrow}>§ 07 · Everything in the box</span>
+          <span className={styles.eyebrow}>What&apos;s in the box</span>
           <h2>One tool for the <em>whole season</em>.</h2>
         </div>
 
@@ -690,14 +688,14 @@ export default async function LandingPage() {
       {/* ───── Pricing ───── */}
       <section className={styles.pricing} id="pricing">
         <div className={styles.pricingHead}>
-          <span className={styles.eyebrow}>§ 08 · Honest pricing</span>
+          <span className={styles.eyebrow}>Honest pricing</span>
           <h2>Free to start. <em>Upgrade</em> when you want more.</h2>
           <p>No ads. No data sales. No surprise charges.</p>
         </div>
 
         <div className={styles.pricingGrid}>
           <div className={`${styles.plan} ${styles.planFree}`}>
-            <div className={styles.planName}>Free · Forever</div>
+            <div className={styles.planName}>Free, forever</div>
             <div className={styles.planPrice}>$0</div>
             <div className={styles.planPeriod}>No card required</div>
             <ul className={styles.planFeatures}>
@@ -716,11 +714,11 @@ export default async function LandingPage() {
 
           <div className={`${styles.plan} ${styles.planPro}`}>
             <span className={styles.planTrial}>7-day trial</span>
-            <div className={styles.planName}>Pro · Everything else</div>
+            <div className={styles.planName}>Pro</div>
             <div className={styles.planPrice}>
               $<em>4</em><sup style={{ fontSize: 28 }}>58</sup>
             </div>
-            <div className={styles.planPeriod}>/mo · billed annually · or $7/mo</div>
+            <div className={styles.planPeriod}>per month, billed annually, or $7 monthly</div>
             <ul className={styles.planFeatures}>
               <li>Everything in Free</li>
               <li>Unlimited gardens + beds</li>
@@ -731,7 +729,7 @@ export default async function LandingPage() {
               <li>Seed inventory + shopping list</li>
             </ul>
             <Link href="/sign-up" className={styles.planCta}>Start 7-day trial</Link>
-            <div className={styles.planFine}>No charge for 7 days · cancel anytime</div>
+            <div className={styles.planFine}>No charge for 7 days. Cancel anytime.</div>
           </div>
         </div>
       </section>
@@ -786,8 +784,8 @@ export default async function LandingPage() {
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <span>© 2026 Bare Root · bareroot.garden</span>
-          <span>Companion data via OpenFarm · CC BY 4.0</span>
+          <span>© 2026 Bare Root, bareroot.garden</span>
+          <span>Companion data via OpenFarm, CC BY 4.0</span>
         </div>
       </footer>
 

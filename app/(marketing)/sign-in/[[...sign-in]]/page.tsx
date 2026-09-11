@@ -16,7 +16,7 @@ export default function SignInPage() {
       >
         <div style={{ textAlign: "center", maxWidth: 440 }}>
           <div style={{ marginBottom: 14, display: "inline-flex" }}>
-            <MarketingEyebrow>§ Welcome back</MarketingEyebrow>
+            <MarketingEyebrow>Welcome back</MarketingEyebrow>
           </div>
           <h1
             style={{

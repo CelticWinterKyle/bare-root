@@ -134,7 +134,7 @@ export function MarketingChrome({
                 Terms
               </Link>
             </div>
-            <span>Bare Root · 2026</span>
+            <span>Bare Root, 2026</span>
           </div>
         </footer>
       )}
@@ -147,10 +147,11 @@ export function MarketingEyebrow({ children }: { children: React.ReactNode }) {
   return (
     <span
       style={{
-        fontFamily: "var(--font-ibm-plex-mono), monospace",
-        fontSize: 11,
-        letterSpacing: "0.22em",
-        textTransform: "uppercase",
+        // Eyebrow role: the wordmark's italic voice, sentence case (see
+        // .eyebrow in globals.css). No tracking, no caps, no section marks.
+        fontFamily: "var(--font-fraunces), Georgia, serif",
+        fontStyle: "italic",
+        fontSize: 13,
         color: "#7DA84E",
         fontWeight: 500,
         display: "inline-flex",

@@ -17,7 +17,7 @@ export default function SignUpPage() {
       >
         <div style={{ textAlign: "center", maxWidth: 440 }}>
           <div style={{ marginBottom: 14, display: "inline-flex" }}>
-            <MarketingEyebrow>§ Start free</MarketingEyebrow>
+            <MarketingEyebrow>Start free</MarketingEyebrow>
           </div>
           <h1
             style={{

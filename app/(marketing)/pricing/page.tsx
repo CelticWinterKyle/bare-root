@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pricing | Bare Root",
     description:
-      "Free to start. Upgrade when you want more. Bare Root Pro is $4/mo billed annually, or $7/mo billed monthly.",
+      "Free to start. Upgrade when you want more. Bare Root Pro is $4/mo billed annually, or $7 a month, billed monthly.",
     url: "/pricing",
     siteName: "Bare Root",
     type: "website",
@@ -99,7 +99,7 @@ export default async function PricingPage() {
         style={{ padding: "80px 32px 56px", textAlign: "center" }}
       >
         <div style={{ marginBottom: 18 }}>
-          <MarketingEyebrow>§ Pricing · Two tiers</MarketingEyebrow>
+          <MarketingEyebrow>Pricing</MarketingEyebrow>
         </div>
         <h1
           style={{
@@ -147,10 +147,8 @@ export default async function PricingPage() {
           >
             <p
               style={{
-                fontFamily: "var(--font-ibm-plex-mono), monospace",
-                fontSize: 10,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
+                fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic",
+                fontSize: 13,
                 color: "#6B6B5A",
                 marginBottom: 12,
               }}
@@ -221,10 +219,8 @@ export default async function PricingPage() {
                 background: "rgba(168,216,112,0.18)",
                 border: "1px solid rgba(168,216,112,0.3)",
                 color: "#A8D870",
-                fontSize: 9,
-                fontFamily: "var(--font-ibm-plex-mono), monospace",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
+                fontSize: 11,
+                fontFamily: "var(--font-body)",
                 padding: "4px 9px",
                 borderRadius: 100,
                 fontWeight: 600,
@@ -234,10 +230,8 @@ export default async function PricingPage() {
             </span>
             <p
               style={{
-                fontFamily: "var(--font-ibm-plex-mono), monospace",
-                fontSize: 10,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
+                fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic",
+                fontSize: 13,
                 color: "rgba(168,216,112,0.7)",
                 marginBottom: 12,
               }}
@@ -261,7 +255,7 @@ export default async function PricingPage() {
               <span style={{ fontSize: 13, color: "rgba(253,253,248,0.6)" }}>/mo, billed annually</span>
             </div>
             <p style={{ fontSize: 13, color: "rgba(253,253,248,0.55)", marginBottom: 24 }}>
-              or $7/mo billed monthly
+              or $7 a month, billed monthly
             </p>
             <Link
               href={ctaHref}
@@ -298,7 +292,7 @@ export default async function PricingPage() {
       {/* Comparison table */}
       <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
         <div style={{ marginBottom: 24 }}>
-          <MarketingEyebrow>§ Compare</MarketingEyebrow>
+          <MarketingEyebrow>Compare plans</MarketingEyebrow>
         </div>
         <div
           style={{
@@ -315,10 +309,8 @@ export default async function PricingPage() {
                   style={{
                     textAlign: "left",
                     padding: "14px 20px",
-                    fontFamily: "var(--font-ibm-plex-mono), monospace",
-                    fontSize: 10,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
+                    fontFamily: "var(--font-body)",
+                    fontSize: 12,
                     color: "#6B6B5A",
                     fontWeight: 500,
                   }}
@@ -329,10 +321,8 @@ export default async function PricingPage() {
                   style={{
                     textAlign: "center",
                     padding: "14px 20px",
-                    fontFamily: "var(--font-ibm-plex-mono), monospace",
-                    fontSize: 10,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
+                    fontFamily: "var(--font-body)",
+                    fontSize: 12,
                     color: "#6B6B5A",
                     fontWeight: 500,
                     width: 110,
@@ -344,10 +334,8 @@ export default async function PricingPage() {
                   style={{
                     textAlign: "center",
                     padding: "14px 20px",
-                    fontFamily: "var(--font-ibm-plex-mono), monospace",
-                    fontSize: 10,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
+                    fontFamily: "var(--font-body)",
+                    fontSize: 12,
                     color: "#1C3D0A",
                     fontWeight: 600,
                     width: 110,
@@ -379,7 +367,7 @@ export default async function PricingPage() {
       {/* FAQ */}
       <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
         <div style={{ marginBottom: 24 }}>
-          <MarketingEyebrow>§ Questions</MarketingEyebrow>
+          <MarketingEyebrow>Questions</MarketingEyebrow>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
           {FAQ.map((item) => (

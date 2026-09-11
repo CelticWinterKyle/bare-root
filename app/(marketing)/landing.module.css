@@ -32,10 +32,9 @@
 
 /* ── Reusable bits ──────────────────────────────────────────────────────── */
 .eyebrow {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
   color: #7DA84E;
   font-weight: 500;
   display: inline-flex;
@@ -51,10 +50,9 @@
 }
 
 .tag {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   padding: 4px 10px;
   border-radius: 100px;
   border: 1px solid var(--rule);
@@ -97,11 +95,11 @@
 }
 
 .sectionNum {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
   color: #ADADAA;
-  text-transform: uppercase;
 }
 
 /* ── Nav ────────────────────────────────────────────────────────────────── */
@@ -149,10 +147,9 @@
   gap: 28px;
 }
 .navLink {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
   transition: color 0.15s;
 }
@@ -197,10 +194,9 @@
   margin-bottom: 36px;
 }
 .heroIssue {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
 }
 .heroTitle {
@@ -251,10 +247,9 @@
   flex-wrap: wrap;
 }
 .heroTrust {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #ADADAA;
 }
 .heroTags {
@@ -282,10 +277,9 @@
   position: absolute;
   top: 14px; left: 14px;
   z-index: 3;
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: rgba(168,216,112,0.7);
   background: rgba(0,0,0,0.4);
   backdrop-filter: blur(8px);
@@ -297,10 +291,9 @@
   position: absolute;
   bottom: 16px; right: 16px;
   z-index: 3;
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: rgba(168,216,112,0.4);
   white-space: nowrap;
 }
@@ -335,10 +328,9 @@
   flex-shrink: 0;
 }
 .overlayLabel {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: #6B6B5A;
   display: block;
 }
@@ -370,10 +362,8 @@
   background: #3A6B20;
 }
 .overlayCompanionLabel {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: #3A6B20;
   font-weight: 600;
 }
@@ -401,10 +391,9 @@
   gap: 16px;
 }
 .scrollCue .cueLabel {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #ADADAA;
 }
 .scrollCueLine {
@@ -470,10 +459,9 @@
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px dashed var(--rule);
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
 }
 .author {
@@ -746,10 +734,9 @@
   position: absolute;
   right: 16px; top: 50%;
   transform: translateY(-50%);
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   background: rgba(168,216,112,0.2);
   color: #A8D870;
   padding: 4px 10px;
@@ -801,10 +788,9 @@
 }
 .canvasStat:last-child { border-right: none; }
 .canvasStatLabel {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   color: #6B6B5A;
   margin-bottom: 6px;
 }
@@ -912,10 +898,9 @@
   z-index: 1;
 }
 .climateLoc {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: rgba(255,255,255,0.4);
   margin-bottom: 8px;
 }
@@ -962,10 +947,8 @@
 }
 .climateLiDate {
   font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
   color: #A8D870;
-  text-transform: uppercase;
   font-weight: 600;
 }
 
@@ -977,10 +960,9 @@
   box-shadow: 0 4px 12px rgba(28,61,10,0.04);
 }
 .calMonth {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
   margin-bottom: 16px;
   padding-bottom: 12px;
@@ -1012,17 +994,13 @@
 }
 .calEventDayDow {
   font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 8px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 11px;
   color: #3A6B20;
   margin-top: 3px;
 }
 .calEventType {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 600;
   display: inline-block;
   margin-bottom: 3px;
@@ -1122,10 +1100,9 @@
   font-variation-settings: 'opsz' 22;
 }
 .companionsStatLine {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: rgba(255,255,255,0.4);
   padding-top: 18px;
   border-top: 1px solid rgba(255,255,255,0.12);
@@ -1171,10 +1148,8 @@
 }
 .compCardWarning .compCardBadge { background: rgba(212,130,10,0.2); color: #F2A03D; }
 .compCardHeadLabel {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 600;
   color: #A8D870;
 }
@@ -1242,10 +1217,9 @@
 }
 .pullquoteAttribution {
   margin-top: 36px;
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
 }
 .pullquoteName {
@@ -1342,9 +1316,7 @@
 }
 .polaroidStamp {
   font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 11px;
   color: #ADADAA;
 }
 .polaroidRating {
@@ -1409,8 +1381,7 @@
 .ledgerRow:hover { background: #F4F4EC; }
 .ledgerNum {
   font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
   color: #ADADAA;
 }
 .ledgerTitle {
@@ -1509,10 +1480,9 @@
 }
 .planPro > * { position: relative; z-index: 1; }
 .planName {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #6B6B5A;
   margin-bottom: 16px;
 }
@@ -1520,10 +1490,8 @@
 .planTrial {
   position: absolute;
   top: 28px; right: 28px;
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 11px;
   background: #D4820A;
   color: #FDFDF8;
   padding: 4px 10px;
@@ -1678,10 +1646,9 @@
   max-width: 32ch;
 }
 .footerColHead {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #ADADAA;
   margin-bottom: 18px;
 }
@@ -1700,10 +1667,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: var(--font-ibm-plex-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 12px;
   color: #ADADAA;
   flex-wrap: wrap;
   gap: 10px;
