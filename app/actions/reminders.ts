@@ -251,7 +251,13 @@ export async function updateNotificationPreference(
       channelEmail: data.channelEmail ?? true,
       channelPush: data.channelPush ?? true,
     },
-    update: data,
+    // Whitelist — `data` is client-supplied; an unfiltered update would accept
+    // userId/type and let a caller move their row onto another user.
+    update: {
+      ...(data.enabled !== undefined && { enabled: Boolean(data.enabled) }),
+      ...(data.channelEmail !== undefined && { channelEmail: Boolean(data.channelEmail) }),
+      ...(data.channelPush !== undefined && { channelPush: Boolean(data.channelPush) }),
+    },
   });
   revalidatePath("/settings/notifications");
 }

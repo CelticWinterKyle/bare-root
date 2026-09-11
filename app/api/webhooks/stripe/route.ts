@@ -76,10 +76,12 @@ export async function POST(req: Request) {
         data: {
           subscriptionTier: isPro ? "PRO" : "FREE",
           stripeSubscriptionId: subscription.id,
-          ...(isTrialing && {
-            trialEndsAt: new Date(subscription.trial_end! * 1000),
-            hadTrial: true,
-          }),
+          // Clear the trial date the moment the subscription stops trialing
+          // (trial → active). Leaving the past date in place made the
+          // layout's "trial ends today" banner show to every converted
+          // subscriber, forever.
+          trialEndsAt: isTrialing ? new Date(subscription.trial_end! * 1000) : null,
+          ...(isTrialing && { hadTrial: true }),
         },
       });
       break;

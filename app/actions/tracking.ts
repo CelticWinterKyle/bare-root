@@ -178,7 +178,17 @@ export async function upsertSeedInventory(data: {
   if (!isProFeature(user.subscriptionTier)) throw new Error("UPGRADE_REQUIRED");
   const row = await db.seedInventory.upsert({
     where: { userId_plantId_variety: { userId: user.id, plantId: data.plantId, variety: data.variety } },
-    create: { userId: user.id, ...data, notes: data.notes || null },
+    // Explicit fields only — the payload comes from the client, and spreading
+    // it after userId let a caller override userId/id and write into
+    // another user's inventory.
+    create: {
+      userId: user.id,
+      plantId: data.plantId,
+      variety: data.variety,
+      quantity: data.quantity,
+      unit: data.unit,
+      notes: data.notes || null,
+    },
     update: { quantity: data.quantity, unit: data.unit, notes: data.notes || null },
   });
   revalidatePath("/inventory");

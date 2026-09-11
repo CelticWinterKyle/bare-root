@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
-import { sendReminderEmail, buildReminderEmailHtml } from "@/lib/api/email";
+import { sendReminderEmail, buildReminderEmailHtml, isEmailConfigured } from "@/lib/api/email";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 // Allow the full Fluid-compute window — email/push sends are network-bound.
@@ -58,11 +58,42 @@ export async function GET(req: Request) {
 
   const now = new Date();
 
+  // Probed once per run, not per reminder — it only reads module state.
+  const emailConfigured = isEmailConfigured();
+  if (!emailConfigured) {
+    console.error(
+      "RESEND_API_KEY is not set — email reminders will be HELD (not sent, not dismissed) until it is configured"
+    );
+  }
+
+  // Reminders left untouched this run because the only channel their owner
+  // wants is email and email isn't configured. Surfaced in the response so
+  // a silent backlog is visible in cron logs instead of looking like idle.
+  let heldForConfig = 0;
+  if (!emailConfigured) {
+    // Rows the scan below leaves out on purpose (see the where clause).
+    // Counted up front so the backlog is visible in cron logs.
+    heldForConfig = await db.reminder.count({
+      where: {
+        scheduledAt: { lte: now },
+        sentAt: null,
+        dismissed: false,
+        user: { pushSubscriptions: { none: {} } },
+      },
+    });
+  }
+
   const reminders = await db.reminder.findMany({
     where: {
       scheduledAt: { lte: now },
       sentAt: null,
       dismissed: false,
+      // While email is unconfigured, a user with no push subscription can
+      // only be HELD (see `unavailable` below). Held rows never advance, so
+      // left in this oldest-first scan they would fill every BATCH_SIZE slot
+      // within days and starve every push-capable user. Leave them out until
+      // email works; they stay pending and go out on the first run after.
+      ...(!emailConfigured && { user: { pushSubscriptions: { some: {} } } }),
     },
     orderBy: { scheduledAt: "asc" },
     take: BATCH_SIZE,
@@ -131,13 +162,23 @@ export async function GET(req: Request) {
         ? `${appUrl}/garden/${reminder.gardenId}`
         : `${appUrl}/reminders`;
 
+      // `attempted` means a channel was actually available and we tried it —
+      // only those failures count against MAX_SEND_ATTEMPTS. `unavailable`
+      // means a channel the user WANTS is switched off on our side (no
+      // RESEND_API_KEY); that is our bug, not a delivery failure, so it must
+      // never consume the retry budget or dismiss the reminder.
       let attempted = false;
       let delivered = false;
+      let unavailable = false;
 
       if (sendEmail) {
-        attempted = true;
-        const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url, unsubscribeUrl);
-        if (await sendReminderEmail(user.email, reminder.title, html, unsubscribeUrl)) delivered = true;
+        if (emailConfigured) {
+          attempted = true;
+          const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url, unsubscribeUrl);
+          if (await sendReminderEmail(user.email, reminder.title, html, unsubscribeUrl)) delivered = true;
+        } else {
+          unavailable = true;
+        }
       }
 
       if (sendPush && user.pushSubscriptions.length > 0) {
@@ -155,6 +196,15 @@ export async function GET(req: Request) {
             await db.pushSubscription.delete({ where: { id: sub.id } });
           }
         }
+      }
+
+      // Nothing was even tried and it's our fault: hold the reminder exactly
+      // as-is (pending, attempt counter untouched) so it goes out for real
+      // once the key lands. Only reached when the user's sole enabled
+      // channel is email — a user with push still delivers above.
+      if (!attempted && unavailable) {
+        heldForConfig++;
+        continue;
       }
 
       // Only mark sent when something was actually delivered. If a send was
@@ -226,5 +276,10 @@ export async function GET(req: Request) {
     }
   }
 
-  return Response.json({ ok: true, dispatched, batchFull: reminders.length === BATCH_SIZE });
+  return Response.json({
+    ok: true,
+    dispatched,
+    heldForConfig,
+    batchFull: reminders.length === BATCH_SIZE,
+  });
 }

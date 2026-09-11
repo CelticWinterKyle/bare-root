@@ -70,7 +70,13 @@ export async function deleteBed(bedId: string): Promise<void> {
   });
   if (!bed) throw new Error("Bed not found");
 
-  await db.bed.delete({ where: { id: bedId } });
+  // Pending reminders for plantings in this bed go with it — plantingId is
+  // SetNull on delete, so otherwise the cron keeps nudging about plants that
+  // no longer exist. Sent ones stay as history.
+  await db.$transaction([
+    db.reminder.deleteMany({ where: { sentAt: null, planting: { cell: { bedId } } } }),
+    db.bed.delete({ where: { id: bedId } }),
+  ]);
   revalidatePath(`/garden/${bed.gardenId}`);
 }
 
@@ -111,6 +117,7 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
       // Cell size changed — row/col coordinates change meaning (e.g. 12" → 6"
       // doubles density), so old positions can't be remapped. Rebuild the
       // grid from scratch; plantings in the bed are lost (the UI warns).
+      await tx.reminder.deleteMany({ where: { sentAt: null, planting: { cell: { bedId } } } });
       await tx.cell.deleteMany({ where: { bedId } });
       const cells: { bedId: string; row: number; col: number }[] = [];
       for (let row = 0; row < nextGridRows; row++) {
@@ -126,9 +133,9 @@ export async function updateBed(bedId: string, input: UpdateBedInput): Promise<v
       // cells still fit. Delete only out-of-bounds cells (cascading just the
       // plantings/footprint cells that no longer fit) and add the new cells
       // exposed by a larger bed.
-      await tx.cell.deleteMany({
-        where: { bedId, OR: [{ row: { gte: nextGridRows } }, { col: { gte: nextGridCols } }] },
-      });
+      const outOfBounds = { bedId, OR: [{ row: { gte: nextGridRows } }, { col: { gte: nextGridCols } }] };
+      await tx.reminder.deleteMany({ where: { sentAt: null, planting: { cell: outOfBounds } } });
+      await tx.cell.deleteMany({ where: outOfBounds });
       const existing = await tx.cell.findMany({ where: { bedId }, select: { row: true, col: true } });
       const have = new Set(existing.map((c) => `${c.row},${c.col}`));
       const toAdd: { bedId: string; row: number; col: number }[] = [];

@@ -79,9 +79,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }));
 
   const isPro = user.subscriptionTier === "PRO";
+  // Only while the trial is genuinely still running. A past trialEndsAt
+  // (webhook lag, or rows written before the webhook started clearing it)
+  // must not render "ends today" indefinitely.
+  const nowMs = Date.now();
   const trialDaysLeft =
-    isPro && user.trialEndsAt
-      ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    isPro && user.trialEndsAt && user.trialEndsAt.getTime() > nowMs
+      ? Math.ceil((user.trialEndsAt.getTime() - nowMs) / (1000 * 60 * 60 * 24))
       : null;
 
   const userInitial = (user.name ?? user.email ?? "G")[0].toUpperCase();

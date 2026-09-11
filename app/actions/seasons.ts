@@ -189,7 +189,19 @@ export async function ratePlanting(
   });
   if (!planting) throw new Error("Planting not found");
 
-  await db.planting.update({ where: { id: plantingId }, data });
+  // Whitelist — the payload comes from the client, and Prisma's unchecked
+  // update would otherwise accept cellId/seasonId/occupancy fields and let a
+  // caller re-parent or double-book a planting through the rating form.
+  const rawRating = data.rating;
+  let rating: number | null = null;
+  if (rawRating !== null && rawRating !== undefined) {
+    const n = Math.round(Number(rawRating));
+    if (!Number.isFinite(n) || n < 1 || n > 5) throw new Error("Rating must be 1–5");
+    rating = n;
+  }
+  const growAgain =
+    data.growAgain === null || data.growAgain === undefined ? null : Boolean(data.growAgain);
+  await db.planting.update({ where: { id: plantingId }, data: { rating, growAgain } });
 
   revalidatePath(`/garden/${planting.cell.bed.gardenId}/seasons`);
 }

@@ -10,6 +10,19 @@ const FROM = process.env.EMAIL_FROM ?? "Bare Root <hello@bareroot.garden>";
 // Bare address out of FROM for the mailto: form of List-Unsubscribe.
 const FROM_ADDRESS = FROM.match(/<([^>]+)>/)?.[1] ?? (FROM.includes("@") ? FROM : null);
 
+/**
+ * Whether outbound email is wired up at all (RESEND_API_KEY present).
+ *
+ * Callers that retry on failure MUST check this before counting a failed
+ * send against a retry budget: a missing key is a server misconfiguration,
+ * not a delivery failure, and retrying can never clear it. Treating the two
+ * the same is how the reminder dispatcher used to burn through its five
+ * attempts and permanently dismiss reminders during an email outage.
+ */
+export function isEmailConfigured(): boolean {
+  return resend !== null;
+}
+
 // Pass `unsubscribeUrl` for bulk-ish mail (reminders) to get RFC 8058
 // List-Unsubscribe headers; transactional sends (collaborator invites)
 // omit it and get no headers.

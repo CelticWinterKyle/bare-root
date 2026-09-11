@@ -7,7 +7,7 @@ import { MarketingChrome, MarketingEyebrow } from "@/components/marketing/Market
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Start free with the visual bed planner, plant library, and companion planting. Upgrade to Pro for $4/mo (billed annually) to unlock the planting calendar, AI layout planner, reminders, harvest tracking, and collaborators.",
+    "Start free with the visual bed planner, plant library, planting calendar, reminders, frost alerts, and harvest tracking. Upgrade to Pro for $4/mo (billed annually) for unlimited gardens and beds, the AI layout planner, season history, seed inventory, and collaborators.",
   openGraph: {
     title: "Pricing | Bare Root",
     description:
@@ -25,19 +25,23 @@ export const metadata: Metadata = {
   },
 };
 
+// Ordered to read top-to-bottom as: what every gardener gets, then where
+// the free tier runs out, then what Pro adds. Rows must stay truthful to
+// the gates in lib/tier.ts — the growing loop (calendar, reminders, frost
+// alerts, harvest logging) is deliberately never paywalled.
 const COMPARISON = [
+  { feature: "Visual bed planner", free: true, pro: true },
+  { feature: "Plant library", free: true, pro: true },
+  { feature: "Companion planting", free: true, pro: true },
+  { feature: "Planting calendar", free: true, pro: true },
+  { feature: "Reminders", free: true, pro: true },
+  { feature: "Weather & frost alerts", free: true, pro: true },
+  { feature: "Harvest tracking", free: true, pro: true },
   { feature: "Gardens", free: "1", pro: "Unlimited" },
   { feature: "Beds per garden", free: "3", pro: "Unlimited" },
-  { feature: "Plant library", free: true, pro: true },
-  { feature: "Visual bed planner", free: true, pro: true },
-  { feature: "Companion planting", free: true, pro: true },
+  { feature: "Photo uploads", free: "20 total", pro: "Unlimited" },
   { feature: "Season history", free: false, pro: true },
   { feature: "AI layout planner", free: false, pro: true },
-  { feature: "Planting calendar", free: false, pro: true },
-  { feature: "Weather & frost alerts", free: false, pro: true },
-  { feature: "Reminders", free: false, pro: true },
-  { feature: "Harvest tracking", free: false, pro: true },
-  { feature: "Photo uploads", free: "20 total", pro: "Unlimited" },
   { feature: "Seed inventory", free: false, pro: true },
   { feature: "Collaborators", free: false, pro: "Up to 5" },
 ];
@@ -194,7 +198,7 @@ export default async function PricingPage() {
                 fontFamily: "var(--font-fraunces), Georgia, serif",
               }}
             >
-              One garden, three beds, the plant library. Plenty to actually grow something this season.
+              One garden, three beds — and the whole growing season. Calendar, reminders, frost alerts, and harvest logging included.
             </p>
           </div>
 
@@ -285,7 +289,7 @@ export default async function PricingPage() {
                 fontFamily: "var(--font-fraunces), Georgia, serif",
               }}
             >
-              Every feature. Unlimited gardens. The full editorial planning experience.
+              Unlimited gardens and beds, the AI layout planner, season history, seed inventory, and up to 5 collaborators.
             </p>
           </div>
         </div>

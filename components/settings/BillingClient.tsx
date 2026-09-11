@@ -6,24 +6,28 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
 
+// Keep in lockstep with lib/tier.ts and the landing/pricing pages: Free is
+// one real garden with the whole growing loop; Pro sells scale plus the
+// year-over-year layer.
 const FREE_FEATURES = [
-  "1 garden",
-  "3 beds per garden",
+  "1 garden, 3 beds",
   "Full plant library",
   "Visual bed planner",
   "Companion planting warnings",
+  "Planting calendar + reminders",
+  "Weather + frost alerts",
+  "Harvest tracking + journal",
+  "20 photo uploads",
 ];
 
 const PRO_FEATURES = [
-  "Unlimited gardens & beds",
-  "Full season history",
-  "Smart AI layout planner",
-  "Location-aware planting calendar",
-  "Weather & frost alerts",
-  "Reminders & notifications",
-  "Harvest tracking & photos",
-  "Seed inventory",
+  "Everything in Free",
+  "Unlimited gardens + beds",
+  "AI layout planner",
+  "Season history + year-over-year",
   "Collaborators (up to 5)",
+  "Unlimited photos",
+  "Seed inventory + shopping list",
 ];
 
 type Props = {
@@ -146,7 +150,7 @@ export function BillingClient({
             </Button>
           ) : (
             <p className="text-xs text-[#6B6B5A] text-center">
-              Your subscription is still settling in. Refresh in a moment to manage billing.
+              Your Pro access was granted directly, so there&rsquo;s no subscription to manage here.
             </p>
           )}
         </div>

@@ -278,11 +278,11 @@ const COMPANIONS = [
 // Feature catalog rendered like a ledger.
 const LEDGER = [
   { num: "01", title: <>Visual <em>bed planner</em></>, desc: "Top-down canvas. Drag plants. Multi-cell footprints.", tier: "Free" },
-  { num: "02", title: <><em>Climate</em>-aware calendar</>, desc: "Personalized to your zip: frost dates, start-seed weeks, harvest windows.", tier: "Pro" },
+  { num: "02", title: <><em>Climate</em>-aware calendar</>, desc: "Personalized to your zip: frost dates, start-seed weeks, harvest windows.", tier: "Free" },
   { num: "03", title: <>Companion <em>science</em></>, desc: "Built-in warnings, beneficial pairings, crop rotation history.", tier: "Free" },
   { num: "04", title: <>AI <em>layout planner</em></>, desc: "Hand it your wishlist; it builds an optimized bed in seconds.", tier: "Pro" },
-  { num: "05", title: <>Harvest <em>logbook</em></>, desc: "Photos, weights, ratings. Season history that informs next year.", tier: "Pro" },
-  { num: "06", title: <>Smart <em>reminders</em></>, desc: "Push + email at the right week. Frost alerts when the front comes.", tier: "Pro" },
+  { num: "05", title: <>Harvest <em>logbook</em></>, desc: "Photos, weights, ratings. Log every pick as it comes out of the bed.", tier: "Free" },
+  { num: "06", title: <>Smart <em>reminders</em></>, desc: "Push + email at the right week. Frost alerts when the front comes.", tier: "Free" },
   { num: "07", title: <>Plant <em>collaborators</em></>, desc: "Share a garden with up to 5 people. Editor or viewer roles.", tier: "Pro" },
   { num: "08", title: <>Seed <em>inventory</em></>, desc: "What you have, what you need. Auto-generated shopping list.", tier: "Pro" },
 ];
@@ -705,6 +705,9 @@ export default async function LandingPage() {
               <li>Full plant library (150+ curated)</li>
               <li>Visual canvas with multi-cell plants</li>
               <li>Companion planting warnings</li>
+              <li>Planting calendar + reminders</li>
+              <li>Weather + frost alerts</li>
+              <li>Harvest tracking + journal</li>
               <li>20 photo uploads</li>
             </ul>
             <Link href="/sign-up" className={styles.planCta}>Get started free</Link>
@@ -719,13 +722,13 @@ export default async function LandingPage() {
             </div>
             <div className={styles.planPeriod}>/mo · billed annually · or $7/mo</div>
             <ul className={styles.planFeatures}>
+              <li>Everything in Free</li>
               <li>Unlimited gardens + beds</li>
-              <li>Personalized planting calendar</li>
               <li>AI layout planner</li>
-              <li>Weather + frost alerts</li>
-              <li>Harvest tracking + season history</li>
+              <li>Season history + year-over-year</li>
               <li>Collaborators (up to 5)</li>
-              <li>Unlimited photos + seed inventory</li>
+              <li>Unlimited photos</li>
+              <li>Seed inventory + shopping list</li>
             </ul>
             <Link href="/sign-up" className={styles.planCta}>Start 7-day trial</Link>
             <div className={styles.planFine}>No charge for 7 days · cancel anytime</div>

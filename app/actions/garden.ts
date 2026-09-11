@@ -116,7 +116,18 @@ export async function deleteGarden(gardenId: string): Promise<void> {
   });
   if (!garden) throw new Error("Garden not found");
 
-  await db.garden.delete({ where: { id: gardenId } });
+  // Pending reminders tied to this garden (frost/water/custom via gardenId,
+  // planting reminders via the bed chain) go with it — both FKs are SetNull,
+  // so otherwise the cron keeps sending "Frost risk at <deleted garden>".
+  await db.$transaction([
+    db.reminder.deleteMany({
+      where: {
+        sentAt: null,
+        OR: [{ gardenId }, { planting: { cell: { bed: { gardenId } } } }],
+      },
+    }),
+    db.garden.delete({ where: { id: gardenId } }),
+  ]);
   // If the deleted garden was the active one, clear the cookie so the
   // resolver falls back cleanly instead of pointing at a dead id.
   if ((await getActiveGardenCookie()) === gardenId) {
