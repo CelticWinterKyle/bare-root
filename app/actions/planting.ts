@@ -560,6 +560,9 @@ export async function undoRemovePlanting(snapshot: {
   plantedDate: Date | null;
   transplantDate: Date | null;
   expectedHarvestDate: Date | null;
+  /** The exact window the planting had. Older clients may omit these. */
+  occupiesFrom?: Date | null;
+  occupiesUntil?: Date | null;
 }) {
   // assignPlant re-runs the full access/footprint/reminder pipeline.
   const res = await assignPlant(
@@ -569,18 +572,23 @@ export async function undoRemovePlanting(snapshot: {
     snapshot.startMethod ?? undefined
   );
 
-  // Restore the occupancy window from the snapshot's dates (assignPlant
-  // just stamped a fresh now-anchored one).
+  // Restore the occupancy window exactly (assignPlant just stamped a fresh
+  // now-anchored one). Deriving it from plantedDate/expectedHarvestDate was
+  // wrong for the common case — a quick placement sets neither, so the undone
+  // planting came back open-ended and showed in every month forever.
   const restored = await db.planting.findUniqueOrThrow({
     where: { id: res.plantingId },
     select: { occupiesFrom: true, isPerennial: true },
   });
-  const window = windowFromDates(
-    snapshot.plantedDate,
-    snapshot.expectedHarvestDate,
-    restored.occupiesFrom,
-    restored.isPerennial
-  );
+  const window =
+    snapshot.occupiesFrom
+      ? { from: snapshot.occupiesFrom, until: restored.isPerennial ? null : snapshot.occupiesUntil ?? null }
+      : windowFromDates(
+          snapshot.plantedDate,
+          snapshot.expectedHarvestDate,
+          restored.occupiesFrom,
+          restored.isPerennial
+        );
   await db.planting.update({
     where: { id: res.plantingId },
     data: {

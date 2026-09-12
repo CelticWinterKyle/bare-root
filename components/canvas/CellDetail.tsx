@@ -49,8 +49,10 @@ type Props = {
     startMethod: PlantStartMethod | null;
     /** Plants growing in each occupied cell (SFG density). */
     quantityPerCell?: number;
-    /** Occupancy window start — "Planned for" display on future plantings. */
+    /** Occupancy window — "Planned for" display on future plantings, and
+     *  captured into the remove-undo snapshot so undo restores it exactly. */
     occupiesFrom?: Date;
+    occupiesUntil?: Date | null;
     temporal?: "past" | "current" | "future" | "dormant";
     /** Live-perennial flag — switches Remove into the clear-vs-delete flow. */
     isPerennial?: boolean;
@@ -232,6 +234,8 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
       plantedDate: plantedDate ? new Date(plantedDate) : null,
       transplantDate: transplantDate ? new Date(transplantDate) : null,
       expectedHarvestDate: expectedHarvest ? new Date(expectedHarvest) : null,
+      occupiesFrom: planting.occupiesFrom ? new Date(planting.occupiesFrom) : null,
+      occupiesUntil: planting.occupiesUntil ? new Date(planting.occupiesUntil) : null,
     };
     const plantName = planting.plant.name;
     startRemove(async () => {

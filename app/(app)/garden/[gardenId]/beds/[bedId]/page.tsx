@@ -405,6 +405,7 @@ export default async function BedPage({
             startMethod: rawPlanting.startMethod,
             quantityPerCell: rawPlanting.quantityPerCell,
             occupiesFrom: rawPlanting.occupiesFrom,
+            occupiesUntil: rawPlanting.occupiesUntil,
             isPerennial: rawPlanting.isPerennial,
             // Temporal state for scrubber styling: future = window hasn't
             // started; past = window fully over (only marked when scrubbing,
