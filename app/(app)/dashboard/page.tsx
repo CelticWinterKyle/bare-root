@@ -1063,7 +1063,8 @@ export default async function DashboardPage() {
                     <div className={styles.bedTileBody}>
                       <div>
                         <div className={styles.bedTileName}>
-                          Bed <em>{bed.name}</em>
+                          {/* Bed names already read "Bed 1" — prefixing gave "Bed Bed 1". */}
+                          <em>{bed.name}</em>
                         </div>
                         <div className={styles.bedTileMeta}>{bed.sizeFt}</div>
                       </div>
