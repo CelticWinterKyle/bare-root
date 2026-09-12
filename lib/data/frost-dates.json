@@ -1,82 +1,28 @@
 {
-  "2a": {
-    "lastFrost": "06-01",
-    "firstFrost": "08-15"
-  },
-  "2b": {
-    "lastFrost": "05-15",
-    "firstFrost": "09-01"
-  },
-  "3a": {
-    "lastFrost": "05-15",
-    "firstFrost": "09-15"
-  },
-  "3b": {
-    "lastFrost": "05-01",
-    "firstFrost": "09-30"
-  },
-  "4a": {
-    "lastFrost": "05-01",
-    "firstFrost": "10-01"
-  },
-  "4b": {
-    "lastFrost": "04-15",
-    "firstFrost": "10-15"
-  },
-  "5a": {
-    "lastFrost": "04-15",
-    "firstFrost": "10-15"
-  },
-  "5b": {
-    "lastFrost": "04-01",
-    "firstFrost": "10-31"
-  },
-  "6a": {
-    "lastFrost": "04-01",
-    "firstFrost": "10-31"
-  },
-  "6b": {
-    "lastFrost": "03-15",
-    "firstFrost": "11-15"
-  },
-  "7a": {
-    "lastFrost": "03-15",
-    "firstFrost": "11-15"
-  },
-  "7b": {
-    "lastFrost": "03-01",
-    "firstFrost": "11-30"
-  },
-  "8a": {
-    "lastFrost": "02-15",
-    "firstFrost": "12-01"
-  },
-  "8b": {
-    "lastFrost": "02-01",
-    "firstFrost": "12-15"
-  },
-  "9a": {
-    "lastFrost": "01-30",
-    "firstFrost": "12-15"
-  },
-  "9b": {
-    "lastFrost": "01-15",
-    "firstFrost": "12-31"
-  },
-  "10a": {
-    "lastFrost": "01-15",
-    "firstFrost": "12-31"
-  },
-  "10b": {
-    "lastFrost": null,
-    "firstFrost": null
-  },
-  "11a": {
-    "lastFrost": null,
-    "firstFrost": null
-  },
-  "11b": {
-    "lastFrost": null,
-    "firstFrost": null
-  }
+  "1a": { "lastFrost": "06-15", "firstFrost": "08-15" },
+  "1b": { "lastFrost": "06-15", "firstFrost": "08-15" },
+  "2a": { "lastFrost": "06-01", "firstFrost": "08-25" },
+  "2b": { "lastFrost": "05-25", "firstFrost": "09-01" },
+  "3a": { "lastFrost": "05-20", "firstFrost": "09-10" },
+  "3b": { "lastFrost": "05-15", "firstFrost": "09-15" },
+  "4a": { "lastFrost": "05-15", "firstFrost": "09-25" },
+  "4b": { "lastFrost": "05-08", "firstFrost": "10-01" },
+  "5a": { "lastFrost": "05-05", "firstFrost": "10-05" },
+  "5b": { "lastFrost": "05-01", "firstFrost": "10-10" },
+  "6a": { "lastFrost": "04-20", "firstFrost": "10-15" },
+  "6b": { "lastFrost": "04-15", "firstFrost": "10-20" },
+  "7a": { "lastFrost": "04-05", "firstFrost": "10-30" },
+  "7b": { "lastFrost": "03-30", "firstFrost": "11-05" },
+  "8a": { "lastFrost": "03-15", "firstFrost": "11-15" },
+  "8b": { "lastFrost": "03-05", "firstFrost": "11-25" },
+  "9a": { "lastFrost": "02-20", "firstFrost": "12-05" },
+  "9b": { "lastFrost": "02-05", "firstFrost": "12-15" },
+  "10a": { "lastFrost": "01-20", "firstFrost": "12-30" },
+  "10b": { "lastFrost": null, "firstFrost": null },
+  "11a": { "lastFrost": null, "firstFrost": null },
+  "11b": { "lastFrost": null, "firstFrost": null },
+  "12a": { "lastFrost": null, "firstFrost": null },
+  "12b": { "lastFrost": null, "firstFrost": null },
+  "13a": { "lastFrost": null, "firstFrost": null },
+  "13b": { "lastFrost": null, "firstFrost": null }
 }
