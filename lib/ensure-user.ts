@@ -53,16 +53,31 @@ export async function ensureDbUser(clerkUserId: string) {
     });
   }
 
-  const user = await db.user.upsert({
-    where: { id: clerkUserId },
-    create: {
-      id: clerkUserId,
-      email: primaryEmail,
-      name: fullName,
-      avatarUrl: cu.imageUrl || null,
-    },
-    update: {},
-  });
+  // The Clerk `user.created` webhook and the first authenticated page load
+  // run this concurrently on every sign-up. Both see no row, both try to
+  // create, and Prisma's upsert is not atomic for a missing row — the loser
+  // throws P2002. That threw out of getCurrentUser, which returned null and
+  // bounced the user's very first page load to /sign-in (blank screen,
+  // redirect churn) while the webhook 500'd. The loser now just re-reads.
+  let user;
+  try {
+    user = await db.user.upsert({
+      where: { id: clerkUserId },
+      create: {
+        id: clerkUserId,
+        email: primaryEmail,
+        name: fullName,
+        avatarUrl: cu.imageUrl || null,
+      },
+      update: {},
+    });
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      user = await db.user.findUniqueOrThrow({ where: { id: clerkUserId } });
+    } else {
+      throw err;
+    }
+  }
 
   // Create the Stripe customer after the response — it adds ~300ms to first
   // sign-in and is subject to Stripe rate limits during a signup spike.
