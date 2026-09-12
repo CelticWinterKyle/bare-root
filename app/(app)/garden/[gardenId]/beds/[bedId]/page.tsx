@@ -1,3 +1,4 @@
+import { pickOccupant } from "@/lib/services/occupancy";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
 import { getLockedBedIds, getLockedGardenIds } from "@/lib/tier";
 import type { Metadata } from "next";
@@ -29,34 +30,6 @@ export async function generateMetadata({
   return {
     title: bed ? `${bed.name} · ${bed.garden.name} | Bare Root` : "Bare Root",
   };
-}
-
-// Which of a cell's occupants the grid shows. On the today view a cell can
-// legally hold a finished planting, its live successor, and one planned for
-// a future month (placed while scrubbed ahead). Latest-occupiesFrom-first
-// picked the future one and hid the live plant. Rank: window contains now →
-// most recently finished → soonest upcoming. Scrubbed views pass null: the
-// query already limited occupants to that month and latest-first is right.
-function pickOccupant<T extends { planting: { occupiesFrom: Date; occupiesUntil: Date | null } }>(
-  occupants: T[],
-  now: Date | null
-): T | null {
-  if (occupants.length === 0) return null;
-  if (!now) return occupants[0];
-  const rank = (o: T) => {
-    const { occupiesFrom, occupiesUntil } = o.planting;
-    if (occupiesFrom <= now && (!occupiesUntil || occupiesUntil > now)) return 0;
-    if (occupiesUntil && occupiesUntil <= now) return 1;
-    return 2;
-  };
-  return [...occupants].sort((a, b) => {
-    const ra = rank(a);
-    const rb = rank(b);
-    if (ra !== rb) return ra - rb;
-    if (ra === 1) return b.planting.occupiesUntil!.getTime() - a.planting.occupiesUntil!.getTime();
-    if (ra === 2) return a.planting.occupiesFrom.getTime() - b.planting.occupiesFrom.getTime();
-    return b.planting.occupiesFrom.getTime() - a.planting.occupiesFrom.getTime();
-  })[0];
 }
 
 // A live perennial reads as dormant when the viewed month falls entirely
