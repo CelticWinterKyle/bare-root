@@ -93,6 +93,12 @@ type Props = {
    *  the placement-time crop-rotation hint (picker row + prefill toast).
    *  Warn-only; never blocks planting. */
   familyHistory?: BedFamilyHistory[];
+  /** Rendered inside the empty-bed hint card (e.g. the templates link) —
+   *  the one moment a new user is asking "now what?". */
+  emptyStateAction?: React.ReactNode;
+  /** What the AI tab offers: Pro (daily cap), one free run, or the upgrade
+   *  card. Overrides the older isPro flag when present. */
+  aiAccess?: "pro" | "free-run" | "locked";
 };
 type SeedInventoryRow = { plantId: string; variety: string; quantity: number; unit: string };
 type PanelState =
@@ -107,7 +113,8 @@ type PanelState =
 // existing planting to a new cell). React hooks can't be called inside a
 // .map(), which is why this is its own component rather than inline.
 
-export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, suggestionsLabel, plannedFor = null, isPro, prefillPlant, frost, canEdit = true, seedInventory = [], familyHistory = [] }: Props) {
+export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells, seasonId, userId, recentPlants, suggestionsLabel, plannedFor = null, isPro, prefillPlant, frost, canEdit = true, seedInventory = [], familyHistory = [], emptyStateAction, aiAccess: aiAccessProp }: Props) {
+  const aiAccess = aiAccessProp ?? (isPro ? "pro" : "locked");
   const router = useRouter();
   const pathname = usePathname();
   const [panel, setPanel] = useState<PanelState>({ type: "none" });
@@ -949,6 +956,9 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                 <div className="backdrop-blur-sm rounded-xl px-4 py-3 shadow-md text-center" style={{ background: "rgba(253,253,248,0.92)", border: "1px solid #E4E4DC" }}>
                   <p className="text-sm font-semibold" style={{ color: "#111109" }}>{canEdit ? "Tap any cell" : "Nothing planted yet"}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#6B6B5A" }}>{canEdit ? "to assign a plant" : "this bed is still empty"}</p>
+                  {canEdit && emptyStateAction && (
+                    <div className="mt-2 pointer-events-auto">{emptyStateAction}</div>
+                  )}
                 </div>
               </div>
             )}
@@ -1604,8 +1614,8 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
 
               {/* SMART MODE */}
               {activeTab === "smart" && (
-                <div className={isPro ? "p-4" : "p-5"}>
-                  {isPro ? (
+                <div className={aiAccess !== "locked" ? "p-4" : "p-5"}>
+                  {aiAccess !== "locked" ? (
                     <SmartLayoutPanel
                       bedId={bedId}
                       seasonId={seasonId}
@@ -1620,6 +1630,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         setActiveTab("plant");
                       }}
                       onHoverAssignment={setHoveredAssignment}
+                      freeRun={aiAccess === "free-run"}
                     />
                   ) : (
                     <div className="text-center py-6 space-y-3">
@@ -1628,7 +1639,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       </div>
                       <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
                       <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                        Build an optimized bed from your plant wishlist. Respects spacing, sun requirements, and companion relations.
+                        You&apos;ve used your free layout. Pro includes 20 a day: an optimized bed from your wishlist, respecting spacing, sun and companions.
                       </p>
                       <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
                         Upgrade to Pro →

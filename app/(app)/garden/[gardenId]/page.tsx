@@ -256,7 +256,7 @@ export default async function GardenPage({
               <Printer style={{ width: 14, height: 14 }} strokeWidth={1.8} />
             </Link>
             {canEdit && <QuickNoteButton gardenId={garden.id} />}
-            {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} primary />}
+            {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} nextBedNumber={bedCount + 1} primary />}
           </div>
         </div>
 
@@ -386,7 +386,7 @@ export default async function GardenPage({
             <p style={{ fontSize: "14px", color: "#6B6B5A", marginBottom: "16px" }}>
               {canEdit ? "Add your first raised bed to start planning." : "Nothing has been planned here yet."}
             </p>
-            {canEdit && <AddBedDialog gardenId={garden.id} />}
+            {canEdit && <AddBedDialog gardenId={garden.id} nextBedNumber={bedCount + 1} />}
           </div>
         </div>
       ) : (
@@ -445,7 +445,7 @@ export default async function GardenPage({
             {/* Mobile section header */}
             <div className="md:hidden flex items-center justify-between px-[22px] pt-4 pb-2">
               <h2 style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: 700, color: "#111109", letterSpacing: "-0.02em" }}>Beds</h2>
-              {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} />}
+              {canEdit && !atBedLimit && <AddBedDialog gardenId={garden.id} nextBedNumber={bedCount + 1} />}
             </div>
 
             {/* Responsive bed list/grid */}
@@ -494,7 +494,7 @@ export default async function GardenPage({
               {/* Add Bed tile — desktop only */}
               {canEdit && !atBedLimit && (
                 <div className="hidden md:block">
-                  <AddBedDialog gardenId={garden.id} asTile />
+                  <AddBedDialog gardenId={garden.id} nextBedNumber={bedCount + 1} asTile />
                 </div>
               )}
             </div>

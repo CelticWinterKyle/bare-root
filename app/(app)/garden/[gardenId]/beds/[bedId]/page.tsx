@@ -1,6 +1,6 @@
 import { pickOccupant } from "@/lib/services/occupancy";
 import { CreateSeasonDialog } from "@/components/seasons/CreateSeasonDialog";
-import { getLockedBedIds, getLockedGardenIds } from "@/lib/tier";
+import { getLockedBedIds, getLockedGardenIds, aiAccessFor } from "@/lib/tier";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
@@ -415,6 +415,7 @@ export default async function BedPage({
   });
 
   const isPro = user.subscriptionTier === "PRO";
+  const aiAccess = aiAccessFor(user);
 
   const bedNameParts = bed.name.trim().split(/\s+/);
   const bedNameFirst = bedNameParts[0];
@@ -565,7 +566,20 @@ export default async function BedPage({
           cells={cells}
           seasonId={viewingSeason?.id ?? ""}
           isPro={isPro}
+          aiAccess={aiAccess}
           canEdit={canEdit}
+          emptyStateAction={
+            canEdit ? (
+              <TemplatesDialog
+                bedId={bed.id}
+                gardenId={gardenId}
+                seasonId={viewingSeason?.id ?? ""}
+                bedCols={bed.gridCols}
+                bedRows={bed.gridRows}
+                trigger="hint"
+              />
+            ) : undefined
+          }
           userId={user.id}
           recentPlants={recentPlants}
           plannedFor={plannedFor}

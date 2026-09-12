@@ -37,8 +37,8 @@ export function WizardShell() {
   const [step, setStep] = useState<Step>(1);
   const [data, setData] = useState<WizardData>({
     gardenName: "",
-    widthFt: "",
-    heightFt: "",
+    widthFt: "20",
+    heightFt: "30",
     zip: "",
     zone: "",
     lastFrostDate: null,
@@ -58,8 +58,8 @@ export function WizardShell() {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
-  async function lookupZip() {
-    const zip = data.zip.replace(/\D/g, "");
+  async function lookupZip(zipOverride?: string) {
+    const zip = (zipOverride ?? data.zip).replace(/\D/g, "");
     if (zip.length < 5) return;
     setLocationState("loading");
     try {
@@ -86,7 +86,7 @@ export function WizardShell() {
     setSubmitError(null);
     startTransition(async () => {
       try {
-        const gardenId = await completeOnboarding({
+        const { gardenId, bedId } = await completeOnboarding({
           gardenName: data.gardenName.trim(),
           widthFt: parseFloat(data.widthFt),
           heightFt: parseFloat(data.heightFt),
@@ -103,7 +103,10 @@ export function WizardShell() {
                 cellSizeIn: parseInt(data.cellSizeIn) as 12 | 6,
               },
         });
-        router.push(`/garden/${gardenId}`);
+        // Land IN the first bed: that's where the "tap any cell" hint and the
+        // plant picker live. The garden overview showed one small bed on a
+        // big green plot and no cue about what to do next.
+        router.push(bedId ? `/garden/${gardenId}/beds/${bedId}` : `/garden/${gardenId}`);
       } catch (err) {
         setSubmitError(
           actionErrorMessage(err, "Couldn't finish setting up your garden. Please try again.")
@@ -266,15 +269,20 @@ export function WizardShell() {
                   maxLength={5}
                   value={data.zip}
                   onChange={(e) => {
-                    set("zip", e.target.value);
+                    const v = e.target.value;
+                    set("zip", v);
                     setLocationState("idle");
+                    // Look up the moment five digits land — a separate button
+                    // was a trap (Continue stayed disabled until it was
+                    // pressed). The button stays for retries.
+                    if (v.replace(/\D/g, "").length === 5) lookupZip(v);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") lookupZip();
                   }}
                 />
                 <Button
-                  onClick={lookupZip}
+                  onClick={() => lookupZip()}
                   disabled={data.zip.replace(/\D/g, "").length < 5 || locationState === "loading"}
                   variant="outline"
                   className="border-[#E4E4DC] shrink-0"

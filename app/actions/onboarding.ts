@@ -23,7 +23,9 @@ type OnboardingInput = {
   bed?: BedInput;
 };
 
-export async function completeOnboarding(input: OnboardingInput): Promise<string> {
+export async function completeOnboarding(
+  input: OnboardingInput
+): Promise<{ gardenId: string; bedId: string | null }> {
  try {
   const user = await requireUser();
   await checkCanCreateGarden(user.id, user.subscriptionTier);
@@ -41,6 +43,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
   else seasonName = `Winter ${year}`;
 
   let gardenId = "";
+  let bedId: string | null = null;
 
   await db.$transaction(async (tx) => {
     const garden = await tx.garden.create({
@@ -85,6 +88,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
           cellSizeIn,
         },
       });
+      bedId = bed.id;
 
       const cells: { bedId: string; row: number; col: number }[] = [];
       for (let row = 0; row < gridRows; row++) {
@@ -104,7 +108,7 @@ export async function completeOnboarding(input: OnboardingInput): Promise<string
   });
 
   revalidatePath("/dashboard");
-  return gardenId;
+  return { gardenId, bedId };
  } catch (err) {
     // Surface the real cause in the server logs — production sanitizes the
     // message before it reaches the client, so without this we're blind.

@@ -15,14 +15,26 @@ import { createBed } from "@/app/actions/bed";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; asTile?: boolean; primary?: boolean }) {
+export function AddBedDialog({
+  gardenId,
+  asTile,
+  primary,
+  nextBedNumber,
+}: {
+  gardenId: string;
+  asTile?: boolean;
+  primary?: boolean;
+  /** Pre-fills the name ("Bed 3") — the greyed placeholder read as a value
+   *  and people hit a disabled button. */
+  nextBedNumber?: number;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState({
-    name: "",
-    widthFt: "",
-    heightFt: "",
+    name: `Bed ${nextBedNumber ?? 2}`,
+    widthFt: "4",
+    heightFt: "8",
     cellSizeIn: "12" as "12" | "6",
   });
 
@@ -129,7 +141,7 @@ export function AddBedDialog({ gardenId, asTile, primary }: { gardenId: string; 
           <div className="space-y-2">
             <Label>Bed name</Label>
             <Input
-              placeholder="Bed 2"
+              placeholder={`Bed ${nextBedNumber ?? 2}`}
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               autoFocus

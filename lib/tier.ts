@@ -97,6 +97,20 @@ export async function checkCanAddCollaborator(tier: Tier): Promise<void> {
   throw new TierLimitError("UPGRADE_REQUIRED");
 }
 
+/**
+ * What the AI layout tab offers this user. Pro: the daily cap. Free with an
+ * unstamped counter: one complimentary run (claimFreeAiRun stamps it).
+ * Otherwise the upgrade card. Mirrors the server rule in
+ * app/actions/smart-layout.ts so the UI never promises a run it won't get.
+ */
+export function aiAccessFor(user: {
+  subscriptionTier: Tier;
+  aiRunsResetAt: Date | null;
+}): "pro" | "free-run" | "locked" {
+  if (user.subscriptionTier === "PRO") return "pro";
+  return user.aiRunsResetAt ? "locked" : "free-run";
+}
+
 export function isProFeature(tier: Tier): boolean {
   return tier === "PRO";
 }

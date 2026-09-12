@@ -34,16 +34,27 @@ async function consumeAiRun(userId: string): Promise<boolean> {
   return bump.count === 1;
 }
 
+/**
+ * Free accounts get ONE layout, ever — enough to see what Pro does before
+ * the upgrade prompt. It rides on the same counter as Pro's daily cap: a
+ * Free user whose aiRunsResetAt has ever been stamped has used their run
+ * (the daily reset in consumeAiRun only applies to Pro). Guarded updateMany
+ * so two concurrent clicks can't both claim it.
+ */
+async function claimFreeAiRun(userId: string): Promise<boolean> {
+  const claimed = await db.user.updateMany({
+    where: { id: userId, aiRunsResetAt: null },
+    data: { aiRunsToday: 1, aiRunsResetAt: new Date() },
+  });
+  return claimed.count === 1;
+}
+
 export async function generateLayoutAction(
   bedId: string,
   seasonId: string,
   wishlistPlantIds: string[]
 ): Promise<{ assignments: LayoutAssignment[]; error?: string }> {
   const user = await requireUser();
-  if (user.subscriptionTier !== "PRO") {
-    return { assignments: [], error: "UPGRADE_REQUIRED" };
-  }
-
   // Cost guardrails: each run is a multi-thousand-token Opus call. Without
   // these one account could loop it indefinitely with a huge wishlist.
   if (wishlistPlantIds.length === 0) {
@@ -52,11 +63,15 @@ export async function generateLayoutAction(
   if (wishlistPlantIds.length > MAX_AI_WISHLIST) {
     return { assignments: [], error: `Pick up to ${MAX_AI_WISHLIST} plants for one layout.` };
   }
-  if (!(await consumeAiRun(user.id))) {
-    return {
-      assignments: [],
-      error: `You've used today's ${AI_RUNS_PER_DAY} layout runs. They reset at midnight UTC.`,
-    };
+  if (user.subscriptionTier === "PRO") {
+    if (!(await consumeAiRun(user.id))) {
+      return {
+        assignments: [],
+        error: `You've used today's ${AI_RUNS_PER_DAY} layout runs. They reset at midnight UTC.`,
+      };
+    }
+  } else if (!(await claimFreeAiRun(user.id))) {
+    return { assignments: [], error: "UPGRADE_REQUIRED" };
   }
 
   const bed = await db.bed.findFirst({

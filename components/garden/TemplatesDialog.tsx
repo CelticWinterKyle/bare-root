@@ -32,12 +32,16 @@ export function TemplatesDialog({
   seasonId,
   bedCols,
   bedRows,
+  trigger = "header",
 }: {
   bedId: string;
   gardenId: string;
   seasonId: string;
   bedCols: number;
   bedRows: number;
+  /** "header" = the toolbar button; "hint" = a text link for the empty-bed
+   *  card, where "64 empty cells, now what?" is actually being asked. */
+  trigger?: "header" | "hint";
 }) {
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
@@ -116,15 +120,27 @@ export function TemplatesDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <button
-        type="button"
-        onClick={() => handleOpenChange(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-[#EAEADE]"
-        style={{ background: "#F4F4EC", color: "#3A3A30", border: "1px solid #E4E4DC" }}
-      >
-        <LayoutTemplate className="w-3.5 h-3.5" style={{ color: "#3A6B20" }} />
-        Templates
-      </button>
+      {trigger === "hint" ? (
+        <button
+          type="button"
+          onClick={() => handleOpenChange(true)}
+          className="inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2 hover:opacity-80"
+          style={{ color: "#3A6B20" }}
+        >
+          <LayoutTemplate className="w-3.5 h-3.5" />
+          or start from a template
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => handleOpenChange(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-[#EAEADE]"
+          style={{ background: "#F4F4EC", color: "#3A3A30", border: "1px solid #E4E4DC" }}
+        >
+          <LayoutTemplate className="w-3.5 h-3.5" style={{ color: "#3A6B20" }} />
+          Templates
+        </button>
+      )}
       <DialogContent className="max-w-md" style={{ background: "#FDFDF8" }}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: "var(--font-display)", fontWeight: 800 }}>

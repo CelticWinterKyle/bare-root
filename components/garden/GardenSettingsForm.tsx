@@ -66,8 +66,8 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleZipLookup() {
-    const zip = form.locationZip.trim();
+  function handleZipLookup(zipOverride?: string) {
+    const zip = (zipOverride ?? form.locationZip).trim();
     if (!zip) {
       toast.error("Enter a zip code first");
       return;
@@ -192,12 +192,17 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
               <Input
                 placeholder="e.g. 45213"
                 value={form.locationZip}
-                onChange={(e) => set("locationZip", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  set("locationZip", v);
+                  // Auto-lookup on the fifth digit; the button stays for retries.
+                  if (v.replace(/\D/g, "").length === 5) handleZipLookup(v);
+                }}
                 className="flex-1"
               />
               <Button
                 type="button"
-                onClick={handleZipLookup}
+                onClick={() => handleZipLookup()}
                 disabled={isLookingUp || !form.locationZip.trim()}
                 variant="outline"
                 className="border-[#E4E4DC] text-[#1C3D0A] hover:bg-[#F4F4EC]"

@@ -31,11 +31,15 @@ type Props = {
    *  silently discarding them on tab switch. */
   onPreviewChange?: (assignments: LayoutAssignment[]) => void;
   onClose: () => void;
+  /** Free account on its one complimentary run — say so, and word the
+   *  cap message accordingly when the next run is refused. */
+  freeRun?: boolean;
 };
 
 type Step = "wishlist" | "generating" | "results";
 
 export function SmartLayoutPanel({
+  freeRun = false,
   bedId,
   seasonId,
   userId,
@@ -221,7 +225,11 @@ export function SmartLayoutPanel({
       {error && (
         <div className="p-2.5 bg-red-50 border border-red-100 rounded-lg text-xs text-[#B85C3A]">
           {error === "UPGRADE_REQUIRED" ? (
-            <>Smart layout is a Pro feature. <Link href="/settings/billing" className="underline">Upgrade</Link></>
+            freeRun ? (
+              <>That was your free layout. <Link href="/settings/billing" className="underline">Upgrade to Pro</Link> for 20 a day.</>
+            ) : (
+              <>Smart layout is a Pro feature. <Link href="/settings/billing" className="underline">Upgrade</Link></>
+            )
           ) : error}
         </div>
       )}
@@ -279,6 +287,11 @@ export function SmartLayoutPanel({
         })}
       </div>
 
+      {freeRun && (
+        <p className="text-xs text-center" style={{ color: "#6B6B5A" }}>
+          Your first AI layout is on us. Pro includes 20 a day.
+        </p>
+      )}
       <Button
         onClick={handleGenerate}
         disabled={wishlist.length === 0}
