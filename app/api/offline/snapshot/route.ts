@@ -1,3 +1,4 @@
+import { pickOccupant } from "@/lib/services/occupancy";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -47,6 +48,8 @@ export async function GET() {
                       status: true,
                       variety: true,
                       quantityPerCell: true,
+                      occupiesFrom: true,
+                      occupiesUntil: true,
                       plant: { select: { name: true, category: true } },
                     },
                   },
@@ -79,8 +82,12 @@ export async function GET() {
           cells: { row: number; col: number }[];
         }
       >();
+      const now = new Date();
       for (const cell of b.cells) {
-        const occ = cell.occupiedBy[0];
+        // Same rule as the bed page's today view: a cell can hold a live
+        // planting AND one planned for a later month; latest-first picked
+        // the planned one and the offline copy lost the plant in the ground.
+        const occ = pickOccupant(cell.occupiedBy, now);
         if (!occ) continue;
         const p = occ.planting;
         const entry = plantings.get(p.id) ?? {

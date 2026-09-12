@@ -81,6 +81,7 @@ export type Planting = {
   quantityPerCell?: number;
   /** Start of the occupancy window — "Planned for" display + future pill. */
   occupiesFrom?: Date;
+  occupiesUntil?: Date | null;
   /** Denormalized perennial liveness (drives badge + remove flow). */
   isPerennial?: boolean;
   /** Scrubber temporal state: future = window hasn't started (ghost +
