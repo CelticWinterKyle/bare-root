@@ -820,7 +820,7 @@ export default async function DashboardPage() {
       <section className={styles.todaySection}>
         <div className={styles.sectionHead}>
           <div>
-            <span className={`${styles.eyebrow} ${styles.muted}`}>§ 01 · The list</span>
+            <span className={`${styles.eyebrow} ${styles.muted}`}>The list</span>
             <div className={styles.sectionTitle}>
               {todayReminders.length > 0
                 ? `${todayReminders.length === 1 ? "One thing" : `${todayReminders.length} things`} for `
@@ -906,7 +906,7 @@ export default async function DashboardPage() {
         <div>
           <div className={styles.sectionHeadBare}>
             <div>
-              <span className={`${styles.eyebrow} ${styles.muted}`}>§ 02 · Your garden</span>
+              <span className={`${styles.eyebrow} ${styles.muted}`}>Your garden</span>
               <div className={styles.sectionTitle}>
                 <em>{firstName ? `${firstName}'s` : "Your"}</em> {primaryGarden.name}
               </div>
@@ -1271,7 +1271,7 @@ export default async function DashboardPage() {
         <div className={styles.journalInner}>
           <div className={styles.sectionHead}>
             <div>
-              <span className={`${styles.eyebrow} ${styles.muted}`}>§ 03 · The journal</span>
+              <span className={`${styles.eyebrow} ${styles.muted}`}>The journal</span>
               <div className={styles.sectionTitle}>
                 Recent <em>entries</em>.
               </div>
@@ -1344,7 +1344,7 @@ export default async function DashboardPage() {
       <section className={styles.suggest}>
         <div className={styles.sectionHead}>
           <div>
-            <span className={`${styles.eyebrow} ${styles.muted}`}>§ 04 · Worth doing</span>
+            <span className={`${styles.eyebrow} ${styles.muted}`}>Worth doing</span>
             <div className={styles.sectionTitle}>
               A suggestion from the <em>field</em>.
             </div>
