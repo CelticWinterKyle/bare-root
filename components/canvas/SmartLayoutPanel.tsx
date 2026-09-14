@@ -226,7 +226,7 @@ export function SmartLayoutPanel({
         <div className="p-2.5 bg-red-50 border border-red-100 rounded-lg text-xs text-[#B85C3A]">
           {error === "UPGRADE_REQUIRED" ? (
             freeRun ? (
-              <>That was your free layout. <Link href="/settings/billing" className="underline">Upgrade to Pro</Link> for 20 a day.</>
+              <>That was your free layout. <Link href="/settings/billing" className="underline">Upgrade to Pro</Link> for 40 a month.</>
             ) : (
               <>Smart layout is a Pro feature. <Link href="/settings/billing" className="underline">Upgrade</Link></>
             )
@@ -289,7 +289,7 @@ export function SmartLayoutPanel({
 
       {freeRun && (
         <p className="text-xs text-center" style={{ color: "#6B6B5A" }}>
-          Your first AI layout is on us. Pro includes 20 a day.
+          Your first AI layout is on us. Pro includes 40 a month.
         </p>
       )}
       <Button

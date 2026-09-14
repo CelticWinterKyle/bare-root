@@ -10,41 +10,43 @@ import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-l
 import { MAX_BULK_CELLS } from "@/lib/validation";
 
 const MAX_AI_WISHLIST = 20;
-const AI_RUNS_PER_DAY = 20;
+const AI_RUNS_PER_MONTH = 40;
 
 /**
- * Claims one of today's AI runs for the user; false when the cap is hit.
- * Two guarded updateMany calls instead of read-then-write, so concurrent
+ * Claims one of this month's AI runs for a Pro user; false when the cap is
+ * hit. Monthly rather than daily so the worst case per user is bounded by
+ * the month's revenue, not by how many days they feel like clicking. Two
+ * guarded updateMany calls instead of read-then-write, so concurrent
  * requests can't both slip under the cap.
  */
 async function consumeAiRun(userId: string): Promise<boolean> {
-  const dayStart = new Date();
-  dayStart.setUTCHours(0, 0, 0, 0);
-  // New day (or never run): the counter restarts at 1.
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  // New month (or never run): the counter restarts at 1.
   const reset = await db.user.updateMany({
-    where: { id: userId, OR: [{ aiRunsResetAt: null }, { aiRunsResetAt: { lt: dayStart } }] },
-    data: { aiRunsToday: 1, aiRunsResetAt: new Date() },
+    where: { id: userId, OR: [{ aiRunsResetAt: null }, { aiRunsResetAt: { lt: monthStart } }] },
+    data: { aiRunsThisMonth: 1, aiRunsResetAt: now },
   });
   if (reset.count === 1) return true;
-  // Same day: increment only while under the cap — the where clause is the guard.
+  // Same month: increment only while under the cap — the where clause is the guard.
   const bump = await db.user.updateMany({
-    where: { id: userId, aiRunsToday: { lt: AI_RUNS_PER_DAY } },
-    data: { aiRunsToday: { increment: 1 } },
+    where: { id: userId, aiRunsThisMonth: { lt: AI_RUNS_PER_MONTH } },
+    data: { aiRunsThisMonth: { increment: 1 } },
   });
   return bump.count === 1;
 }
 
 /**
  * Free accounts get ONE layout, ever — enough to see what Pro does before
- * the upgrade prompt. It rides on the same counter as Pro's daily cap: a
+ * the upgrade prompt. It rides on the same counter as Pro's monthly cap: a
  * Free user whose aiRunsResetAt has ever been stamped has used their run
- * (the daily reset in consumeAiRun only applies to Pro). Guarded updateMany
+ * (the monthly reset in consumeAiRun only applies to Pro). Guarded updateMany
  * so two concurrent clicks can't both claim it.
  */
 async function claimFreeAiRun(userId: string): Promise<boolean> {
   const claimed = await db.user.updateMany({
     where: { id: userId, aiRunsResetAt: null },
-    data: { aiRunsToday: 1, aiRunsResetAt: new Date() },
+    data: { aiRunsThisMonth: 1, aiRunsResetAt: new Date() },
   });
   return claimed.count === 1;
 }
@@ -67,7 +69,7 @@ export async function generateLayoutAction(
     if (!(await consumeAiRun(user.id))) {
       return {
         assignments: [],
-        error: `You've used today's ${AI_RUNS_PER_DAY} layout runs. They reset at midnight UTC.`,
+        error: `You've used this month's ${AI_RUNS_PER_MONTH} AI layouts. They reset on the 1st.`,
       };
     }
   } else if (!(await claimFreeAiRun(user.id))) {

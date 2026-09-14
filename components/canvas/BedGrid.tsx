@@ -96,7 +96,7 @@ type Props = {
   /** Rendered inside the empty-bed hint card (e.g. the templates link) —
    *  the one moment a new user is asking "now what?". */
   emptyStateAction?: React.ReactNode;
-  /** What the AI tab offers: Pro (daily cap), one free run, or the upgrade
+  /** What the AI tab offers: Pro (monthly cap), one free run, or the upgrade
    *  card. Overrides the older isPro flag when present. */
   aiAccess?: "pro" | "free-run" | "locked";
 };
@@ -1639,7 +1639,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                       </div>
                       <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
                       <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                        You&apos;ve used your free layout. Pro includes 20 a day: an optimized bed from your wishlist, respecting spacing, sun and companions.
+                        You&apos;ve used your free layout. Pro includes 40 a month: an optimized bed from your wishlist, respecting spacing, sun and companions.
                       </p>
                       <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
                         Upgrade to Pro →

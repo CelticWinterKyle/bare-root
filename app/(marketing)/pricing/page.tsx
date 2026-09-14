@@ -41,7 +41,7 @@ const COMPARISON = [
   { feature: "Beds per garden", free: "5", pro: "Unlimited" },
   { feature: "Photo uploads", free: "20 total", pro: "Unlimited" },
   { feature: "Season history", free: false, pro: true },
-  { feature: "AI layout planner", free: "1 to try", pro: "20 a day" },
+  { feature: "AI layout planner", free: "1 to try", pro: "40 a month" },
   { feature: "Seed inventory", free: false, pro: true },
   { feature: "Collaborators", free: false, pro: "Up to 5" },
 ];

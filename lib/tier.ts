@@ -98,7 +98,7 @@ export async function checkCanAddCollaborator(tier: Tier): Promise<void> {
 }
 
 /**
- * What the AI layout tab offers this user. Pro: the daily cap. Free with an
+ * What the AI layout tab offers this user. Pro: the monthly cap. Free with an
  * unstamped counter: one complimentary run (claimFreeAiRun stamps it).
  * Otherwise the upgrade card. Mirrors the server rule in
  * app/actions/smart-layout.ts so the UI never promises a run it won't get.

@@ -122,7 +122,10 @@ Return ONLY valid JSON in this exact format, no other text:
 If a plant cannot be placed due to spacing or sun constraints, omit it. Row and col are 0-indexed. Place each wishlist plant at least once when a suitable empty cell exists.`;
 
   const message = await client.messages.create({
-    model: "claude-opus-4-8",
+    // Sonnet: the task is arranging a wishlist in a small grid as JSON, and
+    // it costs about 2.5× less per run than Opus. Adaptive thinking is on by
+    // default on this model, so no thinking param is needed.
+    model: "claude-sonnet-5",
     max_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });

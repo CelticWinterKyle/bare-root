@@ -98,8 +98,10 @@ model User {
   hadTrial             Boolean   @default(false)
   onboardingComplete   Boolean   @default(false)
   onboardingStep       Int       @default(0)
-  // AI layout planner: per-user daily cap, UTC day (see generateLayoutAction).
-  aiRunsToday          Int       @default(0)
+  // AI layout planner: per-user MONTHLY cap, UTC month (see generateLayoutAction).
+  // aiRunsResetAt is the start of the period being counted; a Free user with
+  // it stamped has used their one complimentary run.
+  aiRunsThisMonth      Int       @default(0)
   aiRunsResetAt        DateTime?
   // Set when Pro was granted via the /beta link — counts toward BETA_MAX_USES.
   betaGrantedAt        DateTime?
