@@ -90,9 +90,9 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(253, 253, 248, 0.86);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  background: rgba(253, 253, 248, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(228,228,220,0.6);
 }
 .navInner {
@@ -1031,7 +1031,7 @@
   color: #111109;
   text-transform: none;
   letter-spacing: -0.01em;
-  margin: 0 8px;
+  margin-right: 2px;
   font-variation-settings: 'opsz' 22;
 }
 
