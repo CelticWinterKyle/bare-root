@@ -251,3 +251,89 @@ export async function getAiUsage(): Promise<AiUsage> {
     capPerMonth: 40,
   };
 }
+
+// ─── Revenue (live from Stripe, never stored) ────────────────────────────────
+
+export type Revenue = {
+  mrrCents: number;
+  active: number;
+  trialing: number;
+  pastDue: number;
+  canceledThisMonth: number;
+  trialsEndingSoon: { user: string; endsAt: string; customerUrl: string }[];
+  failedPayments: { user: string; amountCents: number; at: string; customerUrl: string }[];
+  conversion: { signedUp: number; everPaid: number; payingNow: number };
+  dashboardUrl: string;
+  error: string | null;
+};
+
+export async function getRevenue(): Promise<Revenue> {
+  await requireOwnerAction();
+  const { stripe } = await import("@/lib/stripe");
+  const live = (process.env.STRIPE_SECRET_KEY ?? "").startsWith("sk_live");
+  const base = live ? "https://dashboard.stripe.com" : "https://dashboard.stripe.com/test";
+  const empty: Revenue = {
+    mrrCents: 0, active: 0, trialing: 0, pastDue: 0, canceledThisMonth: 0,
+    trialsEndingSoon: [], failedPayments: [],
+    conversion: { signedUp: 0, everPaid: 0, payingNow: 0 },
+    dashboardUrl: base, error: null,
+  };
+
+  const [signedUp, everPaid] = await Promise.all([
+    db.user.count(),
+    db.user.count({ where: { stripeSubscriptionId: { not: null } } }),
+  ]);
+  empty.conversion.signedUp = signedUp;
+  empty.conversion.everPaid = everPaid;
+
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const monthStart = Math.floor(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1) / 1000);
+    const weekOut = now + 7 * 86_400;
+
+    // Every non-canceled subscription, expanded so the customer email is on the object.
+    const subs: import("stripe").Stripe.Subscription[] = [];
+    for await (const s of stripe.subscriptions.list({ status: "all", limit: 100, expand: ["data.customer"] })) subs.push(s);
+
+    const emailOf = (s: import("stripe").Stripe.Subscription) => {
+      const c = s.customer;
+      return typeof c === "string" ? c : "deleted" in c && c.deleted ? "(deleted customer)" : c.email ?? c.id;
+    };
+    const customerUrl = (s: import("stripe").Stripe.Subscription) => `${base}/customers/${typeof s.customer === "string" ? s.customer : s.customer.id}`;
+
+    let mrr = 0;
+    for (const s of subs) {
+      if (s.status !== "active") continue;
+      for (const item of s.items.data) {
+        const p = item.price;
+        if (!p.unit_amount || !p.recurring) continue;
+        const monthly = p.recurring.interval === "year" ? p.unit_amount / 12 : p.recurring.interval === "month" ? p.unit_amount : 0;
+        mrr += monthly * (item.quantity ?? 1) / (p.recurring.interval_count || 1);
+      }
+    }
+    empty.mrrCents = Math.round(mrr);
+    empty.active = subs.filter((s) => s.status === "active").length;
+    empty.trialing = subs.filter((s) => s.status === "trialing").length;
+    empty.pastDue = subs.filter((s) => s.status === "past_due" || s.status === "unpaid").length;
+    empty.canceledThisMonth = subs.filter((s) => s.status === "canceled" && (s.canceled_at ?? 0) >= monthStart).length;
+    empty.conversion.payingNow = empty.active;
+    empty.trialsEndingSoon = subs
+      .filter((s) => s.status === "trialing" && s.trial_end && s.trial_end <= weekOut)
+      .sort((a, b) => (a.trial_end ?? 0) - (b.trial_end ?? 0))
+      .map((s) => ({ user: emailOf(s), endsAt: new Date((s.trial_end ?? 0) * 1000).toISOString(), customerUrl: customerUrl(s) }));
+
+    const failed = await stripe.invoices.list({ status: "open", limit: 20, expand: ["data.customer"] });
+    empty.failedPayments = failed.data
+      .filter((inv) => (inv.attempt_count ?? 0) > 0)
+      .map((inv) => {
+        const c = inv.customer;
+        const id = typeof c === "string" ? c : c?.id ?? "";
+        const email = typeof c === "string" || !c || ("deleted" in c && c.deleted) ? id : c.email ?? id;
+        return { user: email, amountCents: inv.amount_due, at: new Date((inv.created ?? 0) * 1000).toISOString(), customerUrl: `${base}/customers/${id}` };
+      });
+    return empty;
+  } catch (err) {
+    console.error("getRevenue failed:", err);
+    return { ...empty, error: err instanceof Error ? err.message : "Stripe request failed" };
+  }
+}

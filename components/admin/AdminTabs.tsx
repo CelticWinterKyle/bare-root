@@ -5,7 +5,7 @@ export type AdminTab = "overview" | "users" | "revenue" | "ai" | "system";
 const TABS: { key: AdminTab; label: string; href: string; ready: boolean }[] = [
   { key: "overview", label: "Overview", href: "/admin/overview", ready: false },
   { key: "users", label: "Users", href: "/admin", ready: true },
-  { key: "revenue", label: "Revenue", href: "/admin/revenue", ready: false },
+  { key: "revenue", label: "Revenue", href: "/admin/revenue", ready: true },
   { key: "ai", label: "AI usage", href: "/admin/ai", ready: true },
   { key: "system", label: "System", href: "/admin/system", ready: false },
 ];
