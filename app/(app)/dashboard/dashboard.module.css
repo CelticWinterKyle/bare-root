@@ -99,8 +99,8 @@
   top: 0;
   z-index: 30;
   background: rgba(253,253,248,0.86);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(228,228,220,0.7);
   padding: 16px var(--x-pad);
   display: flex;
@@ -145,14 +145,6 @@
   border-bottom: 1px solid var(--rule);
 }
 .heroLeft .eyebrow { margin-bottom: 18px; }
-.heroDate {
-  font-family: var(--font-display);
-  font-size: clamp(14px, 1.4vw, 16px);
-  font-style: italic;
-  color: var(--mid);
-  margin-bottom: 12px;
-  font-variation-settings: 'opsz' 18;
-}
 .heroGreeting {
   font-family: var(--font-display);
   font-size: clamp(44px, 6vw, 72px);
@@ -190,24 +182,6 @@
   box-shadow:
     0 20px 50px -16px rgba(28,61,10,0.35),
     0 4px 12px -4px rgba(28,61,10,0.15);
-}
-.weather::before {
-  content: '';
-  position: absolute;
-  right: -30px; top: -30px;
-  width: 140px; height: 140px;
-  border-radius: 50%;
-  background: var(--mid);
-  opacity: 0.45;
-}
-.weather::after {
-  content: '';
-  position: absolute;
-  right: 20px; bottom: -40px;
-  width: 90px; height: 90px;
-  border-radius: 50%;
-  background: var(--sage);
-  opacity: 0.18;
 }
 .weatherTop {
   display: flex;
@@ -467,24 +441,6 @@
   padding: 22px 26px 20px;
   position: relative;
   overflow: hidden;
-}
-.gardenCardHeader::before {
-  content: '';
-  position: absolute;
-  right: -40px; top: -40px;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: var(--mid);
-  opacity: 0.35;
-}
-.gardenCardHeader::after {
-  content: '';
-  position: absolute;
-  right: 40px; bottom: -60px;
-  width: 140px; height: 140px;
-  border-radius: 50%;
-  background: var(--sage);
-  opacity: 0.13;
 }
 .gardenCardRow {
   position: relative;
@@ -776,37 +732,6 @@
 .seasonProgress strong { color: var(--deep); font-weight: 600; }
 
 /* Quick stats */
-.qstats {
-  padding: 6px 8px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-.qstat {
-  padding: 12px 10px;
-  text-align: center;
-}
-.qstat .num {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.025em;
-  color: var(--ink);
-  font-variation-settings: 'opsz' 32;
-}
-.qstat .num em { font-style: italic; color: var(--deep); }
-.qstat .numSub {
-  font-size: 14px;
-  font-weight: 700;
-}
-.qstat .label {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 5px;
-  font-weight: 500;
-}
 
 /* Upcoming list */
 .upcomingList { padding: 8px 0; }
@@ -1087,20 +1012,11 @@
   border-radius: 16px;
   padding: 32px 36px;
   display: grid;
-  grid-template-columns: 1fr 220px;
+  grid-template-columns: 1fr;
   gap: 36px;
   align-items: center;
   position: relative;
   overflow: hidden;
-}
-.suggestCard::after {
-  content: '';
-  position: absolute;
-  right: -50px; bottom: -50px;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: var(--sage);
-  opacity: 0.08;
 }
 .suggestCard > * { position: relative; z-index: 1; }
 .suggestEyebrow {
@@ -1153,27 +1069,6 @@
   transition: transform 0.15s;
 }
 .suggestCta:hover .suggestCtaArrow { transform: translateX(3px); }
-.suggestViz { text-align: center; }
-.suggestVizNum {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 96px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--deep);
-  line-height: 0.9;
-  font-variation-settings: 'opsz' 144;
-}
-.suggestVizNum span {
-  font-size: 44px;
-}
-.suggestVizLabel {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 12px;
-  color: var(--mid);
-  margin-top: 8px;
-  font-weight: 600;
-}
 
 /* ── Empty-garden state ─────────────────────────────────────────────────── */
 .emptyState {
@@ -1196,15 +1091,6 @@
   position: relative;
   overflow: hidden;
   color: var(--white);
-}
-.emptyHead::before {
-  content: '';
-  position: absolute;
-  right: -40px; top: -40px;
-  width: 180px; height: 180px;
-  border-radius: 50%;
-  background: var(--mid);
-  opacity: 0.4;
 }
 .emptyHead > * { position: relative; z-index: 1; }
 .emptyHeadTitle {
@@ -1282,7 +1168,6 @@
     gap: 22px;
     padding: 26px;
   }
-  .suggestVizNum { font-size: 72px; }
 }
 @media (max-width: 640px) {
   .topbar { padding: 12px 16px; }

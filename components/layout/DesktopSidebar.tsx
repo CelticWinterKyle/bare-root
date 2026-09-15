@@ -213,7 +213,7 @@ export function DesktopSidebar({
         {isPro && (
           <span style={{
             fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
-            background: "linear-gradient(135deg, #D4820A, #F0A030)",
+            background: "#D4820A",
             color: "white", padding: "2px 6px", borderRadius: "4px",
             flexShrink: 0,
           }}>

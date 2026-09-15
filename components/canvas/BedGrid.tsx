@@ -1634,10 +1634,10 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     />
                   ) : (
                     <div className="text-center py-6 space-y-3">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: "#F4F4EC" }}>
-                        <Sparkles className="w-6 h-6" style={{ color: "#6B6B5A" }} />
-                      </div>
-                      <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
+                      <p className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: "#111109" }}>
+                        <Sparkles className="w-4 h-4" style={{ color: "#3A6B20" }} />
+                        AI layout planner
+                      </p>
                       <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
                         You&apos;ve used your free layout. Pro includes 40 a month: an optimized bed from your wishlist, respecting spacing, sun and companions.
                       </p>

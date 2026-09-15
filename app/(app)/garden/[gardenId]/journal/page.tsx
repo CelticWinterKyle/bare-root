@@ -174,7 +174,7 @@ export default async function GardenJournalPage({
               The Journal · {garden.name}
             </div>
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px, 4vw, 30px)", fontWeight: 800, color: "#111109", letterSpacing: "-0.03em", lineHeight: 1, fontVariationSettings: "'opsz' 32" }}>
-              What the garden <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>told you</em>.
+              What the garden told you.
             </h1>
           </div>
           <Link

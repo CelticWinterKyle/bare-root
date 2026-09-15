@@ -257,11 +257,11 @@ export default async function SeasonSummaryPage({
             </>
           ) : totalPlantings > 0 ? (
             <>
-              {totalPlantings} planting{totalPlantings === 1 ? "" : "s"}, <em>pressed and kept</em>.
+              {totalPlantings} planting{totalPlantings === 1 ? "" : "s"}, pressed and kept.
             </>
           ) : (
             <>
-              An empty page, <em>waiting</em>.
+              An empty page, waiting.
             </>
           )}
         </h2>
@@ -310,7 +310,7 @@ export default async function SeasonSummaryPage({
               <div>
                 <span className={styles.eyebrow}>From the journal</span>
                 <div className={styles.sectionTitle}>
-                  The season, <em>in pictures</em>.
+                  The season, in pictures.
                 </div>
               </div>
               <span className={styles.sectionMeta}>
@@ -351,7 +351,7 @@ export default async function SeasonSummaryPage({
             <div>
               <span className={styles.eyebrow}>Harvest rhythm</span>
               <div className={styles.sectionTitle}>
-                Month by <em>month</em>.
+                Month by month.
               </div>
             </div>
             <span className={styles.sectionMeta}>{dominantUnit} logged</span>
@@ -380,7 +380,7 @@ export default async function SeasonSummaryPage({
             <div>
               <span className={styles.eyebrow}>The ledger</span>
               <div className={styles.sectionTitle}>
-                What the beds <em>gave</em>.
+                What the beds gave.
               </div>
             </div>
           </div>
@@ -421,7 +421,7 @@ export default async function SeasonSummaryPage({
             <div>
               <span className={styles.eyebrow}>Every planting</span>
               <div className={styles.sectionTitle}>
-                The full <em>roster</em>.
+                The full roster.
               </div>
             </div>
           </div>
@@ -464,7 +464,7 @@ export default async function SeasonSummaryPage({
             <div>
               <span className={styles.eyebrow}>Next year&apos;s list</span>
               <div className={styles.sectionTitle}>
-                Plant <em>again</em>.
+                Plant again.
               </div>
             </div>
           </div>

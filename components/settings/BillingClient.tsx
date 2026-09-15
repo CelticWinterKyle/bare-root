@@ -93,9 +93,6 @@ export function BillingClient({
   if (justUpgraded) {
     return (
       <div className="px-[22px] md:px-8 py-16 text-center">
-        <div className="w-16 h-16 bg-[#F4F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
-          <Star className="w-8 h-8 text-[#9A5E08] fill-[#D4820A]" />
-        </div>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "28px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", marginBottom: "8px" }}>
           Welcome to Pro!
         </h1>

@@ -215,7 +215,7 @@ export default async function DashboardPage() {
             <div className={styles.emptyHead}>
               <Sprout className="w-9 h-9" style={{ color: "rgba(168,216,112,0.7)" }} />
               <h1 className={styles.emptyHeadTitle}>
-                Set up your <em>first</em> garden
+                Set up your first garden
               </h1>
               <p className={styles.emptyHeadSub}>
                 Add your beds, map your space, and start planning.
@@ -515,14 +515,14 @@ export default async function DashboardPage() {
     winter: [
       {
         eyebrow: "Quiet season",
-        title: <>A good time to <em>review and reorder</em>.</>,
+        title: <>A good time to review and reorder.</>,
         body: "The beds are resting. Look back over what grew well, rate what you'd grow again, and get the seed order in before spring catches you off guard.",
         href: `/garden/${primaryGarden.id}/seasons`,
         cta: "Review the season",
       },
       {
         eyebrow: "Dreaming ahead",
-        title: <>Plan next season from the <em>armchair</em>.</>,
+        title: <>Plan next season from the armchair.</>,
         body: "Winter is for graph paper and good intentions. Browse the plant library, sketch the spring layout, and let something new earn a spot in the beds.",
         href: "/plants",
         cta: "Browse the library",
@@ -531,14 +531,14 @@ export default async function DashboardPage() {
     spring: [
       {
         eyebrow: "Succession sowing",
-        title: <>Keep something always <em>coming up</em>.</>,
+        title: <>Keep something always coming up.</>,
         body: "A second sowing of greens or radishes every couple of weeks keeps the harvest steady instead of arriving all at once.",
         href: "/plants",
         cta: "Open plant library",
       },
       {
         eyebrow: "Hardening off",
-        title: <>Ease the seedlings <em>outdoors</em>.</>,
+        title: <>Ease the seedlings outdoors.</>,
         body: "Indoor starts want a week of short outdoor visits before transplanting — a little sun and breeze at a time, so the move to the bed isn't a shock.",
         href: "/calendar",
         cta: "Check the calendar",
@@ -547,14 +547,14 @@ export default async function DashboardPage() {
     summer: [
       {
         eyebrow: "Deep watering",
-        title: <>Water <em>deeply</em>, not often.</>,
+        title: <>Water deeply, not often.</>,
         body: "A long soak a couple of times a week beats a daily sprinkle — roots chase the water down, and the plants ride out hot spells far better.",
         href: `/garden/${primaryGarden.id}`,
         cta: "Walk the beds",
       },
       {
         eyebrow: "Keep picking",
-        title: <>Harvest often to <em>keep them producing</em>.</>,
+        title: <>Harvest often to keep them producing.</>,
         body: "Beans, zucchini, and cucumbers slow down when fruit hangs too long. Pick a little every day or two and log it — the plants will keep the pace.",
         href: `/garden/${primaryGarden.id}/journal`,
         cta: "Open the journal",
@@ -563,14 +563,14 @@ export default async function DashboardPage() {
     fall: [
       {
         eyebrow: "Fall window",
-        title: <>There&apos;s still time for <em>one more sowing</em>.</>,
+        title: <>There&apos;s still time for one more sowing.</>,
         body: "Cool-weather crops — spinach, radishes, garlic — actually prefer this end of the year. Check what fits before the first frost closes the window.",
         href: "/calendar",
         cta: "See what fits",
       },
       {
         eyebrow: "Putting it to bed",
-        title: <>Tuck the garden in for <em>winter</em>.</>,
+        title: <>Tuck the garden in for winter.</>,
         body: "Clear the spent plantings, note what thrived, and rate the season while it's fresh. Next spring's plan writes itself from a good record.",
         href: `/garden/${primaryGarden.id}/seasons`,
         cta: "Review the season",
@@ -582,7 +582,7 @@ export default async function DashboardPage() {
   if (frostRisk && frostDay) {
     suggestion = {
       eyebrow: "Frost watch",
-      title: <>Cold night coming — <em>cover the tender plants</em>.</>,
+      title: <>Cold night coming. Cover the tender plants.</>,
       body: `The forecast dips to ${Math.round(frostDay.minTemp)}°F. Drape row cover or old sheets over anything tender before dusk, and check the morning forecast before you uncover.`,
       href: `/garden/${primaryGarden.id}`,
       cta: "Open the garden",
@@ -590,7 +590,7 @@ export default async function DashboardPage() {
   } else if (allBeds.length === 0) {
     suggestion = {
       eyebrow: "First things first",
-      title: <>Your garden has <em>no beds</em> yet.</>,
+      title: <>Your garden has no beds yet.</>,
       body: "Every planting needs a place to live. Add your first bed to the canvas — even a small 4×4 is plenty to get growing.",
       href: `/garden/${primaryGarden.id}`,
       cta: "Add a bed",
@@ -598,7 +598,7 @@ export default async function DashboardPage() {
   } else if (activePlantingCount === 0) {
     suggestion = {
       eyebrow: "Time to plant",
-      title: <>The beds are <em>empty</em> — see what you can plant right now.</>,
+      title: <>The beds are empty. See what you can plant right now.</>,
       body: "The calendar knows your zone and frost dates, so it can tell you exactly what's in its window this week. Pick something quick to get the season moving.",
       href: "/calendar",
       cta: "Open the calendar",
@@ -606,7 +606,7 @@ export default async function DashboardPage() {
   } else if (overdueCount >= 2) {
     suggestion = {
       eyebrow: "Catching up",
-      title: <>{overdueCount} tasks are <em>waiting</em> — knock them out.</>,
+      title: <>{overdueCount} tasks are waiting. Knock them out.</>,
       body: "A few reminders slipped past their day. Most take five minutes in the garden, and marking them done keeps each planting's story straight.",
       href: "/reminders",
       cta: "See the list",
@@ -618,7 +618,7 @@ export default async function DashboardPage() {
   ) {
     suggestion = {
       eyebrow: "First harvest",
-      title: <>Plants are growing — <em>log the first harvest</em> when it comes in.</>,
+      title: <>Plants are growing. Log the first harvest when it comes in.</>,
       body: "Logged harvests build the journal and the year's tally. When something's ready, weigh it (roughly is fine) and write it down — future-you will love the record.",
       href: `/garden/${primaryGarden.id}`,
       cta: "Walk the beds",
@@ -724,8 +724,6 @@ export default async function DashboardPage() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
-          <span className={styles.eyebrow}>Today&apos;s edition</span>
-          <div className={styles.heroDate}>{fmtHeroDate(now, tz)}</div>
           <h1 className={styles.heroGreeting}>
             Good {timeOfDay(now, tz)},<br />
             <em>{firstName ?? "gardener"}.</em>
@@ -821,13 +819,13 @@ export default async function DashboardPage() {
         <div className={styles.sectionHead}>
           <div>
             <span className={`${styles.eyebrow} ${styles.muted}`}>The list</span>
-            <div className={styles.sectionTitle}>
+            <h2 className={styles.sectionTitle}>
               {todayReminders.length > 0
                 ? `${todayReminders.length === 1 ? "One thing" : `${todayReminders.length} things`} for `
                 : "Nothing pressing "}
-              <em>today</em>
+              today
               {todayReminders.length > 0 ? "." : "."}
-            </div>
+            </h2>
           </div>
           <Link href="/reminders" className={styles.sectionAction}>
             All reminders →
@@ -907,9 +905,9 @@ export default async function DashboardPage() {
           <div className={styles.sectionHeadBare}>
             <div>
               <span className={`${styles.eyebrow} ${styles.muted}`}>Your garden</span>
-              <div className={styles.sectionTitle}>
+              <h2 className={styles.sectionTitle}>
                 <em>{firstName ? `${firstName}'s` : "Your"}</em> {primaryGarden.name}
-              </div>
+              </h2>
             </div>
             <Link href={`/garden/${primaryGarden.id}`} className={styles.sectionAction}>
               Open canvas →
@@ -921,7 +919,7 @@ export default async function DashboardPage() {
               <div className={styles.gardenCardRow}>
                 <div>
                   <h2 className={styles.gardenCardName}>
-                    {gardenW} × {gardenH} ft <em>plot</em>
+                    {gardenW} × {gardenH} ft plot
                   </h2>
                   <div className={styles.gardenCardMeta}>
                     {primaryGarden.usdaZone && (
@@ -1095,9 +1093,9 @@ export default async function DashboardPage() {
           {activeSeason && (
             <div className={styles.widget}>
               <div className={styles.widgetHead}>
-                <div className={styles.widgetTitle}>
-                  The <em>season</em>
-                </div>
+                <h2 className={styles.widgetTitle}>
+                  The season
+                </h2>
                 {seasonTotalDays && (
                   <span className={styles.widgetMeta}>
                     Day {seasonDayN} / {seasonTotalDays}
@@ -1140,45 +1138,12 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          <div className={styles.widget}>
-            <div className={styles.widgetHead}>
-              <div className={styles.widgetTitle}>
-                At a <em>glance</em>
-              </div>
-              <span className={styles.widgetMeta}>Year to date</span>
-            </div>
-            <div className={styles.qstats}>
-              <div className={styles.qstat}>
-                <div className="num">
-                  <em>{activePlantingCount}</em>
-                </div>
-                <div className="label">Active plantings</div>
-              </div>
-              <div className={styles.qstat}>
-                <div className="num">{recentHarvests.length}</div>
-                <div className="label">Recent harvests</div>
-              </div>
-              <div className={styles.qstat}>
-                <div className="num">
-                  {yieldLbs > 0 ? yieldLbs.toFixed(1) : "0"}
-                  <span className="numSub">lb</span>
-                </div>
-                <div className="label">Harvested</div>
-              </div>
-              <div className={styles.qstat}>
-                <div className="num">
-                  {avgRating !== null ? avgRating.toFixed(1) : "—"}
-                </div>
-                <div className="label">Avg rating</div>
-              </div>
-            </div>
-          </div>
 
           <div className={styles.widget}>
             <div className={styles.widgetHead}>
-              <div className={styles.widgetTitle}>
-                Coming <em>up</em>
-              </div>
+              <h2 className={styles.widgetTitle}>
+                Coming up
+              </h2>
               <Link href="/calendar" className={styles.sectionAction} style={{ fontSize: 9 }}>
                 View →
               </Link>
@@ -1225,9 +1190,9 @@ export default async function DashboardPage() {
           {alertReminders.length > 0 && (
             <div className={styles.widget}>
               <div className={styles.widgetHead}>
-                <div className={styles.widgetTitle}>
-                  <em>Alerts</em>
-                </div>
+                <h2 className={styles.widgetTitle}>
+                  Alerts
+                </h2>
                 <span className={styles.widgetMeta}>
                   {alertReminders.length} new
                 </span>
@@ -1273,9 +1238,9 @@ export default async function DashboardPage() {
           <div className={styles.sectionHead}>
             <div>
               <span className={`${styles.eyebrow} ${styles.muted}`}>The journal</span>
-              <div className={styles.sectionTitle}>
-                Recent <em>entries</em>.
-              </div>
+              <h2 className={styles.sectionTitle}>
+                Recent entries.
+              </h2>
             </div>
             <Link href={`/garden/${primaryGarden.id}/journal`} className={styles.sectionAction}>
               Open journal →
@@ -1346,9 +1311,9 @@ export default async function DashboardPage() {
         <div className={styles.sectionHead}>
           <div>
             <span className={`${styles.eyebrow} ${styles.muted}`}>Worth doing</span>
-            <div className={styles.sectionTitle}>
-              A suggestion from the <em>field</em>.
-            </div>
+            <h2 className={styles.sectionTitle}>
+              A suggestion from the field.
+            </h2>
           </div>
         </div>
         <div className={styles.suggestCard}>
@@ -1360,13 +1325,6 @@ export default async function DashboardPage() {
               {suggestion.cta}
               <span className={styles.suggestCtaArrow}>→</span>
             </Link>
-          </div>
-          <div className={styles.suggestViz}>
-            <div className={styles.suggestVizNum}>
-              {activePlantingCount}
-              <span>plants</span>
-            </div>
-            <div className={styles.suggestVizLabel}>growing this season</div>
           </div>
         </div>
       </section>

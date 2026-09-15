@@ -47,7 +47,7 @@ export default async function GardenSettingsPage({
           </span>
         </div>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", lineHeight: 1, fontVariationSettings: "'opsz' 26" }}>
-          Garden <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Settings</em>
+          Garden settings
         </h1>
       </div>
       <div className="px-[22px] md:px-8 py-5 space-y-8">
