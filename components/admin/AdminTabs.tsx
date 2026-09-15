@@ -7,7 +7,7 @@ const TABS: { key: AdminTab; label: string; href: string; ready: boolean }[] = [
   { key: "users", label: "Users", href: "/admin", ready: true },
   { key: "revenue", label: "Revenue", href: "/admin/revenue", ready: true },
   { key: "ai", label: "AI usage", href: "/admin/ai", ready: true },
-  { key: "system", label: "System", href: "/admin/system", ready: false },
+  { key: "system", label: "System", href: "/admin/system", ready: true },
 ];
 
 /**

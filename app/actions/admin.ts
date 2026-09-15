@@ -337,3 +337,84 @@ export async function getRevenue(): Promise<Revenue> {
     return { ...empty, error: err instanceof Error ? err.message : "Stripe request failed" };
   }
 }
+
+// ─── System ───────────────────────────────────────────────────────────────────
+
+export type CronHealth = {
+  name: string;
+  schedule: string;
+  lastStartedAt: string | null;
+  lastFinishedAt: string | null;
+  lastOk: boolean | null;
+  lastSent: number;
+  lastHeld: number;
+  lastFailed: number;
+  lastError: string | null;
+  overdue: boolean;
+};
+
+export type FeedbackRow = { id: string; at: string; user: string; email: string; path: string | null; message: string };
+
+const CRONS: { name: string; schedule: string; everyMs: number }[] = [
+  { name: "dispatch-reminders", schedule: "hourly", everyMs: 3_600_000 },
+  { name: "refresh-weather", schedule: "every 3 hours", everyMs: 3 * 3_600_000 },
+  { name: "frost-check", schedule: "daily, 08:00 UTC", everyMs: 24 * 3_600_000 },
+  { name: "water-check", schedule: "daily, 13:00 UTC", everyMs: 24 * 3_600_000 },
+];
+
+export async function getSystem(): Promise<{ crons: CronHealth[]; feedback: FeedbackRow[]; recordingSince: string | null }> {
+  await requireOwnerAction();
+  const now = Date.now();
+  const [lastRuns, feedback, first] = await Promise.all([
+    Promise.all(CRONS.map((c) => db.cronRun.findFirst({ where: { name: c.name }, orderBy: { startedAt: "desc" } }))),
+    db.feedback.findMany({ orderBy: { createdAt: "desc" }, take: 20, include: { user: { select: { name: true, email: true } } } }),
+    db.cronRun.findFirst({ orderBy: { startedAt: "asc" }, select: { startedAt: true } }),
+  ]);
+  return {
+    recordingSince: first?.startedAt.toISOString() ?? null,
+    crons: CRONS.map((c, i) => {
+      const r = lastRuns[i];
+      // Overdue = no run within 1.5× its interval (allows for cron jitter).
+      const overdue = !r ? false : now - r.startedAt.getTime() > c.everyMs * 1.5;
+      return {
+        name: c.name,
+        schedule: c.schedule,
+        lastStartedAt: r?.startedAt.toISOString() ?? null,
+        lastFinishedAt: r?.finishedAt?.toISOString() ?? null,
+        lastOk: r ? r.ok : null,
+        lastSent: r?.sent ?? 0,
+        lastHeld: r?.held ?? 0,
+        lastFailed: r?.failed ?? 0,
+        lastError: r?.error ?? null,
+        overdue,
+      };
+    }),
+    feedback: feedback.map((f) => ({ id: f.id, at: f.createdAt.toISOString(), user: f.user.name ?? f.user.email, email: f.user.email, path: f.path, message: f.message })),
+  };
+}
+
+/**
+ * The maintenance routes, callable from the System tab. Each route still
+ * self-authenticates; this just lets a button replace a console command.
+ * Returns the route's JSON so the result readout is exactly what the route
+ * said.
+ */
+export async function runMaintenance(
+  name: "cleanup-reminders" | "seed-companions" | "enrich-plants" | "backfill-images",
+  params: Record<string, string> = {}
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  await requireOwnerAction();
+  const { headers: nextHeaders } = await import("next/headers");
+  const h = await nextHeaders();
+  const cookie = h.get("cookie") ?? "";
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${base}/api/admin/${name}${qs ? `?${qs}` : ""}`, {
+    method: "POST",
+    headers: { cookie, "x-admin-secret": process.env.CRON_SECRET ?? "" },
+    cache: "no-store",
+  });
+  let body: unknown = null;
+  try { body = await res.json(); } catch { body = await res.text().catch(() => null); }
+  return { ok: res.ok, status: res.status, body };
+}
