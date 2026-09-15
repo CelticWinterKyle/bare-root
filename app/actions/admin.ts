@@ -137,12 +137,14 @@ export async function setUserTier(userId: string, tier: Tier): Promise<void> {
   }
   await db.user.update({ where: { id: userId }, data: { subscriptionTier: tier } });
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
 }
 
 export async function resetAiRuns(userId: string): Promise<void> {
   await requireOwnerAction();
   await db.user.update({ where: { id: userId }, data: { aiRunsThisMonth: 0, aiRunsResetAt: null } });
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
 }
 
 /**
@@ -163,6 +165,7 @@ export async function joinGardenAsViewer(gardenId: string): Promise<void> {
     update: { role: CollabRole.VIEWER, acceptedAt: new Date() },
   });
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
   revalidatePath(`/garden/${gardenId}`);
 }
 
@@ -170,6 +173,7 @@ export async function leaveGardenAsViewer(gardenId: string): Promise<void> {
   const owner = await requireOwnerAction();
   await db.gardenCollaborator.deleteMany({ where: { gardenId, userId: owner.id, role: CollabRole.VIEWER } });
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
   revalidatePath(`/garden/${gardenId}`);
 }
 
@@ -417,4 +421,64 @@ export async function runMaintenance(
   let body: unknown = null;
   try { body = await res.json(); } catch { body = await res.text().catch(() => null); }
   return { ok: res.ok, status: res.status, body };
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+
+export type Overview = {
+  users: { total: number; pro: number; trialing: number; newThisWeek: number };
+  ai: { runsThisMonth: number; costCents: number };
+  reminders: { sent7d: number; held: number };
+  needsYou: { kind: "warn" | "ok"; text: string; href?: string }[];
+  thisWeek: { at: string; text: string }[];
+};
+
+export async function getOverview(): Promise<Overview> {
+  await requireOwnerAction();
+  const nowMs = Date.now();
+  const now = new Date(nowMs);
+  const weekAgo = new Date(nowMs - 7 * 86_400_000);
+  const weekOut = new Date(nowMs + 7 * 86_400_000);
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+  const [total, pro, trialing, newUsers, aiMonth, sent7d, latestDispatch, endingTrials, recentFeedback, recentHarvests, recentSignups, lastRuns] = await Promise.all([
+    db.user.count(),
+    db.user.count({ where: { subscriptionTier: "PRO" } }),
+    db.user.count({ where: { trialEndsAt: { gt: now } } }),
+    db.user.findMany({ where: { createdAt: { gte: weekAgo } }, select: { name: true, email: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 10 }),
+    db.aiRun.aggregate({ where: { createdAt: { gte: monthStart } }, _count: { _all: true }, _sum: { costCents: true } }),
+    db.reminder.count({ where: { sentAt: { gte: weekAgo } } }),
+    db.cronRun.findFirst({ where: { name: "dispatch-reminders" }, orderBy: { startedAt: "desc" } }),
+    db.user.findMany({ where: { trialEndsAt: { gt: now, lte: weekOut } }, select: { name: true, email: true, trialEndsAt: true }, orderBy: { trialEndsAt: "asc" }, take: 5 }),
+    db.feedback.findMany({ where: { createdAt: { gte: weekAgo } }, include: { user: { select: { name: true, email: true } } }, orderBy: { createdAt: "desc" }, take: 5 }),
+    db.harvestLog.findMany({ where: { harvestedAt: { gte: weekAgo } }, include: { planting: { include: { plant: { select: { name: true } }, season: { include: { garden: { include: { user: { select: { name: true, email: true } } } } } } } } }, orderBy: { harvestedAt: "desc" }, take: 5 }),
+    db.user.count({ where: { createdAt: { gte: weekAgo } } }),
+    Promise.all(CRONS.map((c) => db.cronRun.findFirst({ where: { name: c.name }, orderBy: { startedAt: "desc" }, select: { startedAt: true, ok: true, error: true } }))),
+  ]);
+
+  const needsYou: Overview["needsYou"] = [];
+  for (const u of endingTrials) {
+    needsYou.push({ kind: "warn", text: `${u.name ?? u.email}'s trial ends ${new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(u.trialEndsAt!)}`, href: "/admin/revenue" });
+  }
+  const held = latestDispatch?.held ?? 0;
+  if (held > 0) needsYou.push({ kind: "warn", text: `${held} reminder${held === 1 ? "" : "s"} held: email may be unconfigured`, href: "/admin/system" });
+  const stale = CRONS.filter((c, i) => { const r = lastRuns[i]; return r && (nowMs - r.startedAt.getTime() > c.everyMs * 1.5 || r.ok === false); });
+  if (stale.length) needsYou.push({ kind: "warn", text: `${stale.map((c) => c.name).join(", ")} ${stale.length === 1 ? "hasn't" : "haven't"} run cleanly`, href: "/admin/system" });
+  const neverFinished = await db.user.count({ where: { onboardingComplete: false, createdAt: { lt: new Date(nowMs - 86_400_000) } } });
+  if (neverFinished > 0) needsYou.push({ kind: "warn", text: `${neverFinished} account${neverFinished === 1 ? "" : "s"} signed up but never finished setup`, href: "/admin/users" });
+  if (needsYou.length === 0) needsYou.push({ kind: "ok", text: "Nothing waiting on you." });
+
+  const thisWeek: Overview["thisWeek"] = [
+    ...newUsers.map((u) => ({ at: u.createdAt.toISOString(), text: `New sign-up: ${u.name ?? u.email}` })),
+    ...recentFeedback.map((f) => ({ at: f.createdAt.toISOString(), text: `Feedback from ${f.user.name ?? f.user.email}: “${f.message.slice(0, 80)}${f.message.length > 80 ? "…" : ""}”` })),
+    ...recentHarvests.map((h) => ({ at: h.harvestedAt.toISOString(), text: `${h.planting.season.garden.user.name ?? h.planting.season.garden.user.email} harvested ${h.quantity} ${h.unit} of ${h.planting.plant.name}` })),
+  ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 12);
+
+  return {
+    users: { total, pro, trialing, newThisWeek: recentSignups },
+    ai: { runsThisMonth: aiMonth._count._all, costCents: aiMonth._sum.costCents ?? 0 },
+    reminders: { sent7d, held },
+    needsYou,
+    thisWeek,
+  };
 }
