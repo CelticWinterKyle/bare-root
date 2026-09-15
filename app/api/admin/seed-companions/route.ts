@@ -1,8 +1,8 @@
+import { OWNER_EMAIL } from "@/lib/owner";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
-const OWNER_EMAIL = "kyle@celticwinter.com";
 
 type Pair = {
   plant: string;

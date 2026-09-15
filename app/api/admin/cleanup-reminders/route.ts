@@ -1,10 +1,10 @@
+import { OWNER_EMAIL } from "@/lib/owner";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ReminderType } from "@/lib/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/auth";
 
 // The account allowed to trigger this from the browser (Clerk session).
-const OWNER_EMAIL = "kyle@celticwinter.com";
 
 /**
  * One-time cleanup for reminder cruft created before the per-cell dedupe

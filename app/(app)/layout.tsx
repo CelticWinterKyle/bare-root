@@ -1,3 +1,4 @@
+import { isOwnerEmail } from "@/lib/owner";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -177,6 +178,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             gardens={switcherGardens}
             activeGardenId={activeGardenId}
             atGardenLimit={atGardenLimit}
+            isOwner={isOwnerEmail(user.email)}
           />
         </div>
 

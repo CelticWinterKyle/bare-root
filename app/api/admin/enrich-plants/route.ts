@@ -1,9 +1,9 @@
+import { OWNER_EMAIL } from "@/lib/owner";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PLANT_ENRICHMENT } from "@/lib/data/plant-enrichment";
 
-const OWNER_EMAIL = "kyle@celticwinter.com";
 
 /**
  * Owner-only backfill: apply the curated enrichment in

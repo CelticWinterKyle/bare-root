@@ -1,10 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard, LayoutGrid, CalendarDays,
-  BookOpen, Package, Bell, Settings,
-} from "lucide-react";
+import { LayoutDashboard, LayoutGrid, CalendarDays, BookOpen, Package, Bell, Settings, ShieldCheck } from "lucide-react";
 import { GardenSwitcher, type GardenOption } from "@/components/garden/GardenSwitcher";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { HelpButton } from "@/components/help/HelpButton";
@@ -41,6 +38,7 @@ export function DesktopSidebar({
   gardens,
   activeGardenId,
   atGardenLimit,
+  isOwner = false,
 }: {
   userName: string | null;
   userInitial: string;
@@ -49,6 +47,8 @@ export function DesktopSidebar({
   gardens: GardenOption[];
   activeGardenId: string | null;
   atGardenLimit: boolean;
+  /** Renders the Owner → Admin link. Only the owner account gets true. */
+  isOwner?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -171,6 +171,21 @@ export function DesktopSidebar({
             })}
           </div>
         ))}
+
+        {isOwner && (
+          <div style={{ padding: "14px 0 6px" }}>
+            <div style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", padding: "0 18px 6px" }}>
+              Owner
+            </div>
+            <Link href="/admin" style={navItemStyle("/admin")}>
+              <ShieldCheck
+                style={{ width: "14px", height: "14px", flexShrink: 0, color: pathname.startsWith("/admin") ? "#7DA84E" : "#ADADAA" }}
+                strokeWidth={pathname.startsWith("/admin") ? 2 : 1.5}
+              />
+              Admin
+            </Link>
+          </div>
+        )}
 
         {/* Settings */}
         <div style={{ marginTop: "8px" }}>

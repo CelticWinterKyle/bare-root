@@ -1,4 +1,5 @@
 "use server";
+import { OWNER_EMAIL } from "@/lib/owner";
 import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -8,7 +9,6 @@ import { escapeHtml } from "@/lib/escape-html";
 const MAX_FEEDBACK_CHARS = 1000;
 
 // Where submissions land. Mirrors the owner gate used by the admin routes.
-const OWNER_EMAIL = "kyle@celticwinter.com";
 
 /**
  * Store a feedback submission and mirror it to the owner's inbox. The row is

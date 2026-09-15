@@ -1,9 +1,9 @@
+import { OWNER_EMAIL } from "@/lib/owner";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { findPexelsImageUrl, isPexelsUrl } from "@/lib/api/pexels";
 
-const OWNER_EMAIL = "kyle@celticwinter.com";
 
 // Pexels lookups are quick, but give the function room across a batch.
 export const maxDuration = 60;
