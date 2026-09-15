@@ -172,3 +172,82 @@ export async function leaveGardenAsViewer(gardenId: string): Promise<void> {
   revalidatePath("/admin");
   revalidatePath(`/garden/${gardenId}`);
 }
+
+// ─── AI usage ─────────────────────────────────────────────────────────────────
+
+export type AiUsage = {
+  month: { runs: number; costCents: number; placed: number; asked: number; failures: number; avgMs: number };
+  lastMonth: { runs: number; costCents: number };
+  perDay: { day: string; runs: number }[]; // last 30 days, oldest first
+  recent: {
+    id: string;
+    at: string;
+    user: string;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    costCents: number;
+    asked: number;
+    placed: number;
+    ok: boolean;
+    error: string | null;
+    durationMs: number;
+  }[];
+  nearCap: { user: string; runs: number }[];
+  capPerMonth: number;
+};
+
+export async function getAiUsage(): Promise<AiUsage> {
+  await requireOwnerAction();
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
+
+  const [monthRows, lastMonthRows, recentRows, users] = await Promise.all([
+    db.aiRun.findMany({ where: { createdAt: { gte: monthStart } }, select: { costCents: true, plantsAsked: true, plantsPlaced: true, ok: true, durationMs: true } }),
+    db.aiRun.aggregate({ where: { createdAt: { gte: lastMonthStart, lt: monthStart } }, _count: { _all: true }, _sum: { costCents: true } }),
+    db.aiRun.findMany({ orderBy: { createdAt: "desc" }, take: 40, include: { user: { select: { name: true, email: true } } } }),
+    db.user.findMany({ where: { aiRunsThisMonth: { gte: 30 }, subscriptionTier: "PRO" }, select: { name: true, email: true, aiRunsThisMonth: true }, orderBy: { aiRunsThisMonth: "desc" }, take: 10 }),
+  ]);
+  const daily = await db.aiRun.findMany({ where: { createdAt: { gte: thirtyDaysAgo } }, select: { createdAt: true } });
+  const byDay = new Map<string, number>();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 86_400_000);
+    byDay.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const r of daily) {
+    const k = r.createdAt.toISOString().slice(0, 10);
+    if (byDay.has(k)) byDay.set(k, (byDay.get(k) ?? 0) + 1);
+  }
+
+  const okRows = monthRows.filter((r) => r.ok);
+  return {
+    month: {
+      runs: monthRows.length,
+      costCents: monthRows.reduce((n, r) => n + r.costCents, 0),
+      placed: okRows.reduce((n, r) => n + r.plantsPlaced, 0),
+      asked: okRows.reduce((n, r) => n + r.plantsAsked, 0),
+      failures: monthRows.length - okRows.length,
+      avgMs: monthRows.length ? Math.round(monthRows.reduce((n, r) => n + r.durationMs, 0) / monthRows.length) : 0,
+    },
+    lastMonth: { runs: lastMonthRows._count._all, costCents: lastMonthRows._sum.costCents ?? 0 },
+    perDay: [...byDay.entries()].map(([day, runs]) => ({ day, runs })),
+    recent: recentRows.map((r) => ({
+      id: r.id,
+      at: r.createdAt.toISOString(),
+      user: r.user.name ?? r.user.email,
+      model: r.model,
+      inputTokens: r.inputTokens,
+      outputTokens: r.outputTokens,
+      costCents: r.costCents,
+      asked: r.plantsAsked,
+      placed: r.plantsPlaced,
+      ok: r.ok,
+      error: r.error,
+      durationMs: r.durationMs,
+    })),
+    nearCap: users.map((u) => ({ user: u.name ?? u.email, runs: u.aiRunsThisMonth })),
+    capPerMonth: 40,
+  };
+}

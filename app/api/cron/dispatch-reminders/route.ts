@@ -1,3 +1,4 @@
+import { withCronRun } from "@/lib/admin-logs";
 import { db } from "@/lib/db";
 import { sendPushNotification } from "@/lib/api/push";
 import { sendReminderEmail, buildReminderEmailHtml, isEmailConfigured } from "@/lib/api/email";
@@ -48,238 +49,243 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Absolute URL required for email <a href> links and SW push payloads.
-  // Fail fast rather than send reminders with broken relative URLs.
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    console.error("NEXT_PUBLIC_APP_URL is not set — refusing to dispatch reminders");
-    return Response.json({ ok: false, error: "missing_app_url" }, { status: 500 });
-  }
+  let result;
+  try {
+    result = await withCronRun("dispatch-reminders", async () => {
+    // Absolute URL required for email <a href> links and SW push payloads.
+    // Fail fast rather than send reminders with broken relative URLs.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      console.error("NEXT_PUBLIC_APP_URL is not set — refusing to dispatch reminders");
+      throw new Error("NEXT_PUBLIC_APP_URL is not set");
+    }
 
-  const now = new Date();
+    const now = new Date();
 
-  // Probed once per run, not per reminder — it only reads module state.
-  const emailConfigured = isEmailConfigured();
-  if (!emailConfigured) {
-    console.error(
-      "RESEND_API_KEY is not set — email reminders will be HELD (not sent, not dismissed) until it is configured"
-    );
-  }
+    // Probed once per run, not per reminder — it only reads module state.
+    const emailConfigured = isEmailConfigured();
+    if (!emailConfigured) {
+      console.error(
+        "RESEND_API_KEY is not set — email reminders will be HELD (not sent, not dismissed) until it is configured"
+      );
+    }
 
-  // Reminders left untouched this run because the only channel their owner
-  // wants is email and email isn't configured. Surfaced in the response so
-  // a silent backlog is visible in cron logs instead of looking like idle.
-  let heldForConfig = 0;
-  if (!emailConfigured) {
-    // Rows the scan below leaves out on purpose (see the where clause).
-    // Counted up front so the backlog is visible in cron logs.
-    heldForConfig = await db.reminder.count({
+    // Reminders left untouched this run because the only channel their owner
+    // wants is email and email isn't configured. Surfaced in the response so
+    // a silent backlog is visible in cron logs instead of looking like idle.
+    let heldForConfig = 0;
+    if (!emailConfigured) {
+      // Rows the scan below leaves out on purpose (see the where clause).
+      // Counted up front so the backlog is visible in cron logs.
+      heldForConfig = await db.reminder.count({
+        where: {
+          scheduledAt: { lte: now },
+          sentAt: null,
+          dismissed: false,
+          user: { pushSubscriptions: { none: {} } },
+        },
+      });
+    }
+
+    const reminders = await db.reminder.findMany({
       where: {
         scheduledAt: { lte: now },
         sentAt: null,
         dismissed: false,
-        user: { pushSubscriptions: { none: {} } },
+        // While email is unconfigured, a user with no push subscription can
+        // only be HELD (see `unavailable` below). Held rows never advance, so
+        // left in this oldest-first scan they would fill every BATCH_SIZE slot
+        // within days and starve every push-capable user. Leave them out until
+        // email works; they stay pending and go out on the first run after.
+        ...(!emailConfigured && { user: { pushSubscriptions: { some: {} } } }),
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: BATCH_SIZE,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            timezone: true,
+            pushSubscriptions: true,
+          },
+        },
+        planting: {
+          include: {
+            cell: { include: { bed: { select: { id: true, gardenId: true } } } },
+          },
+        },
       },
     });
-  }
 
-  const reminders = await db.reminder.findMany({
-    where: {
-      scheduledAt: { lte: now },
-      sentAt: null,
-      dismissed: false,
-      // While email is unconfigured, a user with no push subscription can
-      // only be HELD (see `unavailable` below). Held rows never advance, so
-      // left in this oldest-first scan they would fill every BATCH_SIZE slot
-      // within days and starve every push-capable user. Leave them out until
-      // email works; they stay pending and go out on the first run after.
-      ...(!emailConfigured && { user: { pushSubscriptions: { some: {} } } }),
-    },
-    orderBy: { scheduledAt: "asc" },
-    take: BATCH_SIZE,
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          timezone: true,
-          pushSubscriptions: true,
-        },
-      },
-      planting: {
-        include: {
-          cell: { include: { bed: { select: { id: true, gardenId: true } } } },
-        },
-      },
-    },
-  });
+    // Group by userId
+    const byUser = new Map<string, typeof reminders>();
+    for (const r of reminders) {
+      const arr = byUser.get(r.userId) ?? [];
+      arr.push(r);
+      byUser.set(r.userId, arr);
+    }
 
-  // Group by userId
-  const byUser = new Map<string, typeof reminders>();
-  for (const r of reminders) {
-    const arr = byUser.get(r.userId) ?? [];
-    arr.push(r);
-    byUser.set(r.userId, arr);
-  }
+    // All preferences for this batch in one query (was a findUnique per
+    // reminder — the N+1 dominated the run at scale).
+    const prefRows = await db.notificationPreference.findMany({
+      where: { userId: { in: [...byUser.keys()] } },
+    });
+    const prefByUserType = new Map(prefRows.map((p) => [`${p.userId}:${p.type}`, p]));
 
-  // All preferences for this batch in one query (was a findUnique per
-  // reminder — the N+1 dominated the run at scale).
-  const prefRows = await db.notificationPreference.findMany({
-    where: { userId: { in: [...byUser.keys()] } },
-  });
-  const prefByUserType = new Map(prefRows.map((p) => [`${p.userId}:${p.type}`, p]));
+    async function dispatchForUser(userReminders: typeof reminders): Promise<number> {
+      let sent = 0;
+      const user = userReminders[0].user;
+      const inSendWindow = isLocalSendWindow(now, user.timezone);
+      // Signed one-click unsubscribe link (CRON_SECRET is checked above, so
+      // this is always set here). Goes in the footer + List-Unsubscribe headers.
+      const unsubscribeUrl = buildUnsubscribeUrl(user.id) ?? undefined;
 
-  async function dispatchForUser(userReminders: typeof reminders): Promise<number> {
-    let sent = 0;
-    const user = userReminders[0].user;
-    const inSendWindow = isLocalSendWindow(now, user.timezone);
-    // Signed one-click unsubscribe link (CRON_SECRET is checked above, so
-    // this is always set here). Goes in the footer + List-Unsubscribe headers.
-    const unsubscribeUrl = buildUnsubscribeUrl(user.id) ?? undefined;
+      for (const reminder of userReminders) {
+        // System reminders (start seeds, transplant, harvest, frost, etc.)
+        // batch into the morning so we don't ping users at 2am. CUSTOM
+        // reminders carry a user-picked datetime and should fire at that
+        // time regardless of where it lands in the day — otherwise a
+        // "remind me at 3pm" gets pushed to the next morning, which
+        // defeats the point of letting users set their own time.
+        if (reminder.type !== "CUSTOM" && !inSendWindow) continue;
+        const pref = prefByUserType.get(`${user.id}:${reminder.type}`);
 
-    for (const reminder of userReminders) {
-      // System reminders (start seeds, transplant, harvest, frost, etc.)
-      // batch into the morning so we don't ping users at 2am. CUSTOM
-      // reminders carry a user-picked datetime and should fire at that
-      // time regardless of where it lands in the day — otherwise a
-      // "remind me at 3pm" gets pushed to the next morning, which
-      // defeats the point of letting users set their own time.
-      if (reminder.type !== "CUSTOM" && !inSendWindow) continue;
-      const pref = prefByUserType.get(`${user.id}:${reminder.type}`);
+        const sendEmail = pref?.channelEmail ?? true;
+        const sendPush = pref?.channelPush ?? true;
+        const enabled = pref?.enabled ?? true;
 
-      const sendEmail = pref?.channelEmail ?? true;
-      const sendPush = pref?.channelPush ?? true;
-      const enabled = pref?.enabled ?? true;
-
-      if (!enabled) {
-        await db.reminder.update({ where: { id: reminder.id }, data: { dismissed: true } });
-        continue;
-      }
-
-      const url = reminder.planting
-        ? `${appUrl}/garden/${reminder.planting.cell.bed.gardenId}/beds/${reminder.planting.cell.bed.id}/plantings/${reminder.planting.id}`
-        : reminder.gardenId
-        ? `${appUrl}/garden/${reminder.gardenId}`
-        : `${appUrl}/reminders`;
-
-      // `attempted` means a channel was actually available and we tried it —
-      // only those failures count against MAX_SEND_ATTEMPTS. `unavailable`
-      // means a channel the user WANTS is switched off on our side (no
-      // RESEND_API_KEY); that is our bug, not a delivery failure, so it must
-      // never consume the retry budget or dismiss the reminder.
-      let attempted = false;
-      let delivered = false;
-      let unavailable = false;
-
-      if (sendEmail) {
-        if (emailConfigured) {
-          attempted = true;
-          const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url, unsubscribeUrl);
-          if (await sendReminderEmail(user.email, reminder.title, html, unsubscribeUrl)) delivered = true;
-        } else {
-          unavailable = true;
+        if (!enabled) {
+          await db.reminder.update({ where: { id: reminder.id }, data: { dismissed: true } });
+          continue;
         }
-      }
 
-      if (sendPush && user.pushSubscriptions.length > 0) {
-        attempted = true;
-        const payload = { title: reminder.title, body: reminder.body ?? "", url };
-        for (const sub of user.pushSubscriptions) {
-          const result = await sendPushNotification(
-            { endpoint: sub.endpoint, p256dhKey: sub.p256dhKey, authKey: sub.authKey },
-            payload
-          );
-          if (result === "sent") delivered = true;
-          // Delete only permanently-dead subscriptions; transient push-service
-          // failures retry on the next run via the sendAttempts counter.
-          else if (result === "gone") {
-            await db.pushSubscription.delete({ where: { id: sub.id } });
+        const url = reminder.planting
+          ? `${appUrl}/garden/${reminder.planting.cell.bed.gardenId}/beds/${reminder.planting.cell.bed.id}/plantings/${reminder.planting.id}`
+          : reminder.gardenId
+          ? `${appUrl}/garden/${reminder.gardenId}`
+          : `${appUrl}/reminders`;
+
+        // `attempted` means a channel was actually available and we tried it —
+        // only those failures count against MAX_SEND_ATTEMPTS. `unavailable`
+        // means a channel the user WANTS is switched off on our side (no
+        // RESEND_API_KEY); that is our bug, not a delivery failure, so it must
+        // never consume the retry budget or dismiss the reminder.
+        let attempted = false;
+        let delivered = false;
+        let unavailable = false;
+
+        if (sendEmail) {
+          if (emailConfigured) {
+            attempted = true;
+            const html = buildReminderEmailHtml(reminder.title, reminder.body ?? "", url, unsubscribeUrl);
+            if (await sendReminderEmail(user.email, reminder.title, html, unsubscribeUrl)) delivered = true;
+          } else {
+            unavailable = true;
           }
         }
-      }
 
-      // Nothing was even tried and it's our fault: hold the reminder exactly
-      // as-is (pending, attempt counter untouched) so it goes out for real
-      // once the key lands. Only reached when the user's sole enabled
-      // channel is email — a user with push still delivers above.
-      if (!attempted && unavailable) {
-        heldForConfig++;
-        continue;
-      }
+        if (sendPush && user.pushSubscriptions.length > 0) {
+          attempted = true;
+          const payload = { title: reminder.title, body: reminder.body ?? "", url };
+          for (const sub of user.pushSubscriptions) {
+            const result = await sendPushNotification(
+              { endpoint: sub.endpoint, p256dhKey: sub.p256dhKey, authKey: sub.authKey },
+              payload
+            );
+            if (result === "sent") delivered = true;
+            // Delete only permanently-dead subscriptions; transient push-service
+            // failures retry on the next run via the sendAttempts counter.
+            else if (result === "gone") {
+              await db.pushSubscription.delete({ where: { id: sub.id } });
+            }
+          }
+        }
 
-      // Only mark sent when something was actually delivered. If a send was
-      // attempted but every channel failed (e.g. email provider down), leave
-      // sentAt null so the next hourly run retries instead of silently
-      // dropping the reminder. If nothing was attempted (no enabled channel /
-      // no push subs), fall through and mark it sent so it doesn't retry
-      // forever.
-      if (attempted && !delivered) {
-        // Bump the attempt counter and retry next run, but give up (dismiss)
-        // after MAX_SEND_ATTEMPTS so a permanently-failing reminder doesn't
-        // retry forever.
-        const attempts = reminder.sendAttempts + 1;
-        await db.reminder.update({
-          where: { id: reminder.id },
-          data:
-            attempts >= MAX_SEND_ATTEMPTS
-              ? { sendAttempts: attempts, dismissed: true }
-              : { sendAttempts: attempts },
-        });
-        continue;
-      }
+        // Nothing was even tried and it's our fault: hold the reminder exactly
+        // as-is (pending, attempt counter untouched) so it goes out for real
+        // once the key lands. Only reached when the user's sole enabled
+        // channel is email — a user with push still delivers above.
+        if (!attempted && unavailable) {
+          heldForConfig++;
+          continue;
+        }
 
-      await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
-      sent++;
+        // Only mark sent when something was actually delivered. If a send was
+        // attempted but every channel failed (e.g. email provider down), leave
+        // sentAt null so the next hourly run retries instead of silently
+        // dropping the reminder. If nothing was attempted (no enabled channel /
+        // no push subs), fall through and mark it sent so it doesn't retry
+        // forever.
+        if (attempted && !delivered) {
+          // Bump the attempt counter and retry next run, but give up (dismiss)
+          // after MAX_SEND_ATTEMPTS so a permanently-failing reminder doesn't
+          // retry forever.
+          const attempts = reminder.sendAttempts + 1;
+          await db.reminder.update({
+            where: { id: reminder.id },
+            data:
+              attempts >= MAX_SEND_ATTEMPTS
+                ? { sendAttempts: attempts, dismissed: true }
+                : { sendAttempts: attempts },
+          });
+          continue;
+        }
 
-      // Recurring reminders: schedule the SINGLE next occurrence as a fresh
-      // row (the just-sent one stays in history). recurrenceCron holds a
-      // simple interval token, not a real cron — weekly = +7d, monthly = +1mo.
-      if (reminder.recurring && (reminder.recurrenceCron === "weekly" || reminder.recurrenceCron === "monthly")) {
-        const next = new Date(reminder.scheduledAt);
-        if (reminder.recurrenceCron === "weekly") next.setDate(next.getDate() + 7);
-        else next.setMonth(next.getMonth() + 1);
-        // If the cron was delayed and the next slot is already past, roll it
-        // forward to the future so it doesn't immediately re-fire in a loop.
-        while (next.getTime() <= now.getTime()) {
+        await db.reminder.update({ where: { id: reminder.id }, data: { sentAt: now } });
+        sent++;
+
+        // Recurring reminders: schedule the SINGLE next occurrence as a fresh
+        // row (the just-sent one stays in history). recurrenceCron holds a
+        // simple interval token, not a real cron — weekly = +7d, monthly = +1mo.
+        if (reminder.recurring && (reminder.recurrenceCron === "weekly" || reminder.recurrenceCron === "monthly")) {
+          const next = new Date(reminder.scheduledAt);
           if (reminder.recurrenceCron === "weekly") next.setDate(next.getDate() + 7);
           else next.setMonth(next.getMonth() + 1);
+          // If the cron was delayed and the next slot is already past, roll it
+          // forward to the future so it doesn't immediately re-fire in a loop.
+          while (next.getTime() <= now.getTime()) {
+            if (reminder.recurrenceCron === "weekly") next.setDate(next.getDate() + 7);
+            else next.setMonth(next.getMonth() + 1);
+          }
+          await db.reminder.create({
+            data: {
+              userId: reminder.userId,
+              gardenId: reminder.gardenId,
+              plantingId: reminder.plantingId,
+              type: reminder.type,
+              title: reminder.title,
+              body: reminder.body,
+              scheduledAt: next,
+              recurring: true,
+              recurrenceCron: reminder.recurrenceCron,
+            },
+          });
         }
-        await db.reminder.create({
-          data: {
-            userId: reminder.userId,
-            gardenId: reminder.gardenId,
-            plantingId: reminder.plantingId,
-            type: reminder.type,
-            title: reminder.title,
-            body: reminder.body,
-            scheduledAt: next,
-            recurring: true,
-            recurrenceCron: reminder.recurrenceCron,
-          },
-        });
+      }
+      return sent;
+    }
+
+    // Dispatch users in concurrent chunks; one user failing doesn't stop
+    // the rest (their reminders simply retry next run via sendAttempts).
+    let dispatched = 0;
+    const userGroups = [...byUser.values()];
+    for (let i = 0; i < userGroups.length; i += USER_CONCURRENCY) {
+      const results = await Promise.allSettled(
+        userGroups.slice(i, i + USER_CONCURRENCY).map((group) => dispatchForUser(group))
+      );
+      for (const r of results) {
+        if (r.status === "fulfilled") dispatched += r.value;
+        else console.error("Reminder dispatch failed for a user:", r.reason);
       }
     }
-    return sent;
-  }
 
-  // Dispatch users in concurrent chunks; one user failing doesn't stop
-  // the rest (their reminders simply retry next run via sendAttempts).
-  let dispatched = 0;
-  const userGroups = [...byUser.values()];
-  for (let i = 0; i < userGroups.length; i += USER_CONCURRENCY) {
-    const results = await Promise.allSettled(
-      userGroups.slice(i, i + USER_CONCURRENCY).map((group) => dispatchForUser(group))
-    );
-    for (const r of results) {
-      if (r.status === "fulfilled") dispatched += r.value;
-      else console.error("Reminder dispatch failed for a user:", r.reason);
-    }
-  }
+    return { ok: true, dispatched, heldForConfig, batchFull: reminders.length === BATCH_SIZE, sent: dispatched, held: heldForConfig };
 
-  return Response.json({
-    ok: true,
-    dispatched,
-    heldForConfig,
-    batchFull: reminders.length === BATCH_SIZE,
   });
+  } catch (err) {
+    // Recorded as a failed CronRun by the wrapper; surface it to the caller too.
+    return Response.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  }
+  return Response.json(result);
 }

@@ -1,4 +1,5 @@
 "use server";
+import { recordAiRun } from "@/lib/admin-logs";
 import { overlapFilter } from "@/lib/services/occupancy";
 import { ActionError } from "@/lib/action-error";
 import { revalidatePath } from "next/cache";
@@ -6,7 +7,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gardenEditFilter } from "@/lib/permissions";
 import { assignPlant } from "@/app/actions/planting";
-import { generateBedLayout, type LayoutAssignment } from "@/lib/services/smart-layout";
+import { generateBedLayout, LayoutModelError, MODEL, type LayoutAssignment } from "@/lib/services/smart-layout";
 import { MAX_BULK_CELLS } from "@/lib/validation";
 
 const MAX_AI_WISHLIST = 20;
@@ -125,8 +126,9 @@ export async function generateLayoutAction(
     },
   });
 
+  const startedAt = Date.now();
   try {
-    const assignments = await generateBedLayout(
+    const { assignments, usage, model } = await generateBedLayout(
       {
         widthFt: bed.widthFt,
         heightFt: bed.heightFt,
@@ -153,9 +155,33 @@ export async function generateLayoutAction(
         seasonName: season?.name ?? "Current season",
       }
     );
+    await recordAiRun({
+      userId: user.id,
+      bedId,
+      model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      plantsAsked: wishlistPlants.length,
+      plantsPlaced: new Set(assignments.map((a) => a.plantId)).size,
+      ok: true,
+      durationMs: Date.now() - startedAt,
+    });
     return { assignments };
   } catch (err) {
     console.error("Smart layout error:", err);
+    const usage = err instanceof LayoutModelError ? err.usage : { inputTokens: 0, outputTokens: 0 };
+    await recordAiRun({
+      userId: user.id,
+      bedId,
+      model: MODEL,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      plantsAsked: wishlistPlants.length,
+      plantsPlaced: 0,
+      ok: false,
+      error: err instanceof Error ? err.message.slice(0, 300) : String(err),
+      durationMs: Date.now() - startedAt,
+    });
     return { assignments: [], error: "Layout generation failed. Please try again." };
   }
 }

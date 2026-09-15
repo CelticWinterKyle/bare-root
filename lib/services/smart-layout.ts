@@ -45,12 +45,27 @@ type GardenContext = {
   seasonName: string;
 };
 
+// Sonnet: the task is arranging a wishlist in a small grid as JSON, and it
+// costs about 2.5× less per run than Opus. Adaptive thinking is on by
+// default on this model, so no thinking param is needed.
+export const MODEL = "claude-sonnet-5";
+
+export type LayoutUsage = { inputTokens: number; outputTokens: number };
+
+/** Thrown after the model answered but the answer was unusable; carries usage so the run is still costed. */
+export class LayoutModelError extends Error {
+  constructor(message: string, public readonly usage: LayoutUsage) {
+    super(message);
+    this.name = "LayoutModelError";
+  }
+}
+
 export async function generateBedLayout(
   bed: BedContext,
   wishlist: WishlistPlant[],
   companions: CompanionEntry[],
   garden: GardenContext
-): Promise<LayoutAssignment[]> {
+): Promise<{ assignments: LayoutAssignment[]; usage: LayoutUsage; model: string }> {
   const emptyCells = bed.cells.filter((c) => !c.isOccupied);
 
   // Only spell out exceptions — enumerating every cell put a 60×60 bed's
@@ -122,19 +137,17 @@ Return ONLY valid JSON in this exact format, no other text:
 If a plant cannot be placed due to spacing or sun constraints, omit it. Row and col are 0-indexed. Place each wishlist plant at least once when a suitable empty cell exists.`;
 
   const message = await client.messages.create({
-    // Sonnet: the task is arranging a wishlist in a small grid as JSON, and
-    // it costs about 2.5× less per run than Opus. Adaptive thinking is on by
-    // default on this model, so no thinking param is needed.
-    model: "claude-sonnet-5",
+    model: MODEL,
     max_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });
 
   const text = message.content[0].type === "text" ? message.content[0].text : "";
+  const usage = { inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens };
 
   // Extract JSON even if there's surrounding text
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON in Claude response");
+  if (!match) throw new LayoutModelError("No JSON in Claude response", usage);
 
   const parsed = JSON.parse(match[0]) as { assignments: LayoutAssignment[] };
 
@@ -148,5 +161,5 @@ If a plant cannot be placed due to spacing or sun constraints, omit it. Row and 
       `Smart layout returned 0 valid placements (${parsed.assignments.length} raw). Response head: ${text.slice(0, 400)}`
     );
   }
-  return valid;
+  return { assignments: valid, usage, model: MODEL };
 }

@@ -1,3 +1,4 @@
+import { withCronRun } from "@/lib/admin-logs";
 import { db } from "@/lib/db";
 import { ReminderType, CollabRole } from "@/lib/generated/prisma/enums";
 import type { ForecastDay } from "@/lib/api/weather";
@@ -25,69 +26,73 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const caches = await db.weatherCache.findMany({
-    where: {},
-    include: {
-      garden: {
-        select: {
-          id: true,
-          name: true,
-          userId: true,
-          collaborators: {
-            where: { role: CollabRole.EDITOR, acceptedAt: { not: null } },
-            select: { userId: true },
+  const result = await withCronRun("frost-check", async () => {
+    const caches = await db.weatherCache.findMany({
+      where: {},
+      include: {
+        garden: {
+          select: {
+            id: true,
+            name: true,
+            userId: true,
+            collaborators: {
+              where: { role: CollabRole.EDITOR, acceptedAt: { not: null } },
+              select: { userId: true },
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  const now = new Date();
+    const now = new Date();
 
-  const frosty = caches.filter((cache) => {
-    const forecast = cache.forecast as ForecastDay[] | null;
-    return forecast != null && hasFrostInWindow(forecast);
-  });
+    const frosty = caches.filter((cache) => {
+      const forecast = cache.forecast as ForecastDay[] | null;
+      return forecast != null && hasFrostInWindow(forecast);
+    });
 
-  // One batched dup-check for all frost-risk gardens (was a findFirst per
-  // garden): skip any garden that already has an active alert from the
-  // last 24h.
-  const existing = frosty.length
-    ? await db.reminder.findMany({
-        where: {
-          gardenId: { in: frosty.map((c) => c.gardenId) },
-          type: ReminderType.FROST_ALERT,
-          dismissed: false,
-          scheduledAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
-        },
-        select: { gardenId: true },
-      })
-    : [];
-  const alreadyAlerted = new Set(existing.map((e) => e.gardenId));
-
-  const rows = frosty
-    .filter((cache) => !alreadyAlerted.has(cache.gardenId))
-    .flatMap((cache) =>
-      [cache.garden.userId, ...cache.garden.collaborators.map((c) => c.userId)].map(
-        (userId) => ({
-          userId,
-          gardenId: cache.gardenId,
-          type: ReminderType.FROST_ALERT,
-          title: `Frost risk at ${cache.garden.name}`,
-          body: "Temperatures near or below freezing are forecast in the next 72 hours. Consider protecting sensitive plants.",
-          scheduledAt: now,
+    // One batched dup-check for all frost-risk gardens (was a findFirst per
+    // garden): skip any garden that already has an active alert from the
+    // last 24h.
+    const existing = frosty.length
+      ? await db.reminder.findMany({
+          where: {
+            gardenId: { in: frosty.map((c) => c.gardenId) },
+            type: ReminderType.FROST_ALERT,
+            dismissed: false,
+            scheduledAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+          },
+          select: { gardenId: true },
         })
-      )
-    );
+      : [];
+    const alreadyAlerted = new Set(existing.map((e) => e.gardenId));
 
-  const created = rows.length ? await db.reminder.createMany({ data: rows }) : { count: 0 };
+    const rows = frosty
+      .filter((cache) => !alreadyAlerted.has(cache.gardenId))
+      .flatMap((cache) =>
+        [cache.garden.userId, ...cache.garden.collaborators.map((c) => c.userId)].map(
+          (userId) => ({
+            userId,
+            gardenId: cache.gardenId,
+            type: ReminderType.FROST_ALERT,
+            title: `Frost risk at ${cache.garden.name}`,
+            body: "Temperatures near or below freezing are forecast in the next 72 hours. Consider protecting sensitive plants.",
+            scheduledAt: now,
+          })
+        )
+      );
 
-  // Daily housekeeping piggybacked on this cron: processed Stripe webhook
-  // event rows only matter for retry-window dedup; prune anything old so
-  // the table doesn't grow forever.
-  const pruned = await db.webhookEvent.deleteMany({
-    where: { processedAt: { lt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000) } },
+    const created = rows.length ? await db.reminder.createMany({ data: rows }) : { count: 0 };
+
+    // Daily housekeeping piggybacked on this cron: processed Stripe webhook
+    // event rows only matter for retry-window dedup; prune anything old so
+    // the table doesn't grow forever.
+    const pruned = await db.webhookEvent.deleteMany({
+      where: { processedAt: { lt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000) } },
+    });
+
+    return { ok: true, alertsCreated: created.count, webhookEventsPruned: pruned.count, sent: created.count };
+
   });
-
-  return Response.json({ ok: true, alertsCreated: created.count, webhookEventsPruned: pruned.count });
+  return Response.json(result);
 }
