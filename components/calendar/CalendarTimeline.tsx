@@ -61,7 +61,7 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
     //    bed view computes expectedHarvestDate and fills the calendar in.
     if (activePlantingCount === 0) {
       return (
-        <div className="text-center py-16 text-[#ADADAA]">
+        <div className="text-center py-16 text-[#6B6B5A]">
           <Sprout className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
           <p className="text-sm">No upcoming planting events.</p>
           <p className="text-xs mt-1">
@@ -71,7 +71,7 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
       );
     }
     return (
-      <div className="text-center py-16 text-[#ADADAA]">
+      <div className="text-center py-16 text-[#6B6B5A]">
         <CalendarClock className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
         <p className="text-sm text-[#6B6B5A]">
           You have {activePlantingCount} planting{activePlantingCount === 1 ? "" : "s"}, but no upcoming events.
@@ -113,12 +113,12 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
                 {monthLabel}
               </h3>
               {currentYear != null && year > currentYear && (
-                <span className="text-[10px] font-medium uppercase tracking-wide text-[#92700A] bg-[#FFF8E7] border border-[#F0D8A0] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-medium text-[#92700A] bg-[#FFF8E7] border border-[#F0D8A0] px-2 py-0.5 rounded-full">
                   Next season
                 </span>
               )}
               <div className="flex-1 h-px bg-[#E4E4DC]" />
-              <span className="text-xs font-medium text-[#ADADAA] bg-[#F4F4EC] px-2 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-[#6B6B5A] bg-[#F4F4EC] px-2 py-0.5 rounded-full">
                 {monthEvents.length} {monthEvents.length === 1 ? "event" : "events"}
               </span>
             </div>
@@ -155,12 +155,12 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span
-                                className="text-xs font-semibold uppercase tracking-wide"
+                                className="text-xs font-semibold"
                                 style={{ color: cfg.text }}
                               >
                                 {cfg.label}
                               </span>
-                              <span className="text-xs text-[#ADADAA]">
+                              <span className="text-xs text-[#6B6B5A]">
                                 {dayName}
                               </span>
                             </div>
@@ -173,7 +173,7 @@ export function CalendarTimeline({ events, activePlantingCount = 0, currentYear 
                                 <span className="text-[#6B6B5A] font-normal"> ×{event.count}</span>
                               ) : null}
                             </p>
-                            <p className="text-xs text-[#ADADAA] mt-0.5">
+                            <p className="text-xs text-[#6B6B5A] mt-0.5">
                               {event.gardenName} · {event.bedName}
                             </p>
                           </div>

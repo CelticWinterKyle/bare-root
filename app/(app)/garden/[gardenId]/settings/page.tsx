@@ -72,12 +72,12 @@ export default async function GardenSettingsPage({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-medium text-[#111109]">Collaborators</h2>
-            <p className="text-xs text-[#ADADAA] mt-0.5">A garden&rsquo;s better with more hands in it — invite up to 5.</p>
+            <p className="text-xs text-[#6B6B5A] mt-0.5">A garden&rsquo;s better with more hands in it — invite up to 5.</p>
           </div>
           {!isPro && (
             <Link
               href="/settings/billing"
-              className="flex items-center gap-1 text-xs text-[#D4820A] font-medium hover:underline"
+              className="flex items-center gap-1 text-xs text-[#9A5E08] font-medium hover:underline"
             >
               <Lock className="w-3 h-3" />
               Pro feature
@@ -87,12 +87,12 @@ export default async function GardenSettingsPage({
 
         {!isPro ? (
           <div className="bg-[#F4F4EC] rounded-xl border border-dashed border-[#E4E4DC] p-6 text-center">
-            <Lock className="w-6 h-6 text-[#ADADAA] mx-auto mb-2" />
+            <Lock className="w-6 h-6 text-[#6B6B5A] mx-auto mb-2" />
             <p className="text-sm font-medium text-[#111109] mb-1">Collaborators are a Pro feature</p>
-            <p className="text-xs text-[#ADADAA] mb-3">Invite up to 5 people to plan together.</p>
+            <p className="text-xs text-[#6B6B5A] mb-3">Invite up to 5 people to plan together.</p>
             <Link
               href="/settings/billing"
-              className="text-sm font-medium text-[#D4820A] hover:underline"
+              className="text-sm font-medium text-[#9A5E08] hover:underline"
             >
               Upgrade to Pro
             </Link>

@@ -150,7 +150,7 @@ export function TemplatesDialog({
 
         {templates === null ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-[#ADADAA]" />
+            <Loader2 className="w-5 h-5 animate-spin text-[#6B6B5A]" />
           </div>
         ) : (
           <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
@@ -188,7 +188,7 @@ export function TemplatesDialog({
                       type="button"
                       onClick={() => handleDelete(t)}
                       disabled={isWorking}
-                      className="shrink-0 p-1.5 rounded-md text-[#ADADAA] hover:text-[#7A2A18] hover:bg-[#FBF0EE] transition-colors"
+                      className="shrink-0 p-1.5 rounded-md text-[#6B6B5A] hover:text-[#7A2A18] hover:bg-[#FBF0EE] transition-colors"
                       aria-label={`Delete template ${t.name}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />

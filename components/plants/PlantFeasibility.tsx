@@ -66,7 +66,7 @@ export function PlantFeasibility({
       </div>
 
       {!frost.firstFrostDate && (
-        <p style={{ fontSize: "11px", color: "#ADADAA", marginTop: "8px" }}>
+        <p style={{ fontSize: "11px", color: "#6B6B5A", marginTop: "8px" }}>
           Set your garden&apos;s zip code for frost-aware timing.
         </p>
       )}

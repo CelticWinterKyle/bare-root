@@ -139,7 +139,7 @@ export function WizardShell() {
                     ? "bg-[#1C3D0A] text-white"
                     : active
                     ? "bg-[#7DA84E] text-white"
-                    : "bg-[#E4E4DC] text-[#ADADAA]"
+                    : "bg-[#E4E4DC] text-[#6B6B5A]"
                 }`}
               >
                 {done ? <Check className="w-4 h-4" /> : n}
@@ -157,7 +157,7 @@ export function WizardShell() {
       </div>
 
       {step > 1 && (
-        <p className="text-center text-xs text-[#ADADAA] mb-4">
+        <p className="text-center text-xs text-[#6B6B5A] mb-4">
           A few quick questions and you'll be planting.
         </p>
       )}
@@ -232,7 +232,7 @@ export function WizardShell() {
                 />
               </div>
             </div>
-            <p className="text-xs text-[#ADADAA] mt-3">
+            <p className="text-xs text-[#6B6B5A] mt-3">
               Don't know exactly? A rough estimate works fine. You can adjust later.
             </p>
             <div className="mt-8 flex justify-between">
@@ -416,7 +416,7 @@ export function WizardShell() {
                       }`}
                     >
                       <div className="font-medium">{size === "12" ? "1 ft squares" : "6 in squares"}</div>
-                      <div className="text-xs mt-0.5 text-[#ADADAA]">
+                      <div className="text-xs mt-0.5 text-[#6B6B5A]">
                         {size === "12"
                           ? "Most beds: one plant per square foot"
                           : "For dense planting: greens, herbs, carrots"}

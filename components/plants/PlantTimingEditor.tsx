@@ -114,7 +114,7 @@ export function PlantTimingEditor({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-sm gap-4">
-      <dt className="text-[#ADADAA] shrink-0">{label}</dt>
+      <dt className="text-[#6B6B5A] shrink-0">{label}</dt>
       <dd className="text-[#111109] text-right">{value}</dd>
     </div>
   );
@@ -149,7 +149,7 @@ function Field({
           placeholder="—"
           className="w-24 border border-[#E4E4DC] rounded-lg px-3 py-2 text-sm text-[#111109] focus:outline-none focus:border-[#7DA84E]"
         />
-        <span className="text-xs text-[#ADADAA]">{suffix}</span>
+        <span className="text-xs text-[#6B6B5A]">{suffix}</span>
       </div>
     </label>
   );

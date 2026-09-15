@@ -284,7 +284,7 @@ export function RemindersClient({
         {/* Dismiss */}
         <button
           onClick={() => handleDismiss(r.id)}
-          className="shrink-0 p-3.5 text-[#ADADAA] hover:text-[#111109] transition-colors"
+          className="shrink-0 p-3.5 text-[#6B6B5A] hover:text-[#111109] transition-colors"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />
@@ -297,7 +297,7 @@ export function RemindersClient({
     <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
             <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
             Activity
           </div>
@@ -315,7 +315,7 @@ export function RemindersClient({
       <div>
         <PageHeader />
         <div className="px-[22px] md:px-8 py-5">
-          <div className="text-center py-16 text-[#ADADAA]">
+          <div className="text-center py-16 text-[#6B6B5A]">
             <Bell className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
             <p className="text-sm">No reminders right now.</p>
             <p className="text-xs mt-1">You&apos;re all caught up.</p>
@@ -332,7 +332,7 @@ export function RemindersClient({
 
       {pending.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
+          <p className="text-xs text-[#6B6B5A] font-semibold mb-3">
             Upcoming
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start stagger-rise">
@@ -345,7 +345,7 @@ export function RemindersClient({
 
       {sent.length > 0 && (
         <div>
-          <p className="text-xs text-[#ADADAA] font-semibold uppercase tracking-wider mb-3">
+          <p className="text-xs text-[#6B6B5A] font-semibold mb-3">
             Sent
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:items-start opacity-75">

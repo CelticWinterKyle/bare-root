@@ -79,7 +79,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
   if (!expanded) {
     return (
       <div>
-        <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>
+        <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>
           How to start
         </p>
         <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: "#F4F4EC" }}>
@@ -104,7 +104,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
 
   return (
     <div>
-      <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>
+      <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>
         How to start
       </p>
 
@@ -156,7 +156,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
       </div>
 
       {!frost.firstFrostDate && (
-        <p style={{ fontSize: "11px", color: "#ADADAA", marginTop: "8px" }}>
+        <p style={{ fontSize: "11px", color: "#6B6B5A", marginTop: "8px" }}>
           Set your garden&apos;s zip code for frost-aware timing.
         </p>
       )}

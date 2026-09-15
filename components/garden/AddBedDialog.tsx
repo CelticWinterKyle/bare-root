@@ -99,7 +99,7 @@ export function AddBedDialog({
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            color: "#ADADAA",
+            color: "#6B6B5A",
             fontFamily: "var(--font-body)",
             fontSize: "13px",
             fontWeight: 500,

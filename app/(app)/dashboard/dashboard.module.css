@@ -59,7 +59,7 @@
   font-family: var(--font-fraunces), Georgia, serif;
   font-style: italic;
   font-size: 13px;
-  color: var(--sage);
+  color: var(--mid);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -126,11 +126,11 @@
   font-weight: 500;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 12px;
-  color: var(--ghost);
+  color: var(--muted);
   white-space: nowrap;
 }
 .topbarEdition em {
-  color: var(--sage);
+  color: var(--mid);
   font-style: normal;
   font-weight: 600;
 }
@@ -234,7 +234,7 @@
   font-weight: 500;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.62);
   margin-bottom: 4px;
   text-align: right;
 }
@@ -263,7 +263,7 @@
   font-weight: 500;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.62);
   margin-bottom: 4px;
 }
 .weatherStat .value {
@@ -335,7 +335,7 @@
 .sectionAction {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 12px;
-  color: var(--sage);
+  color: var(--mid);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -382,7 +382,7 @@
   font-size: 14px;
   flex-shrink: 0;
 }
-.taskIconSeed { background: var(--amber-pale); color: var(--amber); }
+.taskIconSeed { background: var(--amber-pale); color: var(--amber-text); }
 .taskIconWater { background: #EFF6FB; color: #4B9EBF; }
 .taskIconHarvest { background: var(--pale); color: var(--mid); }
 .taskIconFrost { background: #E8F0FF; color: #2C4D7D; }
@@ -418,11 +418,11 @@
   gap: 5px;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
-  color: var(--sage);
+  color: var(--mid);
   font-weight: 600;
   margin-top: 12px;
 }
-.taskWhenDue { color: var(--amber); }
+.taskWhenDue { color: var(--amber-text); }
 .taskWhenNow { color: var(--mid); }
 
 .taskEmpty {
@@ -593,11 +593,11 @@
   font-variation-settings: 'opsz' 32;
 }
 .gardenStat .value em { font-style: italic; color: var(--deep); }
-.gardenStat .valueAmber { color: var(--amber); }
+.gardenStat .valueAmber { color: var(--amber-text); }
 .gardenStat .valueSub {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
-  color: var(--ghost);
+  color: var(--muted);
   margin-top: 4px;
   font-weight: 500;
 }
@@ -718,7 +718,7 @@
 .widgetMeta {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
-  color: var(--ghost);
+  color: var(--muted);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -851,9 +851,9 @@
   display: inline-block;
   margin-bottom: 2px;
 }
-.upcomingTypeSeed { color: var(--amber); }
+.upcomingTypeSeed { color: var(--amber-text); }
 .upcomingTypeTrans { color: var(--mid); }
-.upcomingTypeHarvest { color: var(--amber); }
+.upcomingTypeHarvest { color: var(--amber-text); }
 .upcomingTypeWater { color: #4B9EBF; }
 .upcomingTypeFrost { color: #2C4D7D; }
 .upcomingTypeOther { color: var(--muted); }
@@ -871,7 +871,7 @@
 .upcomingName em { font-style: italic; color: var(--deep); }
 .upcomingWhere {
   font-size: 10px;
-  color: var(--ghost);
+  color: var(--muted);
   margin-top: 1px;
 }
 .upcomingPip {
@@ -921,7 +921,7 @@
   flex-shrink: 0;
   margin-top: 1px;
   background: var(--amber-pale);
-  color: var(--amber);
+  color: var(--amber-text);
 }
 .reminderIconBlue { background: #EFF6FB; color: #4B9EBF; }
 .reminderIconGreen { background: var(--pale); color: var(--mid); }
@@ -941,7 +941,7 @@
 .reminderTime {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--ghost);
+  color: var(--muted);
   font-weight: 500;
   margin-top: 3px;
 }
@@ -983,7 +983,7 @@
     0 4px 18px -2px rgba(28,61,10,0.1),
     0 1px 4px rgba(28,61,10,0.06);
   position: relative;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.22s ease-out;
   cursor: pointer;
   display: block;
 }
@@ -992,7 +992,7 @@
 .polaroid:nth-child(3) { transform: rotate(-0.8deg); }
 .polaroid:nth-child(4) { transform: rotate(1.6deg); margin-top: 14px; }
 .polaroid:hover {
-  transform: rotate(0) translateY(-4px) scale(1.025);
+  transform: translateY(-3px);
   z-index: 2;
 }
 
@@ -1032,13 +1032,13 @@
 .polaroidStamp {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--ghost);
+  color: var(--muted);
   font-weight: 500;
 }
 .polaroidRating {
   display: flex;
   gap: 1px;
-  color: var(--amber);
+  color: var(--amber-text);
   font-size: 9px;
 }
 .polaroidName {
@@ -1244,17 +1244,19 @@
 .emptyCta:hover { background: var(--mid); }
 
 /* ── Entrance animation ─────────────────────────────────────────────────── */
-@keyframes rise {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .heroLeft > *,
+  .weather { animation: rise 0.6s cubic-bezier(0.2,0.8,0.2,1) backwards; }
+  .heroLeft > *:nth-child(1) { animation-delay: 0.05s; }
+  .heroLeft > *:nth-child(2) { animation-delay: 0.12s; }
+  .heroLeft > *:nth-child(3) { animation-delay: 0.2s; }
+  .heroLeft > *:nth-child(4) { animation-delay: 0.28s; }
+  .weather { animation-delay: 0.18s; }
 }
-.heroLeft > *,
-.weather { animation: rise 0.6s cubic-bezier(0.2,0.8,0.2,1) backwards; }
-.heroLeft > *:nth-child(1) { animation-delay: 0.05s; }
-.heroLeft > *:nth-child(2) { animation-delay: 0.12s; }
-.heroLeft > *:nth-child(3) { animation-delay: 0.2s; }
-.heroLeft > *:nth-child(4) { animation-delay: 0.28s; }
-.weather { animation-delay: 0.18s; }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {

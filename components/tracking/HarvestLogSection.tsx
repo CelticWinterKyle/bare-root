@@ -89,7 +89,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg font-semibold text-[#111109]">Harvest log</h2>
         {logs.length > 0 && (
-          <span className="text-sm text-[#D4820A] font-medium">{totalLabel} total</span>
+          <span className="text-sm text-[#9A5E08] font-medium">{totalLabel} total</span>
         )}
       </div>
 
@@ -101,7 +101,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
                 <span className="text-sm font-medium text-[#111109]">
                   {log.quantity} {log.unit}
                 </span>
-                <span className="text-xs text-[#ADADAA] ml-2">
+                <span className="text-xs text-[#6B6B5A] ml-2">
                   {new Date(log.harvestedAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })}
                 </span>
                 {log.notes && <p className="text-xs text-[#6B6B5A] mt-0.5">{log.notes}</p>}
@@ -109,7 +109,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
               <button
                 onClick={() => handleDelete(log.id)}
                 disabled={deletingId === log.id}
-                className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors ml-3"
+                className="text-[#6B6B5A] hover:text-[#B85C3A] transition-colors ml-3"
               >
                 {deletingId === log.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -164,7 +164,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 text-sm text-[#D4820A] hover:text-[#A0650A] font-medium transition-colors"
+          className="flex items-center gap-2 text-sm text-[#9A5E08] hover:text-[#A0650A] font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Log harvest

@@ -82,7 +82,7 @@ export function OfflineClient() {
   return (
     <div className="container-narrow px-[22px] md:px-8 py-8">
       <div className="flex items-center gap-3 mb-1">
-        <CloudOff className="w-5 h-5" style={{ color: "#7DA84E" }} />
+        <CloudOff className="w-5 h-5" style={{ color: "#3A6B20" }} />
         <h1
           style={{
             fontFamily: "var(--font-display)",
@@ -100,7 +100,7 @@ export function OfflineClient() {
         Harvests you log here sync when you&apos;re back online.
       </p>
       {queued.length > 0 && (
-        <p className="text-xs mb-4 flex items-center gap-1.5" style={{ color: "#D4820A" }}>
+        <p className="text-xs mb-4 flex items-center gap-1.5" style={{ color: "#9A5E08" }}>
           <RefreshCw className="w-3 h-3" />
           {queued.length} harvest{queued.length === 1 ? "" : "s"} waiting to sync
         </p>

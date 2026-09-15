@@ -56,11 +56,10 @@ export function BottomNav() {
                 style={{ color: isActive ? "#A8D870" : "rgba(255,255,255,0.6)" }}
               />
               <span
-                className="font-mono leading-none"
+                className="leading-none"
                 style={{
-                  fontSize: 9,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
+                  fontSize: 10,
+                  fontWeight: 500,
                   color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.55)",
                 }}
               >

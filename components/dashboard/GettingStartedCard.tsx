@@ -75,7 +75,7 @@ export function GettingStartedCard({ steps }: { steps: ChecklistStep[] }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#ADADAA",
+            color: "#6B6B5A",
             background: "transparent",
             border: "none",
             cursor: "pointer",
@@ -104,7 +104,7 @@ export function GettingStartedCard({ steps }: { steps: ChecklistStep[] }) {
               fontFamily: "var(--font-mono)",
               fontSize: 10,
               letterSpacing: "0.14em",
-              color: "#ADADAA",
+              color: "#6B6B5A",
             }}
           >
             {doneCount} / {steps.length}

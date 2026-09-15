@@ -181,7 +181,7 @@ export default async function PlantDetailPage({
                 {plant.name}
               </h1>
               {plant.scientificName && (
-                <p className="text-sm text-[#ADADAA] italic mt-0.5">
+                <p className="text-sm text-[#6B6B5A] italic mt-0.5">
                   {plant.scientificName}
                 </p>
               )}
@@ -211,7 +211,7 @@ export default async function PlantDetailPage({
       {activePlantings.length > 0 && (
         <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
-            <Sprout className="w-4 h-4 text-[#7DA84E] shrink-0" />
+            <Sprout className="w-4 h-4 text-[#3A6B20] shrink-0" />
             <h2 className="font-medium text-[#111109]">
               In your garden
               <span className="text-[#6B6B5A] font-normal">
@@ -232,7 +232,7 @@ export default async function PlantDetailPage({
                     <span className="text-[#6B6B5A] font-normal"> · {p.variety}</span>
                   )}
                 </span>
-                <span className="text-xs text-[#ADADAA] shrink-0">
+                <span className="text-xs text-[#6B6B5A] shrink-0">
                   {p.cell.bed.garden.name} →
                 </span>
               </Link>
@@ -315,10 +315,10 @@ export default async function PlantDetailPage({
         return (
           <div className="bg-white rounded-xl border border-[#E4E4DC] p-5 mb-4">
             <h2 className="font-medium text-[#111109] mb-1">Pests &amp; diseases</h2>
-            <p className="text-xs text-[#ADADAA] mb-3">Common issues to watch for with this plant.</p>
+            <p className="text-xs text-[#6B6B5A] mb-3">Common issues to watch for with this plant.</p>
             {pests.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs font-medium text-[#B85C3A] uppercase tracking-wide mb-2">Common pests</p>
+                <p className="text-xs font-medium text-[#B85C3A] mb-2">Common pests</p>
                 <div className="flex flex-wrap gap-2">
                   {pests.map((p) => (
                     <span key={p} className="px-2.5 py-1 bg-[#FBF0EE] text-[#7A2A18] text-sm rounded-full">{p}</span>
@@ -328,7 +328,7 @@ export default async function PlantDetailPage({
             )}
             {diseases.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-[#92700A] uppercase tracking-wide mb-2">Common diseases</p>
+                <p className="text-xs font-medium text-[#92700A] mb-2">Common diseases</p>
                 <div className="flex flex-wrap gap-2">
                   {diseases.map((d) => (
                     <span key={d} className="px-2.5 py-1 bg-[#FFF8E7] text-[#7A4A0A] text-sm rounded-full">{d}</span>
@@ -346,7 +346,7 @@ export default async function PlantDetailPage({
           <h2 className="font-medium text-[#111109] mb-3">Companion planting</h2>
           {beneficial.length > 0 && (
             <div className="mb-3">
-              <p className="text-xs font-medium text-[#3A6B20] uppercase tracking-wide mb-2">
+              <p className="text-xs font-medium text-[#3A6B20] mb-2">
                 Beneficial companions
               </p>
               <div className="flex flex-wrap gap-2">
@@ -364,7 +364,7 @@ export default async function PlantDetailPage({
           )}
           {harmful.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-[#B85C3A] uppercase tracking-wide mb-2">
+              <p className="text-xs font-medium text-[#B85C3A] mb-2">
                 Avoid planting near
               </p>
               <div className="flex flex-wrap gap-2">
@@ -391,7 +391,7 @@ export default async function PlantDetailPage({
 function Stat({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; value: string }) {
   return (
     <div className="bg-[#F4F4EC] rounded-xl p-3 border border-[#E4E4DC]">
-      <p className="flex items-center gap-1 text-xs text-[#ADADAA] mb-0.5">
+      <p className="flex items-center gap-1 text-xs text-[#6B6B5A] mb-0.5">
         {Icon && <Icon className="w-3 h-3 shrink-0 text-[#6B6B5A]" aria-hidden="true" />}
         {label}
       </p>
@@ -403,7 +403,7 @@ function Stat({ icon: Icon, label, value }: { icon?: LucideIcon; label: string; 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-sm gap-4">
-      <dt className="text-[#ADADAA] shrink-0">{label}</dt>
+      <dt className="text-[#6B6B5A] shrink-0">{label}</dt>
       <dd className="text-[#111109] text-right">{value}</dd>
     </div>
   );

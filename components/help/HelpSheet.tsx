@@ -70,7 +70,7 @@ export function HelpSheet({
             style={{
               fontFamily: "var(--font-display)", fontStyle: "italic",
               fontSize: 13,
-              color: "#7DA84E",
+              color: "#3A6B20",
               fontWeight: 500,
             }}
           >

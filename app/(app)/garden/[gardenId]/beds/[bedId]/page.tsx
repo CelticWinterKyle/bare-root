@@ -529,7 +529,7 @@ export default async function BedPage({
           <div className="mt-3 space-y-1.5">
             {rotationWarnings.map((w, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#FDF2E0", border: "1px solid rgba(212,130,10,0.25)" }}>
-                <RotateCcw className="w-3.5 h-3.5 shrink-0" style={{ color: "#D4820A" }} />
+                <RotateCcw className="w-3.5 h-3.5 shrink-0" style={{ color: "#9A5E08" }} />
                 <span style={{ color: "#7A4A0A" }}>
                   <span className="font-semibold">Crop rotation: </span>
                   {w.plantFamily} ({w.currentPlants.join(", ")}) grew here in {w.seasonName}.{" "}

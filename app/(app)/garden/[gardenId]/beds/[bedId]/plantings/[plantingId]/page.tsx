@@ -93,7 +93,7 @@ export default async function PlantingDetailPage({
       <div className="flex flex-wrap gap-4 mb-8 pb-5 border-b border-[#E4E4DC]">
           {planting.plantedDate && (
             <div>
-              <p className="text-xs text-[#ADADAA]">Planted</p>
+              <p className="text-xs text-[#6B6B5A]">Planted</p>
               <p className="text-sm font-medium text-[#111109]">
                 {new Date(planting.plantedDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
@@ -101,7 +101,7 @@ export default async function PlantingDetailPage({
           )}
           {planting.expectedHarvestDate && (
             <div>
-              <p className="text-xs text-[#ADADAA]">Est. harvest</p>
+              <p className="text-xs text-[#6B6B5A]">Est. harvest</p>
               <p className="text-sm font-medium text-[#3A6B20]">
                 {new Date(planting.expectedHarvestDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </p>
@@ -109,27 +109,27 @@ export default async function PlantingDetailPage({
           )}
           {estYieldLbs != null && (
             <div>
-              <p className="text-xs text-[#ADADAA]">Est. yield</p>
+              <p className="text-xs text-[#6B6B5A]">Est. yield</p>
               <p className="text-sm font-medium text-[#3A6B20]">
                 ~{estYieldLbs} lb
-                <span className="text-[#ADADAA] font-normal"> est.</span>
+                <span className="text-[#6B6B5A] font-normal"> est.</span>
               </p>
             </div>
           )}
           {planting.harvestLogs.length > 0 && (
             <div>
-              <p className="text-xs text-[#ADADAA]">Total harvested</p>
-              <p className="text-sm font-medium text-[#D4820A]">
+              <p className="text-xs text-[#6B6B5A]">Total harvested</p>
+              <p className="text-sm font-medium text-[#9A5E08]">
                 {totalHarvest} {harvestUnit}
                 {estYieldLbs != null && harvestUnit === "lbs" && (
-                  <span className="text-[#ADADAA] font-normal"> of ~{estYieldLbs} est.</span>
+                  <span className="text-[#6B6B5A] font-normal"> of ~{estYieldLbs} est.</span>
                 )}
               </p>
             </div>
           )}
           {planting.rating && (
             <div>
-              <p className="text-xs text-[#ADADAA]">Rating</p>
+              <p className="text-xs text-[#6B6B5A]">Rating</p>
               <p className="text-sm font-medium text-[#111109]">{"★".repeat(planting.rating)}{"☆".repeat(5 - planting.rating)}</p>
             </div>
           )}
@@ -150,7 +150,7 @@ export default async function PlantingDetailPage({
         ) : (
           <section>
             <h2 className="font-display text-lg font-semibold text-[#111109] mb-1">Season rating</h2>
-            <p className="text-sm text-[#ADADAA]">
+            <p className="text-sm text-[#6B6B5A]">
               You can rate this and decide whether to grow it again once it&apos;s harvested.
             </p>
           </section>

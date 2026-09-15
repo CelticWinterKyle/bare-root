@@ -799,7 +799,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
           }}
         >
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-[rgba(212,130,10,0.25)] shrink-0">
-            <Move className="w-4 h-4 text-[#D4820A]" />
+            <Move className="w-4 h-4 text-[#9A5E08]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[#7A4A0A]">
@@ -1635,13 +1635,13 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   ) : (
                     <div className="text-center py-6 space-y-3">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto" style={{ background: "#F4F4EC" }}>
-                        <Sparkles className="w-6 h-6" style={{ color: "#ADADAA" }} />
+                        <Sparkles className="w-6 h-6" style={{ color: "#6B6B5A" }} />
                       </div>
                       <p className="text-sm font-semibold" style={{ color: "#111109" }}>AI layout planner</p>
                       <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
                         You&apos;ve used your free layout. Pro includes 40 a month: an optimized bed from your wishlist, respecting spacing, sun and companions.
                       </p>
-                      <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#D4820A" }}>
+                      <a href="/settings/billing" className="inline-block text-sm font-medium hover:underline" style={{ color: "#9A5E08" }}>
                         Upgrade to Pro →
                       </a>
                     </div>

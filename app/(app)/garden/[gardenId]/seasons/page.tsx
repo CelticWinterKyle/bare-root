@@ -86,12 +86,12 @@ export default async function SeasonsPage({
       {/* Active season */}
       {activeSeason && (
         <div className="mb-6">
-          <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">Active</p>
+          <p className="text-xs text-[#6B6B5A] font-medium mb-2">Active</p>
           <div className="bg-white rounded-xl border border-[#1C3D0A]/30 p-4">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h2 className="font-medium text-[#111109]">{activeSeason.name}</h2>
-                <p className="text-xs text-[#ADADAA] mt-0.5">
+                <p className="text-xs text-[#6B6B5A] mt-0.5">
                   Started {activeSeason.startDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                 </p>
               </div>
@@ -148,17 +148,17 @@ export default async function SeasonsPage({
       {/* Past seasons */}
       {pastSeasons.length > 0 && (
         <div>
-          <p className="text-xs text-[#ADADAA] font-medium uppercase tracking-wide mb-2">History</p>
+          <p className="text-xs text-[#6B6B5A] font-medium mb-2">History</p>
           {!isPro ? (
             <div className="bg-[#F4F4EC] rounded-xl border border-dashed border-[#E4E4DC] p-6 text-center">
-              <Lock className="w-6 h-6 text-[#ADADAA] mx-auto mb-2" />
+              <Lock className="w-6 h-6 text-[#6B6B5A] mx-auto mb-2" />
               <p className="text-sm font-medium text-[#111109] mb-1">Season history is a Pro feature</p>
-              <p className="text-xs text-[#ADADAA] mb-3">
+              <p className="text-xs text-[#6B6B5A] mb-3">
                 {pastSeasons.length} past season{pastSeasons.length !== 1 ? "s" : ""} archived.
               </p>
               <Link
                 href="/settings/billing"
-                className="text-sm font-medium text-[#D4820A] hover:underline"
+                className="text-sm font-medium text-[#9A5E08] hover:underline"
               >
                 Upgrade to Pro to view
               </Link>
@@ -180,7 +180,7 @@ export default async function SeasonsPage({
                         <Link href={`/garden/${gardenId}/seasons/${season.id}`} className="font-medium text-[#111109] hover:text-[#1C3D0A] transition-colors">
                           {season.name}
                         </Link>
-                        <p className="text-xs text-[#ADADAA] mt-0.5">
+                        <p className="text-xs text-[#6B6B5A] mt-0.5">
                           {season.startDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                           {season.endDate &&
                             ` to ${season.endDate.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
@@ -189,7 +189,7 @@ export default async function SeasonsPage({
                       <form action={setActiveSeason.bind(null, season.id)}>
                         <button
                           type="submit"
-                          className="text-xs text-[#7DA84E] hover:text-[#1C3D0A] font-medium"
+                          className="text-xs text-[#3A6B20] hover:text-[#1C3D0A] font-medium"
                         >
                           Set active
                         </button>
@@ -202,7 +202,7 @@ export default async function SeasonsPage({
                       </span>
                       {avgRating && (
                         <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-[#D4820A] text-[#D4820A]" />
+                          <Star className="w-3 h-3 fill-[#D4820A] text-[#9A5E08]" />
                           {avgRating.toFixed(1)} avg
                         </span>
                       )}
@@ -221,7 +221,7 @@ export default async function SeasonsPage({
                           </span>
                         ))}
                         {season.plantings.length > 8 && (
-                          <span className="text-[11px] text-[#ADADAA]">+{season.plantings.length - 8} more</span>
+                          <span className="text-[11px] text-[#6B6B5A]">+{season.plantings.length - 8} more</span>
                         )}
                       </div>
                     )}
@@ -234,7 +234,7 @@ export default async function SeasonsPage({
       )}
 
       {garden.seasons.length === 0 && (
-        <div className="text-center py-12 text-[#ADADAA]">
+        <div className="text-center py-12 text-[#6B6B5A]">
           <p className="text-sm">No seasons yet. Create your first season to start tracking.</p>
         </div>
       )}
@@ -245,7 +245,7 @@ export default async function SeasonsPage({
 
 function PlantingsSummary({ plantings }: { plantings: { plant: { id: string; name: string }; variety: string | null; status: string }[] }) {
   if (plantings.length === 0) {
-    return <p className="text-xs text-[#ADADAA]">No plants assigned yet.</p>;
+    return <p className="text-xs text-[#6B6B5A]">No plants assigned yet.</p>;
   }
   // Dedupe by plant + variety so "Tomato · Sungold" and "Tomato · Roma"
   // both get a chip instead of collapsing into one bare "Tomato".
@@ -265,7 +265,7 @@ function PlantingsSummary({ plantings }: { plantings: { plant: { id: string; nam
         </span>
       ))}
       {unique.length > 10 && (
-        <span className="text-[11px] text-[#ADADAA]">+{unique.length - 10} more</span>
+        <span className="text-[11px] text-[#6B6B5A]">+{unique.length - 10} more</span>
       )}
     </div>
   );

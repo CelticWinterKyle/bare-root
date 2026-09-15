@@ -71,7 +71,7 @@ export function GardenSwitcher({
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "1px",
+            fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "1px",
           }}>
             Garden
           </div>
@@ -83,9 +83,9 @@ export function GardenSwitcher({
           </div>
         </div>
         {isPending ? (
-          <Loader2 style={{ width: 14, height: 14, color: "#ADADAA" }} className="animate-spin" />
+          <Loader2 style={{ width: 14, height: 14, color: "#6B6B5A" }} className="animate-spin" />
         ) : (
-          <ChevronsUpDown style={{ width: 14, height: 14, color: "#ADADAA", flexShrink: 0 }} />
+          <ChevronsUpDown style={{ width: 14, height: 14, color: "#6B6B5A", flexShrink: 0 }} />
         )}
       </button>
 

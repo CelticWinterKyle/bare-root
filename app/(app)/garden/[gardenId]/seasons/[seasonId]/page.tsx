@@ -396,14 +396,14 @@ export default async function SeasonSummaryPage({
                     {s.varieties.length > 0 && (
                       <span className="text-xs text-[#6B6B5A]"> · {s.varieties.join(", ")}</span>
                     )}
-                    <p className="text-xs text-[#ADADAA]">{s.beds.join(", ")}</p>
+                    <p className="text-xs text-[#6B6B5A]">{s.beds.join(", ")}</p>
                   </div>
-                  <span className="text-sm font-semibold text-[#D4820A] text-right">
+                  <span className="text-sm font-semibold text-[#9A5E08] text-right">
                     {Object.entries(s.totalsByUnit)
                       .map(([u, q]) => `${Number(q.toFixed(2))} ${u}`)
                       .join(" · ")}
                     {s.estYieldLbs > 0 && (
-                      <span className="block text-xs font-normal text-[#ADADAA]">
+                      <span className="block text-xs font-normal text-[#6B6B5A]">
                         ~{Number(s.estYieldLbs.toFixed(1))} lb est.
                       </span>
                     )}
@@ -435,13 +435,13 @@ export default async function SeasonSummaryPage({
                   {s.varieties.length > 0 && (
                     <span className="text-xs text-[#6B6B5A]"> · {s.varieties.join(", ")}</span>
                   )}
-                  <p className="text-xs text-[#ADADAA]">
+                  <p className="text-xs text-[#6B6B5A]">
                     {s.status.replace(/_/g, " ").toLowerCase()} · {s.beds.join(", ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {s.rating && (
-                    <span className="text-xs text-[#D4820A]">
+                    <span className="text-xs text-[#9A5E08]">
                       {"★".repeat(s.rating)}
                     </span>
                   )}
@@ -483,7 +483,7 @@ export default async function SeasonSummaryPage({
       )}
 
       {totalPlantings === 0 && (
-        <div className="text-center py-12 text-[#ADADAA]">
+        <div className="text-center py-12 text-[#6B6B5A]">
           <p className="text-sm">No plantings recorded for this season.</p>
         </div>
       )}

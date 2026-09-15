@@ -223,7 +223,7 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
                 value={form.lastFrostDate}
                 onChange={(e) => set("lastFrostDate", e.target.value)}
               />
-              <p className="text-[10px] text-[#ADADAA]">{formatMmdd(inputToMmdd(form.lastFrostDate))} (year ignored)</p>
+              <p className="text-[10px] text-[#6B6B5A]">{formatMmdd(inputToMmdd(form.lastFrostDate))} (year ignored)</p>
             </div>
             <div className="space-y-1.5">
               <Label>First frost</Label>
@@ -232,7 +232,7 @@ export function GardenSettingsForm({ gardenId, initial }: Props) {
                 value={form.firstFrostDate}
                 onChange={(e) => set("firstFrostDate", e.target.value)}
               />
-              <p className="text-[10px] text-[#ADADAA]">{formatMmdd(inputToMmdd(form.firstFrostDate))} (year ignored)</p>
+              <p className="text-[10px] text-[#6B6B5A]">{formatMmdd(inputToMmdd(form.firstFrostDate))} (year ignored)</p>
             </div>
           </div>
         </div>

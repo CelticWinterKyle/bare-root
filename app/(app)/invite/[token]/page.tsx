@@ -61,7 +61,7 @@ export default async function InvitePage({
               style={{
                 fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic",
                 fontSize: "13px",
-                color: "#7DA84E",
+                color: "#3A6B20",
               }}
             >
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
@@ -157,7 +157,7 @@ export default async function InvitePage({
           style={{
             fontWeight: 500, fontFamily: "var(--font-body)",
             fontSize: "11px",
-            color: "#ADADAA",
+            color: "#6B6B5A",
           }}
         >
           Bare Root · Garden planning

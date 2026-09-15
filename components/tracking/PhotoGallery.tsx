@@ -90,7 +90,7 @@ export function PhotoGallery({ plantingId, photos, photosRemaining }: Props) {
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-lg font-semibold text-[#111109]">Photos</h2>
-        <span className="text-xs text-[#ADADAA]">
+        <span className="text-xs text-[#6B6B5A]">
           {photos.length} photo{photos.length !== 1 ? "s" : ""}
           {photosRemaining !== null ? ` · ${photosRemaining} left on Free` : ""}
         </span>
@@ -148,7 +148,7 @@ export function PhotoGallery({ plantingId, photos, photosRemaining }: Props) {
               onChange={(e) => setPendingCaption(e.target.value)}
               maxLength={120}
               autoFocus
-              className="w-full text-sm border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+              className="w-full text-sm border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#6B6B5A]"
             />
             <div className="flex gap-2 mt-2">
               <button
@@ -175,11 +175,11 @@ export function PhotoGallery({ plantingId, photos, photosRemaining }: Props) {
       )}
 
       {photosRemaining !== null && photosRemaining <= 0 ? (
-        <div className="flex items-center gap-2 text-sm text-[#ADADAA]">
+        <div className="flex items-center gap-2 text-sm text-[#6B6B5A]">
           <Lock className="w-4 h-4" />
           <span>
             Photo limit reached.{" "}
-            <Link href="/settings/billing" className="text-[#D4820A] hover:underline">
+            <Link href="/settings/billing" className="text-[#9A5E08] hover:underline">
               Upgrade to Pro
             </Link>{" "}
             for unlimited photos.
@@ -187,7 +187,7 @@ export function PhotoGallery({ plantingId, photos, photosRemaining }: Props) {
         </div>
       ) : !pendingFile ? (
         <label className={`flex items-center gap-2 text-sm font-medium cursor-pointer transition-colors ${
-          isUploading ? "text-[#ADADAA]" : "text-[#7DA84E] hover:text-[#1C3D0A]"
+          isUploading ? "text-[#6B6B5A]" : "text-[#3A6B20] hover:text-[#1C3D0A]"
         }`}>
           <Camera className="w-4 h-4" />
           Add photo

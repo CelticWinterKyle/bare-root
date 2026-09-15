@@ -160,7 +160,7 @@ export default async function GardenPage({
     whiteSpace: "nowrap",
   };
   const tagGreen: React.CSSProperties = { ...tagBase, color: "#1C3D0A", borderColor: "#D4E8BE", background: "#E4F0D4" };
-  const tagAmber: React.CSSProperties = { ...tagBase, color: "#D4820A", borderColor: "rgba(212,130,10,0.2)", background: "#FDF2E0" };
+  const tagAmber: React.CSSProperties = { ...tagBase, color: "#9A5E08", borderColor: "rgba(212,130,10,0.2)", background: "#FDF2E0" };
   const tagGhost: React.CSSProperties = { ...tagBase, color: "#6B6B5A", borderColor: "#E4E4DC", background: "transparent" };
 
   // ── Button shared styles ───────────────────────────────────────────────────
@@ -206,7 +206,7 @@ export default async function GardenPage({
         <div className="flex items-start justify-between gap-4 px-[22px] md:px-8 pt-6 pb-5">
           <div>
             {/* Eyebrow with dash */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
               {isOwner ? "My Garden" : "Shared Garden"}
             </div>
@@ -379,7 +379,7 @@ export default async function GardenPage({
       {garden.beds.length === 0 ? (
         <div className="mx-[22px] my-3 md:mx-8 md:my-5">
           <div style={{ borderRadius: "12px", padding: "48px 32px", textAlign: "center", background: "#F4F4EC", border: "1px solid #E4E4DC" }}>
-            <Sprout style={{ width: "40px", height: "40px", margin: "0 auto 12px", color: "#7DA84E" }} />
+            <Sprout style={{ width: "40px", height: "40px", margin: "0 auto 12px", color: "#3A6B20" }} />
             <p style={{ fontFamily: "var(--font-display)", fontSize: "18px", fontWeight: 700, color: "#1C3D0A", marginBottom: "6px" }}>
               No beds yet
             </p>
@@ -427,7 +427,7 @@ export default async function GardenPage({
               <div style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", marginTop: "3px" }}>Active Plants</div>
             </div>
             <div style={{ padding: "14px 20px", borderRight: "1px solid #E4E4DC" }}>
-              <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#D4820A", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: "26px", fontWeight: 800, color: "#9A5E08", lineHeight: 1, letterSpacing: "-0.02em" }}>
                 {garden.lastFrostDate ? formatFrostDateShort(garden.lastFrostDate) : "—"}
               </div>
               <div style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", marginTop: "3px" }}>Last Frost</div>
@@ -473,7 +473,7 @@ export default async function GardenPage({
                           {bed.widthFt} × {bed.heightFt} ft · {activeSeason?.name ?? "No season"}
                         </div>
                         {/* Plant count — desktop (below meta) */}
-                        <div className="hidden md:block" style={{ fontSize: "13px", fontWeight: 600, color: "#7DA84E", marginTop: "5px" }}>
+                        <div className="hidden md:block" style={{ fontSize: "13px", fontWeight: 600, color: "#3A6B20", marginTop: "5px" }}>
                           {bed.plantCount} {bed.plantCount === 1 ? "plant" : "plants"}
                         </div>
                       </div>
@@ -520,7 +520,7 @@ export default async function GardenPage({
           <div style={{ marginTop: "16px", borderRadius: "12px", padding: "16px", textAlign: "center", border: "1px dashed #D4E8BE" }}>
             <p style={{ fontSize: "14px", color: "#6B6B5A" }}>
               {TIER_LIMITS.FREE.bedsPerGarden} beds used on Free plan.{" "}
-              <Link href="/settings/billing" style={{ color: "#D4820A" }}>
+              <Link href="/settings/billing" style={{ color: "#9A5E08" }}>
                 Upgrade to Pro
               </Link>{" "}
               for unlimited beds.

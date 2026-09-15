@@ -190,7 +190,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
               Tracking
             </div>
@@ -261,7 +261,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                 </div>
               ) : (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B5A]" />
                   <Input
                     placeholder="Search plants…"
                     value={plantQuery}
@@ -269,7 +269,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                     className="pl-9"
                   />
                   {isSearching && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#6B6B5A]" />
                   )}
                   {plantResults.length > 0 && (
                     <ul className="mt-1 max-h-48 overflow-y-auto border border-[#E4E4DC] rounded-md bg-white shadow-sm">
@@ -287,7 +287,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                     </ul>
                   )}
                   {plantQuery.length >= 2 && !isSearching && plantResults.length === 0 && (
-                    <p className="text-xs text-[#ADADAA] mt-1">No plants found. Try a different search.</p>
+                    <p className="text-xs text-[#6B6B5A] mt-1">No plants found. Try a different search.</p>
                   )}
                 </div>
               )}
@@ -337,7 +337,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
           )}
 
           {inventory.length === 0 && !addOpen ? (
-            <div className="text-center py-12 text-[#ADADAA]">
+            <div className="text-center py-12 text-[#6B6B5A]">
               <Package className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
               <p className="text-sm">No seeds tracked yet.</p>
               <p className="text-xs mt-1">Add what you have on hand.</p>
@@ -350,7 +350,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                     <p className="text-sm font-medium text-[#111109]">
                       {item.plantName}{item.variety ? ` · ${item.variety}` : ""}
                     </p>
-                    <p className="text-xs text-[#ADADAA]">
+                    <p className="text-xs text-[#6B6B5A]">
                       {item.quantity} {item.unit}
                       {item.notes && ` · ${item.notes}`}
                     </p>
@@ -358,7 +358,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors"
+                    className="text-[#6B6B5A] hover:text-[#B85C3A] transition-colors"
                   >
                     {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>
@@ -373,7 +373,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
       {tab === "shopping" && (
         <>
           {shoppingList.length === 0 ? (
-            <div className="text-center py-12 text-[#ADADAA]">
+            <div className="text-center py-12 text-[#6B6B5A]">
               <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-[#E4E4DC]" />
               <p className="text-sm">No active plantings found.</p>
               <p className="text-xs mt-1">Plan your beds to generate a shopping list.</p>
@@ -405,11 +405,11 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
                         {isChecked && <Check className="w-3 h-3 text-white" />}
                       </button>
                       <div className="flex-1">
-                        <p className={`text-sm font-medium ${isChecked ? "line-through text-[#ADADAA]" : "text-[#111109]"}`}>
+                        <p className={`text-sm font-medium ${isChecked ? "line-through text-[#6B6B5A]" : "text-[#111109]"}`}>
                           {itemLabel(item)}
                         </p>
                         {item.inInventory && item.inventoryQty !== null && (
-                          <p className="text-xs text-[#7DA84E]">{item.inventoryQty} in stock</p>
+                          <p className="text-xs text-[#3A6B20]">{item.inventoryQty} in stock</p>
                         )}
                       </div>
                     </div>

@@ -153,7 +153,7 @@ export function GardensOverview({
                 minHeight: "92px",
                 border: "1.5px dashed #E4E4DC",
                 borderRadius: "12px",
-                color: "#ADADAA",
+                color: "#6B6B5A",
                 fontFamily: "var(--font-body)",
                 fontSize: "13px",
                 fontWeight: 500,

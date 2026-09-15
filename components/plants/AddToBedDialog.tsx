@@ -92,7 +92,7 @@ export function AddToBedDialog({ plantId, plantName, gardens, compact = false }:
           ) : !hasUsableGarden ? (
             <div className="text-center py-8 text-sm text-[#6B6B5A]">
               <p className="mb-2">None of your gardens have an active season.</p>
-              <p className="text-xs text-[#ADADAA] mb-4">Plantings are tracked by season. Start one to add plants.</p>
+              <p className="text-xs text-[#6B6B5A] mb-4">Plantings are tracked by season. Start one to add plants.</p>
               <Button
                 onClick={() => { setOpen(false); router.push(`/garden/${gardens[0].id}/seasons`); }}
                 variant="outline"
@@ -117,11 +117,11 @@ export function AddToBedDialog({ plantId, plantName, gardens, compact = false }:
                       {garden.name}
                     </p>
                     {!garden.hasActiveSeason && (
-                      <span className="text-[10px] text-[#D4820A] font-medium">No active season</span>
+                      <span className="text-[10px] text-[#9A5E08] font-medium">No active season</span>
                     )}
                   </div>
                   {garden.beds.length === 0 ? (
-                    <p className="text-xs text-[#ADADAA] italic py-2">No beds in this garden</p>
+                    <p className="text-xs text-[#6B6B5A] italic py-2">No beds in this garden</p>
                   ) : (
                     <div className="space-y-1.5">
                       {garden.beds.map((bed) => {
@@ -137,7 +137,7 @@ export function AddToBedDialog({ plantId, plantName, gardens, compact = false }:
                           >
                             <div>
                               <p className="text-sm font-medium text-[#111109]">{bed.name}</p>
-                              <p className="text-xs text-[#ADADAA] mt-0.5">
+                              <p className="text-xs text-[#6B6B5A] mt-0.5">
                                 {bed.widthFt} × {bed.heightFt} ft ·{" "}
                                 {full
                                   ? "All cells planted"
@@ -145,7 +145,7 @@ export function AddToBedDialog({ plantId, plantName, gardens, compact = false }:
                               </p>
                             </div>
                             {!disabled && !full && (
-                              <ArrowRight className="w-4 h-4 text-[#7DA84E] shrink-0" />
+                              <ArrowRight className="w-4 h-4 text-[#3A6B20] shrink-0" />
                             )}
                           </button>
                         );

@@ -50,7 +50,7 @@ export function GrowthNotes({ plantingId, notes }: Props) {
             <div key={note.id} className="flex items-start justify-between gap-3 p-3 bg-[#F4F4EC] rounded-xl border border-[#E4E4DC]">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#111109] whitespace-pre-wrap">{note.body}</p>
-                <p className="text-xs text-[#ADADAA] mt-1">
+                <p className="text-xs text-[#6B6B5A] mt-1">
                   {new Date(note.createdAt).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -61,7 +61,7 @@ export function GrowthNotes({ plantingId, notes }: Props) {
               <button
                 onClick={() => handleDelete(note.id)}
                 disabled={deletingId === note.id}
-                className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors shrink-0 mt-0.5"
+                className="text-[#6B6B5A] hover:text-[#B85C3A] transition-colors shrink-0 mt-0.5"
               >
                 {deletingId === note.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -80,7 +80,7 @@ export function GrowthNotes({ plantingId, notes }: Props) {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Add a note…"
           rows={2}
-          className="flex-1 border border-[#E4E4DC] rounded-xl px-3 py-2 text-sm text-[#111109] resize-none focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+          className="flex-1 border border-[#E4E4DC] rounded-xl px-3 py-2 text-sm text-[#111109] resize-none focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#6B6B5A]"
         />
         <button
           type="submit"

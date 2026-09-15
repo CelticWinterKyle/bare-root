@@ -112,7 +112,7 @@ export function DesktopSidebar({
           </div>
           <div style={{
             fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
-            color: "#ADADAA", marginTop: "1px",
+            color: "#6B6B5A", marginTop: "1px",
           }}>
             Garden Planner
           </div>
@@ -133,7 +133,7 @@ export function DesktopSidebar({
           <div key={section.label} style={{ padding: "14px 0 6px" }}>
             <div style={{
               fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
-              color: "#ADADAA", padding: "0 18px 6px",
+              color: "#6B6B5A", padding: "0 18px 6px",
             }}>
               {section.label}
             </div>
@@ -160,7 +160,7 @@ export function DesktopSidebar({
                   {proLocked && (
                     <span style={{
                       marginLeft: "auto", fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px",
-                      background: "#F4F4EC", color: "#ADADAA",
+                      background: "#F4F4EC", color: "#6B6B5A",
                       padding: "1px 5px", borderRadius: "4px", lineHeight: 1.6,
                     }}>
                       Pro

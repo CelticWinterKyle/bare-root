@@ -13,11 +13,11 @@ const SEEN_KEY = "bareroot:bellSeenAt";
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   START_SEEDS: <Sprout className="w-3.5 h-3.5 text-[#D4A843]" />,
-  TRANSPLANT: <ArrowUpFromLine className="w-3.5 h-3.5 text-[#7DA84E]" />,
-  HARVEST: <Scissors className="w-3.5 h-3.5 text-[#D4820A]" />,
+  TRANSPLANT: <ArrowUpFromLine className="w-3.5 h-3.5 text-[#3A6B20]" />,
+  HARVEST: <Scissors className="w-3.5 h-3.5 text-[#9A5E08]" />,
   FROST_ALERT: <Snowflake className="w-3.5 h-3.5 text-blue-400" />,
   WATER: <Leaf className="w-3.5 h-3.5 text-blue-400" />,
-  FERTILIZE: <Leaf className="w-3.5 h-3.5 text-[#7DA84E]" />,
+  FERTILIZE: <Leaf className="w-3.5 h-3.5 text-[#3A6B20]" />,
 };
 
 type BellReminder = {
@@ -108,7 +108,7 @@ export function NotificationBell({
               <Link
                 href="/reminders"
                 className="text-[12px] font-medium transition-colors"
-                style={{ color: "#7DA84E", letterSpacing: "0.1em" }}
+                style={{ color: "#3A6B20", letterSpacing: "0.1em" }}
                 onClick={() => setOpen(false)}
               >
                 View all
@@ -149,7 +149,7 @@ export function NotificationBell({
                         <button
                           onClick={(e) => handleDone(r.id, e)}
                           className="shrink-0 transition-colors mt-0.5"
-                          style={{ color: "#7DA84E" }}
+                          style={{ color: "#3A6B20" }}
                           aria-label="Mark done"
                           title="Mark done"
                         >
@@ -159,7 +159,7 @@ export function NotificationBell({
                       <button
                         onClick={(e) => handleDismiss(r.id, e)}
                         className="shrink-0 transition-colors mt-0.5"
-                        style={{ color: "#ADADAA" }}
+                        style={{ color: "#6B6B5A" }}
                         aria-label="Dismiss"
                       >
                         <X className="w-3.5 h-3.5" />

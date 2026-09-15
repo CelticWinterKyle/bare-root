@@ -121,7 +121,7 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[#111109] truncate">{c.name ?? c.email}</p>
-            {c.name && <p className="text-xs text-[#ADADAA] truncate">{c.email}</p>}
+            {c.name && <p className="text-xs text-[#6B6B5A] truncate">{c.email}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Select
@@ -147,7 +147,7 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
             <button
               onClick={() => handleRemove(c.userId, c.id)}
               disabled={removingId === c.id}
-              className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors"
+              className="text-[#6B6B5A] hover:text-[#B85C3A] transition-colors"
               aria-label="Remove collaborator"
             >
               {removingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
@@ -159,15 +159,15 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
       {pendingInvitations.map((inv) => (
         <div key={inv.id} className="flex items-center gap-3 p-3 bg-[#F4F4EC] border border-dashed border-[#E4E4DC] rounded-xl">
           <div className="w-8 h-8 rounded-full bg-white border border-[#E4E4DC] flex items-center justify-center shrink-0">
-            <Clock className="w-4 h-4 text-[#ADADAA]" />
+            <Clock className="w-4 h-4 text-[#6B6B5A]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[#6B6B5A] truncate">{inv.email}</p>
-            <p className="text-xs text-[#ADADAA]">Invite pending · {inv.role.toLowerCase()}</p>
+            <p className="text-xs text-[#6B6B5A]">Invite pending · {inv.role.toLowerCase()}</p>
           </div>
           <button
             onClick={() => handleCancelInvite(inv.id)}
-            className="text-[#ADADAA] hover:text-[#B85C3A] transition-colors shrink-0"
+            className="text-[#6B6B5A] hover:text-[#B85C3A] transition-colors shrink-0"
             aria-label="Cancel invitation"
           >
             <X className="w-4 h-4" />
@@ -176,7 +176,7 @@ export function CollaboratorsClient({ gardenId, collaborators, pendingInvitation
       ))}
 
       {total === 0 && !showInvite && (
-        <p className="text-sm text-[#ADADAA] text-center py-4">Just you out here so far.</p>
+        <p className="text-sm text-[#6B6B5A] text-center py-4">Just you out here so far.</p>
       )}
 
       {showInvite ? (

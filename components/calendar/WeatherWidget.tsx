@@ -29,7 +29,7 @@ export function WeatherWidget({ current, forecast, locationDisplay }: Props) {
   if (!current && !forecast) {
     return (
       <div className="bg-[#F4F4EC] rounded-xl border border-[#E4E4DC] p-4 text-center">
-        <p className="text-sm text-[#ADADAA]">Weather unavailable</p>
+        <p className="text-sm text-[#6B6B5A]">Weather unavailable</p>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export function WeatherWidget({ current, forecast, locationDisplay }: Props) {
           <div className="flex items-start justify-between">
             <div>
               {locationDisplay && (
-                <p className="text-xs text-[#ADADAA] mb-1 font-medium">{locationDisplay}</p>
+                <p className="text-xs text-[#6B6B5A] mb-1 font-medium">{locationDisplay}</p>
               )}
               <div className="flex items-baseline gap-2">
                 <span
@@ -59,7 +59,7 @@ export function WeatherWidget({ current, forecast, locationDisplay }: Props) {
                   {current.description}
                 </span>
               </div>
-              <div className="flex items-center gap-3 mt-2 text-xs text-[#ADADAA]">
+              <div className="flex items-center gap-3 mt-2 text-xs text-[#6B6B5A]">
                 <span className="flex items-center gap-1">
                   <Droplets className="w-3 h-3" />
                   {current.humidity}%
@@ -112,7 +112,7 @@ export function WeatherWidget({ current, forecast, locationDisplay }: Props) {
                 <span className="text-sm font-bold text-[#111109]">{day.maxTemp}°</span>
                 <span
                   className={`text-xs font-medium ${
-                    isFrost ? "text-blue-600" : "text-[#ADADAA]"
+                    isFrost ? "text-blue-600" : "text-[#6B6B5A]"
                   }`}
                 >
                   {day.minTemp}°

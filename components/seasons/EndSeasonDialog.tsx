@@ -61,7 +61,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-[#ADADAA] border-[#E4E4DC] hover:bg-[#F4F4EC]"
+        className="text-[#6B6B5A] border-[#E4E4DC] hover:bg-[#F4F4EC]"
       >
         End season
       </Button>
@@ -74,12 +74,12 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md border border-[#E4E4DC] flex flex-col max-h-[80vh]">
         <div className="p-6 pb-0">
           <h2 className="font-display text-xl font-semibold text-[#111109]">End {seasonName}</h2>
-          <p className="text-sm text-[#ADADAA] mt-1">Rate your plantings before archiving.</p>
+          <p className="text-sm text-[#6B6B5A] mt-1">Rate your plantings before archiving.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {plantings.length === 0 && (
-            <p className="text-sm text-[#ADADAA] text-center py-4">No plantings this season.</p>
+            <p className="text-sm text-[#6B6B5A] text-center py-4">No plantings this season.</p>
           )}
           {plantings.map((p) => {
             const r = ratings[p.id];
@@ -87,7 +87,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
               <div key={p.id} className="border border-[#E4E4DC] rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-sm text-[#111109]">{p.plantName}</span>
-                  <span className="text-xs text-[#ADADAA]">{p.status.replace(/_/g, " ").toLowerCase()}</span>
+                  <span className="text-xs text-[#6B6B5A]">{p.status.replace(/_/g, " ").toLowerCase()}</span>
                 </div>
                 {/* Star rating */}
                 <div className="flex items-center gap-1 mb-2">
@@ -96,7 +96,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
                       <Star
                         className={`w-5 h-5 transition-colors ${
                           r.rating !== null && star <= r.rating
-                            ? "fill-[#D4820A] text-[#D4820A]"
+                            ? "fill-[#D4820A] text-[#9A5E08]"
                             : "text-[#E4E4DC]"
                         }`}
                       />
@@ -105,7 +105,7 @@ export function EndSeasonDialog({ seasonId, seasonName, plantings }: Props) {
                   {r.rating && (
                     <button
                       onClick={() => setRatings((prev) => ({ ...prev, [p.id]: { ...prev[p.id], rating: null } }))}
-                      className="ml-1 text-[11px] text-[#ADADAA] hover:text-[#111109]"
+                      className="ml-1 text-[11px] text-[#6B6B5A] hover:text-[#111109]"
                     >
                       clear
                     </button>

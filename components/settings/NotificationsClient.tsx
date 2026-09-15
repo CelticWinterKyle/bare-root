@@ -120,7 +120,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
   return (
     <div>
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
           <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Settings
         </div>
@@ -146,7 +146,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
             <Smartphone className="w-4 h-4 shrink-0 text-[#1C3D0A]" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-[#111109]">This device receives push notifications</p>
-              <p className="text-xs text-[#ADADAA]">Disabling stops push on this device only.</p>
+              <p className="text-xs text-[#6B6B5A]">Disabling stops push on this device only.</p>
             </div>
           </div>
           <button
@@ -166,7 +166,7 @@ export function NotificationsClient({ settings: initial }: { settings: Setting[]
             <div className="flex items-center justify-between mb-1">
               <div>
                 <p className="text-sm font-medium text-[#111109]">{s.label}</p>
-                <p className="text-xs text-[#ADADAA]">{s.description}</p>
+                <p className="text-xs text-[#6B6B5A]">{s.description}</p>
               </div>
               <Toggle
                 checked={s.enabled}
@@ -238,7 +238,7 @@ function ChannelToggle({
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         checked
           ? "bg-[#F4F4EC] border-[#1C3D0A] text-[#1C3D0A]"
-          : "bg-white border-[#E4E4DC] text-[#ADADAA]"
+          : "bg-white border-[#E4E4DC] text-[#6B6B5A]"
       }`}
     >
       {icon}

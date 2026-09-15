@@ -169,7 +169,7 @@ export default async function GardenJournalPage({
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
               <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
               The Journal · {garden.name}
             </div>
@@ -218,7 +218,7 @@ export default async function GardenJournalPage({
                     <div className="flex-1 min-w-0">
                       {/* Stamp line */}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA" }}>
+                        <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A" }}>
                           {stamp(e.at, e.kind)}
                         </span>
                         <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: meta.fg }}>
@@ -235,7 +235,7 @@ export default async function GardenJournalPage({
                             {e.planting.variety && (
                               <span className="text-[#6B6B5A]"> · {e.planting.variety}</span>
                             )}
-                            <span className="text-[#ADADAA]"> · {e.planting.bedName}</span>
+                            <span className="text-[#6B6B5A]"> · {e.planting.bedName}</span>
                           </>
                         ) : (
                           <em className="font-display" style={{ fontStyle: "italic", color: "#1C3D0A" }}>
@@ -243,7 +243,7 @@ export default async function GardenJournalPage({
                           </em>
                         )}
                         {e.yieldLabel && (
-                          <span className="font-semibold text-[#D4820A]"> — {e.yieldLabel}</span>
+                          <span className="font-semibold text-[#9A5E08]"> — {e.yieldLabel}</span>
                         )}
                       </p>
                       {/* Body / caption */}
@@ -277,7 +277,7 @@ export default async function GardenJournalPage({
               })}
             </div>
             {truncated && (
-              <p className="text-center text-xs text-[#ADADAA] mt-5" style={{ fontWeight: 500, fontFamily: "var(--font-body)" }}>
+              <p className="text-center text-xs text-[#6B6B5A] mt-5" style={{ fontWeight: 500, fontFamily: "var(--font-body)" }}>
                 Showing the latest {MERGED_CAP} entries
               </p>
             )}

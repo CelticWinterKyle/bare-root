@@ -74,8 +74,8 @@ export function SeasonSelector({ seasons, selectedId, isPro }: Props) {
             ))}
             {!isPro && seasons.length > 1 && (
               <div className="border-t border-[#E4E4DC] mt-1 pt-1 px-3 pb-2">
-                <p className="text-[10px] text-[#ADADAA]">
-                  <a href="/settings/billing" className="text-[#D4820A] hover:underline">Upgrade to Pro</a> to view past seasons
+                <p className="text-[10px] text-[#6B6B5A]">
+                  <a href="/settings/billing" className="text-[#9A5E08] hover:underline">Upgrade to Pro</a> to view past seasons
                 </p>
               </div>
             )}

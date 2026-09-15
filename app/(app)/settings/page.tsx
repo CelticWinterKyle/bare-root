@@ -12,7 +12,7 @@ export default async function SettingsPage() {
     <div className="container-narrow">
       {/* Page header */}
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
           <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Account
         </div>
@@ -29,12 +29,12 @@ export default async function SettingsPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[#111109] truncate">{user.name ?? "—"}</p>
-          <p className="text-xs text-[#ADADAA] truncate">{user.email}</p>
+          <p className="text-xs text-[#6B6B5A] truncate">{user.email}</p>
           {/* user.timezone is kept in sync by TimezoneSync — surface it so
               reminder/dashboard times aren't a mystery. No override needed. */}
-          <p className="text-[11px] text-[#ADADAA] truncate mt-0.5">
+          <p className="text-[11px] text-[#6B6B5A] truncate mt-0.5">
             Times shown in: {user.timezone}{" "}
-            <span className="text-[#C6C6BD]">(detected from this device)</span>
+            <span className="text-[#6B6B5A]">(detected from this device)</span>
           </p>
           {/* Metric toggle hidden for alpha: ~30 sites still hardcode ft/°F,
               so the switch promised more than the app delivered. Re-enable
@@ -89,7 +89,7 @@ function SettingsLink({
           <span className="block text-xs font-normal text-[#6B6B5A]">{sublabel}</span>
         )}
       </span>
-      <ChevronRight className="w-4 h-4 text-[#ADADAA]" />
+      <ChevronRight className="w-4 h-4 text-[#6B6B5A]" />
     </Link>
   );
 }

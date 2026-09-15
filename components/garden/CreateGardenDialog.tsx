@@ -115,7 +115,7 @@ export function CreateGardenDialog({
           {atLimit ? (
             <div className="mt-2 space-y-4">
               <div className="flex items-start gap-3 rounded-xl bg-[#FDF2E0] border border-[#F0D8A0] p-3">
-                <Sparkles className="w-5 h-5 text-[#D4820A] shrink-0 mt-0.5" />
+                <Sparkles className="w-5 h-5 text-[#9A5E08] shrink-0 mt-0.5" />
                 <p className="text-sm text-[#6B6B5A]">
                   The free plan includes one garden. Upgrade to Pro for unlimited
                   gardens and beds.

@@ -73,7 +73,7 @@ export function GlobalSearch({ trigger }: { trigger: "sidebar" | "icon" }) {
           <kbd
             style={{
               fontFamily: "var(--font-mono)", fontSize: 9, padding: "2px 5px",
-              borderRadius: 4, background: "#F4F4EC", border: "1px solid #E4E4DC", color: "#ADADAA",
+              borderRadius: 4, background: "#F4F4EC", border: "1px solid #E4E4DC", color: "#6B6B5A",
             }}
           >
             ⌘K
@@ -95,7 +95,7 @@ export function GlobalSearch({ trigger }: { trigger: "sidebar" | "icon" }) {
         <DialogContent className="max-w-md p-0 gap-0" style={{ background: "#FDFDF8" }}>
           <DialogTitle className="sr-only">Search</DialogTitle>
           <div className="relative" style={{ borderBottom: "1px solid #E4E4DC" }}>
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B5A]" />
             <input
               autoFocus
               value={query}
@@ -105,12 +105,12 @@ export function GlobalSearch({ trigger }: { trigger: "sidebar" | "icon" }) {
               style={{ color: "#111109" }}
             />
             {isSearching && (
-              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
+              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#6B6B5A]" />
             )}
           </div>
           <div className="max-h-80 overflow-y-auto p-2">
             {!hasAny ? (
-              <p className="text-sm text-center py-8" style={{ color: "#ADADAA" }}>
+              <p className="text-sm text-center py-8" style={{ color: "#6B6B5A" }}>
                 {query.trim().length >= 2 && !isSearching
                   ? "Nothing found"
                   : "Type to search your garden"}
@@ -148,7 +148,7 @@ export function GlobalSearch({ trigger }: { trigger: "sidebar" | "icon" }) {
                     {results.plants.map((p) => (
                       <Row
                         key={p.id}
-                        icon={<Leaf className="w-3.5 h-3.5" style={{ color: "#7DA84E" }} />}
+                        icon={<Leaf className="w-3.5 h-3.5" style={{ color: "#3A6B20" }} />}
                         title={p.name}
                         sub={p.category.toLowerCase()}
                         onClick={() => go(`/plants/${p.id}`)}
@@ -171,7 +171,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
       <p
         className="px-2 py-1"
         style={{
-          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: 11, color: "#ADADAA",
+          fontWeight: 500, fontFamily: "var(--font-body)", fontSize: 11, color: "#6B6B5A",
         }}
       >
         {label}

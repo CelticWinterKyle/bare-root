@@ -386,7 +386,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
           />
         ) : planting.startMethod ? (
           <div>
-            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "6px" }}>Start method</p>
+            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "6px" }}>Start method</p>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30" }}>
               {START_METHOD_LABEL[planting.startMethod]}
             </p>
@@ -395,7 +395,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
 
         {/* Status — buttons for editors, a static chip for viewers */}
         <div>
-          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Status</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>Status</p>
           {canEdit ? (
             <div className="grid grid-cols-2 gap-1.5">
               {STATUSES.map((s) => (
@@ -435,7 +435,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
               are producing. Full history stays on the planting page. */}
           {canEdit && (status === "HARVESTING" || status === "ACTIVE") && (
             <div className="mt-2.5 flex items-center flex-wrap gap-1.5 p-2 rounded-lg" style={{ background: "#FFF3E8", border: "1px solid #F0DCC8" }}>
-              <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#D4820A" }}>
+              <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#9A5E08" }}>
                 Log harvest
               </span>
               <input
@@ -468,7 +468,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
 
         {/* Variety + Notes — inputs for editors, plain text for viewers */}
         <div>
-          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Details</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>Details</p>
           {canEdit ? (
             <div className="space-y-2">
               <input
@@ -477,7 +477,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
                 value={variety}
                 onChange={(e) => setVariety(e.target.value)}
                 onBlur={(e) => handleMetaBlur("variety", e.target.value)}
-                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA]"
+                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#6B6B5A]"
               />
               <textarea
                 placeholder="Notes (optional)"
@@ -485,7 +485,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
                 onChange={(e) => setNotes(e.target.value)}
                 onBlur={(e) => handleMetaBlur("notes", e.target.value)}
                 rows={2}
-                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#ADADAA] resize-none"
+                className="w-full text-xs border border-[#E4E4DC] rounded-md px-2.5 py-1.5 text-[#111109] bg-white focus:outline-none focus:ring-1 focus:ring-[#1C3D0A] placeholder:text-[#6B6B5A] resize-none"
               />
             </div>
           ) : planting.variety || planting.notes ? (
@@ -502,13 +502,13 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
               )}
             </div>
           ) : (
-            <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#ADADAA" }}>No variety or notes yet</p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A" }}>No variety or notes yet</p>
           )}
         </div>
 
         {/* Dates — date inputs for editors, plain text for viewers */}
         <div>
-          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Dates</p>
+          <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>Dates</p>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <label style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#6B6B5A", flexShrink: 0 }}>Planted</label>
@@ -556,14 +556,14 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         {/* Companion warnings */}
         {(harmful.length > 0 || beneficial.length > 0) && (
           <div>
-            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#ADADAA", marginBottom: "8px" }}>Companions in this bed</p>
+            <p style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A", marginBottom: "8px" }}>Companions in this bed</p>
             <div className="space-y-1.5">
               {harmful.map((w) => (
                 <div key={w.plantName} style={{ display: "flex", alignItems: "flex-start", gap: "7px" }}>
                   <div style={{
                     width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0, marginTop: "1px",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "9px", background: "#FDF2E0", color: "#D4820A",
+                    fontSize: "9px", background: "#FDF2E0", color: "#9A5E08",
                   }}>!</div>
                   <span style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#3A3A30", lineHeight: 1.4 }}>
                     {w.plantName}{w.notes ? `: ${w.notes}` : ""}

@@ -112,7 +112,7 @@ export function MarketingChrome({
               gap: 16,
               fontWeight: 500, fontFamily: "var(--font-body)",
               fontSize: 12,
-              color: "#ADADAA",
+              color: "#6B6B5A",
             }}
           >
             <div style={{ display: "flex", flexWrap: "wrap", gap: 22 }}>
@@ -150,7 +150,7 @@ export function MarketingEyebrow({ children }: { children: React.ReactNode }) {
         fontFamily: "var(--font-fraunces), Georgia, serif",
         fontStyle: "italic",
         fontSize: 13,
-        color: "#7DA84E",
+        color: "#3A6B20",
         fontWeight: 500,
         display: "inline-flex",
         alignItems: "center",

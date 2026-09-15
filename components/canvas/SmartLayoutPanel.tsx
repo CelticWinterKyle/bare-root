@@ -144,10 +144,10 @@ export function SmartLayoutPanel({
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <div className="w-10 h-10 rounded-full bg-[#F4F4EC] flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-[#7DA84E] animate-pulse" />
+          <Sparkles className="w-5 h-5 text-[#3A6B20] animate-pulse" />
         </div>
         <p className="text-sm font-medium text-[#111109]">Planning your bed…</p>
-        <p className="text-xs text-[#ADADAA]">Optimizing for sun, spacing & companions</p>
+        <p className="text-xs text-[#6B6B5A]">Optimizing for sun, spacing & companions</p>
       </div>
     );
   }
@@ -157,11 +157,11 @@ export function SmartLayoutPanel({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#7DA84E]" />
+          <Sparkles className="w-4 h-4 text-[#3A6B20]" />
           <span className="font-display text-sm font-semibold text-[#111109]">
             {assignments.length} plant{assignments.length !== 1 ? "s" : ""} placed
           </span>
-          <span className="ml-auto text-[12px] font-medium text-[#ADADAA]">
+          <span className="ml-auto text-[12px] font-medium text-[#6B6B5A]">
             {selectedCount} of {assignments.length} selected
           </span>
         </div>
@@ -190,7 +190,7 @@ export function SmartLayoutPanel({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium text-[#111109]">{a.plantName}</span>
-                    <span className="text-xs text-[#ADADAA]">
+                    <span className="text-xs text-[#6B6B5A]">
                       Row {a.row + 1}, Col {a.col + 1}
                     </span>
                   </div>
@@ -253,7 +253,7 @@ export function SmartLayoutPanel({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B5A]" />
         <Input
           autoFocus
           placeholder="Add plants to wishlist…"
@@ -262,7 +262,7 @@ export function SmartLayoutPanel({
           className="pl-9"
         />
         {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#6B6B5A]" />
         )}
       </div>
 

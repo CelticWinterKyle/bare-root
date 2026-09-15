@@ -94,7 +94,7 @@ export function BillingClient({
     return (
       <div className="px-[22px] md:px-8 py-16 text-center">
         <div className="w-16 h-16 bg-[#F4F4EC] rounded-full flex items-center justify-center mx-auto mb-4">
-          <Star className="w-8 h-8 text-[#D4820A] fill-[#D4820A]" />
+          <Star className="w-8 h-8 text-[#9A5E08] fill-[#D4820A]" />
         </div>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "28px", fontWeight: 800, color: "#111109", letterSpacing: "-0.025em", marginBottom: "8px" }}>
           Welcome to Pro!
@@ -110,7 +110,7 @@ export function BillingClient({
   return (
     <div>
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
           <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Settings
         </div>
@@ -122,7 +122,7 @@ export function BillingClient({
 
       {isPro && trialDaysLeft !== null && trialDaysLeft > 0 && (
         <div className="mb-6 bg-[#FFF3E8] border border-orange-200 rounded-xl px-4 py-3">
-          <p className="text-sm font-medium text-[#D4820A]">
+          <p className="text-sm font-medium text-[#9A5E08]">
             Trial ends in {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}
           </p>
           <p className="text-xs text-[#6B6B5A] mt-0.5">Your card will be charged when the trial ends.</p>
@@ -184,12 +184,12 @@ export function BillingClient({
               <ul className="space-y-2 mb-6">
                 {FREE_FEATURES.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-[#6B6B5A]">
-                    <Check className="w-4 h-4 text-[#7DA84E] shrink-0" />
+                    <Check className="w-4 h-4 text-[#3A6B20] shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-center text-[#ADADAA]">Your current plan</p>
+              <p className="text-xs text-center text-[#6B6B5A]">Your current plan</p>
             </div>
 
             {/* Pro */}

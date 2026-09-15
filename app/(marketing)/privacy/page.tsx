@@ -50,7 +50,7 @@ export default function PrivacyPage() {
           style={{
             fontWeight: 500, fontFamily: "var(--font-body)",
             fontSize: 12,
-            color: "#ADADAA",
+            color: "#6B6B5A",
             marginBottom: 40,
           }}
         >

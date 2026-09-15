@@ -111,7 +111,7 @@ export function QuickNoteButton({
             autoFocus
             className="min-h-24"
           />
-          <p className="text-xs text-[#ADADAA]">
+          <p className="text-xs text-[#6B6B5A]">
             Goes in the garden journal, dated today.
           </p>
           <Button

@@ -51,12 +51,13 @@
   --pale:        #E4F0D4;
   --pale-2:      #D4E8BE;
   --amber:       #D4820A;
+  --amber-text:  #9A5E08;   /* amber as TEXT on light — the fill color is 2.9:1 */
   --amber-pale:  #FDF2E0;
   --rust:        #7A2A18;
   --ink:         #111109;
   --ink-2:       #3A3A30;
   --muted:       #6B6B5A;
-  --ghost:       #ADADAA;
+  --ghost:       #ADADAA;   /* borders, dividers, icons only — 2.2:1 as text */
   --rule:        #E4E4DC;
 
   /* shadcn slots → glasshouse tokens */

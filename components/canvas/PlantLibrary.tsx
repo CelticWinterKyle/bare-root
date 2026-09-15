@@ -197,7 +197,7 @@ export function PlantLibrary({
         <div className="relative">
           <Search
             className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
-            style={{ color: "#ADADAA" }}
+            style={{ color: "#6B6B5A" }}
           />
           <Input
             placeholder="Search plants..."
@@ -209,7 +209,7 @@ export function PlantLibrary({
           {isSearching && (
             <Loader2
               className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin"
-              style={{ color: "#7DA84E" }}
+              style={{ color: "#3A6B20" }}
             />
           )}
         </div>
@@ -240,7 +240,7 @@ export function PlantLibrary({
             style={{
               fontWeight: 500, fontFamily: "var(--font-body)",
               fontSize: 11,
-              color: "#ADADAA",
+              color: "#6B6B5A",
             }}
           >
             {suggestionsLabel}
@@ -254,7 +254,7 @@ export function PlantLibrary({
             <p className="text-sm" style={{ color: "#6B6B5A" }}>
               No plants found
             </p>
-            <p className="text-xs mt-1" style={{ color: "#ADADAA" }}>
+            <p className="text-xs mt-1" style={{ color: "#6B6B5A" }}>
               Try a different search
             </p>
           </div>
@@ -277,7 +277,7 @@ export function PlantLibrary({
         style={{
           fontWeight: 500, fontFamily: "var(--font-body)",
           fontSize: 11,
-          color: "#ADADAA",
+          color: "#6B6B5A",
           borderTop: "1px solid #E4E4DC",
         }}
       >

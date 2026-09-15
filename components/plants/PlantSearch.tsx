@@ -125,7 +125,7 @@ export function PlantSearch({
         <div className="relative flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-            style={{ color: "#ADADAA" }}
+            style={{ color: "#6B6B5A" }}
           />
           <Input
             placeholder="Search tomato, basil, marigold…"
@@ -142,7 +142,7 @@ export function PlantSearch({
           {(isPending || apiSearching) && (
             <Loader2
               className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin"
-              style={{ color: "#ADADAA" }}
+              style={{ color: "#6B6B5A" }}
             />
           )}
         </div>
@@ -223,7 +223,7 @@ export function PlantSearch({
                     src={plant.imageUrl}
                     category={plant.category}
                     name={plant.name}
-                    className="transition-transform duration-500 group-hover:scale-105"
+                    className=""
                   />
                   <span
                     style={{
@@ -287,7 +287,7 @@ export function PlantSearch({
                         style={{
                           fontFamily: "var(--font-mono)",
                           fontSize: "8px",
-                          color: "#D4820A",
+                          color: "#9A5E08",
                           background: "#FDF2E0",
                           padding: "2px 6px",
                           borderRadius: "100px",
@@ -341,7 +341,7 @@ export function PlantSearch({
             }}
           >
             Load more
-            <span style={{ color: "#ADADAA", fontWeight: 500 }}>
+            <span style={{ color: "#6B6B5A", fontWeight: 500 }}>
               {" "}· {plants.length - visibleCount} more
             </span>
           </button>

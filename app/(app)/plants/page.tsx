@@ -79,7 +79,7 @@ export default async function PlantsPage({
     <div className="container-narrow">
       {/* Page header */}
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
           <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Library
         </div>
@@ -97,7 +97,7 @@ export default async function PlantsPage({
         inventoryByPlant={Object.fromEntries(inventoryByPlant)}
       />
 
-      <p className="px-[22px] md:px-8 py-6 text-xs text-[#ADADAA]">
+      <p className="px-[22px] md:px-8 py-6 text-xs text-[#6B6B5A]">
         Plant photos via{" "}
         <a
           href="https://www.pexels.com"

@@ -96,7 +96,7 @@ export function PwaInstallPrompt() {
           </>
         )}
       </div>
-      <button onClick={dismiss} className="shrink-0 text-[#ADADAA] hover:text-[#111109]" aria-label="Dismiss">
+      <button onClick={dismiss} className="shrink-0 text-[#6B6B5A] hover:text-[#111109]" aria-label="Dismiss">
         <X className="w-4 h-4" />
       </button>
     </div>

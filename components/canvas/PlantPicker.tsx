@@ -217,7 +217,7 @@ export function PlantPicker({
         </div>
       )}
       <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ADADAA]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B5A]" />
         <Input
           autoFocus
           placeholder="Search plants…"
@@ -226,7 +226,7 @@ export function PlantPicker({
           className="pl-9"
         />
         {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#ADADAA]" />
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#6B6B5A]" />
         )}
       </div>
 
@@ -253,12 +253,12 @@ export function PlantPicker({
       </div>
 
       {!query && !activeCategory && recentPlants.length > 0 && (
-        <p className="text-xs text-[#ADADAA] mb-2">{suggestionsLabel}</p>
+        <p className="text-xs text-[#6B6B5A] mb-2">{suggestionsLabel}</p>
       )}
 
       <div className="flex-1 overflow-y-auto space-y-1">
         {results.length === 0 ? (
-          <div className="text-center py-8 text-[#ADADAA] text-sm">
+          <div className="text-center py-8 text-[#6B6B5A] text-sm">
             {query ? `No plants found for "${query}"` : "Search for a plant to add"}
           </div>
         ) : (
@@ -274,7 +274,7 @@ export function PlantPicker({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-[#111109] truncate">{plant.name}</p>
-                <p className="text-xs text-[#ADADAA]">
+                <p className="text-xs text-[#6B6B5A]">
                   {plant.daysToMaturity ? `${plant.daysToMaturity} days` : plant.category}
                   {plant.isPerennial && <span style={{ color: "#3A6B20", fontWeight: 600 }}> · perennial</span>}
                   {(() => {
@@ -330,7 +330,7 @@ export function PlantPicker({
                 );
               })()}
               {isAssigning && assigningId === plant.id && (
-                <Loader2 className="w-4 h-4 animate-spin text-[#7DA84E] shrink-0" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#3A6B20] shrink-0" />
               )}
             </button>
           ))

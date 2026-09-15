@@ -234,7 +234,7 @@ export default async function CalendarPage() {
     <div className="container-narrow">
       {/* Page header */}
       <div className="px-[22px] md:px-8 pt-6 pb-5" style={{ borderBottom: "1px solid #E4E4DC" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#7DA84E", marginBottom: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: "13px", color: "#3A6B20", marginBottom: "6px" }}>
           <span style={{ display: "block", width: "16px", height: "1.5px", background: "#7DA84E", borderRadius: "1px", flexShrink: 0 }} />
           Planning
         </div>
@@ -259,10 +259,10 @@ export default async function CalendarPage() {
           />
         ) : (
           <div className="bg-[#F4F4EC] rounded-xl border border-dashed border-[#E4E4DC] p-4 flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-[#ADADAA] shrink-0" />
-            <p className="text-sm text-[#ADADAA]">
+            <MapPin className="w-4 h-4 text-[#6B6B5A] shrink-0" />
+            <p className="text-sm text-[#6B6B5A]">
               Add your zip code in{" "}
-              <Link href={settingsHref} className="text-[#D4820A] hover:underline">
+              <Link href={settingsHref} className="text-[#9A5E08] hover:underline">
                 garden settings
               </Link>{" "}
               to see weather and frost alerts.
@@ -275,7 +275,7 @@ export default async function CalendarPage() {
       {hasNoFrostDate && gardens.length > 0 && (
         <div className="mb-6 p-3 bg-[#FFF8E7] border border-yellow-200 rounded-xl text-sm text-[#6B6B5A]">
           Some gardens are missing frost dates, so planting calendar events may be incomplete.{" "}
-          <Link href={settingsHref} className="text-[#D4820A] hover:underline">
+          <Link href={settingsHref} className="text-[#9A5E08] hover:underline">
             Update garden settings →
           </Link>
         </div>
@@ -294,7 +294,7 @@ export default async function CalendarPage() {
                 className="flex items-start gap-3 p-3 bg-[#F4F4EC] rounded-xl border border-[#E4E4DC]"
               >
                 <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-[#E4E4DC]">
-                  <Sprout className="w-4 h-4 text-[#7DA84E]" />
+                  <Sprout className="w-4 h-4 text-[#3A6B20]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#111109]">
@@ -303,7 +303,7 @@ export default async function CalendarPage() {
                       {s.plantName}
                     </Link>
                   </p>
-                  <p className="text-xs text-[#ADADAA] mt-0.5">
+                  <p className="text-xs text-[#6B6B5A] mt-0.5">
                     {s.gardenName} · {s.bedName} · {s.daysToMaturity} days ·{" "}
                     Plant by{" "}
                     {s.suggestedPlantDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
