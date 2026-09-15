@@ -43,7 +43,7 @@ export function PlantFeasibility({
       <p style={{ fontFamily: "var(--font-display)", fontSize: "16px", fontWeight: 700, color: "#111109", lineHeight: 1.25 }}>
         {f.recommendedThisSeason
           ? rec.summary
-          : `Too late this season — ${rec.summary.charAt(0).toLowerCase()}${rec.summary.slice(1)}`}
+          : `Too late this season. ${rec.summary}`}
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>

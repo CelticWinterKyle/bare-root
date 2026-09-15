@@ -426,7 +426,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
         }
         return;
       }
-      toast.info("View only — ask the garden owner for editor access to plant", { duration: 2000 });
+      toast.info("View only. Ask the garden owner for editor access to plant", { duration: 2000 });
       return;
     }
     // Move flow takes precedence over everything else — the user has
@@ -451,7 +451,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       const moveFp = footprintBlockers(movingPlanting.id, cell);
       if (moveFp.blockers.length > 0) {
         toast.error(
-          `Not enough room — ${movingPlanting.plantName} needs a clear ${moveFp.side}×${moveFp.side} area (${[...new Set(moveFp.blockers)].join(", ")} in the way)`
+          `Not enough room. ${movingPlanting.plantName} needs a clear ${moveFp.side}×${moveFp.side} area (${[...new Set(moveFp.blockers)].join(", ")} in the way)`
         );
         return;
       }
@@ -755,7 +755,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
       if (fp.blockers.length > 0) {
         toast.error(
           fp.side > 1
-            ? `Not enough room — ${name} needs a clear ${fp.side}×${fp.side} area (${[...new Set(fp.blockers)].join(", ")} in the way)`
+            ? `Not enough room. ${name} needs a clear ${fp.side}×${fp.side} area (${[...new Set(fp.blockers)].join(", ")} in the way)`
             : "That cell is already occupied"
         );
         return;
@@ -1120,7 +1120,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                         ? `${occupantName}${statusLabel ? `, ${statusLabel}` : ""}`
                         : "empty";
                       const isSelectedAny = isSelected || (selectMode && selectedCells.has(cell.id));
-                      const ariaLabel = `Row ${cell.row + 1}, column ${cell.col + 1} — ${cellContent}${isSelectedAny ? ", selected" : ""}`;
+                      const ariaLabel = `Row ${cell.row + 1}, column ${cell.col + 1}: ${cellContent}${isSelectedAny ? ", selected" : ""}`;
 
                       return (
                         <CellTile
@@ -1347,7 +1347,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
               >
                 <Eye className="w-3 h-3" style={{ color: "#6B6B5A" }} />
                 <span style={{ fontWeight: 500, fontFamily: "var(--font-body)", fontSize: "11px", color: "#6B6B5A" }}>
-                  Viewing — read only
+                  Viewing, read only
                 </span>
               </div>
             )}
@@ -1495,7 +1495,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                     </div>
                     <p className="text-sm font-semibold" style={{ color: "#111109" }}>Viewing this bed</p>
                     <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
-                      Tap any planted cell to see its details — status, dates, variety, and companions. You have view-only access; ask the garden owner for editor access to make changes.
+                      Tap any planted cell to see its details: status, dates, variety, and companions. You have view-only access; ask the garden owner for editor access to make changes.
                     </p>
                   </div>
                 )
@@ -1554,7 +1554,7 @@ export function BedGrid({ bedId, gardenId, gridCols, gridRows, cellSizeIn, cells
                   <p className="text-xs leading-relaxed" style={{ color: "#6B6B5A" }}>
                     {canEdit
                       ? "Tap any cell to cycle its sun level. Use this to map shadows from fences, trees, or the house so plant suggestions match each spot's reality."
-                      : "Shows each cell's mapped sun exposure — shadows from fences, trees, or the house."}
+                      : "Shows each cell's mapped sun exposure: shadows from fences, trees, or the house."}
                   </p>
                   <div className="space-y-1.5 pt-2">
                     {Object.entries(SUN_LABEL).map(([key, emoji]) => (

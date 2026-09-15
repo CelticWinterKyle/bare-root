@@ -15,7 +15,7 @@ export function HelpButton() {
     <>
       <button
         type="button"
-        aria-label="Help — field guide"
+        aria-label="Help: field guide"
         onClick={() => setOpen(true)}
         className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F4F4EC] transition-colors"
       >

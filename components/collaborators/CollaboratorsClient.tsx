@@ -22,8 +22,8 @@ const ROLE_ITEMS: { value: "EDITOR" | "VIEWER"; label: string }[] = [
 ];
 
 const INVITE_ROLE_ITEMS: { value: "EDITOR" | "VIEWER"; label: string }[] = [
-  { value: "EDITOR", label: "Editor — can plant & edit" },
-  { value: "VIEWER", label: "Viewer — read only" },
+  { value: "EDITOR", label: "Editor: can plant and edit" },
+  { value: "VIEWER", label: "Viewer: read only" },
 ];
 
 type Collaborator = {

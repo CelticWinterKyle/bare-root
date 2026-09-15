@@ -112,7 +112,7 @@ export function StartMethodPicker({ plantingId, plant, frost, current, anchorDat
       <p style={{ fontFamily: "var(--font-display)", fontSize: "14px", fontWeight: 700, color: "#111109", lineHeight: 1.3, marginBottom: "8px" }}>
         {sel.feasibleThisSeason || sel.method === "SEED_INDOORS"
           ? sel.summary
-          : `Too late this season — ${sel.summary.charAt(0).toLowerCase()}${sel.summary.slice(1)}`}
+          : `Too late this season. ${sel.summary}`}
       </p>
 
       <div className="space-y-1.5">

@@ -121,7 +121,7 @@ export function SmartLayoutPanel({
         if (res.skipped > 0) {
           // A silent partial apply made "0 of 8 placed" look like success.
           toast.warning(
-            `Placed ${res.planted} of ${chosen.length}. ${res.skipped} couldn't fit — those cells were already taken.`,
+            `Placed ${res.planted} of ${chosen.length}. ${res.skipped} couldn't fit because those cells were already taken.`,
             { duration: 8000 }
           );
         }

@@ -119,7 +119,7 @@ export default async function SeasonsPage({
             Perennials
           </h2>
           <p className="text-xs text-[#6B6B5A] mb-3">
-            These live across seasons — they hold their cells until you clear them from the bed.
+            These live across seasons. They hold their cells until you clear them from the bed.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {perennials.map((p) => (

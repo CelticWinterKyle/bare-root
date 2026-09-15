@@ -14,7 +14,7 @@ import { FeedbackForm } from "./FeedbackForm";
 const ENTRIES: { term: string; body: string }[] = [
   {
     term: "Seasons",
-    body: "Everything you plant lives inside a season — one active at a time per garden. When a season ends, its plantings become history you can look back on; the beds clear for the next one.",
+    body: "Everything you plant lives inside a season, one active at a time per garden. When a season ends, its plantings become history you can look back on; the beds clear for the next one.",
   },
   {
     term: "Beds & cells",
@@ -22,7 +22,7 @@ const ENTRIES: { term: string; body: string }[] = [
   },
   {
     term: "Footprint & spacing",
-    body: "Every plant has a spacing — how much room it needs to breathe. A tomato wanting 18\" claims a block of cells (its footprint), which is why one planting can fill several squares.",
+    body: "Every plant has a spacing: how much room it needs to breathe. A tomato wanting 18\" claims a block of cells (its footprint), which is why one planting can fill several squares.",
   },
   {
     term: "Start methods",
@@ -30,11 +30,11 @@ const ENTRIES: { term: string; body: string }[] = [
   },
   {
     term: "Sun levels",
-    body: "Each cell can be mapped as full sun, partial sun, partial shade, or full shade — the real light it gets after fences, trees, and the house have their say. Suggestions respect the map.",
+    body: "Each cell can be mapped as full sun, partial sun, partial shade, or full shade, the real light it gets after fences, trees, and the house have their say. Suggestions respect the map.",
   },
   {
     term: "Companion pairs",
-    body: "Some neighbors help each other; some quarrel. A green dot on a cell means a beneficial pairing nearby, a rust dot means a conflict. Advisory only — the garden never stops you.",
+    body: "Some neighbors help each other; some quarrel. A green dot on a cell means a beneficial pairing nearby, a rust dot means a conflict. Advisory only. The garden never stops you.",
   },
   {
     term: "Frost dates",
@@ -42,7 +42,7 @@ const ENTRIES: { term: string; body: string }[] = [
   },
   {
     term: "Reminders",
-    body: "Reminders close the loop: marking \"start seeds,\" \"transplant,\" or \"harvest\" as done updates the planting itself — its status moves along and the next reminder lines up.",
+    body: "Reminders close the loop: marking \"start seeds,\" \"transplant,\" or \"harvest\" as done updates the planting itself. Its status moves along and the next reminder lines up.",
   },
 ];
 

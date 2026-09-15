@@ -72,7 +72,7 @@ export default async function GardenSettingsPage({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-medium text-[#111109]">Collaborators</h2>
-            <p className="text-xs text-[#6B6B5A] mt-0.5">A garden&rsquo;s better with more hands in it — invite up to 5.</p>
+            <p className="text-xs text-[#6B6B5A] mt-0.5">A garden&rsquo;s better with more hands in it. Invite up to 5.</p>
           </div>
           {!isPro && (
             <Link

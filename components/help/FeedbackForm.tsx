@@ -22,7 +22,7 @@ export function FeedbackForm() {
       try {
         await submitFeedback(trimmed, pathname ?? undefined);
         setMessage("");
-        toast.success("Thanks — sent to the gardener-in-chief.");
+        toast.success("Thanks. Sent to the gardener-in-chief.");
       } catch {
         toast.error("Couldn't send that. Please try again.");
       }
@@ -43,7 +43,7 @@ export function FeedbackForm() {
         Something off?
       </div>
       <p style={{ fontSize: 13, color: "#3A3A30", lineHeight: 1.55, marginBottom: 8 }}>
-        Confusing, broken, or missing — say it here and it lands straight in the
+        Confusing, broken, or missing? Say it here and it lands straight in the
         builder&apos;s inbox.
       </p>
       <textarea

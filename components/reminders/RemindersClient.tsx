@@ -136,7 +136,7 @@ export function RemindersClient({
           // would throw. Awaiting it here showed "Couldn't log" for a
           // harvest that WAS saved, and the retry queued a duplicate.
           toast.success(
-            "Saved on this device — will sync when you're back online. Mark the reminder done once you're connected."
+            "Saved on this device. It will sync when you're back online. Mark the reminder done once you're connected."
           );
         }
         setLoggingId(null);

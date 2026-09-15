@@ -539,7 +539,7 @@ export default async function DashboardPage() {
       {
         eyebrow: "Hardening off",
         title: <>Ease the seedlings outdoors.</>,
-        body: "Indoor starts want a week of short outdoor visits before transplanting — a little sun and breeze at a time, so the move to the bed isn't a shock.",
+        body: "Indoor starts want a week of short outdoor visits before transplanting: a little sun and breeze at a time, so the move to the bed isn't a shock.",
         href: "/calendar",
         cta: "Check the calendar",
       },
@@ -548,14 +548,14 @@ export default async function DashboardPage() {
       {
         eyebrow: "Deep watering",
         title: <>Water deeply, not often.</>,
-        body: "A long soak a couple of times a week beats a daily sprinkle — roots chase the water down, and the plants ride out hot spells far better.",
+        body: "A long soak a couple of times a week beats a daily sprinkle. Roots chase the water down, and the plants ride out hot spells far better.",
         href: `/garden/${primaryGarden.id}`,
         cta: "Walk the beds",
       },
       {
         eyebrow: "Keep picking",
         title: <>Harvest often to keep them producing.</>,
-        body: "Beans, zucchini, and cucumbers slow down when fruit hangs too long. Pick a little every day or two and log it — the plants will keep the pace.",
+        body: "Beans, zucchini, and cucumbers slow down when fruit hangs too long. Pick a little every day or two and log it. The plants will keep the pace.",
         href: `/garden/${primaryGarden.id}/journal`,
         cta: "Open the journal",
       },
@@ -564,7 +564,7 @@ export default async function DashboardPage() {
       {
         eyebrow: "Fall window",
         title: <>There&apos;s still time for one more sowing.</>,
-        body: "Cool-weather crops — spinach, radishes, garlic — actually prefer this end of the year. Check what fits before the first frost closes the window.",
+        body: "Cool-weather crops like spinach, radishes, and garlic actually prefer this end of the year. Check what fits before the first frost closes the window.",
         href: "/calendar",
         cta: "See what fits",
       },
@@ -591,7 +591,7 @@ export default async function DashboardPage() {
     suggestion = {
       eyebrow: "First things first",
       title: <>Your garden has no beds yet.</>,
-      body: "Every planting needs a place to live. Add your first bed to the canvas — even a small 4×4 is plenty to get growing.",
+      body: "Every planting needs a place to live. Add your first bed to the canvas. Even a small 4×4 is plenty to get growing.",
       href: `/garden/${primaryGarden.id}`,
       cta: "Add a bed",
     };
@@ -619,7 +619,7 @@ export default async function DashboardPage() {
     suggestion = {
       eyebrow: "First harvest",
       title: <>Plants are growing. Log the first harvest when it comes in.</>,
-      body: "Logged harvests build the journal and the year's tally. When something's ready, weigh it (roughly is fine) and write it down — future-you will love the record.",
+      body: "Logged harvests build the journal and the year's tally. When something's ready, weigh it (roughly is fine) and write it down. Future-you will love the record.",
       href: `/garden/${primaryGarden.id}`,
       cta: "Walk the beds",
     };

@@ -132,7 +132,7 @@ export function BillingClient({
             <Sprout className="w-5 h-5 text-[#1C3D0A]" />
             <div>
               <p className="text-sm font-semibold text-[#111109]">Bare Root Pro</p>
-              <p className="text-xs text-[#6B6B5A]">Everything&rsquo;s unlocked — the whole toolshed is yours.</p>
+              <p className="text-xs text-[#6B6B5A]">Everything&rsquo;s unlocked. The whole toolshed is yours.</p>
             </div>
           </div>
           {hasStripeCustomer ? (
@@ -154,7 +154,7 @@ export function BillingClient({
       ) : (
         <>
           <p className="text-[#6B6B5A] mb-8">
-            {hadTrial ? "Upgrade to pick up where your trial left off." : "Try Pro free for 7 days — no charge until the trial ends."}
+            {hadTrial ? "Upgrade to pick up where your trial left off." : "Try Pro free for 7 days. No charge until the trial ends."}
           </p>
 
           {/* Billing toggle */}

@@ -197,7 +197,7 @@ export default async function GardenJournalPage({
               The journal&apos;s waiting for its first entry.
             </p>
             <p className="text-sm text-[#6B6B5A] mt-1">
-              Log a harvest, add a photo, or leave a note — it all lands here.
+              Log a harvest, add a photo, or leave a note. It all lands here.
             </p>
           </div>
         ) : (

@@ -126,7 +126,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
         });
         toast.success(
           landed === "queued"
-            ? `Saved on this device — will sync when you're back online`
+            ? `Saved on this device. It will sync when you're back online.`
             : `Logged ${quantity} ${harvestUnit} of ${planting.plant.name}`
         );
         setHarvestQty("");
@@ -209,7 +209,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
     startRemove(async () => {
       try {
         await clearPerennial(planting.id);
-        toast.success(`${plantName} cleared — its cells are free and the history stays`);
+        toast.success(`${plantName} cleared. Its cells are free and the history stays.`);
         onClose();
       } catch {
         toast.error("Couldn't clear it. Please try again.");
@@ -618,7 +618,7 @@ export function CellDetail({ planting, warnings, cellId, seasonId, gardenId, bed
                 cursor: "pointer", opacity: isRemoving ? 0.5 : 1,
               }}
             >
-              Clear — keep history
+              Clear, keep history
             </button>
             <button
               onClick={doDelete}

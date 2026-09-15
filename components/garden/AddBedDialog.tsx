@@ -64,7 +64,7 @@ export function AddBedDialog({
       Math.max(1, Math.floor(heightFt * (12 / cellSizeIn)));
     if (cellCount > 5000) {
       toast.error(
-        `That bed would have ${cellCount.toLocaleString()} cells — the limit is 5,000. Try a smaller bed${cellSizeIn === 6 ? ` or 1 ft squares` : ""}.`
+        `That bed would have ${cellCount.toLocaleString()} cells. The limit is 5,000. Try a smaller bed${cellSizeIn === 6 ? ` or 1 ft squares` : ""}.`
       );
       return;
     }

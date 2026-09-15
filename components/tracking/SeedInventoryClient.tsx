@@ -144,7 +144,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
           quantity: 1,
           unit: "packets",
         });
-        toast.success(`Added to your seeds — ${itemLabel(item)}`, {
+        toast.success(`Added ${itemLabel(item)} to your seeds`, {
           action: {
             label: "Undo",
             onClick: () => {
@@ -168,7 +168,7 @@ export function SeedInventoryClient({ userId, inventory, shoppingList }: Props) 
   function handleShareShopping() {
     const unchecked = shoppingList.filter((s) => !s.inInventory && !checked.has(itemKey(s)));
     if (unchecked.length === 0) {
-      toast.info("Nothing to share — your shopping list is empty.");
+      toast.info("Nothing to share. Your shopping list is empty.");
       return;
     }
     const text = unchecked.map((s) => `• ${itemLabel(s)}`).join("\n");

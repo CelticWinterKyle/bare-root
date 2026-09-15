@@ -200,7 +200,7 @@ export function PlantPicker({
         <div className="mb-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-yellow-800">Spacing conflict — planted anyway</p>
+            <p className="text-xs font-medium text-yellow-800">Spacing conflict, planted anyway</p>
             {spacingWarnings.map((w, i) => (
               <p key={i} className="text-xs text-yellow-700">
                 Too close to {w.neighborPlantName} ({w.distanceIn}″ apart, needs {w.requiredIn}″)
@@ -292,7 +292,7 @@ export function PlantPicker({
                     <p
                       className="mt-0.5 flex items-center gap-1 text-[10px]"
                       style={{ color: "#A06010" }}
-                      title={`${hist.plantNames.join(", ")} grew here in ${hist.seasonName} — rotating families helps prevent disease buildup`}
+                      title={`${hist.plantNames.join(", ")} grew here in ${hist.seasonName}. Rotating families helps prevent disease buildup`}
                     >
                       <RotateCcw className="w-2.5 h-2.5 shrink-0" />
                       <span className="truncate">

@@ -107,7 +107,7 @@ export function OfflineClient() {
       )}
       {savedFlash && (
         <p className="text-xs mb-4 flex items-center gap-1.5" style={{ color: "#1C3D0A" }}>
-          <Check className="w-3 h-3" /> Saved on this device — will sync when online
+          <Check className="w-3 h-3" /> Saved on this device. Syncs when online.
         </p>
       )}
 

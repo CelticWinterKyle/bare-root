@@ -218,7 +218,7 @@ export default async function SeasonSummaryPage({
           ? `Up ${fmtQty(diff)} ${dominantUnit} on last season.`
           : `Down ${fmtQty(-diff)} ${dominantUnit} on last season.`;
     } else {
-      comparison = "First tracked season — next year gets a comparison.";
+      comparison = "First tracked season. Next year gets a comparison.";
     }
   }
 

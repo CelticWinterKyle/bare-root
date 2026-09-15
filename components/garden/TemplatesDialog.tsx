@@ -63,7 +63,7 @@ export function TemplatesDialog({
       try {
         const res = await applyTemplate(t.id, bedId, seasonId);
         if (res.planted === 0) {
-          toast.error("Nothing planted — the cells it needs are occupied.");
+          toast.error("Nothing planted. The cells it needs are occupied.");
         } else {
           toast.success(
             `Planted ${res.planted} from “${t.name}”${res.skipped > 0 ? ` · ${res.skipped} skipped` : ""}`

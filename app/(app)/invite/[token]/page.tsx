@@ -6,9 +6,9 @@ import { Sprout } from "lucide-react";
 
 const ROLE_COPY: Record<string, string> = {
   EDITOR:
-    "As an editor you can plant, log harvests, and leave notes — a full pair of hands in the beds.",
+    "As an editor you can plant, log harvests, and leave notes. A full pair of hands in the beds.",
   VIEWER:
-    "As a viewer you can watch the garden grow — browse the beds, the plantings, and the journal.",
+    "As a viewer you can watch the garden grow: browse the beds, the plantings, and the journal.",
 };
 
 export default async function InvitePage({
@@ -90,7 +90,7 @@ export default async function InvitePage({
                 <p className="text-sm text-[#6B6B5A] leading-relaxed">
                   The invite to <strong className="text-[#111109]">{invitation.garden.name}</strong>{" "}
                   expired before it was accepted. Ask {inviterName} to send a
-                  fresh one — they only take a moment.
+                  fresh one. They only take a moment.
                 </p>
               </>
             ) : mismatch ? (

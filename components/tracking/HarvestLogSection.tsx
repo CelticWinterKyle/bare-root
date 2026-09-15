@@ -60,7 +60,7 @@ export function HarvestLogSection({ plantingId, logs }: Props) {
           harvestedAt: date,
         });
         if (landed === "queued") {
-          toast.success("Saved on this device — will sync when you're back online");
+          toast.success("Saved on this device. It will sync when you're back online.");
         }
         setQuantity("");
         setNotes("");
