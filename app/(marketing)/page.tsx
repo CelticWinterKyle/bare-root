@@ -1,3 +1,4 @@
+import { ZoomIn, ZoomOut, RotateCcw, Sprout } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
@@ -277,14 +278,14 @@ const COMPANIONS = [
 
 // Feature catalog rendered like a ledger.
 const LEDGER = [
-  { num: "01", title: <>Visual <em>bed planner</em></>, desc: "Top-down canvas. Drag plants. Multi-cell footprints.", tier: "Free" },
-  { num: "02", title: <><em>Climate</em>-aware calendar</>, desc: "Personalized to your zip: frost dates, start-seed weeks, harvest windows.", tier: "Free" },
-  { num: "03", title: <>Companion <em>science</em></>, desc: "Built-in warnings, beneficial pairings, crop rotation history.", tier: "Free" },
-  { num: "04", title: <>AI <em>layout planner</em></>, desc: "Hand it your wishlist; it builds an optimized bed in seconds.", tier: "Pro" },
-  { num: "05", title: <>Harvest <em>logbook</em></>, desc: "Photos, weights, ratings. Log every pick as it comes out of the bed.", tier: "Free" },
-  { num: "06", title: <>Smart <em>reminders</em></>, desc: "Push + email at the right week. Frost alerts when the front comes.", tier: "Free" },
-  { num: "07", title: <>Plant <em>collaborators</em></>, desc: "Share a garden with up to 5 people. Editor or viewer roles.", tier: "Pro" },
-  { num: "08", title: <>Seed <em>inventory</em></>, desc: "What you have, what you need. Auto-generated shopping list.", tier: "Pro" },
+  { num: "01", title: <>Visual bed planner</>, desc: "Top-down canvas. Drag plants. Multi-cell footprints.", tier: "Free" },
+  { num: "02", title: <>Climate-aware calendar</>, desc: "Personalized to your zip: frost dates, start-seed weeks, harvest windows.", tier: "Free" },
+  { num: "03", title: <>Companion guide</>, desc: "Built-in warnings, beneficial pairings, crop rotation history.", tier: "Free" },
+  { num: "04", title: <>AI layout planner</>, desc: "Hand it your wishlist; it builds an optimized bed in seconds.", tier: "Pro" },
+  { num: "05", title: <>Harvest logbook</>, desc: "Photos, weights, ratings. Log every pick as it comes out of the bed.", tier: "Free" },
+  { num: "06", title: <>Smart reminders</>, desc: "Push + email at the right week. Frost alerts when the front comes.", tier: "Free" },
+  { num: "07", title: <>Plant collaborators</>, desc: "Share a garden with up to 5 people. Editor or viewer roles.", tier: "Pro" },
+  { num: "08", title: <>Seed inventory</>, desc: "What you have, what you need. Auto-generated shopping list.", tier: "Pro" },
 ];
 
 export default async function LandingPage() {
@@ -314,7 +315,7 @@ export default async function LandingPage() {
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
           <div className={styles.heroMeta}>
-            <span className={styles.eyebrow}>A visual planner for raised-bed gardens</span>
+            <span className={styles.eyebrow}>For raised beds, zones 3 to 10</span>
           </div>
           <h1 className={styles.heroTitle}>
             Plan the garden<br />
@@ -323,7 +324,7 @@ export default async function LandingPage() {
           </h1>
           <p className={styles.heroLede}>
             A visual planner that knows your climate, your beds, and what grows
-            well together, built for the gardener who&apos;s tired of guessing.
+            well together. Built for the gardener who&apos;s tired of guessing.
           </p>
           <div className={styles.heroCta}>
             <Link href="/sign-up" className={`${styles.btn} ${styles.btnPrimary}`}>
@@ -332,13 +333,7 @@ export default async function LandingPage() {
             </Link>
             <Link href="/pricing" className={`${styles.btn} ${styles.btnGhost}`}>See pricing</Link>
           </div>
-          <div className={styles.heroTrust}>No credit card. Free forever.</div>
-          <div className={styles.heroTags}>
-            <span className={`${styles.tag} ${styles.tagGreen}`}>Zone-aware</span>
-            <span className={`${styles.tag} ${styles.tagAmber}`}>Companion science</span>
-            <span className={styles.tag}>Climate smart</span>
-            <span className={styles.tag}>Mobile + PWA</span>
-          </div>
+          <div className={styles.heroTrust}>No card needed to start.</div>
         </div>
 
         <div className={styles.heroCanvas}>
@@ -370,7 +365,7 @@ export default async function LandingPage() {
           <p>
             So we built something that looks like your garden. Beds you can
             see from above. Plants that take up the right amount of space. A
-            calendar that knows when YOUR zip code&apos;s last frost is, not the
+            calendar that knows when your zip code&apos;s last frost is, not the
             generic one printed on a seed packet from someone else&apos;s climate.
           </p>
           <div className={styles.signature}>
@@ -386,7 +381,7 @@ export default async function LandingPage() {
         <div className={styles.canvasShowcaseInner}>
           <div className={styles.canvasShowcaseHeader}>
             <span className={styles.eyebrow}>The canvas</span>
-            <h2>Drag, drop, and <em>actually see</em> your garden.</h2>
+            <h2>Drag, drop, and actually see your garden.</h2>
             <p>
               Top-down beds with real proportions. Plants take the room they
               actually need: a tomato claims four cells, lettuce one. Tap to
@@ -405,9 +400,9 @@ export default async function LandingPage() {
                 </div>
               </div>
               <div className={styles.canvasGridTopbarActions}>
-                <span className={styles.iconBtn}>⊕</span>
-                <span className={styles.iconBtn}>⊖</span>
-                <span className={styles.iconBtn}>⟳</span>
+                <span className={styles.iconBtn}><ZoomIn size={14} strokeWidth={2} /></span>
+                <span className={styles.iconBtn}><ZoomOut size={14} strokeWidth={2} /></span>
+                <span className={styles.iconBtn}><RotateCcw size={14} strokeWidth={2} /></span>
               </div>
             </div>
 
@@ -463,36 +458,17 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          <div className={styles.canvasStats}>
-            <div className={styles.canvasStat}>
-              <div className={styles.canvasStatLabel}>Beds planted</div>
-              <div className={styles.canvasStatValue}><em>3</em></div>
-            </div>
-            <div className={styles.canvasStat}>
-              <div className={styles.canvasStatLabel}>Active plantings</div>
-              <div className={styles.canvasStatValue}>18</div>
-            </div>
-            <div className={styles.canvasStat}>
-              <div className={styles.canvasStatLabel}>Last frost</div>
-              <div className={`${styles.canvasStatValue} ${styles.canvasStatValueAmber}`}>Apr 15</div>
-            </div>
-            <div className={styles.canvasStat}>
-              <div className={styles.canvasStatLabel}>Today</div>
-              <div className={styles.canvasStatValue}>68°</div>
-            </div>
-          </div>
         </div>
       </section>
 
       {/* ───── Climate + Calendar duet ───── */}
       <section className={styles.duet}>
         <div className={styles.duetCard}>
-          <div className={styles.duetNum}>03</div>
           <span className={styles.eyebrow}>Climate-aware</span>
-          <h3>Knows your <em>zip code</em>. Tells you when to plant.</h3>
+          <h3>Knows your zip code. Tells you when to plant.</h3>
           <p>
             Your USDA hardiness zone. Your last and first frost dates. A
-            calendar built around YOUR climate, not someone else&apos;s. Start-seeds
+            calendar built around your climate. Start-seeds
             reminders fire at the right week. Frost alerts come before the
             cold front.
           </p>
@@ -530,9 +506,8 @@ export default async function LandingPage() {
         </div>
 
         <div className={styles.duetCard}>
-          <div className={styles.duetNum}>04</div>
           <span className={styles.eyebrow}>Your calendar</span>
-          <h3>The right thing, at the <em>right week</em>.</h3>
+          <h3>The right thing, at the right week.</h3>
           <p>
             Pulled together from each plant&apos;s days-to-maturity, your local
             frost dates, and what you&apos;ve actually planted. Push and email
@@ -551,7 +526,7 @@ export default async function LandingPage() {
                 <div className={styles.calEventPlant}><em>Tomato</em></div>
                 <div className={styles.calEventWhere}>Robyn&apos;s Garden · Bed B</div>
               </div>
-              <div className={`${styles.calEventIcon} ${styles.calIconSeed}`}>🌱</div>
+              <div className={`${styles.calEventIcon} ${styles.calIconSeed}`}><Sprout size={16} strokeWidth={2} /></div>
             </div>
             <div className={styles.calEvent}>
               <div className={styles.calEventDay}>
@@ -563,7 +538,7 @@ export default async function LandingPage() {
                 <div className={styles.calEventPlant}><em>Pepper</em></div>
                 <div className={styles.calEventWhere}>Robyn&apos;s Garden · Bed B</div>
               </div>
-              <div className={`${styles.calEventIcon} ${styles.calIconSeed}`}>🌶</div>
+              <div className={`${styles.calEventIcon} ${styles.calIconSeed}`}><Sprout size={16} strokeWidth={2} /></div>
             </div>
             <div className={styles.calEvent}>
               <div className={styles.calEventDay}>
@@ -585,17 +560,14 @@ export default async function LandingPage() {
       <section className={styles.companions}>
         <div className={styles.companionsInner}>
           <div className={styles.companionsText}>
-            <span className={styles.eyebrow}>Companion science</span>
+            <span className={styles.eyebrow}>Companion guide</span>
             <h2>What grows well together, <em>and what won&apos;t</em>.</h2>
             <p>
-              Centuries of gardener wisdom plus modern horticultural research,
+              Companion pairings from the OpenFarm dataset, checked by hand,
               baked into every cell you tap. The AI layout planner reads your
               wishlist and builds an arrangement that maximizes friends and
               keeps enemies apart.
             </p>
-            <div className={styles.companionsStatLine}>
-              <strong>129 companion relationships</strong> across <strong>153 curated plants</strong>
-            </div>
           </div>
 
           <div className={styles.companionsViz}>
@@ -669,7 +641,7 @@ export default async function LandingPage() {
       <section className={styles.ledger}>
         <div className={styles.ledgerHead}>
           <span className={styles.eyebrow}>What&apos;s in the box</span>
-          <h2>One tool for the <em>whole season</em>.</h2>
+          <h2>One tool for the whole season.</h2>
         </div>
 
         <div className={styles.ledgerRows}>
@@ -689,13 +661,13 @@ export default async function LandingPage() {
       <section className={styles.pricing} id="pricing">
         <div className={styles.pricingHead}>
           <span className={styles.eyebrow}>Honest pricing</span>
-          <h2>Free to start. <em>Upgrade</em> when you want more.</h2>
-          <p>No ads. No data sales. No surprise charges.</p>
+          <h2>Free to start. Upgrade when you want more.</h2>
+          <p>No ads, and we never sell your data.</p>
         </div>
 
         <div className={styles.pricingGrid}>
           <div className={`${styles.plan} ${styles.planFree}`}>
-            <div className={styles.planName}>Free, forever</div>
+            <div className={styles.planName}>Free</div>
             <div className={styles.planPrice}>$0</div>
             <div className={styles.planPeriod}>No card required</div>
             <ul className={styles.planFeatures}>
@@ -708,8 +680,8 @@ export default async function LandingPage() {
               <li>Harvest tracking + journal</li>
               <li>20 photo uploads</li>
             </ul>
-            <Link href="/sign-up" className={styles.planCta}>Get started free</Link>
-            <div className={styles.planFine}>Free forever, really</div>
+            <Link href="/sign-up" className={styles.planCta}>Start planning</Link>
+            <div className={styles.planFine}>Stays free for as long as you use it</div>
           </div>
 
           <div className={`${styles.plan} ${styles.planPro}`}>
@@ -728,8 +700,8 @@ export default async function LandingPage() {
               <li>Unlimited photos</li>
               <li>Seed inventory + shopping list</li>
             </ul>
-            <Link href="/sign-up" className={styles.planCta}>Start 7-day trial</Link>
-            <div className={styles.planFine}>No charge for 7 days. Cancel anytime.</div>
+            <Link href="/sign-up" className={styles.planCta}>Try Pro</Link>
+            <div className={styles.planFine}>Seven days free, then $4.58 a month. Cancel anytime.</div>
           </div>
         </div>
       </section>
@@ -737,7 +709,7 @@ export default async function LandingPage() {
       {/* ───── Final CTA ───── */}
       <section className={styles.final}>
         <div className={styles.finalInner}>
-          <h2>The garden is <em>waiting</em>.</h2>
+          <h2>The garden is waiting.</h2>
           <p>Plan it before the ground thaws.</p>
           <Link href="/sign-up" className={`${styles.btn} ${styles.btnPrimary} ${styles.finalCta}`}>
             Start planning for free
@@ -763,15 +735,6 @@ export default async function LandingPage() {
               <li><Link href="/pricing">Pricing</Link></li>
               <li><Link href="/sign-in">Sign in</Link></li>
               <li><Link href="/sign-up">Sign up</Link></li>
-            </ul>
-          </div>
-          <div className={styles.footerCol}>
-            <div className={styles.footerColHead}>Garden</div>
-            <ul>
-              <li><a href="#field-guide">Plant library</a></li>
-              <li><a href="#field-guide">Growing zones</a></li>
-              <li><a href="#field-guide">Companion guide</a></li>
-              <li><a href="#field-guide">Seasonal notes</a></li>
             </ul>
           </div>
           <div className={styles.footerCol}>

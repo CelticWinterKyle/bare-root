@@ -42,7 +42,7 @@ export default function SignUpPage() {
               fontVariationSettings: "'opsz' 18",
             }}
           >
-            No credit card. Free forever tier. Sets up in under three minutes.
+            No card needed. Setup takes about three minutes.
           </p>
         </div>
         <SignUp

@@ -27,10 +27,10 @@ export default function PrivacyPage() {
     <MarketingChrome>
       <article
         className="container-narrow"
-        style={{ padding: "56px 24px 64px", maxWidth: 760, margin: "0 auto" }}
+        style={{ padding: "56px 24px 64px", maxWidth: 680, margin: "0 auto" }}
       >
         <div style={{ marginBottom: 16 }}>
-          <MarketingEyebrow>Privacy policy</MarketingEyebrow>
+          <MarketingEyebrow>What we keep, and why</MarketingEyebrow>
         </div>
         <h1
           style={{
@@ -38,13 +38,13 @@ export default function PrivacyPage() {
             fontSize: "clamp(36px, 5vw, 56px)",
             fontWeight: 800,
             color: "#111109",
-            letterSpacing: "-0.035em",
+            letterSpacing: "-0.02em",
             lineHeight: 0.95,
             fontVariationSettings: "'opsz' 64",
             marginBottom: 14,
           }}
         >
-          Privacy <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>Policy</em>
+          Privacy policy
         </h1>
         <p
           style={{

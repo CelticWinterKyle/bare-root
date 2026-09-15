@@ -99,7 +99,7 @@ export default async function PricingPage() {
         style={{ padding: "80px 32px 56px", textAlign: "center" }}
       >
         <div style={{ marginBottom: 18 }}>
-          <MarketingEyebrow>Pricing</MarketingEyebrow>
+          <MarketingEyebrow>Free to start</MarketingEyebrow>
         </div>
         <h1
           style={{
@@ -107,13 +107,13 @@ export default async function PricingPage() {
             fontSize: "clamp(40px, 5.5vw, 64px)",
             fontWeight: 800,
             lineHeight: 0.95,
-            letterSpacing: "-0.035em",
+            letterSpacing: "-0.02em",
             color: "#111109",
             fontVariationSettings: "'opsz' 96",
             marginBottom: 18,
           }}
         >
-          Simple, <em style={{ fontStyle: "italic", color: "#1C3D0A" }}>honest</em> pricing.
+          Two plans. No surprises.
         </h1>
         <p
           style={{
@@ -126,7 +126,7 @@ export default async function PricingPage() {
             fontVariationSettings: "'opsz' 22",
           }}
         >
-          Free to start. Upgrade when you want more.
+          Everything you need to plan and grow one garden is free. Pro adds room to grow and the year-over-year view.
         </p>
       </section>
 
@@ -162,7 +162,7 @@ export default async function PricingPage() {
                   fontSize: 52,
                   fontWeight: 800,
                   color: "#111109",
-                  letterSpacing: "-0.035em",
+                  letterSpacing: "-0.02em",
                   lineHeight: 1,
                 }}
               >
@@ -244,7 +244,7 @@ export default async function PricingPage() {
                   fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 800,
                   fontSize: 52,
-                  letterSpacing: "-0.035em",
+                  letterSpacing: "-0.02em",
                   lineHeight: 1,
                   color: "#FDFDF8",
                 }}
@@ -292,6 +292,7 @@ export default async function PricingPage() {
       {/* Comparison table */}
       <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
         <div style={{ marginBottom: 24 }}>
+          <h2 className="sr-only">Compare plans</h2>
           <MarketingEyebrow>Compare plans</MarketingEyebrow>
         </div>
         <div
@@ -367,6 +368,7 @@ export default async function PricingPage() {
       {/* FAQ */}
       <section className="container-narrow" style={{ padding: "0 32px 64px" }}>
         <div style={{ marginBottom: 24 }}>
+          <h2 className="sr-only">Questions</h2>
           <MarketingEyebrow>Questions</MarketingEyebrow>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
@@ -380,11 +382,11 @@ export default async function PricingPage() {
                 padding: "18px 22px",
               }}
             >
-              <p
+              <h3
                 style={{
                   fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700,
-                  fontSize: 16,
+                  fontSize: 17,
                   color: "#111109",
                   marginBottom: 6,
                   letterSpacing: "-0.015em",
@@ -392,8 +394,8 @@ export default async function PricingPage() {
                 }}
               >
                 {item.q}
-              </p>
-              <p style={{ fontSize: 14, color: "#3A3A30", lineHeight: 1.5 }}>{item.a}</p>
+              </h3>
+              <p style={{ fontSize: 15, color: "#3A3A30", lineHeight: 1.55, maxWidth: "62ch" }}>{item.a}</p>
             </div>
           ))}
         </div>
@@ -410,7 +412,7 @@ export default async function PricingPage() {
             fontWeight: 800,
             fontSize: "clamp(28px, 4vw, 40px)",
             color: "#111109",
-            letterSpacing: "-0.03em",
+            letterSpacing: "-0.02em",
             marginBottom: 22,
           }}
         >
