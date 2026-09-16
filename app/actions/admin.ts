@@ -482,3 +482,90 @@ export async function getOverview(): Promise<Overview> {
     thisWeek,
   };
 }
+
+// ─── Beta invites ─────────────────────────────────────────────────────────────
+
+export type BetaInviteRow = {
+  id: string;
+  code: string;
+  url: string;
+  label: string;
+  note: string | null;
+  maxUses: number;
+  uses: number;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  redeemedBy: { user: string; at: string }[];
+  status: "active" | "used" | "expired" | "revoked";
+};
+
+function inviteStatus(i: { uses: number; maxUses: number; expiresAt: Date | null; revokedAt: Date | null }): BetaInviteRow["status"] {
+  if (i.revokedAt) return "revoked";
+  if (i.expiresAt && i.expiresAt.getTime() < Date.now()) return "expired";
+  if (i.uses >= i.maxUses) return "used";
+  return "active";
+}
+
+export async function listBetaInvites(): Promise<BetaInviteRow[]> {
+  await requireOwnerAction();
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://bareroot.garden";
+  const rows = await db.betaInvite.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { redemptions: { include: { user: { select: { name: true, email: true } } }, orderBy: { createdAt: "desc" } } },
+  });
+  return rows.map((i) => ({
+    id: i.id,
+    code: i.code,
+    url: `${base}/beta?code=${i.code}`,
+    label: i.label,
+    note: i.note,
+    maxUses: i.maxUses,
+    uses: i.uses,
+    expiresAt: i.expiresAt?.toISOString() ?? null,
+    revokedAt: i.revokedAt?.toISOString() ?? null,
+    createdAt: i.createdAt.toISOString(),
+    redeemedBy: i.redemptions.map((r) => ({ user: r.user.name ?? r.user.email, at: r.createdAt.toISOString() })),
+    status: inviteStatus(i),
+  }));
+}
+
+/** URL-safe, 20 chars, from crypto — not guessable, readable enough to paste. */
+function newCode(): string {
+  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
+export async function createBetaInvite(input: { label: string; note?: string; maxUses?: number; expiresInDays?: number | null }): Promise<BetaInviteRow> {
+  await requireOwnerAction();
+  const label = input.label.trim();
+  if (!label) throw new ActionError("INVALID_INPUT", "Give the link a name (who it's for).");
+  if (label.length > 100) throw new ActionError("INVALID_INPUT", "Name must be 100 characters or fewer.");
+  const maxUses = Math.min(100, Math.max(1, Math.round(input.maxUses ?? 1)));
+  const expiresAt = input.expiresInDays ? new Date(Date.now() + input.expiresInDays * 86_400_000) : null;
+  const row = await db.betaInvite.create({
+    data: { code: newCode(), label, note: input.note?.trim() || null, maxUses, expiresAt },
+    include: { redemptions: { include: { user: { select: { name: true, email: true } } } } },
+  });
+  revalidatePath("/admin/users");
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://bareroot.garden";
+  return {
+    id: row.id, code: row.code, url: `${base}/beta?code=${row.code}`, label: row.label, note: row.note,
+    maxUses: row.maxUses, uses: row.uses, expiresAt: row.expiresAt?.toISOString() ?? null, revokedAt: null,
+    createdAt: row.createdAt.toISOString(), redeemedBy: [], status: "active",
+  };
+}
+
+export async function revokeBetaInvite(id: string): Promise<void> {
+  await requireOwnerAction();
+  await db.betaInvite.update({ where: { id }, data: { revokedAt: new Date() } });
+  revalidatePath("/admin/users");
+}
+
+/** Un-revoke, e.g. after a mis-click. Doesn't restore used-up uses. */
+export async function restoreBetaInvite(id: string): Promise<void> {
+  await requireOwnerAction();
+  await db.betaInvite.update({ where: { id }, data: { revokedAt: null } });
+  revalidatePath("/admin/users");
+}

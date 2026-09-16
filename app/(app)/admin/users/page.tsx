@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireOwner } from "@/lib/owner";
-import { listUsers, summarizeUsers } from "@/app/actions/admin";
+import { listUsers, summarizeUsers, listBetaInvites } from "@/app/actions/admin";
+import { BetaInvitesPanel } from "@/components/admin/BetaInvitesPanel";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { UsersTab } from "@/components/admin/UsersTab";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   await requireOwner();
-  const users = await listUsers();
+  const [users, invites] = await Promise.all([listUsers(), listBetaInvites()]);
   const { pro, trialing, newThisWeek } = await summarizeUsers(users);
 
   return (
@@ -27,6 +28,7 @@ export default async function AdminPage() {
       <div className="px-[22px] md:px-8 py-5">
         <AdminTabs active="users" />
         <UsersTab users={users} />
+        <BetaInvitesPanel invites={invites} />
       </div>
     </div>
   );

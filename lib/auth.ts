@@ -3,7 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { ensureDbUser } from "@/lib/ensure-user";
-import { BETA_COOKIE, BETA_MAX_USES, isValidBetaCode } from "@/lib/beta";
+import { BETA_COOKIE, BETA_MAX_USES, isValidBetaCode, redeemInvite } from "@/lib/beta";
 import { redirect } from "next/navigation";
 
 // React.cache: the layout AND every page call this independently, so
@@ -32,7 +32,10 @@ export const getCurrentUser = cache(async () => {
   if (user.subscriptionTier === "FREE") {
     try {
       const beta = (await cookies()).get(BETA_COOKIE)?.value;
-      if (isValidBetaCode(beta)) {
+      // Per-person invite: records the redemption against the invite.
+      if (beta && (await redeemInvite(beta, user.id))) {
+        user = (await db.user.findUnique({ where: { id: user.id } })) ?? user;
+      } else if (isValidBetaCode(beta)) {
         // Cap total grants so a leaked link can't hand out unlimited Pro;
         // betaGrantedAt is the audit trail (and the counter).
         const granted = await db.user.count({ where: { betaGrantedAt: { not: null } } });
